@@ -1,0 +1,7 @@
+# Terraform plugins
+.terraform/
+
+# Terraform states
+*.tfstate
+*.tfstate.backup
+*.tfstate.*.backup
