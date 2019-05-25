@@ -1,8 +1,4 @@
 resource "aws_lb" "femiwiki-load-balancer" {
-  access_logs {
-    enabled = false
-  }
-
   enable_deletion_protection = false
   enable_http2               = true
   idle_timeout               = "60"
@@ -26,5 +22,4 @@ resource "aws_lb" "femiwiki-load-balancer" {
 
   subnets = ["${data.terraform_remote_state.subnet.aws_subnet_subnet-9da70beb_id}", "${data.terraform_remote_state.subnet.aws_subnet_subnet-e5d929bd_id}", "${data.terraform_remote_state.subnet.aws_subnet_subnet-2581d80d_id}"]
   tags    {}
-  vpc_id  = "${data.terraform_remote_state.vpc.aws_vpc_vpc-a4749ac0_id}"
 }

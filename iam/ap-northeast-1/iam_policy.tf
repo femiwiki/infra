@@ -79,7 +79,7 @@ resource "aws_iam_policy" "Force_MFA" {
         "iam:UploadSSHPublicKey"
       ],
       "Effect": "Allow",
-      "Resource": "arn:aws:iam::*:user/${aws:username}",
+      "Resource": "arn:aws:iam::*:user/$${aws:username}",
       "Sid": "AllowIndividualUserToSeeAndManageOnlyTheirOwnAccountInformation"
     },
     {
@@ -92,8 +92,8 @@ resource "aws_iam_policy" "Force_MFA" {
       ],
       "Effect": "Allow",
       "Resource": [
-        "arn:aws:iam::*:mfa/${aws:username}",
-        "arn:aws:iam::*:user/${aws:username}"
+        "arn:aws:iam::*:mfa/$${aws:username}",
+        "arn:aws:iam::*:user/$${aws:username}"
       ],
       "Sid": "AllowIndividualUserToViewAndManageTheirOwnMFA"
     },
@@ -108,8 +108,8 @@ resource "aws_iam_policy" "Force_MFA" {
       },
       "Effect": "Allow",
       "Resource": [
-        "arn:aws:iam::*:mfa/${aws:username}",
-        "arn:aws:iam::*:user/${aws:username}"
+        "arn:aws:iam::*:mfa/$${aws:username}",
+        "arn:aws:iam::*:user/$${aws:username}"
       ],
       "Sid": "AllowIndividualUserToDeactivateOnlyTheirOwnMFAOnlyWhenUsingMFA"
     },
