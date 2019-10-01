@@ -22,6 +22,14 @@ terraform init
 terraform plan
 ```
 
+### TODOs
+- [ ] 인스턴스 프로필 (ec2.tf 에 인스턴스 프로필 ARN 하드코딩되어있음)
+- [ ] SES
+- [ ] EC2
+- [ ] ALB
+- [ ] IAM
+- [ ] Route53
+
 [Terraform Badge]: https://badgen.net/badge/icon/terraform?label&icon=https://cdn.jsdelivr.net/gh/simnalamburt/badgen-icons@2b2fc88/icons/terraform.svg
 [Terraform Cloud Link]: https://app.terraform.io/app/femiwiki/workspaces/infra
 [Terraform Cloud]: https://app.terraform.io
