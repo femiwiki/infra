@@ -14,7 +14,7 @@ resource "aws_launch_template" "base" {
   instance_initiated_shutdown_behavior = "stop"
   instance_type                        = "t3.nano"
   key_name                             = aws_key_pair.femiwiki.key_name
-  vpc_security_group_ids               = ["sg-03aebf67", "sg-07e51fb6f6719fc57"]
+  vpc_security_group_ids               = [aws_default_security_group.default.id, aws_security_group.mediawiki.id]
 
   block_device_mappings {
     device_name = "/dev/xvda"
@@ -55,7 +55,7 @@ resource "aws_launch_template" "mediawiki" {
   instance_initiated_shutdown_behavior = "terminate"
   instance_type                        = "t3.micro"
   key_name                             = aws_key_pair.femiwiki.key_name
-  vpc_security_group_ids               = ["sg-03aebf67", "sg-07e51fb6f6719fc57"]
+  vpc_security_group_ids               = [aws_default_security_group.default.id, aws_security_group.mediawiki.id]
 
   block_device_mappings {
     device_name = "/dev/xvda"
