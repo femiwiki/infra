@@ -36,10 +36,7 @@ resource "aws_s3_bucket_policy" "uploaded_files" {
 }
 
 data "aws_iam_policy_document" "uploaded_files" {
-  policy_id = "..."
-
   statement {
-    sid     = "..."
     actions = ["s3:GetObject"]
 
     principals {
@@ -49,8 +46,6 @@ data "aws_iam_policy_document" "uploaded_files" {
 
     resources = ["arn:aws:s3:::femiwiki-uploaded-files/*"]
   }
-
-  version = "2008-10-17"
 }
 
 resource "aws_s3_bucket_policy" "uploaded_files_thumb" {
@@ -60,10 +55,7 @@ resource "aws_s3_bucket_policy" "uploaded_files_thumb" {
 }
 
 data "aws_iam_policy_document" "uploaded_files_thumb" {
-  policy_id = "..."
-
   statement {
-    sid     = "..."
     actions = ["s3:GetObject"]
 
     principals {
@@ -73,6 +65,4 @@ data "aws_iam_policy_document" "uploaded_files_thumb" {
 
     resources = ["arn:aws:s3:::femiwiki-uploaded-files-thumb/*"]
   }
-
-  version = "2008-10-17"
 }
