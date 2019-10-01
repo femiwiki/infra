@@ -1,5 +1,8 @@
-Femiwiki Terraform
+Femiwiki Infra
 ========
+[![Terraform Badge]][Terraform Cloud Link]
+
+페미위키의 AWS 인프라가 정의되어있는 테라폼 코드입니다.
 
 ### Prerequisites
 - Terraform 0.12
@@ -19,4 +22,6 @@ terraform init
 terraform plan
 ```
 
+[Terraform Badge]: https://badgen.net/badge/icon/terraform?label&icon=https://cdn.jsdelivr.net/gh/simnalamburt/badgen-icons@2b2fc88/icons/terraform.svg
+[Terraform Cloud Link]: https://app.terraform.io/app/femiwiki/workspaces/infra
 [Terraform Cloud]: https://app.terraform.io
