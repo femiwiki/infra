@@ -30,6 +30,6 @@ terraform plan
 - [ ] IAM
 - [ ] Route53
 
-[Terraform Badge]: https://badgen.net/badge/icon/terraform?label&icon=https://cdn.jsdelivr.net/gh/simnalamburt/badgen-icons@2b2fc88/icons/terraform.svg
+[Terraform Badge]: https://badgen.net/badge/icon/terraform?label&icon=terraform
 [Terraform Cloud Link]: https://app.terraform.io/app/femiwiki/workspaces/infra
 [Terraform Cloud]: https://app.terraform.io
