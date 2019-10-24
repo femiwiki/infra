@@ -1952,12 +1952,6 @@ resource "aws_iam_policy_attachment" "AmazonRoute53ReadOnlyAccess" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonRoute53ReadOnlyAccess"
 }
 
-resource "aws_iam_policy_attachment" "AmazonS3Access" {
-  name       = "AmazonS3Access"
-  policy_arn = "arn:aws:iam::302617221463:policy/AmazonS3Access"
-  roles      = ["AmazonS3Access"]
-}
-
 resource "aws_iam_policy_attachment" "AmazonS3FullAccess" {
   name       = "AmazonS3FullAccess"
   policy_arn = "arn:aws:iam::aws:policy/AmazonS3FullAccess"

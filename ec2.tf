@@ -27,7 +27,7 @@ resource "aws_launch_template" "base" {
   }
 
   iam_instance_profile {
-    arn = "arn:aws:iam::302617221463:instance-profile/AmazonS3Access"
+    arn = aws_iam_instance_profile.amazon_s3_access.arn
   }
 
   tag_specifications {
@@ -68,7 +68,7 @@ resource "aws_launch_template" "mediawiki" {
   }
 
   iam_instance_profile {
-    arn = "arn:aws:iam::302617221463:instance-profile/AmazonS3Access"
+    arn = aws_iam_instance_profile.amazon_s3_access.arn
   }
 
   tag_specifications {
@@ -84,4 +84,9 @@ resource "aws_launch_template" "mediawiki" {
       Name = "mediawiki"
     }
   }
+}
+
+resource "aws_iam_instance_profile" "amazon_s3_access" {
+  name = "AmazonS3Access"
+  role = aws_iam_role.amazon_s3_access.name
 }

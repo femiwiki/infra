@@ -23,7 +23,7 @@ terraform plan
 ```
 
 ### TODOs
-- [ ] 인스턴스 프로필 (ec2.tf 에 인스턴스 프로필 ARN 하드코딩되어있음)
+- [x] 인스턴스 프로필
 - [ ] SES
 - [ ] EC2
 - [ ] ALB
