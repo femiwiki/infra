@@ -26,7 +26,7 @@ terraform plan
 - [x] 인스턴스 프로필
 - [x] SES
 - [x] EC2
-- [ ] ALB
+- [x] ALB
 - [ ] IAM
 - [ ] Route53
 - [ ] GitHub
