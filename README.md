@@ -24,7 +24,7 @@ terraform plan
 
 ### TODOs
 - [x] 인스턴스 프로필
-- [ ] SES
+- [x] SES
 - [ ] EC2
 - [ ] ALB
 - [ ] IAM

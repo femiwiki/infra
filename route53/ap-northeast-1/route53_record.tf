@@ -1,27 +1,3 @@
-resource "aws_route53_record" "Z1IOLPZGUQYUUT_2yz4o5m6fz4fxc7menpiet2oh2iu34st--_domainkey--femiwiki--com--_CNAME" {
-  name    = "2yz4o5m6fz4fxc7menpiet2oh2iu34st._domainkey.femiwiki.com"
-  records = ["2yz4o5m6fz4fxc7menpiet2oh2iu34st.dkim.amazonses.com"]
-  ttl     = "300"
-  type    = "CNAME"
-  zone_id = "${aws_route53_zone.Z1IOLPZGUQYUUT_femiwiki--com.zone_id}"
-}
-
-resource "aws_route53_record" "Z1IOLPZGUQYUUT_5ya44psrwmbbmja25vcpxrntycwpmyap--_domainkey--femiwiki--com--_CNAME" {
-  name    = "5ya44psrwmbbmja25vcpxrntycwpmyap._domainkey.femiwiki.com"
-  records = ["5ya44psrwmbbmja25vcpxrntycwpmyap.dkim.amazonses.com"]
-  ttl     = "300"
-  type    = "CNAME"
-  zone_id = "${aws_route53_zone.Z1IOLPZGUQYUUT_femiwiki--com.zone_id}"
-}
-
-resource "aws_route53_record" "Z1IOLPZGUQYUUT__amazonses--femiwiki--com--_TXT" {
-  name    = "_amazonses.femiwiki.com"
-  records = ["TEXdrA8h0Su+KJl/dEp7Z6uWn2dbboiwQOhoZyb+jZQ="]
-  ttl     = "1800"
-  type    = "TXT"
-  zone_id = "${aws_route53_zone.Z1IOLPZGUQYUUT_femiwiki--com.zone_id}"
-}
-
 resource "aws_route53_record" "Z1IOLPZGUQYUUT__bb27811814286f2e5b8472ccdab1ba34--femiwiki--com--_CNAME" {
   name    = "_bb27811814286f2e5b8472ccdab1ba34.femiwiki.com"
   records = ["_659b4aa0766f8e7ac67bb6cd3d40826d.tljzshvwok.acm-validations.aws."]
@@ -35,14 +11,6 @@ resource "aws_route53_record" "Z1IOLPZGUQYUUT__github-challenge-femiwiki--femiwi
   records = ["8116bea44c"]
   ttl     = "300"
   type    = "TXT"
-  zone_id = "${aws_route53_zone.Z1IOLPZGUQYUUT_femiwiki--com.zone_id}"
-}
-
-resource "aws_route53_record" "Z1IOLPZGUQYUUT_adey3isneuqjaqsqibxsmqppfn33esg6--_domainkey--femiwiki--com--_CNAME" {
-  name    = "adey3isneuqjaqsqibxsmqppfn33esg6._domainkey.femiwiki.com"
-  records = ["adey3isneuqjaqsqibxsmqppfn33esg6.dkim.amazonses.com"]
-  ttl     = "300"
-  type    = "CNAME"
   zone_id = "${aws_route53_zone.Z1IOLPZGUQYUUT_femiwiki--com.zone_id}"
 }
 
