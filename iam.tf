@@ -48,3 +48,18 @@ data "aws_iam_policy_document" "amazon_s3_access" {
     ]
   }
 }
+
+resource "aws_iam_role" "upload_backup" {
+  name        = "UploadBackup"
+  description = "Allows EC2 instances to upload to the backup bucket."
+  path        = "/"
+
+  assume_role_policy = data.aws_iam_policy_document.assume_role.json
+}
+
+data "aws_iam_policy_document" "upload_backup" {
+  statement {
+    actions   = ["s3:PutObject"]
+    resources = ["arn:aws:s3:::femiwiki-backups/mysql/*"]
+  }
+}
