@@ -44,7 +44,7 @@ data "aws_iam_policy_document" "uploaded_files" {
       identifiers = ["*"]
     }
 
-    resources = ["arn:aws:s3:::femiwiki-uploaded-files/*"]
+    resources = ["${aws_s3_bucket.uploaded_files.arn}/*"]
   }
 }
 
@@ -63,6 +63,6 @@ data "aws_iam_policy_document" "uploaded_files_thumb" {
       identifiers = ["*"]
     }
 
-    resources = ["arn:aws:s3:::femiwiki-uploaded-files-thumb/*"]
+    resources = ["${aws_s3_bucket.uploaded_files_thumb.arn}/*"]
   }
 }
