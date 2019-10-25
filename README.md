@@ -27,7 +27,7 @@ terraform plan
 - [x] SES
 - [x] EC2
 - [x] ALB
-- [ ] IAM
+- [x] IAM
 - [ ] Route53
 - [ ] GitHub
 
