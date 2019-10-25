@@ -20,3 +20,8 @@ provider "aws" {
   region  = "us-east-1"
   version = ">= 2.30.0, < 3"
 }
+
+provider "github" {
+  organization = "femiwiki"
+  version      = ">= 2.2.0, < 3"
+}
