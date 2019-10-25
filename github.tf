@@ -9,7 +9,6 @@ locals {
     "765P",
     "choidamdam",
     "HanbitGaram",
-    "minichicken",
     "vvvvviral",
   ]
 }
