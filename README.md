@@ -8,6 +8,7 @@ Femiwiki Infra
 - Terraform 0.12
 - [Terraform Cloud] 계정
 - AWS 크레덴셜
+- Github personal access tokens
 
 ### Instructions
 ```bash
@@ -23,13 +24,14 @@ terraform plan
 ```
 
 ### TODOs
-- [ ] 인스턴스 프로필 (ec2.tf 에 인스턴스 프로필 ARN 하드코딩되어있음)
-- [ ] SES
-- [ ] EC2
-- [ ] ALB
-- [ ] IAM
-- [ ] Route53
-- [ ] GitHub
+- [x] 인스턴스 프로필
+- [x] SES
+- [x] EC2
+- [x] ALB
+- [x] IAM
+- [x] Route53
+- [x] GitHub
+- [ ] 유저 데이터(secret.php 가져오기와 데이터베이스 백업 복구가 빠져있음)
 
 [Terraform Badge]: https://badgen.net/badge/icon/terraform?label&icon=https://unpkg.com/badgen-icons@0.12.0/icons/terraform.svg
 [Terraform Cloud Link]: https://app.terraform.io/app/femiwiki/workspaces/infra
