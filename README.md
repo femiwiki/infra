@@ -8,7 +8,7 @@ Femiwiki Infra
 - Terraform 0.12
 - [Terraform Cloud] 계정
 - AWS 크레덴셜
-- Github personal access tokens
+- Github personal access tokens (`$GITHUB_TOKEN`)
 
 ### Instructions
 ```bash
