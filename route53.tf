@@ -82,4 +82,3 @@ resource "aws_route53_record" "github_challenge_femiwiki_com" {
   type    = "TXT"
   zone_id = aws_route53_zone.femiwiki_com.zone_id
 }
-

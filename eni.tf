@@ -9,7 +9,7 @@ resource "aws_network_interface" "database_bots" {
   ]
 
   attachment {
-    instance     = "${aws_instance.database_bots.id}"
+    instance     = aws_instance.database_bots.id
     device_index = 0
   }
 
