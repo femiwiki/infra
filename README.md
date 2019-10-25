@@ -28,7 +28,7 @@ terraform plan
 - [x] EC2
 - [x] ALB
 - [x] IAM
-- [ ] Route53
+- [x] Route53
 - [ ] GitHub
 
 [Terraform Badge]: https://badgen.net/badge/icon/terraform?label&icon=https://unpkg.com/badgen-icons@0.12.0/icons/terraform.svg
