@@ -27,7 +27,7 @@ resource "aws_launch_template" "base" {
   }
 
   iam_instance_profile {
-    arn = aws_iam_instance_profile.amazon_s3_access.arn
+    arn = aws_iam_instance_profile.mediawiki.arn
   }
 
   tag_specifications {
@@ -68,7 +68,7 @@ resource "aws_launch_template" "mediawiki" {
   }
 
   iam_instance_profile {
-    arn = aws_iam_instance_profile.amazon_s3_access.arn
+    arn = aws_iam_instance_profile.mediawiki.arn
   }
 
   tag_specifications {
@@ -86,9 +86,9 @@ resource "aws_launch_template" "mediawiki" {
   }
 }
 
-resource "aws_iam_instance_profile" "amazon_s3_access" {
-  name = "AmazonS3Access"
-  role = aws_iam_role.amazon_s3_access.name
+resource "aws_iam_instance_profile" "mediawiki" {
+  name = "MediaWiki"
+  role = aws_iam_role.mediawiki.name
 }
 
 resource "aws_instance" "mediawiki" {
@@ -97,7 +97,7 @@ resource "aws_instance" "mediawiki" {
   instance_type        = "t3.micro"
   key_name             = aws_key_pair.femiwiki.key_name
   monitoring           = false
-  iam_instance_profile = aws_iam_instance_profile.amazon_s3_access.name
+  iam_instance_profile = aws_iam_instance_profile.mediawiki.name
 
   vpc_security_group_ids = [
     aws_default_security_group.default.id,
