@@ -47,15 +47,15 @@ data "aws_iam_policy_document" "assume_role" {
   }
 }
 
-resource "aws_iam_role" "amazon_s3_access" {
-  name               = "AmazonS3Access"
+resource "aws_iam_role" "mediawiki" {
+  name               = "MediaWiki"
   description        = "Allows EC2 instances to call AWS services on your behalf."
   path               = "/"
   assume_role_policy = data.aws_iam_policy_document.assume_role.json
 }
 
 resource "aws_iam_role_policy_attachment" "amazon_s3_access" {
-  role       = aws_iam_role.amazon_s3_access.name
+  role       = aws_iam_role.mediawiki.name
   policy_arn = aws_iam_policy.amazon_s3_access.arn
 }
 
@@ -89,6 +89,36 @@ resource "aws_iam_policy" "amazon_s3_access" {
   description = "Provide Access to Amazon S3 buckets."
 
   policy = data.aws_iam_policy_document.amazon_s3_access.json
+}
+
+resource "aws_iam_role_policy_attachment" "route53" {
+  role       = aws_iam_role.mediawiki.name
+  policy_arn = aws_iam_policy.route53.arn
+}
+
+data "aws_iam_policy_document" "route53" {
+  statement {
+    actions = [
+      "route53:GetHostedZone",
+      "route53:ListResourceRecordSets",
+      "route53:ChangeResourceRecordSets",
+    ]
+    resources = ["arn:aws:route53:::hostedzone/${aws_route53_zone.femiwiki_com.zone_id}"]
+  }
+
+  statement {
+    actions = [
+      "route53:GetChange",
+    ]
+    resources = ["arn:aws:route53:::change/*"]
+  }
+}
+
+resource "aws_iam_policy" "route53" {
+  name        = "Route53Access"
+  description = "Provide Access to route53."
+
+  policy = data.aws_iam_policy_document.route53.json
 }
 
 resource "aws_iam_policy" "force_mfa" {
