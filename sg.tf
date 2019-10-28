@@ -91,7 +91,7 @@ resource "aws_security_group" "mediawiki" {
   }
 }
 
-resource "aws_security_group_rule" "mediawiki_ingress" {
+resource "aws_security_group_rule" "mediawiki_ingress_http" {
   security_group_id = aws_security_group.mediawiki.id
   description       = "http from load balancer"
 
@@ -99,7 +99,20 @@ resource "aws_security_group_rule" "mediawiki_ingress" {
   protocol                 = "tcp"
   from_port                = 80
   to_port                  = 80
-  source_security_group_id = aws_security_group.loadbalancer.id
+  cidr_blocks      = ["0.0.0.0/0"]
+  ipv6_cidr_blocks = ["::/0"]
+}
+
+resource "aws_security_group_rule" "mediawiki_ingress_https" {
+  security_group_id = aws_security_group.mediawiki.id
+  description       = "https from load balancer"
+
+  type                     = "ingress"
+  protocol                 = "tcp"
+  from_port                = 443
+  to_port                  = 443
+  cidr_blocks      = ["0.0.0.0/0"]
+  ipv6_cidr_blocks = ["::/0"]
 }
 
 resource "aws_security_group_rule" "mediawiki_egress" {
