@@ -7,12 +7,16 @@ resource "aws_route53_record" "femiwiki_com" {
   name    = "femiwiki.com"
   type    = "A"
   zone_id = aws_route53_zone.femiwiki_com.zone_id
+  records = [aws_eip.mediawiki.public_ip]
+  ttl     = 300
+}
 
-  alias {
-    name                   = aws_lb.femiwiki.dns_name
-    zone_id                = aws_lb.femiwiki.zone_id
-    evaluate_target_health = false
-  }
+resource "aws_route53_record" "www_femiwiki_com" {
+  name    = "www.femiwiki.com"
+  type    = "A"
+  zone_id = aws_route53_zone.femiwiki_com.zone_id
+  records = [aws_eip.mediawiki.public_ip]
+  ttl     = 300
 }
 
 # resource "aws_route53_record" "test_femiwiki_com" {
