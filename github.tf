@@ -11,6 +11,20 @@ locals {
     "HanbitGaram",
     "vvvvviral",
   ]
+  extensions = {
+    UnifiedExtensionForFemiwiki = {
+      description = "Unified Extension For Femiwiki"
+    }
+    FacetedCategory = {
+      description = "FacetedCategories extension"
+    }
+    CategoryIntersectionSearch = {
+      description = "provide special page show category intersection"
+    }
+    Sanctions = {
+      description = "Offers convenient way to handle sanctions."
+    }
+  }
 }
 
 # Members
@@ -41,7 +55,6 @@ resource "github_project_column" "columns" {
   name       = each.key
 }
 
-
 resource "github_membership" "members" {
   for_each = toset(local.github_members)
 
@@ -56,29 +69,6 @@ resource "github_repository" "infra" {
   description   = ":evergreen_tree: Terraforming Femiwiki Infrastructure"
   has_downloads = true
   has_issues    = true
-}
-
-resource "github_repository" "unified_extension_for_femiwiki" {
-  name          = "UnifiedExtensionForFemiwiki"
-  description   = "Unified Extension For Femiwiki"
-  has_downloads = true
-  has_issues    = true
-  has_projects  = false
-  has_wiki      = false
-  topics = [
-    "mediawiki-extension",
-  ]
-}
-
-resource "github_branch_protection" "unified_extension_for_femiwiki" {
-  repository = github_repository.unified_extension_for_femiwiki.name
-  branch     = "master"
-}
-
-resource "github_repository_collaborator" "unified_extension_for_femiwiki" {
-  repository = github_repository.unified_extension_for_femiwiki.name
-  username   = "translatewiki"
-  permission = "push"
 }
 
 resource "github_repository" "femiwiki_skin" {
@@ -105,9 +95,11 @@ resource "github_repository_collaborator" "femiwiki_skin" {
   permission = "push"
 }
 
-resource "github_repository" "faceted_category" {
-  name          = "FacetedCategory"
-  description   = "FacetedCategories extension"
+resource "github_repository" "extensions" {
+  for_each      = local.extensions
+  name          = each.key
+  description   = each.value.description
+  homepage_url  = "https://www.mediawiki.org/wiki/Special:MyLanguage/Extension:${each.key}"
   has_downloads = true
   has_issues    = true
   has_projects  = false
@@ -117,60 +109,15 @@ resource "github_repository" "faceted_category" {
   ]
 }
 
-resource "github_branch_protection" "faceted_category" {
-  repository = github_repository.faceted_category.name
+resource "github_branch_protection" "extension_protections" {
+  for_each   = local.extensions
+  repository = each.key
   branch     = "master"
 }
 
-resource "github_repository_collaborator" "faceted_category" {
-  repository = github_repository.faceted_category.name
-  username   = "translatewiki"
-  permission = "push"
-}
-
-resource "github_repository" "category_intersection_search" {
-  name          = "CategoryIntersectionSearch"
-  description   = "provide special page show category intersection"
-  has_downloads = true
-  has_issues    = true
-  has_projects  = false
-  has_wiki      = false
-  topics = [
-    "mediawiki-extension",
-  ]
-}
-
-resource "github_branch_protection" "category_intersection_search" {
-  repository = github_repository.category_intersection_search.name
-  branch     = "master"
-}
-
-resource "github_repository_collaborator" "category_intersection_search" {
-  repository = github_repository.category_intersection_search.name
-  username   = "translatewiki"
-  permission = "push"
-}
-
-resource "github_repository" "sanctions" {
-  name          = "Sanctions"
-  description   = "Offers convenient way to handle sanctions."
-  homepage_url  = "https://www.mediawiki.org/wiki/Special:MyLanguage/Extension:Sanctions"
-  has_downloads = true
-  has_issues    = true
-  has_projects  = false
-  has_wiki      = false
-  topics = [
-    "mediawiki-extension",
-  ]
-}
-
-resource "github_branch_protection" "sanctions" {
-  repository = github_repository.sanctions.name
-  branch     = "master"
-}
-
-resource "github_repository_collaborator" "sanctions" {
-  repository = github_repository.sanctions.name
+resource "github_repository_collaborator" "extension_collaborators" {
+  for_each   = local.extensions
+  repository = each.key
   username   = "translatewiki"
   permission = "push"
 }
