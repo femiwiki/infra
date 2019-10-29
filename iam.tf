@@ -250,30 +250,6 @@ data "aws_iam_policy_document" "upload_backup" {
   }
 }
 
-resource "aws_iam_role" "service_role_for_elastic_load_balancing" {
-  name               = "AWSServiceRoleForElasticLoadBalancing"
-  description        = "Allows ELB to call AWS services on your behalf."
-  path               = "/aws-service-role/elasticloadbalancing.amazonaws.com/"
-  assume_role_policy = data.aws_iam_policy_document.lb_assume_role.json
-}
-
-data "aws_iam_policy_document" "lb_assume_role" {
-  statement {
-    actions = ["sts:AssumeRole"]
-
-    principals {
-      type        = "Service"
-      identifiers = ["elasticloadbalancing.amazonaws.com"]
-    }
-  }
-}
-
-resource "aws_iam_role_policy_attachment" "elastic_loadbalancing_service" {
-  role = aws_iam_role.service_role_for_elastic_load_balancing.name
-  # AWS managed policy
-  policy_arn = "arn:aws:iam::aws:policy/aws-service-role/AWSElasticLoadBalancingServiceRolePolicy"
-}
-
 resource "aws_iam_user_policy" "ses_sending_access" {
   name   = "AmazonSesSendingAccess"
   user   = "femiwiki-email"

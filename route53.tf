@@ -44,14 +44,6 @@ resource "aws_route53_record" "amazonses_femiwiki_com_dkim_record" {
   records = ["${element(aws_ses_domain_dkim.femiwiki_com.dkim_tokens, count.index)}.dkim.amazonses.com"]
 }
 
-resource "aws_route53_record" "femiwiki_com_acm" {
-  name    = aws_acm_certificate.femiwiki_com.domain_validation_options[0].resource_record_name
-  records = [aws_acm_certificate.femiwiki_com.domain_validation_options[0].resource_record_value]
-  ttl     = "300"
-  type    = "CNAME"
-  zone_id = aws_route53_zone.femiwiki_com.zone_id
-}
-
 resource "aws_route53_record" "femiwiki_com_mx" {
   name = "femiwiki.com"
   records = [
