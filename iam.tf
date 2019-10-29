@@ -150,10 +150,10 @@ resource "aws_iam_role" "mediawiki" {
   name               = "MediaWiki"
   description        = "Allows EC2 instances to call AWS services on your behalf."
   path               = "/"
-  assume_role_policy = data.aws_iam_policy_document.assume_role.json
+  assume_role_policy = data.aws_iam_policy_document.instance_assume_role.json
 }
 
-data "aws_iam_policy_document" "assume_role" {
+data "aws_iam_policy_document" "instance_assume_role" {
   statement {
     actions = ["sts:AssumeRole"]
 
@@ -235,7 +235,7 @@ resource "aws_iam_role" "upload_backup" {
   name               = "UploadBackup"
   description        = "Allows EC2 instances to upload to the backup bucket."
   path               = "/"
-  assume_role_policy = data.aws_iam_policy_document.assume_role.json
+  assume_role_policy = data.aws_iam_policy_document.instance_assume_role.json
 }
 
 data "aws_iam_policy_document" "upload_backup" {
@@ -301,8 +301,26 @@ data "aws_iam_policy_document" "packer" {
   }
 }
 
+resource "aws_iam_role" "service_role_for_elastic_load_balancing" {
+  name               = "AWSServiceRoleForElasticLoadBalancing"
+  description        = "Allows ELB to call AWS services on your behalf."
+  path               = "/aws-service-role/elasticloadbalancing.amazonaws.com/"
+  assume_role_policy = data.aws_iam_policy_document.lb_assume_role.json
+}
+
+data "aws_iam_policy_document" "lb_assume_role" {
+  statement {
+    actions = ["sts:AssumeRole"]
+
+    principals {
+      type        = "Service"
+      identifiers = ["elasticloadbalancing.amazonaws.com"]
+    }
+  }
+}
+
 resource "aws_iam_role_policy_attachment" "elastic_loadbalancing_service" {
-  role = "AWSServiceRoleForElasticLoadBalancing"
+  role = aws_iam_role.service_role_for_elastic_load_balancing.name
   # AWS managed policy
   policy_arn = "arn:aws:iam::aws:policy/aws-service-role/AWSElasticLoadBalancingServiceRolePolicy"
 }
