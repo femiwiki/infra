@@ -325,12 +325,6 @@ resource "aws_iam_role_policy_attachment" "elastic_loadbalancing_service" {
   policy_arn = "arn:aws:iam::aws:policy/aws-service-role/AWSElasticLoadBalancingServiceRolePolicy"
 }
 
-resource "aws_iam_role_policy_attachment" "trusted_advisor_service" {
-  role = "AWSServiceRoleForTrustedAdvisor"
-  # AWS managed policy
-  policy_arn = "arn:aws:iam::aws:policy/aws-service-role/AWSTrustedAdvisorServiceRolePolicy"
-}
-
 resource "aws_iam_user_policy" "ses_sending_access" {
   name   = "AmazonSesSendingAccess"
   user   = "femiwiki-email"
