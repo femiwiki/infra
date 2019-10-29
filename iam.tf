@@ -6,24 +6,14 @@ locals {
     "Nagyeop",
     "simnalamburt",
   ]
-}
-
-resource "aws_iam_group" "admin" {
-  name = "Admin"
-  path = "/"
-}
-
-resource "aws_iam_group_policy_attachment" "administrator_access" {
-  group = "Admin"
-  # AWS managed policy
-  policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
+  programmatic_users = [
+    "femiwiki-email",
+    "packer",
+  ]
 }
 
 resource "aws_iam_user" "admins" {
-  for_each = toset(concat(local.admins, [
-    "femiwiki-email",
-    "packer",
-  ]))
+  for_each = toset(concat(local.admins, local.programmatic_users))
 
   name = each.key
   path = "/"
@@ -33,92 +23,18 @@ resource "aws_iam_user_group_membership" "admins" {
   for_each = toset(local.admins)
 
   user   = each.key
-  groups = ["Admin"]
+  groups = [aws_iam_group.admin.name]
 }
 
-data "aws_iam_policy_document" "assume_role" {
-  statement {
-    actions = ["sts:AssumeRole"]
-
-    principals {
-      type        = "Service"
-      identifiers = ["ec2.amazonaws.com"]
-    }
-  }
+resource "aws_iam_group" "admin" {
+  name = "Admin"
+  path = "/"
 }
 
-resource "aws_iam_role" "mediawiki" {
-  name               = "MediaWiki"
-  description        = "Allows EC2 instances to call AWS services on your behalf."
-  path               = "/"
-  assume_role_policy = data.aws_iam_policy_document.assume_role.json
-}
-
-resource "aws_iam_role_policy_attachment" "amazon_s3_access" {
-  role       = aws_iam_role.mediawiki.name
-  policy_arn = aws_iam_policy.amazon_s3_access.arn
-}
-
-data "aws_iam_policy_document" "amazon_s3_access" {
-  statement {
-    actions = ["s3:*"]
-    resources = [
-      "${aws_s3_bucket.uploaded_files.arn}/*",
-      "${aws_s3_bucket.uploaded_files_thumb.arn}/*",
-      "${aws_s3_bucket.uploaded_files_temp.arn}/*",
-      "${aws_s3_bucket.uploaded_files_deleted.arn}/*",
-    ]
-  }
-
-  statement {
-    actions = [
-      "s3:Get*",
-      "s3:List*"
-    ]
-    resources = [
-      aws_s3_bucket.uploaded_files.arn,
-      aws_s3_bucket.uploaded_files_thumb.arn,
-      aws_s3_bucket.uploaded_files_temp.arn,
-      aws_s3_bucket.uploaded_files_deleted.arn
-    ]
-  }
-}
-
-resource "aws_iam_policy" "amazon_s3_access" {
-  name        = "AmazonS3Access"
-  description = "Provide Access to Amazon S3 buckets."
-
-  policy = data.aws_iam_policy_document.amazon_s3_access.json
-}
-
-resource "aws_iam_role_policy_attachment" "route53" {
-  role       = aws_iam_role.mediawiki.name
-  policy_arn = aws_iam_policy.route53.arn
-}
-
-data "aws_iam_policy_document" "route53" {
-  statement {
-    actions = [
-      "route53:GetHostedZone",
-      "route53:ListResourceRecordSets",
-      "route53:ChangeResourceRecordSets",
-    ]
-    resources = ["arn:aws:route53:::hostedzone/${aws_route53_zone.femiwiki_com.zone_id}"]
-  }
-
-  statement {
-    actions = [
-      "route53:GetChange",
-    ]
-    resources = ["arn:aws:route53:::change/*"]
-  }
-}
-
-resource "aws_iam_policy" "route53" {
-  name        = "Route53Access"
-  description = "Provide Access to route53."
-
-  policy = data.aws_iam_policy_document.route53.json
+resource "aws_iam_group_policy_attachment" "administrator_access" {
+  group = aws_iam_group.admin.name
+  # AWS managed policy
+  policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
 }
 
 resource "aws_iam_group_policy_attachment" "force_mfa" {
@@ -230,6 +146,91 @@ data "aws_iam_policy_document" "force_mfa" {
   }
 }
 
+resource "aws_iam_role" "mediawiki" {
+  name               = "MediaWiki"
+  description        = "Allows EC2 instances to call AWS services on your behalf."
+  path               = "/"
+  assume_role_policy = data.aws_iam_policy_document.assume_role.json
+}
+
+data "aws_iam_policy_document" "assume_role" {
+  statement {
+    actions = ["sts:AssumeRole"]
+
+    principals {
+      type        = "Service"
+      identifiers = ["ec2.amazonaws.com"]
+    }
+  }
+}
+
+resource "aws_iam_role_policy_attachment" "amazon_s3_access" {
+  role       = aws_iam_role.mediawiki.name
+  policy_arn = aws_iam_policy.amazon_s3_access.arn
+}
+
+resource "aws_iam_policy" "amazon_s3_access" {
+  name        = "AmazonS3Access"
+  description = "Provide Access to Amazon S3 buckets."
+
+  policy = data.aws_iam_policy_document.amazon_s3_access.json
+}
+
+data "aws_iam_policy_document" "amazon_s3_access" {
+  statement {
+    actions = ["s3:*"]
+    resources = [
+      "${aws_s3_bucket.uploaded_files.arn}/*",
+      "${aws_s3_bucket.uploaded_files_thumb.arn}/*",
+      "${aws_s3_bucket.uploaded_files_temp.arn}/*",
+      "${aws_s3_bucket.uploaded_files_deleted.arn}/*",
+    ]
+  }
+
+  statement {
+    actions = [
+      "s3:Get*",
+      "s3:List*"
+    ]
+    resources = [
+      aws_s3_bucket.uploaded_files.arn,
+      aws_s3_bucket.uploaded_files_thumb.arn,
+      aws_s3_bucket.uploaded_files_temp.arn,
+      aws_s3_bucket.uploaded_files_deleted.arn
+    ]
+  }
+}
+
+resource "aws_iam_role_policy_attachment" "route53" {
+  role       = aws_iam_role.mediawiki.name
+  policy_arn = aws_iam_policy.route53.arn
+}
+
+resource "aws_iam_policy" "route53" {
+  name        = "Route53Access"
+  description = "Provide Access to route53."
+
+  policy = data.aws_iam_policy_document.route53.json
+}
+
+data "aws_iam_policy_document" "route53" {
+  statement {
+    actions = [
+      "route53:GetHostedZone",
+      "route53:ListResourceRecordSets",
+      "route53:ChangeResourceRecordSets",
+    ]
+    resources = ["arn:aws:route53:::hostedzone/${aws_route53_zone.femiwiki_com.zone_id}"]
+  }
+
+  statement {
+    actions = [
+      "route53:GetChange",
+    ]
+    resources = ["arn:aws:route53:::change/*"]
+  }
+}
+
 resource "aws_iam_role" "upload_backup" {
   name               = "UploadBackup"
   description        = "Allows EC2 instances to upload to the backup bucket."
@@ -247,6 +248,13 @@ data "aws_iam_policy_document" "upload_backup" {
 resource "aws_iam_user_policy_attachment" "packer" {
   user       = "packer"
   policy_arn = aws_iam_policy.packer.arn
+}
+
+resource "aws_iam_policy" "packer" {
+  name        = "Packer"
+  description = "Policy for packer"
+  path        = "/"
+  policy      = data.aws_iam_policy_document.packer.json
 }
 
 data "aws_iam_policy_document" "packer" {
@@ -293,13 +301,6 @@ data "aws_iam_policy_document" "packer" {
   }
 }
 
-resource "aws_iam_policy" "packer" {
-  name        = "Packer"
-  description = "Policy for packer"
-  path        = "/"
-  policy      = data.aws_iam_policy_document.packer.json
-}
-
 resource "aws_iam_role_policy_attachment" "elastic_loadbalancing_service" {
   role = "AWSServiceRoleForElasticLoadBalancing"
   # AWS managed policy
@@ -312,15 +313,15 @@ resource "aws_iam_role_policy_attachment" "trusted_advisor_service" {
   policy_arn = "arn:aws:iam::aws:policy/aws-service-role/AWSTrustedAdvisorServiceRolePolicy"
 }
 
+resource "aws_iam_user_policy" "ses_sending_access" {
+  name   = "AmazonSesSendingAccess"
+  user   = "femiwiki-email"
+  policy = data.aws_iam_policy_document.ses_sending_access.json
+}
+
 data "aws_iam_policy_document" "ses_sending_access" {
   statement {
     actions   = ["ses:SendRawEmail"]
     resources = ["*"]
   }
-}
-
-resource "aws_iam_user_policy" "ses_sending_access" {
-  name   = "AmazonSesSendingAccess"
-  user   = "femiwiki-email"
-  policy = data.aws_iam_policy_document.ses_sending_access.json
 }
