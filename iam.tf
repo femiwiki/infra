@@ -216,7 +216,7 @@ resource "aws_iam_policy" "route53" {
 data "aws_iam_policy_document" "route53" {
   statement {
     actions = [
-      "route53:GetHostedZone",
+      "route53:ListHostedZonesByName",
       "route53:ListResourceRecordSets",
       "route53:ChangeResourceRecordSets",
     ]
