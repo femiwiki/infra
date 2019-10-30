@@ -216,11 +216,17 @@ resource "aws_iam_policy" "route53" {
 data "aws_iam_policy_document" "route53" {
   statement {
     actions = [
-      "route53:ListHostedZonesByName",
       "route53:ListResourceRecordSets",
       "route53:ChangeResourceRecordSets",
     ]
     resources = ["arn:aws:route53:::hostedzone/${aws_route53_zone.femiwiki_com.zone_id}"]
+  }
+
+  statement {
+    actions = [
+      "route53:ListHostedZonesByName",
+    ]
+    resources = ["*"]
   }
 
   statement {
