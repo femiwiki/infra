@@ -12,7 +12,7 @@ resource "aws_launch_template" "base" {
   ebs_optimized                        = true
   image_id                             = "ami-0019c8208fd95e551"
   instance_initiated_shutdown_behavior = "stop"
-  instance_type                        = "t3.nano"
+  instance_type                        = "t3a.nano"
   key_name                             = aws_key_pair.femiwiki.key_name
   vpc_security_group_ids               = [aws_default_security_group.default.id, aws_security_group.mediawiki.id]
 
@@ -53,7 +53,7 @@ resource "aws_launch_template" "mediawiki" {
   ebs_optimized                        = true
   image_id                             = "ami-0a20c8152821c73ba"
   instance_initiated_shutdown_behavior = "terminate"
-  instance_type                        = "t3.micro"
+  instance_type                        = "t3a.micro"
   key_name                             = aws_key_pair.femiwiki.key_name
   vpc_security_group_ids               = [aws_default_security_group.default.id, aws_security_group.mediawiki.id]
 
