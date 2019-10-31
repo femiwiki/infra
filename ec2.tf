@@ -138,6 +138,57 @@ resource "aws_instance" "mediawiki" {
   # EOF
 }
 
+resource "aws_instance" "mediawiki_green" {
+  ebs_optimized        = true
+  ami                  = "ami-0a20c8152821c73ba"
+  instance_type        = "t3a.micro"
+  key_name             = aws_key_pair.femiwiki.key_name
+  monitoring           = false
+  iam_instance_profile = aws_iam_instance_profile.mediawiki.name
+
+  vpc_security_group_ids = [
+    aws_default_security_group.default.id,
+    aws_security_group.loadbalancer.id,
+    aws_security_group.mediawiki.id,
+  ]
+
+  root_block_device {
+    delete_on_termination = true
+    encrypted             = false
+    iops                  = 0
+    volume_size           = 16
+    volume_type           = "standard"
+  }
+
+  credit_specification {
+    cpu_credits = "unlimited"
+  }
+
+  tags = {
+    Name = "mediawiki"
+  }
+
+  volume_tags = {
+    Name = "mediawiki"
+  }
+
+  user_data = <<EOF
+#!/bin/bash
+set -euo pipefail; IFS=$'\n\t'
+
+git clone https://github.com/femiwiki/mediawiki.git ~/mediawiki/
+# TODO: Download seceret from S3
+cp ~/mediawiki/configs/secret.php.example ~/mediawiki/configs/secret.php
+sudo docker swarm init
+sudo docker stack deploy --prune -c ~/mediawiki/production.yml mediawiki
+EOF
+}
+
+resource "aws_eip" "mediawiki" {
+  instance = aws_instance.mediawiki_green.id
+  vpc      = true
+}
+
 resource "aws_instance" "database_bots" {
   ebs_optimized           = true
   ami                     = "ami-0019c8208fd95e551"
