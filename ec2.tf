@@ -180,7 +180,7 @@ git clone https://github.com/femiwiki/mediawiki.git ~/mediawiki/
 # TODO: Download seceret from S3
 cp ~/mediawiki/configs/secret.php.example ~/mediawiki/configs/secret.php
 sudo docker swarm init
-sudo docker stack deploy --prune -c ~/mediawiki/production.yml mediawiki
+# sudo docker stack deploy --prune -c ~/mediawiki/production.yml mediawiki
 EOF
 }
 
