@@ -10,7 +10,7 @@ resource "aws_launch_template" "base" {
 
   disable_api_termination              = true
   ebs_optimized                        = true
-  image_id                             = "ami-0019c8208fd95e551"
+  image_id                             = "ami-05a7aef30b1c739c0"
   instance_initiated_shutdown_behavior = "stop"
   instance_type                        = "t3a.nano"
   key_name                             = aws_key_pair.femiwiki.key_name
@@ -140,7 +140,7 @@ resource "aws_instance" "mediawiki" {
 
 resource "aws_instance" "mediawiki_green" {
   ebs_optimized        = true
-  ami                  = "ami-0a20c8152821c73ba"
+  ami                  = "ami-05a7aef30b1c739c0"
   instance_type        = "t3a.micro"
   key_name             = aws_key_pair.femiwiki.key_name
   monitoring           = false
