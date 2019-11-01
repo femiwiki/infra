@@ -3,10 +3,9 @@ resource "aws_key_pair" "femiwiki" {
   public_key = file("res/femiwiki_rsa.pub")
 }
 
-# TODO: base launch template은 별 쓸모가 없다. DB용 launch template로 바꾸자.
-resource "aws_launch_template" "base" {
-  name        = "base"
-  description = "Base Launch Template"
+resource "aws_launch_template" "database_bots" {
+  name        = "database"
+  description = "A launch template for database servers"
 
   disable_api_termination              = true
   ebs_optimized                        = true
