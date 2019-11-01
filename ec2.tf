@@ -50,7 +50,7 @@ resource "aws_launch_template" "mediawiki" {
 
   disable_api_termination              = true
   ebs_optimized                        = true
-  image_id                             = "ami-0a20c8152821c73ba"
+  image_id                             = "ami-05a7aef30b1c739c0"
   instance_initiated_shutdown_behavior = "terminate"
   instance_type                        = "t3a.micro"
   key_name                             = aws_key_pair.femiwiki.key_name
