@@ -9,7 +9,7 @@ resource "aws_launch_template" "database_bots" {
 
   disable_api_termination              = true
   ebs_optimized                        = true
-  image_id                             = "ami-05a7aef30b1c739c0"
+  image_id                             = "ami-0e862a343920e7b60"
   instance_initiated_shutdown_behavior = "stop"
   instance_type                        = "t3a.nano"
   key_name                             = aws_key_pair.femiwiki.key_name
@@ -50,7 +50,7 @@ resource "aws_launch_template" "mediawiki" {
 
   disable_api_termination              = true
   ebs_optimized                        = true
-  image_id                             = "ami-05a7aef30b1c739c0"
+  image_id                             = "ami-0e862a343920e7b60"
   instance_initiated_shutdown_behavior = "terminate"
   instance_type                        = "t3a.micro"
   key_name                             = aws_key_pair.femiwiki.key_name
@@ -139,7 +139,7 @@ resource "aws_instance" "mediawiki" {
 
 # resource "aws_instance" "mediawiki_green" {
 #   ebs_optimized        = true
-#   ami                  = "ami-05a7aef30b1c739c0"
+#   ami                  = "ami-0e862a343920e7b60"
 #   instance_type        = "t3a.micro"
 #   key_name             = aws_key_pair.femiwiki.key_name
 #   monitoring           = false
