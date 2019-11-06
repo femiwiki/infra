@@ -258,6 +258,7 @@ resource "github_repository" "cassandra" {
     "cassandra",
     "docker-image",
   ]
+  archived      = true
 }
 
 resource "github_repository" "backupbot" {
