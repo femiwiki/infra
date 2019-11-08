@@ -3,11 +3,6 @@ resource "aws_key_pair" "femiwiki" {
   public_key = file("res/femiwiki_rsa.pub")
 }
 
-resource "aws_iam_instance_profile" "mediawiki" {
-  name = "MediaWiki"
-  role = aws_iam_role.mediawiki.name
-}
-
 resource "aws_instance" "mediawiki_green" {
   ebs_optimized        = true
   ami                  = "ami-02f64686a16f77fbd"
@@ -109,9 +104,4 @@ resource "aws_instance" "database_bots" {
   # docker stack deploy --prune -c /home/ec2-user/swarm/memcached.yml memcached
   # docker stack deploy --prune -c /home/ec2-user/swarm/bots.yml botse
   # EOF
-}
-
-resource "aws_iam_instance_profile" "upload_backup" {
-  name = "UploadBackup"
-  role = aws_iam_role.upload_backup.name
 }

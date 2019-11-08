@@ -37,7 +37,7 @@ resource "aws_iam_group_policy_attachment" "administrator_access" {
 }
 
 resource "aws_iam_group_policy_attachment" "force_mfa" {
-  group = "Admin"
+  group      = "Admin"
   policy_arn = aws_iam_policy.force_mfa.arn
 }
 
@@ -163,6 +163,11 @@ data "aws_iam_policy_document" "instance_assume_role" {
   }
 }
 
+resource "aws_iam_instance_profile" "mediawiki" {
+  name = "MediaWiki"
+  role = aws_iam_role.mediawiki.name
+}
+
 resource "aws_iam_role_policy_attachment" "amazon_s3_access" {
   role       = aws_iam_role.mediawiki.name
   policy_arn = aws_iam_policy.amazon_s3_access.arn
@@ -248,6 +253,11 @@ data "aws_iam_policy_document" "upload_backup" {
     actions   = ["s3:PutObject"]
     resources = ["${aws_s3_bucket.backups.arn}/*"]
   }
+}
+
+resource "aws_iam_instance_profile" "upload_backup" {
+  name = "UploadBackup"
+  role = aws_iam_role.upload_backup.name
 }
 
 resource "aws_iam_user_policy" "ses_sending_access" {
