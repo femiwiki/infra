@@ -18,7 +18,6 @@ resource "aws_instance" "mediawiki" {
 
   vpc_security_group_ids = [
     aws_default_security_group.default.id,
-    aws_security_group.loadbalancer.id,
     aws_security_group.mediawiki.id,
   ]
 
@@ -68,7 +67,6 @@ resource "aws_instance" "mediawiki_green" {
 
   vpc_security_group_ids = [
     aws_default_security_group.default.id,
-    aws_security_group.loadbalancer.id,
     aws_security_group.mediawiki.id,
   ]
 
