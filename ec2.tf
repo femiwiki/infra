@@ -3,7 +3,7 @@ resource "aws_key_pair" "femiwiki" {
   public_key = file("res/femiwiki_rsa.pub")
 }
 
-resource "aws_instance" "mediawiki_green" {
+resource "aws_instance" "mediawiki" {
   ebs_optimized        = true
   ami                  = "ami-02f64686a16f77fbd"
   instance_type        = "t3a.micro"
@@ -52,7 +52,7 @@ EOF
 }
 
 resource "aws_eip" "mediawiki" {
-  instance = aws_instance.mediawiki_green.id
+  instance = aws_instance.mediawiki.id
   vpc      = true
 }
 
