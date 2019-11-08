@@ -47,6 +47,9 @@ resource "aws_instance" "mediawiki" {
   # #!/bin/bash
   # set -euo pipefail; IFS=$'\n\t'
 
+  # # Enable verbose mode
+  # set -x
+
   # sudo -u ec2-user git clone https://github.com/femiwiki/mediawiki.git /home/ec2-user/mediawiki/
   # # TODO: Download seceret from S3
   # sudo -u ec2-user cp /home/ec2-user/mediawiki/configs/secret.php.example /home/ec2-user/mediawiki/configs/secret.php
@@ -92,6 +95,9 @@ resource "aws_instance" "mediawiki_green" {
   user_data = <<EOF
 #!/bin/bash
 set -euo pipefail; IFS=$'\n\t'
+
+# Enable verbose mode
+set -x
 
 sudo -u ec2-user git clone https://github.com/femiwiki/mediawiki.git /home/ec2-user/mediawiki/
 # TODO: Download seceret from S3
@@ -143,6 +149,9 @@ resource "aws_instance" "database_bots" {
   # user_data = <<EOF
   # #!/bin/bash
   # set -euo pipefail; IFS=$'\n\t'
+
+  # # Enable verbose mode
+  # set -x
 
   # sudo -u ec2-user git clone https://github.com/femiwiki/database.git /home/ec2-user/swarm/
   # # TODO: Download SQL dump from S3
