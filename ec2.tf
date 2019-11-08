@@ -35,11 +35,11 @@ resource "aws_instance" "mediawiki" {
   }
 
   tags = {
-    Name = "mediawiki"
+    Name = "mediawiki-old"
   }
 
   volume_tags = {
-    Name = "mediawiki"
+    Name = "mediawiki-old"
   }
 
   # # 이 부분을 주석 해제하면 인스턴스가 Replacement 됩니다.
