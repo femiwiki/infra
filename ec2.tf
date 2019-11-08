@@ -8,55 +8,6 @@ resource "aws_iam_instance_profile" "mediawiki" {
   role = aws_iam_role.mediawiki.name
 }
 
-resource "aws_instance" "mediawiki" {
-  ebs_optimized        = true
-  ami                  = "ami-0a20c8152821c73ba"
-  instance_type        = "t3.micro"
-  key_name             = aws_key_pair.femiwiki.key_name
-  monitoring           = false
-  iam_instance_profile = aws_iam_instance_profile.mediawiki.name
-
-  vpc_security_group_ids = [
-    aws_default_security_group.default.id,
-    aws_security_group.mediawiki.id,
-  ]
-
-  root_block_device {
-    delete_on_termination = true
-    encrypted             = false
-    iops                  = 0
-    volume_size           = 16
-    volume_type           = "standard"
-  }
-
-  credit_specification {
-    cpu_credits = "unlimited"
-  }
-
-  tags = {
-    Name = "mediawiki-old"
-  }
-
-  volume_tags = {
-    Name = "mediawiki-old"
-  }
-
-  # # 이 부분을 주석 해제하면 인스턴스가 Replacement 됩니다.
-  # user_data = <<EOF
-  # #!/bin/bash
-  # set -euo pipefail; IFS=$'\n\t'
-
-  # # Enable verbose mode
-  # set -x
-
-  # sudo -u ec2-user git clone https://github.com/femiwiki/mediawiki.git /home/ec2-user/mediawiki/
-  # # TODO: Download seceret from S3
-  # sudo -u ec2-user cp /home/ec2-user/mediawiki/configs/secret.php.example /home/ec2-user/mediawiki/configs/secret.php
-  # docker swarm init
-  # # docker stack deploy --prune -c /home/ec2-user/mediawiki/production.yml mediawiki
-  # EOF
-}
-
 resource "aws_instance" "mediawiki_green" {
   ebs_optimized        = true
   ami                  = "ami-02f64686a16f77fbd"
