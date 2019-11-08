@@ -47,11 +47,11 @@ resource "aws_instance" "mediawiki" {
   # #!/bin/bash
   # set -euo pipefail; IFS=$'\n\t'
 
-  # git clone https://github.com/femiwiki/mediawiki.git /home/ec2-user/mediawiki/
+  # sudo -u ec2-user git clone https://github.com/femiwiki/mediawiki.git /home/ec2-user/mediawiki/
   # # TODO: Download seceret from S3
-  # cp /home/ec2-user/mediawiki/configs/secret.php.example /home/ec2-user/mediawiki/configs/secret.php
-  # sudo docker swarm init
-  # sudo docker stack deploy --prune -c /home/ec2-user/mediawiki/production.yml mediawiki
+  # sudo -u ec2-user cp /home/ec2-user/mediawiki/configs/secret.php.example /home/ec2-user/mediawiki/configs/secret.php
+  # docker swarm init
+  # # docker stack deploy --prune -c /home/ec2-user/mediawiki/production.yml mediawiki
   # EOF
 }
 
@@ -89,17 +89,16 @@ resource "aws_instance" "mediawiki_green" {
     Name = "mediawiki"
   }
 
-# 이 부분을 주석 해제하면 인스턴스가 Replacement 됩니다.
-#   user_data = <<EOF
-# #!/bin/bash
-# set -euo pipefail; IFS=$'\n\t'
+  user_data = <<EOF
+#!/bin/bash
+set -euo pipefail; IFS=$'\n\t'
 
-# git clone https://github.com/femiwiki/mediawiki.git /home/ec2-user/mediawiki/
-# # TODO: Download seceret from S3
-# cp /home/ec2-user/mediawiki/configs/secret.php.example /home/ec2-user/mediawiki/configs/secret.php
-# sudo docker swarm init
-# # sudo docker stack deploy --prune -c /home/ec2-user/mediawiki/production.yml mediawiki
-# EOF
+sudo -u ec2-user git clone https://github.com/femiwiki/mediawiki.git /home/ec2-user/mediawiki/
+# TODO: Download seceret from S3
+sudo -u ec2-user cp /home/ec2-user/mediawiki/configs/secret.php.example /home/ec2-user/mediawiki/configs/secret.php
+docker swarm init
+# docker stack deploy --prune -c /home/ec2-user/mediawiki/production.yml mediawiki
+EOF
 }
 
 resource "aws_eip" "mediawiki" {
@@ -145,9 +144,9 @@ resource "aws_instance" "database_bots" {
   # #!/bin/bash
   # set -euo pipefail; IFS=$'\n\t'
 
-  # git clone https://github.com/femiwiki/database.git /home/ec2-user/swarm/
+  # sudo -u ec2-user git clone https://github.com/femiwiki/database.git /home/ec2-user/swarm/
   # # TODO: Download SQL dump from S3
-  # sudo docker swarm init
+  # docker swarm init
   # docker stack deploy --prune -c /home/ec2-user/swarm/database.yml database
   # docker stack deploy --prune -c /home/ec2-user/swarm/memcached.yml memcached
   # docker stack deploy --prune -c /home/ec2-user/swarm/bots.yml botse
