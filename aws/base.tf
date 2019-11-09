@@ -5,7 +5,7 @@ terraform {
     organization = "femiwiki"
 
     workspaces {
-      name = "infra"
+      name = "aws"
     }
   }
 }
