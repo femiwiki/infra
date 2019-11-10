@@ -71,6 +71,15 @@ resource "github_repository" "infra" {
   has_issues    = true
 }
 
+resource "github_branch_protection" "infra" {
+  repository = github_repository.infra.name
+  branch     = "master"
+
+  required_pull_request_reviews {
+    required_approving_review_count = 1
+  }
+}
+
 resource "github_repository" "femiwiki_skin" {
   name          = "FemiwikiSkin"
   description   = ":jack_o_lantern: 페미위키 스킨"
@@ -135,6 +144,15 @@ resource "github_repository" "femiwiki" {
   ]
 }
 
+resource "github_branch_protection" "femiwiki" {
+  repository = github_repository.femiwiki.name
+  branch     = "master"
+
+  required_pull_request_reviews {
+    required_approving_review_count = 1
+  }
+}
+
 resource "github_repository" "mediawiki" {
   name          = "mediawiki"
   description   = ":whale: Dockerized Femiwiki's mediawiki server"
@@ -146,6 +164,15 @@ resource "github_repository" "mediawiki" {
     "server",
     "wiki",
   ]
+}
+
+resource "github_branch_protection" "mediawiki" {
+  repository = github_repository.mediawiki.name
+  branch     = "master"
+
+  required_pull_request_reviews {
+    required_approving_review_count = 1
+  }
 }
 
 resource "github_repository" "database" {
@@ -160,6 +187,15 @@ resource "github_repository" "database" {
   ]
 }
 
+resource "github_branch_protection" "database" {
+  repository = github_repository.database.name
+  branch     = "master"
+
+  required_pull_request_reviews {
+    required_approving_review_count = 1
+  }
+}
+
 resource "github_repository" "base" {
   name          = "base"
   description   = ":whale: Base docker image of https://github.com/femiwiki/mediawiki to accelerate build speed"
@@ -169,6 +205,15 @@ resource "github_repository" "base" {
   topics        = ["docker-image"]
 }
 
+resource "github_branch_protection" "base" {
+  repository = github_repository.base.name
+  branch     = "master"
+
+  required_pull_request_reviews {
+    required_approving_review_count = 1
+  }
+}
+
 resource "github_repository" "base_extensions" {
   name          = "base-extensions"
   description   = ":whale: Base docker image of https://github.com/femiwiki/mediawiki to accelerate build speed"
@@ -176,6 +221,15 @@ resource "github_repository" "base_extensions" {
   has_issues    = true
   has_wiki      = false
   topics        = ["docker-image", ]
+}
+
+resource "github_branch_protection" "base_extensions" {
+  repository = github_repository.base_extensions.name
+  branch     = "master"
+
+  required_pull_request_reviews {
+    required_approving_review_count = 1
+  }
 }
 
 resource "github_repository" "parsoid" {
@@ -190,6 +244,15 @@ resource "github_repository" "parsoid" {
   ]
 }
 
+resource "github_branch_protection" "parsoid" {
+  repository = github_repository.parsoid.name
+  branch     = "master"
+
+  required_pull_request_reviews {
+    required_approving_review_count = 1
+  }
+}
+
 resource "github_repository" "docker_restbase" {
   name          = "docker-restbase"
   description   = "📝 Dockerized RESTBase"
@@ -200,6 +263,15 @@ resource "github_repository" "docker_restbase" {
     "docker-image",
     "restbase"
   ]
+}
+
+resource "github_branch_protection" "docker_restbase" {
+  repository = github_repository.docker_restbase.name
+  branch     = "master"
+
+  required_pull_request_reviews {
+    required_approving_review_count = 1
+  }
 }
 
 resource "github_repository" "rankingbot" {
@@ -215,6 +287,15 @@ resource "github_repository" "rankingbot" {
   ]
 }
 
+resource "github_branch_protection" "rankingbot" {
+  repository = github_repository.rankingbot.name
+  branch     = "master"
+
+  required_pull_request_reviews {
+    required_approving_review_count = 1
+  }
+}
+
 resource "github_repository" "backupbot" {
   name          = "backupbot"
   description   = ":robot: 페미위키 MySQL 백업봇"
@@ -225,6 +306,15 @@ resource "github_repository" "backupbot" {
     "bot",
     "docker-image",
   ]
+}
+
+resource "github_branch_protection" "backupbot" {
+  repository = github_repository.backupbot.name
+  branch     = "master"
+
+  required_pull_request_reviews {
+    required_approving_review_count = 1
+  }
 }
 
 resource "github_repository" "tweetbot" {
@@ -240,12 +330,30 @@ resource "github_repository" "tweetbot" {
   ]
 }
 
+resource "github_branch_protection" "tweetbot" {
+  repository = github_repository.tweetbot.name
+  branch     = "master"
+
+  required_pull_request_reviews {
+    required_approving_review_count = 1
+  }
+}
+
 resource "github_repository" "ami" {
   name          = "ami"
   description   = ":package: Base AMI of Femiwiki"
   has_downloads = true
   has_issues    = true
   has_wiki      = false
+}
+
+resource "github_branch_protection" "ami" {
+  repository = github_repository.ami.name
+  branch     = "master"
+
+  required_pull_request_reviews {
+    required_approving_review_count = 1
+  }
 }
 
 resource "github_repository" "maintenance" {
@@ -255,4 +363,13 @@ resource "github_repository" "maintenance" {
   has_downloads = true
   has_issues    = true
   topics        = ["website"]
+}
+
+resource "github_branch_protection" "maintenance" {
+  repository = github_repository.maintenance.name
+  branch     = "master"
+
+  required_pull_request_reviews {
+    required_approving_review_count = 1
+  }
 }
