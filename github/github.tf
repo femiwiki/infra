@@ -219,15 +219,6 @@ resource "github_repository" "rankingbot" {
   ]
 }
 
-resource "github_repository" "emailbot" {
-  name          = "emailbot"
-  description   = ":email: Femiwiki email bot"
-  archived      = true
-  has_downloads = true
-  has_issues    = true
-  has_wiki      = false
-}
-
 resource "github_repository" "base" {
   name          = "base"
   description   = ":whale: Base docker image of https://github.com/femiwiki/mediawiki to accelerate build speed"
@@ -246,19 +237,6 @@ resource "github_repository" "base_extensions" {
   topics = [
     "docker-image",
   ]
-}
-
-resource "github_repository" "cassandra" {
-  name          = "cassandra"
-  description   = "🐳 Dockerized Femiwiki's cassandra server"
-  has_downloads = true
-  has_issues    = true
-  has_wiki      = false
-  topics = [
-    "cassandra",
-    "docker-image",
-  ]
-  archived      = true
 }
 
 resource "github_repository" "backupbot" {
@@ -316,37 +294,4 @@ resource "github_repository" "mediawiki_aws_s3" {
   name          = "mediawiki-aws-s3"
   description   = ""
   has_downloads = true
-}
-
-resource "github_repository" "html2feed_lambda" {
-  name          = "html2feed-lambda"
-  description   = ""
-  has_downloads = true
-  has_issues    = true
-  archived      = true
-}
-
-resource "github_repository" "kakaotalk_chatloggen_lambda" {
-  name          = "kakaotalk-chatloggen-lambda"
-  description   = "카카오톡 대화로그 생성기"
-  homepage_url  = "https://femiwiki.com/index.php?oldid=124894"
-  archived      = true
-  has_downloads = true
-  has_issues    = true
-}
-
-resource "github_repository" "graphviz_lambda" {
-  name          = "graphviz-lambda"
-  description   = "A simple web service that renders DOT files as svg"
-  has_downloads = true
-  has_issues    = true
-  archived      = true
-}
-
-resource "github_repository" "mediawiki_vagrant" {
-  name          = "mediawiki-vagrant"
-  description   = "Barebone installation of Mediawiki"
-  has_downloads = true
-  has_issues    = true
-  archived      = true
 }
