@@ -8,6 +8,7 @@ locals {
   ]
   programmatic_users = [
     "femiwiki-email",
+    "terraform-cloud",
   ]
 }
 
