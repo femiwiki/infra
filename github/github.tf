@@ -384,7 +384,7 @@ resource "github_issue_label" "note" {
   for_each    = toset(data.github_repositories.actives.names)
   repository  = each.key
   name        = "글쓰기"
-  color       = "F484A9"
+  color       = "f484a9"
   description = "공지사항이나 블로그 글로 문서화해야하는 이슈"
 }
 
@@ -392,7 +392,7 @@ resource "github_issue_label" "bug" {
   for_each    = toset(data.github_repositories.actives.names)
   repository  = each.key
   name        = "Bug"
-  color       = "EE0701"
+  color       = "ee0701"
   description = ""
 }
 
@@ -400,7 +400,7 @@ resource "github_issue_label" "enhancement" {
   for_each    = toset(data.github_repositories.actives.names)
   repository  = each.key
   name        = "enhancement"
-  color       = "84B6EB"
+  color       = "84b6eb"
   description = "New feature or request"
 }
 
@@ -408,7 +408,7 @@ resource "github_issue_label" "wontfix" {
   for_each    = toset(data.github_repositories.actives.names)
   repository  = each.key
   name        = "wontfix"
-  color       = "FFFFFF"
+  color       = "ffffff"
   description = "This will not be worked on"
 }
 
@@ -416,7 +416,7 @@ resource "github_issue_label" "invalid" {
   for_each    = toset(data.github_repositories.actives.names)
   repository  = each.key
   name        = "invalid"
-  color       = "E4E669"
+  color       = "e4e669"
   description = "This doesn't seem right"
 }
 
@@ -424,7 +424,7 @@ resource "github_issue_label" "femiwki_discussion_needed" {
   for_each    = toset(data.github_repositories.actives.names)
   repository  = each.key
   name        = "femiwki discussion needed"
-  color       = "D4C5F9"
+  color       = "d4c5f9"
   description = ""
 }
 
@@ -432,6 +432,6 @@ resource "github_issue_label" "epic" {
   for_each    = toset(data.github_repositories.actives.names)
   repository  = each.key
   name        = "EPIC"
-  color       = "E4E669"
+  color       = "e4e669"
   description = ""
 }
