@@ -146,6 +146,64 @@ data "aws_iam_policy_document" "force_mfa" {
   }
 }
 
+resource "aws_iam_user_policy_attachment" "terraform_cloud" {
+  user       = "terraform-cloud"
+  policy_arn = aws_iam_policy.terraform_cloud.arn
+}
+
+resource "aws_iam_policy" "terraform_cloud" {
+  name        = "TerraformCloud"
+  description = ""
+  policy      = data.aws_iam_policy_document.terraform_cloud.json
+}
+
+data "aws_iam_policy_document" "terraform_cloud" {
+  statement {
+    actions = [
+      "autoscaling:*",
+      "cloudwatch:*",
+      "ec2:*",
+      "elasticloadbalancing:*",
+      "events:*",
+      "iam:GenerateCredentialReport",
+      "iam:GenerateServiceLastAccessedDetails",
+      "iam:Get*",
+      "iam:List*",
+      "iam:PassRole",
+      "iam:SimulateCustomPolicy",
+      "iam:SimulatePrincipalPolicy",
+      "lambda:*",
+      "logs:*",
+      "route53:*",
+      "route53domains:*",
+      "ses:*",
+      "sns:*",
+      "sqs:*",
+      "s3:*",
+      "tag:GetResources"
+    ]
+    resources = ["*"]
+  }
+
+  statement {
+    actions   = ["iam:CreateServiceLinkedRole"]
+    resources = ["*"]
+
+    condition {
+      test     = "StringEquals"
+      variable = "iam:AWSServiceName"
+      values = [
+        "autoscaling.amazonaws.com",
+        "ec2scheduled.amazonaws.com",
+        "elasticloadbalancing.amazonaws.com",
+        "spot.amazonaws.com",
+        "spotfleet.amazonaws.com",
+        "transitgateway.amazonaws.com"
+      ]
+    }
+  }
+}
+
 resource "aws_iam_role" "mediawiki" {
   name               = "MediaWiki"
   description        = "Allows EC2 instances to call AWS services on your behalf."
