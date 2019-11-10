@@ -160,24 +160,6 @@ resource "github_repository" "docker_restbase" {
   ]
 }
 
-resource "github_repository" "restbase" {
-  name          = "restbase"
-  description   = "Distributed storage with REST API & dispatcher for backend services."
-  homepage_url  = "https://www.mediawiki.org/wiki/RESTBase"
-  has_downloads = true
-  has_issues    = false
-  has_wiki      = false
-}
-
-resource "github_repository" "restbase_mod_table_mysql" {
-  name          = "restbase-mod-table-mysql"
-  description   = "SQLite backend for RESTBase"
-  homepage_url  = "https://www.mediawiki.org/wiki/RESTBase"
-  has_downloads = true
-  has_issues    = false
-  has_wiki      = false
-}
-
 resource "github_repository" "database" {
   name          = "database"
   description   = ":floppy_disk: 페미위키 데이터베이스 서버"
@@ -188,13 +170,6 @@ resource "github_repository" "database" {
     "docker-compose",
     "server",
   ]
-}
-
-resource "github_repository" "DiscordNotifications" {
-  name          = "DiscordNotifications"
-  description   = "Integrate Discord with Mediawiki. Sends notifications into your Discord room when certain actions are being performed in your wiki (for example when article is being edited, new article was added...)"
-  has_downloads = true
-  has_wiki      = false
 }
 
 resource "github_repository" "maintenance" {
@@ -276,22 +251,10 @@ resource "github_repository" "parsoid" {
   ]
 }
 
-resource "github_repository" "oojs_ui" {
-  name         = "oojs-ui"
-  description  = "OOUI is a modern JavaScript UI library with strong cross-browser support. It is the standard library for MediaWiki and Wikipedia. This is a mirror from https://gerrit.wikimedia.org. Main website:"
-  homepage_url = "https://www.mediawiki.org/wiki/OOUI"
-}
-
 resource "github_repository" "ami" {
   name          = "ami"
   description   = ":package: Base AMI of Femiwiki"
   has_downloads = true
   has_issues    = true
   has_wiki      = false
-}
-
-resource "github_repository" "mediawiki_aws_s3" {
-  name          = "mediawiki-aws-s3"
-  description   = ""
-  has_downloads = true
 }
