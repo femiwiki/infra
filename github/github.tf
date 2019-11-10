@@ -175,7 +175,7 @@ resource "github_repository" "base_extensions" {
   has_downloads = true
   has_issues    = true
   has_wiki      = false
-  topics = ["docker-image",]
+  topics        = ["docker-image", ]
 }
 
 resource "github_repository" "parsoid" {
