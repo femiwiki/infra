@@ -148,18 +148,6 @@ resource "github_repository" "mediawiki" {
   ]
 }
 
-resource "github_repository" "docker_restbase" {
-  name          = "docker-restbase"
-  description   = "📝 Dockerized RESTBase"
-  has_downloads = true
-  has_issues    = true
-  has_wiki      = false
-  topics = [
-    "docker-image",
-    "restbase"
-  ]
-}
-
 resource "github_repository" "database" {
   name          = "database"
   description   = ":floppy_disk: 페미위키 데이터베이스 서버"
@@ -169,28 +157,6 @@ resource "github_repository" "database" {
   topics = [
     "docker-compose",
     "server",
-  ]
-}
-
-resource "github_repository" "maintenance" {
-  name          = "maintenance"
-  description   = ":wrench: 페미위키 점검 페이지"
-  homepage_url  = "https://femiwiki.github.io/maintenance"
-  has_downloads = true
-  has_issues    = true
-  topics        = ["website"]
-}
-
-resource "github_repository" "rankingbot" {
-  name          = "rankingbot"
-  description   = ":robot: 랭킹봇"
-  homepage_url  = "https://femiwiki.com/w/%EC%82%AC%EC%9A%A9%EC%9E%90:%EB%9E%AD%ED%82%B9%EB%B4%87"
-  has_downloads = true
-  has_issues    = true
-  has_wiki      = false
-  topics = [
-    "bot",
-    "docker-image",
   ]
 }
 
@@ -210,6 +176,43 @@ resource "github_repository" "base_extensions" {
   has_issues    = true
   has_wiki      = false
   topics = ["docker-image",]
+}
+
+resource "github_repository" "parsoid" {
+  name          = "parsoid"
+  description   = ":whale: Dockerized parsoid"
+  has_downloads = true
+  has_issues    = true
+  has_wiki      = false
+  topics = [
+    "docker-image",
+    "parsoid",
+  ]
+}
+
+resource "github_repository" "docker_restbase" {
+  name          = "docker-restbase"
+  description   = "📝 Dockerized RESTBase"
+  has_downloads = true
+  has_issues    = true
+  has_wiki      = false
+  topics = [
+    "docker-image",
+    "restbase"
+  ]
+}
+
+resource "github_repository" "rankingbot" {
+  name          = "rankingbot"
+  description   = ":robot: 랭킹봇"
+  homepage_url  = "https://femiwiki.com/w/%EC%82%AC%EC%9A%A9%EC%9E%90:%EB%9E%AD%ED%82%B9%EB%B4%87"
+  has_downloads = true
+  has_issues    = true
+  has_wiki      = false
+  topics = [
+    "bot",
+    "docker-image",
+  ]
 }
 
 resource "github_repository" "backupbot" {
@@ -237,22 +240,19 @@ resource "github_repository" "tweetbot" {
   ]
 }
 
-resource "github_repository" "parsoid" {
-  name          = "parsoid"
-  description   = ":whale: Dockerized parsoid"
-  has_downloads = true
-  has_issues    = true
-  has_wiki      = false
-  topics = [
-    "docker-image",
-    "parsoid",
-  ]
-}
-
 resource "github_repository" "ami" {
   name          = "ami"
   description   = ":package: Base AMI of Femiwiki"
   has_downloads = true
   has_issues    = true
   has_wiki      = false
+}
+
+resource "github_repository" "maintenance" {
+  name          = "maintenance"
+  description   = ":wrench: 페미위키 점검 페이지"
+  homepage_url  = "https://femiwiki.github.io/maintenance"
+  has_downloads = true
+  has_issues    = true
+  topics        = ["website"]
 }
