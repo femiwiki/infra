@@ -384,7 +384,7 @@ resource "github_issue_label" "note" {
   for_each    = toset(data.github_repositories.actives.names)
   repository  = each.key
   name        = "글쓰기"
-  color       = "f484a9"
+  color       = "0075ca"
   description = "공지사항이나 블로그 글로 문서화해야하는 이슈"
 }
 
@@ -400,7 +400,7 @@ resource "github_issue_label" "enhancement" {
   for_each    = toset(data.github_repositories.actives.names)
   repository  = each.key
   name        = "enhancement"
-  color       = "84b6eb"
+  color       = "a2eeef"
   description = "New feature or request"
 }
 
@@ -432,6 +432,6 @@ resource "github_issue_label" "epic" {
   for_each    = toset(data.github_repositories.actives.names)
   repository  = each.key
   name        = "EPIC"
-  color       = "e4e669"
+  color       = "fc7a6c"
   description = ""
 }
