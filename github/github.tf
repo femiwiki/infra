@@ -388,6 +388,14 @@ resource "github_issue_label" "bug" {
   description = ""
 }
 
+resource "github_issue_label" "dependencies" {
+  for_each    = toset(data.github_repositories.actives.names)
+  repository  = each.key
+  name        = "dependencies"
+  color       = "a7f42c"
+  description = "Pull requests that update a dependency file"
+}
+
 resource "github_issue_label" "enhancement" {
   for_each    = toset(data.github_repositories.actives.names)
   repository  = each.key
