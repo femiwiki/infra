@@ -153,8 +153,8 @@ resource "github_branch_protection" "femiwiki" {
   }
 }
 
-resource "github_repository" "mediawiki" {
-  name          = "mediawiki"
+resource "github_repository" "docker_mediawiki" {
+  name          = "docker-mediawiki"
   description   = ":whale: Dockerized Femiwiki's mediawiki server"
   has_downloads = true
   has_issues    = true
@@ -167,7 +167,7 @@ resource "github_repository" "mediawiki" {
 }
 
 resource "github_branch_protection" "mediawiki" {
-  repository = github_repository.mediawiki.name
+  repository = github_repository.docker_mediawiki.name
   branch     = "master"
 
   required_pull_request_reviews {
@@ -232,8 +232,8 @@ resource "github_branch_protection" "base_extensions" {
   }
 }
 
-resource "github_repository" "parsoid" {
-  name          = "parsoid"
+resource "github_repository" "docker_parsoid" {
+  name          = "docker-parsoid"
   description   = ":whale: Dockerized parsoid"
   has_downloads = true
   has_issues    = true
@@ -245,7 +245,7 @@ resource "github_repository" "parsoid" {
 }
 
 resource "github_branch_protection" "parsoid" {
-  repository = github_repository.parsoid.name
+  repository = github_repository.docker_parsoid.name
   branch     = "master"
 
   required_pull_request_reviews {
