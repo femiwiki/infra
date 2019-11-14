@@ -7,7 +7,7 @@ resource "aws_route53_record" "femiwiki_com" {
   name    = "femiwiki.com"
   type    = "A"
   zone_id = aws_route53_zone.femiwiki_com.zone_id
-  records = [aws_eip.mediawiki.public_ip]
+  records = [aws_eip.femiwiki.public_ip]
   ttl     = 300
 }
 
@@ -15,7 +15,7 @@ resource "aws_route53_record" "www_femiwiki_com" {
   name    = "www.femiwiki.com"
   type    = "A"
   zone_id = aws_route53_zone.femiwiki_com.zone_id
-  records = [aws_eip.mediawiki.public_ip]
+  records = [aws_eip.femiwiki.public_ip]
   ttl     = 300
 }
 
