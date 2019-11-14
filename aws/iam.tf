@@ -198,13 +198,6 @@ data "aws_iam_policy_document" "terraform_cloud" {
   }
 }
 
-resource "aws_iam_role" "mediawiki" {
-  name               = "MediaWiki"
-  description        = "Allows EC2 instances to call AWS services on your behalf."
-  path               = "/"
-  assume_role_policy = data.aws_iam_policy_document.instance_assume_role.json
-}
-
 resource "aws_iam_role" "femiwiki" {
   name               = "Femiwiki"
   description        = "Allows EC2 instances to call AWS services on your behalf."
@@ -223,19 +216,9 @@ data "aws_iam_policy_document" "instance_assume_role" {
   }
 }
 
-resource "aws_iam_instance_profile" "mediawiki" {
-  name = "MediaWiki"
-  role = aws_iam_role.mediawiki.name
-}
-
 resource "aws_iam_instance_profile" "femiwiki" {
   name = "Femiwiki"
   role = aws_iam_role.femiwiki.name
-}
-
-resource "aws_iam_role_policy_attachment" "amazon_s3_access" {
-  role       = aws_iam_role.mediawiki.name
-  policy_arn = aws_iam_policy.amazon_s3_access.arn
 }
 
 resource "aws_iam_role_policy_attachment" "femiwiki_amazon_s3_access" {
@@ -275,11 +258,6 @@ data "aws_iam_policy_document" "amazon_s3_access" {
   }
 }
 
-resource "aws_iam_role_policy_attachment" "route53" {
-  role       = aws_iam_role.mediawiki.name
-  policy_arn = aws_iam_policy.route53.arn
-}
-
 resource "aws_iam_role_policy_attachment" "femiwiki_route53" {
   role       = aws_iam_role.femiwiki.name
   policy_arn = aws_iam_policy.route53.arn
@@ -316,13 +294,6 @@ data "aws_iam_policy_document" "route53" {
   }
 }
 
-resource "aws_iam_role" "upload_backup" {
-  name               = "UploadBackup"
-  description        = "Allows EC2 instances to upload to the backup bucket."
-  path               = "/"
-  assume_role_policy = data.aws_iam_policy_document.instance_assume_role.json
-}
-
 resource "aws_iam_role_policy_attachment" "femiwiki_upload_backup" {
   role       = aws_iam_role.femiwiki.name
   policy_arn = aws_iam_policy.upload_backup.arn
@@ -340,11 +311,6 @@ data "aws_iam_policy_document" "upload_backup" {
     actions   = ["s3:PutObject"]
     resources = ["${aws_s3_bucket.backups.arn}/*"]
   }
-}
-
-resource "aws_iam_instance_profile" "upload_backup" {
-  name = "UploadBackup"
-  role = aws_iam_role.upload_backup.name
 }
 
 resource "aws_iam_user_policy" "ses_sending_access" {
