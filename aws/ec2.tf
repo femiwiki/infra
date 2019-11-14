@@ -3,9 +3,15 @@ resource "aws_key_pair" "femiwiki" {
   public_key = file("res/femiwiki_rsa.pub")
 }
 
+data "aws_ami" "femiwiki_base" {
+  most_recent      = true
+  name_regex       = "^femiwiki-base \\d{4}-\\d{2}-\\d{2} \\d{2}_\\d{2}$"
+  owners           = ["self"]
+}
+
 resource "aws_instance" "mediawiki" {
   ebs_optimized        = true
-  ami                  = "ami-02f64686a16f77fbd"
+  ami                  = data.aws_ami.femiwiki_base.image_id
   instance_type        = "t3a.micro"
   key_name             = aws_key_pair.femiwiki.key_name
   monitoring           = false
@@ -49,6 +55,13 @@ sudo -u ec2-user cp /home/ec2-user/mediawiki/configs/secret.php.example /home/ec
 docker swarm init
 # docker stack deploy --prune -c /home/ec2-user/mediawiki/production.yml mediawiki
 EOF
+
+  lifecycle {
+    ignore_changes = [
+      ami,
+      user_data,
+    ]
+  }
 }
 
 resource "aws_eip" "mediawiki" {
@@ -58,7 +71,7 @@ resource "aws_eip" "mediawiki" {
 
 resource "aws_instance" "database_bots" {
   ebs_optimized           = true
-  ami                     = "ami-0019c8208fd95e551"
+  ami                  = data.aws_ami.femiwiki_base.image_id
   instance_type           = "t3.nano"
   key_name                = aws_key_pair.femiwiki.key_name
   monitoring              = false
@@ -89,19 +102,25 @@ resource "aws_instance" "database_bots" {
     Name = "database+bots"
   }
 
-  # # 이 부분을 주석 해제하면 인스턴스가 Replacement 됩니다.
-  # user_data = <<EOF
-  # #!/bin/bash
-  # set -euo pipefail; IFS=$'\n\t'
+  user_data = <<EOF
+#!/bin/bash
+set -euo pipefail; IFS=$'\n\t'
 
-  # # Enable verbose mode
-  # set -x
+# Enable verbose mode
+set -x
 
-  # sudo -u ec2-user git clone https://github.com/femiwiki/database.git /home/ec2-user/swarm/
-  # # TODO: Download SQL dump from S3
-  # docker swarm init
-  # docker stack deploy --prune -c /home/ec2-user/swarm/database.yml database
-  # docker stack deploy --prune -c /home/ec2-user/swarm/memcached.yml memcached
-  # docker stack deploy --prune -c /home/ec2-user/swarm/bots.yml botse
-  # EOF
+sudo -u ec2-user git clone https://github.com/femiwiki/database.git /home/ec2-user/swarm/
+# TODO: Download SQL dump from S3
+docker swarm init
+docker stack deploy --prune -c /home/ec2-user/swarm/database.yml database
+docker stack deploy --prune -c /home/ec2-user/swarm/memcached.yml memcached
+docker stack deploy --prune -c /home/ec2-user/swarm/bots.yml botse
+EOF
+
+  lifecycle {
+    ignore_changes = [
+      ami,
+      user_data,
+    ]
+  }
 }
