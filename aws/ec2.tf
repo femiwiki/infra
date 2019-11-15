@@ -4,9 +4,9 @@ resource "aws_key_pair" "femiwiki" {
 }
 
 data "aws_ami" "femiwiki_base" {
-  most_recent      = true
-  name_regex       = "^femiwiki-base \\d{4}-\\d{2}-\\d{2} \\d{2}_\\d{2}$"
-  owners           = ["self"]
+  most_recent = true
+  name_regex  = "^femiwiki-base \\d{4}-\\d{2}-\\d{2} \\d{2}_\\d{2}$"
+  owners      = ["self"]
 }
 
 resource "aws_instance" "mediawiki" {
@@ -71,7 +71,7 @@ resource "aws_eip" "mediawiki" {
 
 resource "aws_instance" "database_bots" {
   ebs_optimized           = true
-  ami                  = data.aws_ami.femiwiki_base.image_id
+  ami                     = data.aws_ami.femiwiki_base.image_id
   instance_type           = "t3.nano"
   key_name                = aws_key_pair.femiwiki.key_name
   monitoring              = false
@@ -126,12 +126,13 @@ EOF
 }
 
 resource "aws_instance" "femiwiki" {
-  ebs_optimized        = true
-  ami                  = data.aws_ami.femiwiki_base.image_id
-  instance_type        = "t3a.micro"
-  key_name             = aws_key_pair.femiwiki.key_name
-  monitoring           = false
-  iam_instance_profile = aws_iam_instance_profile.femiwiki.name
+  ebs_optimized           = true
+  ami                     = data.aws_ami.femiwiki_base.image_id
+  instance_type           = "t3a.micro"
+  key_name                = aws_key_pair.femiwiki.key_name
+  monitoring              = false
+  iam_instance_profile    = aws_iam_instance_profile.femiwiki.name
+  disable_api_termination = true
 
   vpc_security_group_ids = [
     aws_default_security_group.default.id,
