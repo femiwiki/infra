@@ -165,6 +165,7 @@ data "aws_iam_policy_document" "terraform_cloud" {
       "ec2:*",
       "elasticloadbalancing:*",
       "events:*",
+      "iam:CreateInstanceProfile",
       "iam:CreateRole",
       "iam:GenerateCredentialReport",
       "iam:GenerateServiceLastAccessedDetails",
