@@ -175,27 +175,6 @@ resource "github_branch_protection" "mediawiki" {
   }
 }
 
-resource "github_repository" "database" {
-  name          = "database"
-  description   = ":floppy_disk: 페미위키 데이터베이스 서버"
-  has_downloads = true
-  has_issues    = true
-  has_wiki      = false
-  topics = [
-    "docker-compose",
-    "server",
-  ]
-}
-
-resource "github_branch_protection" "database" {
-  repository = github_repository.database.name
-  branch     = "master"
-
-  required_pull_request_reviews {
-    required_approving_review_count = 1
-  }
-}
-
 resource "github_repository" "base" {
   name          = "base"
   description   = ":whale: Base docker image of https://github.com/femiwiki/mediawiki to accelerate build speed"
