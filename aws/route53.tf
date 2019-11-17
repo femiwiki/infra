@@ -19,10 +19,18 @@ resource "aws_route53_record" "www_femiwiki_com" {
   ttl     = 300
 }
 
+resource "aws_route53_record" "maintenance_femiwiki_com" {
+  name    = "maintenance.femiwiki.com"
+  type    = "CNAME"
+  zone_id = aws_route53_zone.femiwiki_com.zone_id
+  ttl     = 300
+  records = ["femiwiki.github.io/maintenance"]
+}
+
 resource "aws_route53_record" "femiwiki_com_amazonses_verification_record" {
   name    = "_amazonses.femiwiki.com"
   records = [aws_ses_domain_identity.femiwiki_com.verification_token]
-  ttl     = "1800"
+  ttl     = 1800
   type    = "TXT"
   zone_id = aws_route53_zone.femiwiki_com.zone_id
 }
@@ -32,7 +40,7 @@ resource "aws_route53_record" "amazonses_femiwiki_com_dkim_record" {
   zone_id = aws_route53_zone.femiwiki_com.zone_id
   name    = "${element(aws_ses_domain_dkim.femiwiki_com.dkim_tokens, count.index)}._domainkey.femiwiki.com"
   type    = "CNAME"
-  ttl     = "300"
+  ttl     = 300
   records = ["${element(aws_ses_domain_dkim.femiwiki_com.dkim_tokens, count.index)}.dkim.amazonses.com"]
 }
 
@@ -45,7 +53,7 @@ resource "aws_route53_record" "femiwiki_com_mx" {
     "5 ALT2.ASPMX.L.GOOGLE.COM",
     "10 ALT4.ASPMX.L.GOOGLE.COM",
   ]
-  ttl     = "3600"
+  ttl     = 3600
   type    = "MX"
   zone_id = aws_route53_zone.femiwiki_com.zone_id
 }
@@ -58,7 +66,7 @@ resource "aws_route53_record" "femiwiki_com_ns" {
     "ns-1810.awsdns-34.co.uk.",
     "ns-1320.awsdns-37.org.",
   ]
-  ttl     = "172800"
+  ttl     = 172800
   type    = "NS"
   zone_id = aws_route53_zone.femiwiki_com.zone_id
 }
@@ -66,7 +74,7 @@ resource "aws_route53_record" "femiwiki_com_ns" {
 resource "aws_route53_record" "femiwiki_com_soa" {
   name    = "femiwiki.com"
   records = ["ns-1320.awsdns-37.org. awsdns-hostmaster.amazon.com. 1 7200 900 1209600 86400"]
-  ttl     = "900"
+  ttl     = 900
   type    = "SOA"
   zone_id = aws_route53_zone.femiwiki_com.zone_id
 }
@@ -74,7 +82,7 @@ resource "aws_route53_record" "femiwiki_com_soa" {
 resource "aws_route53_record" "github_challenge_femiwiki_com" {
   name    = "_github-challenge-femiwiki.femiwiki.com"
   records = ["8116bea44c"]
-  ttl     = "300"
+  ttl     = 300
   type    = "TXT"
   zone_id = aws_route53_zone.femiwiki_com.zone_id
 }
