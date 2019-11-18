@@ -122,6 +122,7 @@ data "aws_iam_policy_document" "force_mfa" {
   statement {
     effect = "Deny"
     not_actions = [
+      "iam:ChangePassword",
       "iam:CreateVirtualMFADevice",
       "iam:DeleteVirtualMFADevice",
       "iam:ListVirtualMFADevices",
