@@ -5,6 +5,7 @@ locals {
     "damdam",
     "Nagyeop",
     "simnalamburt",
+    "love_adela",
   ]
   programmatic_users = [
     "femiwiki-email",
