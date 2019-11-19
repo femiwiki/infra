@@ -24,6 +24,9 @@ locals {
     Sanctions = {
       description = "Offers convenient way to handle sanctions."
     }
+    AchievementBadges = {
+      description = "TBD"
+    }
   }
 }
 
