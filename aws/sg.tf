@@ -19,6 +19,17 @@ resource "aws_default_security_group" "default" {
   }
 }
 
+# See https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-connect-set-up.html#ec2-instance-connect-setup-security-group
+resource "aws_security_group_rule" "default_instance_connect_browser_based_client" {
+  security_group_id = aws_default_security_group.default.id
+  description       = "EC2 Instance Connect Browser-based client"
+  type              = "ingress"
+  protocol          = "tcp"
+  from_port         = 22
+  to_port           = 22
+  cidr_blocks       = ["3.112.23.0/29"]
+}
+
 #
 # 페미위키 서버용 SG
 #
