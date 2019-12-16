@@ -13,7 +13,8 @@ yum install -y ec2-instance-connect
 # 기본 유틸리티들 설치
 #
 yum autoremove -y postfix
-yum-config-manager --add-repo=https://copr.fedorainfracloud.org/coprs/carlwgeorge/ripgrep/repo/epel-7/carlwgeorge-ripgrep-epel-7.repo
+curl -Lo /etc/yum.repos.d/carlwgeorge-ripgrep-epel-7.repo \
+  'https://copr.fedorainfracloud.org/coprs/carlwgeorge/ripgrep/repo/epel-7/carlwgeorge-ripgrep-epel-7.repo'
 yum update -y
 yum install -y \
   vim-enhanced \
