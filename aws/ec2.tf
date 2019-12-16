@@ -1,6 +1,13 @@
+# TODO: 없앨 예정
 resource "aws_key_pair" "femiwiki" {
   key_name   = "femiwiki-2018-09-15"
   public_key = file("res/femiwiki_rsa.pub")
+}
+
+# 김지현이 소지하고있는 비상용 키페어
+resource "aws_key_pair" "femiwiki_green" {
+  key_name   = "femiwiki-emergency-key"
+  public_key = file("res/femiwiki_rsa_green.pub")
 }
 
 # TODO: 없앨 예정
