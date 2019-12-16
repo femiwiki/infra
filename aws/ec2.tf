@@ -62,7 +62,7 @@ resource "aws_instance" "femiwiki" {
   }
 
   tags = {
-    Name = "femiwiki"
+    Name = "femiwiki (old)"
   }
 
   volume_tags = {
