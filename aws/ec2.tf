@@ -3,6 +3,7 @@ resource "aws_key_pair" "femiwiki" {
   public_key = file("res/femiwiki_rsa.pub")
 }
 
+# TODO: 없앨 예정
 data "aws_ami" "femiwiki_base" {
   most_recent = true
   name_regex  = "^femiwiki-base \\d{4}-\\d{2}-\\d{2} \\d{2}_\\d{2}$"
@@ -26,6 +27,7 @@ data "aws_ami" "amazon_linux_2" {
   name_regex = "^amzn2-ami-minimal-hvm-2.0.20191116.0-x86_64-ebs$"
 }
 
+# TODO: 없앨 예정
 resource "aws_instance" "femiwiki" {
   ebs_optimized           = true
   ami                     = data.aws_ami.femiwiki_base.image_id
