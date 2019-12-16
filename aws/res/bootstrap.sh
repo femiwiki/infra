@@ -5,6 +5,11 @@ set -euo pipefail; IFS=$'\n\t'
 set -x
 
 #
+# ec2-instance-connect 를 제일 먼저 설치
+#
+yum install -y ec2-instance-connect
+
+#
 # 기본 유틸리티들 설치
 #
 yum autoremove -y postfix
@@ -18,8 +23,7 @@ yum install -y \
   yum-cron \
   jq \
   ripgrep \
-  'https://www.atoptool.nl/download/atop-2.4.0-1.x86_64.rpm' \
-  ec2-instance-connect
+  'https://www.atoptool.nl/download/atop-2.4.0-1.x86_64.rpm'
 
 #
 # yum-cron 설치
