@@ -18,6 +18,24 @@ resource "github_branch_protection" "infra" {
 }
 
 #
+# kubernetes
+#
+resource "github_repository" "kubernetes" {
+  name        = "kubernetes"
+  description = ":whale: Femiwiki kubernetes"
+  has_issues  = true
+}
+
+resource "github_branch_protection" "kubernetes" {
+  repository = github_repository.kubernetes.name
+  branch     = "master"
+
+  required_pull_request_reviews {
+    required_approving_review_count = 1
+  }
+}
+
+#
 # skin
 #
 resource "github_repository" "femiwiki_skin" {
