@@ -1,72 +1,6 @@
-locals {
-  github_organization = "femiwiki"
-  github_admins = [
-    "femiwiki-bot",
-    "lens0021",
-    "simnalamburt",
-  ]
-  github_members = [
-    "765P",
-    "choidamdam",
-    "HanbitGaram",
-    "vvvvviral",
-  ]
-  extensions = {
-    UnifiedExtensionForFemiwiki = {
-      description = "Unified Extension For Femiwiki"
-    }
-    FacetedCategory = {
-      description = "FacetedCategories extension"
-    }
-    CategoryIntersectionSearch = {
-      description = "provide special page show category intersection"
-    }
-    Sanctions = {
-      description = "Offers convenient way to handle sanctions."
-    }
-    AchievementBadges = {
-      description = "TBD"
-    }
-  }
-}
-
-# Members
-
-resource "github_membership" "admins" {
-  for_each = toset(local.github_admins)
-
-  username = each.key
-  role     = "admin"
-}
-
-# Project
-
-resource "github_organization_project" "dev" {
-  name = "개발"
-  body = ":shipit: 페미위키 관련된 기술적인 사안"
-}
-
-resource "github_project_column" "columns" {
-  for_each = toset([
-    "To do",
-    "In Progress",
-    "Blocked",
-    "Done"
-  ])
-
-  project_id = github_organization_project.dev.id
-  name       = each.key
-}
-
-resource "github_membership" "members" {
-  for_each = toset(local.github_members)
-
-  username = each.key
-  role     = "member"
-}
-
-# Repositories
-
+#
+# infra
+#
 resource "github_repository" "infra" {
   name          = "infra"
   description   = ":evergreen_tree: Terraforming Femiwiki Infrastructure"
@@ -83,6 +17,9 @@ resource "github_branch_protection" "infra" {
   }
 }
 
+#
+# skin
+#
 resource "github_repository" "femiwiki_skin" {
   name          = "FemiwikiSkin"
   description   = ":jack_o_lantern: 페미위키 스킨"
@@ -105,6 +42,29 @@ resource "github_repository_collaborator" "femiwiki_skin" {
   repository = github_repository.femiwiki_skin.name
   username   = "translatewiki"
   permission = "push"
+}
+
+#
+# extensions
+#
+locals {
+  extensions = {
+    UnifiedExtensionForFemiwiki = {
+      description = "Unified Extension For Femiwiki"
+    }
+    FacetedCategory = {
+      description = "FacetedCategories extension"
+    }
+    CategoryIntersectionSearch = {
+      description = "provide special page show category intersection"
+    }
+    Sanctions = {
+      description = "Offers convenient way to handle sanctions."
+    }
+    AchievementBadges = {
+      description = "TBD"
+    }
+  }
 }
 
 resource "github_repository" "extensions" {
@@ -134,6 +94,9 @@ resource "github_repository_collaborator" "extension_collaborators" {
   permission = "push"
 }
 
+#
+# femiwiki
+#
 resource "github_repository" "femiwiki" {
   name          = "femiwiki"
   description   = ":earth_asia: 문서화된 페미위키 기술 정보 및 이슈 트래킹 정보 제공"
@@ -156,6 +119,9 @@ resource "github_branch_protection" "femiwiki" {
   }
 }
 
+#
+# mediawiki
+#
 resource "github_repository" "docker_mediawiki" {
   name          = "docker-mediawiki"
   description   = ":whale: Dockerized Femiwiki's mediawiki server"
@@ -178,6 +144,9 @@ resource "github_branch_protection" "mediawiki" {
   }
 }
 
+#
+# base
+#
 resource "github_repository" "base" {
   name          = "base"
   description   = ":whale: Base docker image of https://github.com/femiwiki/mediawiki to accelerate build speed"
@@ -196,6 +165,9 @@ resource "github_branch_protection" "base" {
   }
 }
 
+#
+# base extensions
+#
 resource "github_repository" "base_extensions" {
   name          = "base-extensions"
   description   = ":whale: Base docker image of https://github.com/femiwiki/mediawiki to accelerate build speed"
@@ -214,6 +186,9 @@ resource "github_branch_protection" "base_extensions" {
   }
 }
 
+#
+# parsoid
+#
 resource "github_repository" "docker_parsoid" {
   name          = "docker-parsoid"
   description   = ":whale: Dockerized parsoid"
@@ -235,6 +210,9 @@ resource "github_branch_protection" "parsoid" {
   }
 }
 
+#
+# restbase
+#
 resource "github_repository" "docker_restbase" {
   name          = "docker-restbase"
   description   = "📝 Dockerized RESTBase"
@@ -256,6 +234,9 @@ resource "github_branch_protection" "docker_restbase" {
   }
 }
 
+#
+# rankingbot
+#
 resource "github_repository" "rankingbot" {
   name          = "rankingbot"
   description   = ":robot: 랭킹봇"
@@ -278,6 +259,9 @@ resource "github_branch_protection" "rankingbot" {
   }
 }
 
+#
+# backupbot
+#
 resource "github_repository" "backupbot" {
   name          = "backupbot"
   description   = ":robot: 페미위키 MySQL 백업봇"
@@ -299,6 +283,9 @@ resource "github_branch_protection" "backupbot" {
   }
 }
 
+#
+# tweetbot
+#
 resource "github_repository" "tweetbot" {
   name          = "tweetbot"
   description   = ":robot: 페미위키 트위터 봇"
@@ -321,6 +308,9 @@ resource "github_branch_protection" "tweetbot" {
   }
 }
 
+#
+# ami
+#
 resource "github_repository" "ami" {
   name          = "ami"
   description   = ":package: Base AMI of Femiwiki"
@@ -338,6 +328,9 @@ resource "github_branch_protection" "ami" {
   }
 }
 
+#
+# maintenance
+#
 resource "github_repository" "maintenance" {
   name          = "maintenance"
   description   = ":wrench: 페미위키 점검 페이지"
@@ -354,74 +347,4 @@ resource "github_branch_protection" "maintenance" {
   required_pull_request_reviews {
     required_approving_review_count = 1
   }
-}
-
-# Labels
-
-data "github_repositories" "actives" {
-  query = "org:femiwiki archived:false fork:false"
-}
-
-resource "github_issue_label" "bug" {
-  for_each    = toset(data.github_repositories.actives.names)
-  repository  = each.key
-  name        = "Bug"
-  color       = "ee0701"
-  description = ""
-}
-
-resource "github_issue_label" "dependencies" {
-  for_each    = toset(data.github_repositories.actives.names)
-  repository  = each.key
-  name        = "dependencies"
-  color       = "a7f42c"
-  description = "Pull requests that update a dependency file"
-}
-
-resource "github_issue_label" "enhancement" {
-  for_each    = toset(data.github_repositories.actives.names)
-  repository  = each.key
-  name        = "enhancement"
-  color       = "a2eeef"
-  description = "New feature or request"
-}
-
-resource "github_issue_label" "epic" {
-  for_each    = toset(data.github_repositories.actives.names)
-  repository  = each.key
-  name        = "EPIC"
-  color       = "fc7a6c"
-  description = ""
-}
-
-resource "github_issue_label" "femiwki_discussion_needed" {
-  for_each    = toset(data.github_repositories.actives.names)
-  repository  = each.key
-  name        = "femiwki discussion needed"
-  color       = "d4c5f9"
-  description = ""
-}
-
-resource "github_issue_label" "invalid" {
-  for_each    = toset(data.github_repositories.actives.names)
-  repository  = each.key
-  name        = "invalid"
-  color       = "e4e669"
-  description = "This doesn't seem right"
-}
-
-resource "github_issue_label" "wontfix" {
-  for_each    = toset(data.github_repositories.actives.names)
-  repository  = each.key
-  name        = "wontfix"
-  color       = "ffffff"
-  description = "This will not be worked on"
-}
-
-resource "github_issue_label" "note" {
-  for_each    = toset(data.github_repositories.actives.names)
-  repository  = each.key
-  name        = "글쓰기"
-  color       = "0075ca"
-  description = "공지사항이나 블로그 글로 문서화해야하는 이슈"
 }
