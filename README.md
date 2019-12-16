@@ -34,5 +34,5 @@ terraform plan
 - [ ] 유저 데이터: secret.php 가져오기(blocked by [femiwiki/femiwiki#110](https://github.com/femiwiki/femiwiki/issues/110))와 데이터베이스 백업 복구가 빠져있음
 
 [Terraform Badge]: https://badgen.net/badge/icon/terraform?label&icon=https://unpkg.com/badgen-icons@0.12.0/icons/terraform.svg
-[Terraform Cloud Link]: https://app.terraform.io/app/femiwiki/workspaces/infra
+[Terraform Cloud Link]: https://app.terraform.io/app/femiwiki/workspaces
 [Terraform Cloud]: https://app.terraform.io
