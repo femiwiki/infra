@@ -14,6 +14,11 @@ locals {
   ]
 }
 
+resource "aws_iam_account_password_policy" "strict" {
+  allow_users_to_change_password = true
+  minimum_password_length        = 14
+}
+
 resource "aws_iam_user" "admins" {
   for_each = toset(concat(local.admins, local.programmatic_users))
 
