@@ -29,3 +29,35 @@ resource "aws_cloudwatch_metric_alarm" "femiwiki_burst_balance_cloud_watch_alarm
   datapoints_to_alarm = 1
   alarm_actions       = [aws_sns_topic.cloudwatch_alarms_topic.arn]
 }
+
+resource "aws_cloudwatch_metric_alarm" "bounce_rate" {
+  provider = aws.us
+
+  alarm_name          = "Bounce Rate"
+  metric_name         = "Reputation.BounceRate"
+  namespace           = "AWS/SES"
+  period              = 300
+  statistic           = "Average"
+  evaluation_periods  = "1"
+  threshold           = "0.05"
+  comparison_operator = "GreaterThanOrEqualToThreshold"
+  datapoints_to_alarm = 1
+  alarm_actions       = [aws_sns_topic.cloudwatch_alarms_topic_us.arn]
+  treat_missing_data  = "ignore"
+}
+
+resource "aws_cloudwatch_metric_alarm" "complaint_rate" {
+  provider = aws.us
+
+  alarm_name          = "Complaint Rate"
+  metric_name         = "Reputation.ComplaintRate"
+  namespace           = "AWS/SES"
+  period              = 300
+  statistic           = "Average"
+  evaluation_periods  = "1"
+  threshold           = "0.001"
+  comparison_operator = "GreaterThanOrEqualToThreshold"
+  datapoints_to_alarm = 1
+  alarm_actions       = [aws_sns_topic.cloudwatch_alarms_topic_us.arn]
+  treat_missing_data  = "ignore"
+}
