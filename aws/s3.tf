@@ -66,3 +66,7 @@ data "aws_iam_policy_document" "uploaded_files_thumb" {
     resources = ["${aws_s3_bucket.uploaded_files_thumb.arn}/*"]
   }
 }
+
+resource "aws_s3_bucket" "uploaded_files_validate" {
+  bucket = "femiwiki-uploaded-files-validate"
+}
