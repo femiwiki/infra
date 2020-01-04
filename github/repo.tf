@@ -391,3 +391,4 @@ resource "github_branch_protection" "automation_testing" {
     required_approving_review_count = 1
   }
 }
+
