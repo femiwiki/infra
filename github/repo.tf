@@ -366,3 +366,28 @@ resource "github_branch_protection" "maintenance" {
     required_approving_review_count = 1
   }
 }
+
+#
+# automation testing
+#
+resource "github_repository" "automation_testing" {
+  name          = "automation_testing"
+  description   = ":gear: Femiwiki Automation Testing"
+  has_downloads = true
+  has_issues    = true
+  has_wiki      = false
+  topics = [
+    "automation",
+    "testing",
+    "puppeteer",
+  ]
+}
+
+resource "github_branch_protection" "automation_testing" {
+  repository = github_repository.automation_testing.name
+  branch     = "master"
+
+  required_pull_request_reviews {
+    required_approving_review_count = 1
+  }
+}
