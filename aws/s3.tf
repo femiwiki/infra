@@ -67,6 +67,10 @@ data "aws_iam_policy_document" "uploaded_files_thumb" {
   }
 }
 
+resource "aws_s3_bucket" "uploaded_files_validate" {
+  bucket = "femiwiki-uploaded-files-validate"
+}
+
 resource "aws_s3_bucket" "miri-files" {
   bucket = "miri-temporary-bucket"
   acl = "private"
