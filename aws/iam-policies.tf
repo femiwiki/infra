@@ -76,8 +76,9 @@ data "aws_iam_policy_document" "force_mfa" {
     effect = "Deny"
     not_actions = [
       // 비밀번호 변경 가능
-      "iam:ChangePassword",
       "iam:GetUser",
+      "iam:ChangePassword",
+      "iam:GetAccountPasswordPolicy",
       "sts:GetSessionToken",
       // VirtualMFA 관리 가능
       "iam:ListVirtualMFADevices",
