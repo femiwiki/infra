@@ -10,93 +10,85 @@ resource "aws_iam_policy" "force_mfa" {
 }
 
 data "aws_iam_policy_document" "force_mfa" {
+  // Reference:
+  //   https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_examples_aws_my-sec-creds-self-manage.html
+
   statement {
+    sid = "AllowViewAccountInfo"
     actions = [
-      "iam:ListAccountAliases",
-      "iam:ListUsers",
-      "iam:ListVirtualMFADevices",
       "iam:GetAccountPasswordPolicy",
-      "iam:GetAccountSummary"
+      "iam:GetAccountSummary",
+      "iam:ListVirtualMFADevices",
     ]
     resources = ["*"]
-    sid       = "AllowAllUsersToListAccounts"
   }
 
   statement {
+    sid = "AllowIndividualUserToSeeAndManageOnlyTheirOwnAccountInformation"
     actions = [
+      // 본인 패스워드 관리 허용
       "iam:ChangePassword",
+      "iam:GetUser",
+      // 본인 액세스키 관리 허용
       "iam:CreateAccessKey",
-      "iam:CreateLoginProfile",
       "iam:DeleteAccessKey",
-      "iam:DeleteLoginProfile",
-      "iam:GetLoginProfile",
       "iam:ListAccessKeys",
       "iam:UpdateAccessKey",
-      "iam:UpdateLoginProfile",
+      // 본인 Signing Certificates 허용
       "iam:ListSigningCertificates",
       "iam:DeleteSigningCertificate",
       "iam:UpdateSigningCertificate",
       "iam:UploadSigningCertificate",
+      // 본인 SSH 공개키 관리 허용
       "iam:ListSSHPublicKeys",
       "iam:GetSSHPublicKey",
       "iam:DeleteSSHPublicKey",
       "iam:UpdateSSHPublicKey",
-      "iam:UploadSSHPublicKey"
+      "iam:UploadSSHPublicKey",
+      // 본인 Service Specific Credential 관리 허용
+      "iam:CreateServiceSpecificCredential",
+      "iam:DeleteServiceSpecificCredential",
+      "iam:ListServiceSpecificCredentials",
+      "iam:ResetServiceSpecificCredential",
+      "iam:UpdateServiceSpecificCredential",
+      // 본인 MFA 관리 허용
+      "iam:EnableMFADevice",
+      "iam:ListMFADevices",
+      "iam:ResyncMFADevice",
+      "iam:DeactivateMFADevice",
     ]
     resources = ["arn:aws:iam::*:user/$${aws:username}"]
-    sid       = "AllowIndividualUserToSeeAndManageOnlyTheirOwnAccountInformation"
   }
 
+  // 본인 VirtualMFA 관리 허용
   statement {
+    sid = "AllowManageOwnVirtualMFADevice"
     actions = [
       "iam:CreateVirtualMFADevice",
       "iam:DeleteVirtualMFADevice",
-      "iam:EnableMFADevice",
-      "iam:ListMFADevices",
-      "iam:ResyncMFADevice"
     ]
-    resources = [
-      "arn:aws:iam::*:mfa/$${aws:username}",
-      "arn:aws:iam::*:user/$${aws:username}",
-    ]
-    sid = "AllowIndividualUserToViewAndManageTheirOwnMFA"
+    resources = ["arn:aws:iam::*:mfa/$${aws:username}"]
   }
 
+  // MFA가 없는경우, 아래의 동작만 수행 가능
   statement {
-    actions = ["iam:DeactivateMFADevice"]
-
-    condition {
-      test     = "Bool"
-      variable = "aws:MultiFactorAuthPresent"
-      values   = [true]
-    }
-    resources = [
-      "arn:aws:iam::*:mfa/$${aws:username}",
-      "arn:aws:iam::*:user/$${aws:username}",
-    ]
-    sid = "AllowIndividualUserToDeactivateOnlyTheirOwnMFAOnlyWhenUsingMFA"
-  }
-
-  statement {
+    sid    = "DenyAllExceptListedIfNoMFA"
     effect = "Deny"
     not_actions = [
+      // 비밀번호 변경 가능
       "iam:ChangePassword",
+      "iam:GetUser",
+      "sts:GetSessionToken",
+      // VirtualMFA 관리 가능
+      "iam:ListVirtualMFADevices",
       "iam:CreateVirtualMFADevice",
       "iam:DeleteVirtualMFADevice",
-      "iam:ListVirtualMFADevices",
+      // MFA 관리 가능
+      "iam:ListMFADevices",
       "iam:EnableMFADevice",
       "iam:ResyncMFADevice",
-      "iam:ListAccountAliases",
-      "iam:ListUsers",
-      "iam:ListSSHPublicKeys",
-      "iam:ListAccessKeys",
-      "iam:ListServiceSpecificCredentials",
-      "iam:ListMFADevices",
-      "iam:GetAccountSummary",
-      "sts:GetSessionToken"
     ]
     resources = ["*"]
-    sid       = "BlockMostAccessUnlessSignedInWithMFA"
 
     condition {
       test     = "BoolIfExists"
