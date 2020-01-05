@@ -27,8 +27,9 @@ data "aws_iam_policy_document" "force_mfa" {
     sid = "AllowIndividualUserToSeeAndManageOnlyTheirOwnAccountInformation"
     actions = [
       // 본인 패스워드 관리 허용
-      "iam:ChangePassword",
+      "iam:ListUsers",
       "iam:GetUser",
+      "iam:ChangePassword",
       // 본인 액세스키 관리 허용
       "iam:CreateAccessKey",
       "iam:DeleteAccessKey",
@@ -76,6 +77,7 @@ data "aws_iam_policy_document" "force_mfa" {
     effect = "Deny"
     not_actions = [
       // 비밀번호 변경 가능
+      "iam:ListUsers",
       "iam:GetUser",
       "iam:ChangePassword",
       "iam:GetAccountPasswordPolicy",
