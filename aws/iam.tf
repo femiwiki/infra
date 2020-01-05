@@ -74,7 +74,21 @@ resource "aws_iam_group_policy_attachment" "admin_permission" {
 }
 
 resource "aws_iam_group_policy_attachment" "admin_mfa" {
-  group      = "Admin"
+  group      = aws_iam_group.admin.name
+  policy_arn = aws_iam_policy.force_mfa.arn
+}
+
+resource "aws_iam_group" "readonly" {
+  name = "ReadOnly"
+}
+
+resource "aws_iam_group_policy_attachment" "readonly_permission" {
+  group      = aws_iam_group.readonly.name
+  policy_arn = "arn:aws:iam::aws:policy/ReadOnlyAccess" # AWS managed policy
+}
+
+resource "aws_iam_group_policy_attachment" "readonly_mfa" {
+  group      = aws_iam_group.readonly.name
   policy_arn = aws_iam_policy.force_mfa.arn
 }
 
