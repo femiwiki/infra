@@ -99,7 +99,6 @@ resource "aws_iam_group_policy_attachment" "readonly_mfa" {
 resource "aws_iam_role" "femiwiki" {
   name               = "Femiwiki"
   description        = "Allows EC2 instances to call AWS services on your behalf."
-  path               = "/"
   assume_role_policy = data.aws_iam_policy_document.instance_assume_role.json
 }
 
