@@ -1,12 +1,4 @@
 locals {
-  admins = [
-    "gmlthak12",
-    "gwiyomisaranghae",
-    "damdam",
-    "Nagyeop",
-    "simnalamburt",
-    "love_adela",
-  ]
   programmatic_users = [
     "femiwiki-email",
     "terraform-cloud",
@@ -23,18 +15,9 @@ resource "aws_iam_account_password_policy" "strict" {
 #
 # IAM Users
 #
-resource "aws_iam_user" "admins" {
-  for_each = toset(concat(local.admins, local.programmatic_users))
-
-  name = each.key
-  path = "/"
-}
-
-resource "aws_iam_user_group_membership" "admins" {
-  for_each = toset(local.admins)
-
-  user   = each.key
-  groups = [aws_iam_group.admin.name]
+resource "aws_iam_user" "programmatic_users" {
+  for_each = toset(local.programmatic_users)
+  name     = each.key
 }
 
 resource "aws_iam_user_policy_attachment" "terraform_cloud" {
