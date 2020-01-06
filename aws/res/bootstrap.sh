@@ -17,6 +17,7 @@ curl -Lo /etc/yum.repos.d/carlwgeorge-ripgrep-epel-7.repo \
   'https://copr.fedorainfracloud.org/coprs/carlwgeorge/ripgrep/repo/epel-7/carlwgeorge-ripgrep-epel-7.repo'
 yum update -y
 yum install -y \
+  bash-completion \
   vim-enhanced \
   htop \
   tmux \
