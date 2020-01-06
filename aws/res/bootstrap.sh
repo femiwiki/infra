@@ -44,7 +44,7 @@ EOF
 # k3s 설치
 #
 curl -sfL https://get.k3s.io |
-  INSTALL_K3S_VERSION='v1.0.0' \
+  INSTALL_K3S_VERSION='v1.0.1' \
   INSTALL_K3S_EXEC='server --write-kubeconfig-mode 644' \
   sh
 # Reference: https://rancher.com/docs/k3s/latest/en/installation/install-options
