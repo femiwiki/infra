@@ -347,6 +347,28 @@ resource "github_branch_protection" "ami" {
 }
 
 #
+# remote gadgets
+#
+resource "github_repository" "remote_gadgets" {
+  name         = "remote-gadgets"
+  description  = "📽️ External repository for Javascript/CSS on FemiWiki"
+  has_issues   = true
+  has_wiki     = false
+  auto_init    = true
+  topics       = ["bot"]
+}
+
+resource "github_branch_protection" "remote_gadgets" {
+  repository = github_repository.remote_gadgets.name
+  branch     = "master"
+
+  required_pull_request_reviews {
+    required_approving_review_count = 1
+  }
+}
+
+
+#
 # maintenance
 #
 resource "github_repository" "maintenance" {
