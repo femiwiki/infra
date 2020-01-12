@@ -77,8 +77,9 @@ set -euo pipefail; IFS=$'\n\t'
 set -x
 
 sudo -u ec2-user git clone https://github.com/femiwiki/docker-mediawiki.git /home/ec2-user/mediawiki/
-# TODO: Download seceret from S3
-# TODO: Download database dump from S3
+# TODO: Download seceret from somewhere (https://github.com/femiwiki/femiwiki/issues/110)
+# TODO: Download database dump from S3 to /srv/mysql/
+# TODO: Place/touch restbase database at /srv/restbase.sqlite3
 sudo -u ec2-user cp /home/ec2-user/mediawiki/configs/secret.php.example /home/ec2-user/mediawiki/configs/secret.php
 sudo -u ec2-user cp /home/ec2-user/mediawiki/configs/bot-secret.sample.env /home/ec2-user/mediawiki/configs/bot-secret.env
 docker swarm init
