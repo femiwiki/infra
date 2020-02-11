@@ -332,6 +332,7 @@ resource "github_branch_protection" "tweetbot" {
 resource "github_repository" "ami" {
   name          = "ami"
   description   = ":package: Base AMI of Femiwiki"
+  archived      = true
   has_downloads = true
   has_issues    = true
   has_wiki      = false
