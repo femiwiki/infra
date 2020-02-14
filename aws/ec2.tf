@@ -95,6 +95,11 @@ EOF
   }
 }
 
+resource "aws_eip" "femiwiki" {
+  instance = aws_instance.femiwiki.id
+  vpc      = true
+}
+
 resource "aws_instance" "femiwiki_green" {
   ebs_optimized           = true
   ami                     = data.aws_ami.amazon_linux_2.image_id
@@ -139,7 +144,17 @@ resource "aws_instance" "femiwiki_green" {
   }
 }
 
-resource "aws_eip" "femiwiki" {
-  instance = aws_instance.femiwiki.id
-  vpc      = true
+resource "aws_volume_attachment" "k3s_state" {
+  device_name = "/dev/xvdf"
+  volume_id   = aws_ebs_volume.k3s_state.id
+  instance_id = aws_instance.femiwiki_green.id
+}
+
+resource "aws_ebs_volume" "k3s_state" {
+  availability_zone = "ap-northeast-1a"
+  iops              = 0
+  size              = 4
+  tags = {
+    Name = "k3s state"
+  }
 }

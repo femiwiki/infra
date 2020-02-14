@@ -42,6 +42,13 @@ Defaults secure_path=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bi
 EOF
 
 #
+# k3s states EBS 마운트
+#
+mkdir -p /var/lib/rancher/k3s
+echo "UUID=$(blkid -s UUID -o value /dev/xvdf)  /var/lib/rancher/k3s  xfs  defaults,nofail  0  2" | sudo tee -a /etc/fstab
+sudo mount -a
+
+#
 # k3s 설치
 #
 curl -sfL https://get.k3s.io |
