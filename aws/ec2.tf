@@ -152,10 +152,14 @@ resource "aws_volume_attachment" "k3s_state" {
 }
 
 resource "aws_ebs_volume" "k3s_state" {
-  availability_zone = "ap-northeast-1a"
+  availability_zone = "ap-northeast-1"
   iops              = 0
   size              = 4
   tags = {
     Name = "k3s state"
+  }
+
+  lifecycle {
+    ignore_changes = [availability_zone]
   }
 }
