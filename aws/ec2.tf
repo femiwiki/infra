@@ -105,6 +105,7 @@ resource "aws_instance" "femiwiki_green" {
   ami                     = data.aws_ami.amazon_linux_2.image_id
   instance_type           = "t3a.micro"
   key_name                = aws_key_pair.femiwiki_green.key_name
+  availability_zone       = aws_ebs_volume.k3s_state.availability_zone
   monitoring              = false
   iam_instance_profile    = aws_iam_instance_profile.femiwiki.name
   disable_api_termination = true
