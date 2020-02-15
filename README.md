@@ -7,8 +7,6 @@ Femiwiki Infra
 ### Prerequisites
 - Terraform 0.12
 - [Terraform Cloud] 계정
-- AWS 크레덴셜
-- Github personal access tokens (`$GITHUB_TOKEN`)
 
 ### Instructions
 ```bash
