@@ -10,12 +10,7 @@ resource "aws_s3_bucket" "backups" {
     # 계산된다는 점을 주의해주세요.
 
     transition {
-      days          = 15
-      storage_class = "GLACIER"
-    }
-
-    transition {
-      days          = 30
+      days          = 14
       storage_class = "DEEP_ARCHIVE"
     }
   }
