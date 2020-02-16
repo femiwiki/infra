@@ -6,8 +6,16 @@ resource "aws_s3_bucket" "backups" {
     id      = "Transition mysql dumps to Glacier Deep Archive after 14 days"
     prefix  = "mysql/"
 
+    # NOTE: STANDARD_IA 를 사용할 경우, S3 IA로 가는순간 30일치 요금이 무조건
+    # 계산된다는 점을 주의해주세요.
+
     transition {
-      days          = 14
+      days          = 15
+      storage_class = "GLACIER"
+    }
+
+    transition {
+      days          = 30
       storage_class = "DEEP_ARCHIVE"
     }
   }
