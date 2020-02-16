@@ -16,6 +16,15 @@ resource "aws_s3_bucket" "backups" {
   }
 }
 
+resource "aws_s3_bucket_public_access_block" "backups" {
+  bucket = aws_s3_bucket.backups.id
+
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
 resource "aws_s3_bucket" "uploaded_files" {
   bucket = "femiwiki-uploaded-files"
 }
@@ -24,8 +33,26 @@ resource "aws_s3_bucket" "uploaded_files_deleted" {
   bucket = "femiwiki-uploaded-files-deleted"
 }
 
+resource "aws_s3_bucket_public_access_block" "uploaded_files_deleted" {
+  bucket = aws_s3_bucket.uploaded_files_deleted.id
+
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
 resource "aws_s3_bucket" "uploaded_files_temp" {
   bucket = "femiwiki-uploaded-files-temp"
+}
+
+resource "aws_s3_bucket_public_access_block" "uploaded_files_temp" {
+  bucket = aws_s3_bucket.uploaded_files_temp.id
+
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
 }
 
 resource "aws_s3_bucket" "uploaded_files_thumb" {
