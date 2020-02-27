@@ -86,3 +86,11 @@ resource "aws_route53_record" "github_challenge_femiwiki_com" {
   type    = "TXT"
   zone_id = aws_route53_zone.femiwiki_com.zone_id
 }
+
+resource "aws_route53_record" "verifybing_femiwiki_com" {
+  name    = "24475b093ea86d87f448bfcb0bbf50ee.femiwiki.com"
+  type    = "CNAME"
+  records = ["verify.bing.com"]
+  ttl     = 900
+  zone_id = aws_route53_zone.femiwiki_com.zone_id
+}
