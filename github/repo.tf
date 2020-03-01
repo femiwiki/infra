@@ -9,8 +9,9 @@ resource "github_repository" "infra" {
 }
 
 resource "github_branch_protection" "infra" {
-  repository = github_repository.infra.name
-  branch     = "master"
+  repository      = github_repository.infra.name
+  branch          = "master"
+  enforce_admins  = true
 
   required_pull_request_reviews {
     required_approving_review_count = 1
@@ -27,8 +28,8 @@ resource "github_repository" "kubernetes" {
 }
 
 resource "github_branch_protection" "kubernetes" {
-  repository = github_repository.kubernetes.name
-  branch     = "master"
+  repository  = github_repository.kubernetes.name
+  branch      = "master"
 
   required_pull_request_reviews {
     required_approving_review_count = 1
@@ -52,8 +53,9 @@ resource "github_repository" "femiwiki_skin" {
 }
 
 resource "github_branch_protection" "femiwiki_skin" {
-  repository = github_repository.femiwiki_skin.name
-  branch     = "master"
+  repository      = github_repository.femiwiki_skin.name
+  branch          = "master"
+  enforce_admins  = true
 }
 
 resource "github_repository_collaborator" "femiwiki_skin" {
@@ -100,9 +102,10 @@ resource "github_repository" "extensions" {
 }
 
 resource "github_branch_protection" "extension_protections" {
-  for_each   = local.extensions
-  repository = each.key
-  branch     = "master"
+  for_each        = local.extensions
+  repository      = each.key
+  branch          = "master"
+  enforce_admins  = true
 }
 
 resource "github_repository_collaborator" "extension_collaborators" {
@@ -129,8 +132,8 @@ resource "github_repository" "femiwiki" {
 }
 
 resource "github_branch_protection" "femiwiki" {
-  repository = github_repository.femiwiki.name
-  branch     = "master"
+  repository      = github_repository.femiwiki.name
+  branch          = "master"
 
   required_pull_request_reviews {
     required_approving_review_count = 1
@@ -154,8 +157,9 @@ resource "github_repository" "docker_mediawiki" {
 }
 
 resource "github_branch_protection" "mediawiki" {
-  repository = github_repository.docker_mediawiki.name
-  branch     = "master"
+  repository      = github_repository.docker_mediawiki.name
+  branch          = "master"
+  enforce_admins  = true
 
   required_pull_request_reviews {
     required_approving_review_count = 1
@@ -175,8 +179,9 @@ resource "github_repository" "base" {
 }
 
 resource "github_branch_protection" "base" {
-  repository = github_repository.base.name
-  branch     = "master"
+  repository      = github_repository.base.name
+  branch          = "master"
+  enforce_admins  = true
 
   required_pull_request_reviews {
     required_approving_review_count = 1
@@ -196,8 +201,9 @@ resource "github_repository" "base_extensions" {
 }
 
 resource "github_branch_protection" "base_extensions" {
-  repository = github_repository.base_extensions.name
-  branch     = "master"
+  repository      = github_repository.base_extensions.name
+  branch          = "master"
+  enforce_admins  = true
 
   required_pull_request_reviews {
     required_approving_review_count = 1
@@ -220,8 +226,9 @@ resource "github_repository" "docker_parsoid" {
 }
 
 resource "github_branch_protection" "parsoid" {
-  repository = github_repository.docker_parsoid.name
-  branch     = "master"
+  repository      = github_repository.docker_parsoid.name
+  branch          = "master"
+  enforce_admins  = true
 
   required_pull_request_reviews {
     required_approving_review_count = 1
@@ -244,8 +251,9 @@ resource "github_repository" "docker_restbase" {
 }
 
 resource "github_branch_protection" "docker_restbase" {
-  repository = github_repository.docker_restbase.name
-  branch     = "master"
+  repository      = github_repository.docker_restbase.name
+  branch          = "master"
+  enforce_admins  = true
 
   required_pull_request_reviews {
     required_approving_review_count = 1
@@ -269,8 +277,9 @@ resource "github_repository" "rankingbot" {
 }
 
 resource "github_branch_protection" "rankingbot" {
-  repository = github_repository.rankingbot.name
-  branch     = "master"
+  repository      = github_repository.rankingbot.name
+  branch          = "master"
+  enforce_admins  = true
 
   required_pull_request_reviews {
     required_approving_review_count = 1
@@ -293,8 +302,9 @@ resource "github_repository" "backupbot" {
 }
 
 resource "github_branch_protection" "backupbot" {
-  repository = github_repository.backupbot.name
-  branch     = "master"
+  repository      = github_repository.backupbot.name
+  branch          = "master"
+  enforce_admins  = true
 
   required_pull_request_reviews {
     required_approving_review_count = 1
@@ -318,8 +328,9 @@ resource "github_repository" "tweetbot" {
 }
 
 resource "github_branch_protection" "tweetbot" {
-  repository = github_repository.tweetbot.name
-  branch     = "master"
+  repository      = github_repository.tweetbot.name
+  branch          = "master"
+  enforce_admins  = true
 
   required_pull_request_reviews {
     required_approving_review_count = 1
@@ -360,8 +371,9 @@ resource "github_repository" "remote_gadgets" {
 }
 
 resource "github_branch_protection" "remote_gadgets" {
-  repository = github_repository.remote_gadgets.name
-  branch     = "master"
+  repository      = github_repository.remote_gadgets.name
+  branch          = "master"
+  enforce_admins  = true
 
   required_pull_request_reviews {
     required_approving_review_count = 1
@@ -382,8 +394,8 @@ resource "github_repository" "maintenance" {
 }
 
 resource "github_branch_protection" "maintenance" {
-  repository = github_repository.maintenance.name
-  branch     = "master"
+  repository      = github_repository.maintenance.name
+  branch          = "master"
 
   required_pull_request_reviews {
     required_approving_review_count = 1
