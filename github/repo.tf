@@ -18,6 +18,12 @@ resource "github_branch_protection" "infra" {
   }
 }
 
+resource "github_team_repository" "infra" {
+  team_id    = github_team.reviewer.id
+  repository = github_repository.infra.name
+  permission = "pull"
+}
+
 #
 # kubernetes
 #
@@ -34,6 +40,12 @@ resource "github_branch_protection" "kubernetes" {
   required_pull_request_reviews {
     required_approving_review_count = 1
   }
+}
+
+resource "github_team_repository" "kubernetes" {
+  team_id    = github_team.reviewer.id
+  repository = github_repository.kubernetes.name
+  permission = "pull"
 }
 
 #
@@ -56,6 +68,12 @@ resource "github_branch_protection" "femiwiki_skin" {
   repository     = github_repository.femiwiki_skin.name
   branch         = "master"
   enforce_admins = true
+}
+
+resource "github_team_repository" "femiwiki_skin" {
+  team_id    = github_team.reviewer.id
+  repository = github_repository.femiwiki_skin.name
+  permission = "pull"
 }
 
 resource "github_repository_collaborator" "femiwiki_skin" {
@@ -108,6 +126,13 @@ resource "github_branch_protection" "extension_protections" {
   enforce_admins = true
 }
 
+resource "github_team_repository" "extensions" {
+  for_each   = local.extensions
+  team_id    = github_team.reviewer.id
+  repository = each.key
+  permission = "pull"
+}
+
 resource "github_repository_collaborator" "extension_collaborators" {
   for_each   = local.extensions
   repository = each.key
@@ -140,6 +165,12 @@ resource "github_branch_protection" "femiwiki" {
   }
 }
 
+resource "github_team_repository" "femiwiki" {
+  team_id    = github_team.reviewer.id
+  repository = github_repository.femiwiki.name
+  permission = "pull"
+}
+
 #
 # mediawiki
 #
@@ -166,6 +197,12 @@ resource "github_branch_protection" "mediawiki" {
   }
 }
 
+resource "github_team_repository" "mediawiki" {
+  team_id    = github_team.reviewer.id
+  repository = github_repository.docker_mediawiki.name
+  permission = "pull"
+}
+
 #
 # base
 #
@@ -188,6 +225,12 @@ resource "github_branch_protection" "base" {
   }
 }
 
+resource "github_team_repository" "base" {
+  team_id    = github_team.reviewer.id
+  repository = github_repository.base.name
+  permission = "pull"
+}
+
 #
 # base extensions
 #
@@ -208,6 +251,12 @@ resource "github_branch_protection" "base_extensions" {
   required_pull_request_reviews {
     required_approving_review_count = 1
   }
+}
+
+resource "github_team_repository" "base_extensions" {
+  team_id    = github_team.reviewer.id
+  repository = github_repository.base_extensions.name
+  permission = "pull"
 }
 
 #
@@ -235,6 +284,12 @@ resource "github_branch_protection" "parsoid" {
   }
 }
 
+resource "github_team_repository" "parsoid" {
+  team_id    = github_team.reviewer.id
+  repository = github_repository.docker_parsoid.name
+  permission = "pull"
+}
+
 #
 # restbase
 #
@@ -258,6 +313,12 @@ resource "github_branch_protection" "docker_restbase" {
   required_pull_request_reviews {
     required_approving_review_count = 1
   }
+}
+
+resource "github_team_repository" "docker_restbase" {
+  team_id    = github_team.reviewer.id
+  repository = github_repository.docker_restbase.name
+  permission = "pull"
 }
 
 #
@@ -286,6 +347,12 @@ resource "github_branch_protection" "rankingbot" {
   }
 }
 
+resource "github_team_repository" "rankingbot" {
+  team_id    = github_team.reviewer.id
+  repository = github_repository.rankingbot.name
+  permission = "pull"
+}
+
 #
 # backupbot
 #
@@ -309,6 +376,12 @@ resource "github_branch_protection" "backupbot" {
   required_pull_request_reviews {
     required_approving_review_count = 1
   }
+}
+
+resource "github_team_repository" "backupbot" {
+  team_id    = github_team.reviewer.id
+  repository = github_repository.backupbot.name
+  permission = "pull"
 }
 
 #
@@ -337,6 +410,12 @@ resource "github_branch_protection" "tweetbot" {
   }
 }
 
+resource "github_team_repository" "tweetbot" {
+  team_id    = github_team.reviewer.id
+  repository = github_repository.tweetbot.name
+  permission = "pull"
+}
+
 #
 # ami
 #
@@ -356,6 +435,12 @@ resource "github_branch_protection" "ami" {
   required_pull_request_reviews {
     required_approving_review_count = 1
   }
+}
+
+resource "github_team_repository" "ami" {
+  team_id    = github_team.reviewer.id
+  repository = github_repository.ami.name
+  permission = "pull"
 }
 
 #
@@ -380,6 +465,12 @@ resource "github_branch_protection" "remote_gadgets" {
   }
 }
 
+resource "github_team_repository" "remote_gadgets" {
+  team_id    = github_team.reviewer.id
+  repository = github_repository.remote_gadgets.name
+  permission = "pull"
+}
+
 
 #
 # maintenance
@@ -400,4 +491,10 @@ resource "github_branch_protection" "maintenance" {
   required_pull_request_reviews {
     required_approving_review_count = 1
   }
+}
+
+resource "github_team_repository" "maintenance" {
+  team_id    = github_team.reviewer.id
+  repository = github_repository.maintenance.name
+  permission = "pull"
 }
