@@ -7,7 +7,7 @@ resource "tfe_workspace" "aws" {
   organization      = tfe_organization.femiwiki.id
   auto_apply        = false
   queue_all_runs    = false
-  terraform_version = "0.12.18"
+  terraform_version = "0.12.21"
   working_directory = "aws"
   vcs_repo {
     identifier         = "femiwiki/infra"
@@ -21,7 +21,7 @@ resource "tfe_workspace" "github" {
   organization      = tfe_organization.femiwiki.id
   auto_apply        = true
   queue_all_runs    = false
-  terraform_version = "0.12.18"
+  terraform_version = "0.12.21"
   working_directory = "github"
   vcs_repo {
     identifier         = "femiwiki/infra"
