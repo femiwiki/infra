@@ -1,3 +1,4 @@
 resource "github_team" "reviewer" {
-  name = "Reviewer"
+  name    = "Reviewer"
+  privacy = "closed"
 }
