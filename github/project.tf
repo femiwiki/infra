@@ -8,7 +8,8 @@ resource "github_project_column" "columns" {
     "To do",
     "In Progress",
     "Blocked",
-    "Done"
+    "Workaround",
+    "Done",
   ])
 
   project_id = github_organization_project.dev.id
