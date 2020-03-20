@@ -97,7 +97,7 @@ locals {
       description = "provide special page show category intersection"
     }
     Sanctions = {
-      description = "Offers convenient way to handle sanctions."
+      description = "🙅 Offers convenient way to handle sanctions."
     }
     AchievementBadges = {
       description = "TBD"
