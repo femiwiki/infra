@@ -65,3 +65,11 @@ resource "github_issue_label" "note" {
   color       = "0075ca"
   description = "공지사항이나 블로그 글로 문서화해야하는 이슈"
 }
+
+resource "github_issue_label" "operation" {
+  for_each    = toset(data.github_repositories.actives.names)
+  repository  = each.key
+  name        = "Operation"
+  color       = "85d659"
+  description = "점검, 인프라 작업"
+}
