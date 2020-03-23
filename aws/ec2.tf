@@ -38,7 +38,7 @@ data "aws_ami" "amazon_linux_2" {
 resource "aws_instance" "femiwiki" {
   ebs_optimized           = true
   ami                     = data.aws_ami.femiwiki_base.image_id
-  instance_type           = "t3a.micro"
+  instance_type           = "t3a.small"
   key_name                = aws_key_pair.femiwiki.key_name
   monitoring              = false
   iam_instance_profile    = aws_iam_instance_profile.femiwiki.name
