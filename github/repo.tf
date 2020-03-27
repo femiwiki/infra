@@ -187,15 +187,16 @@ resource "github_repository" "docker_mediawiki" {
   ]
 }
 
-resource "github_branch_protection" "mediawiki" {
-  repository     = github_repository.docker_mediawiki.name
-  branch         = "master"
-  enforce_admins = true
-
-  required_pull_request_reviews {
-    required_approving_review_count = 1
-  }
-}
+# https://github.com/femiwiki/infra/issues/59
+# resource "github_branch_protection" "mediawiki" {
+#   repository     = github_repository.docker_mediawiki.name
+#   branch         = "master"
+#   enforce_admins = true
+#
+#   required_pull_request_reviews {
+#     required_approving_review_count = 1
+#   }
+# }
 
 resource "github_team_repository" "mediawiki" {
   team_id    = github_team.reviewer.id
