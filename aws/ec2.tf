@@ -140,6 +140,11 @@ resource "aws_instance" "femiwiki_green" {
   }
 }
 
+resource "aws_eip" "femiwiki_green" {
+  instance = aws_instance.femiwiki_green.id
+  vpc      = true
+}
+
 resource "aws_volume_attachment" "k3s_state" {
   device_name = "/dev/xvdf"
   volume_id   = aws_ebs_volume.k3s_state.id
