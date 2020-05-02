@@ -87,6 +87,17 @@ resource "aws_route53_record" "femiwiki_com_soa" {
   zone_id = aws_route53_zone.femiwiki_com.zone_id
 }
 
+resource "aws_route53_record" "femiwiki_com_txt" {
+  name    = "femiwiki.com"
+  ttl     = 900
+  type    = "TXT"
+  zone_id = aws_route53_zone.femiwiki_com.zone_id
+  records = [
+    # Google Search Console
+    "google-site-verification=dBkD96hFbYlBf5-GsXjjownJrAGYQvUIPHPK4T9Dwko"
+  ]
+}
+
 resource "aws_route53_record" "github_challenge_femiwiki_com" {
   name    = "_github-challenge-femiwiki.femiwiki.com"
   records = ["8116bea44c"]
