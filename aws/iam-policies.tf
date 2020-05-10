@@ -241,6 +241,13 @@ resource "aws_iam_policy" "route53" {
 data "aws_iam_policy_document" "route53" {
   statement {
     actions = [
+      "sts:AssumeRole",
+    ]
+    resources = ["*"]
+  }
+
+  statement {
+    actions = [
       "route53:ListResourceRecordSets",
       "route53:ChangeResourceRecordSets",
     ]
