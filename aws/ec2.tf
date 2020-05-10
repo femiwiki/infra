@@ -156,6 +156,6 @@ resource "aws_ebs_volume" "persistent_data" {
   iops              = 0
   size              = 4
   tags = {
-    Name = "k3s state"
+    Name = "Persistent data"
   }
 }
