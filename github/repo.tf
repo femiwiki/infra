@@ -52,13 +52,14 @@ resource "github_team_repository" "kubernetes" {
 # skin
 #
 resource "github_repository" "femiwiki_skin" {
-  name          = "FemiwikiSkin"
-  description   = ":jack_o_lantern: 페미위키 스킨"
-  homepage_url  = "https://www.mediawiki.org/wiki/Special:MyLanguage/Skin:Femiwiki"
-  has_downloads = true
-  has_issues    = true
-  has_projects  = false
-  has_wiki      = false
+  name           = "FemiwikiSkin"
+  description    = ":jack_o_lantern: 페미위키 스킨"
+  homepage_url   = "https://www.mediawiki.org/wiki/Special:MyLanguage/Skin:Femiwiki"
+  default_branch = "REL1_34"
+  has_downloads  = true
+  has_issues     = true
+  has_projects   = false
+  has_wiki       = false
   topics = [
     "mediawiki-skin",
   ]
@@ -67,6 +68,12 @@ resource "github_repository" "femiwiki_skin" {
 resource "github_branch_protection" "femiwiki_skin" {
   repository = github_repository.femiwiki_skin.name
   branch     = "master"
+  # enforce_admins = true
+}
+
+resource "github_branch_protection" "femiwiki_skin_REL1_34" {
+  repository = github_repository.femiwiki_skin.name
+  branch     = "REL1_34"
   # enforce_admins = true
 }
 
@@ -106,14 +113,15 @@ locals {
 }
 
 resource "github_repository" "extensions" {
-  for_each      = local.extensions
-  name          = each.key
-  description   = each.value.description
-  homepage_url  = "https://www.mediawiki.org/wiki/Special:MyLanguage/Extension:${each.key}"
-  has_downloads = true
-  has_issues    = true
-  has_projects  = false
-  has_wiki      = false
+  for_each       = local.extensions
+  name           = each.key
+  description    = each.value.description
+  homepage_url   = "https://www.mediawiki.org/wiki/Special:MyLanguage/Extension:${each.key}"
+  default_branch = "REL1_34"
+  has_downloads  = true
+  has_issues     = true
+  has_projects   = false
+  has_wiki       = false
   topics = [
     "mediawiki-extension",
   ]
@@ -123,6 +131,13 @@ resource "github_branch_protection" "extension_protections" {
   for_each   = local.extensions
   repository = each.key
   branch     = "master"
+  # enforce_admins = true
+}
+
+resource "github_branch_protection" "extension_protections_REL1_34" {
+  for_each   = local.extensions
+  repository = each.key
+  branch     = "REL1_34"
   # enforce_admins = true
 }
 
