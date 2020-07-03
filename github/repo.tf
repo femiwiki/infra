@@ -190,10 +190,11 @@ resource "github_team_repository" "femiwiki" {
 # mediawiki
 #
 resource "github_repository" "docker_mediawiki" {
-  name          = "docker-mediawiki"
-  description   = ":whale: Dockerized Femiwiki's mediawiki server"
-  has_downloads = true
-  has_issues    = true
+  name                   = "docker-mediawiki"
+  description            = ":whale: Dockerized Femiwiki's mediawiki server"
+  has_downloads          = true
+  has_issues             = true
+  delete_branch_on_merge = true
   topics = [
     "docker-compose",
     "docker-image",
