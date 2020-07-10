@@ -5,13 +5,6 @@ resource "tfe_workspace" "aws" {
   queue_all_runs    = false
   terraform_version = "0.12.28"
   working_directory = "aws"
-  vcs_repo {
-    identifier         = "femiwiki/infra"
-    ingress_submodules = false
-
-    # See https://github.com/terraform-providers/terraform-provider-tfe/issues/147
-    oauth_token_id = ""
-  }
 }
 
 resource "tfe_workspace" "github" {
@@ -21,13 +14,6 @@ resource "tfe_workspace" "github" {
   queue_all_runs    = false
   terraform_version = "0.12.28"
   working_directory = "github"
-  vcs_repo {
-    identifier         = "femiwiki/infra"
-    ingress_submodules = false
-
-    # See https://github.com/terraform-providers/terraform-provider-tfe/issues/147
-    oauth_token_id = ""
-  }
 }
 
 resource "tfe_workspace" "terraform_cloud" {
@@ -37,11 +23,4 @@ resource "tfe_workspace" "terraform_cloud" {
   queue_all_runs    = false
   terraform_version = "0.12.28"
   working_directory = "terraform-cloud"
-  vcs_repo {
-    identifier         = "femiwiki/infra"
-    ingress_submodules = false
-
-    # See https://github.com/terraform-providers/terraform-provider-tfe/issues/147
-    oauth_token_id = ""
-  }
 }
