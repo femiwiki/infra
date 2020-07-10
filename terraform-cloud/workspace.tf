@@ -1,7 +1,3 @@
-variable "oauth_token_id" {
-  type = string
-}
-
 resource "tfe_workspace" "aws" {
   name              = "aws"
   organization      = tfe_organization.femiwiki.id
@@ -12,7 +8,9 @@ resource "tfe_workspace" "aws" {
   vcs_repo {
     identifier         = "femiwiki/infra"
     ingress_submodules = false
-    oauth_token_id     = var.oauth_token_id
+
+    # See https://github.com/terraform-providers/terraform-provider-tfe/issues/147
+    oauth_token_id = ""
   }
 }
 
@@ -26,9 +24,10 @@ resource "tfe_workspace" "github" {
   vcs_repo {
     identifier         = "femiwiki/infra"
     ingress_submodules = false
-    oauth_token_id     = var.oauth_token_id
-  }
 
+    # See https://github.com/terraform-providers/terraform-provider-tfe/issues/147
+    oauth_token_id = ""
+  }
 }
 
 resource "tfe_workspace" "terraform_cloud" {
@@ -41,7 +40,8 @@ resource "tfe_workspace" "terraform_cloud" {
   vcs_repo {
     identifier         = "femiwiki/infra"
     ingress_submodules = false
-    oauth_token_id     = var.oauth_token_id
-  }
 
+    # See https://github.com/terraform-providers/terraform-provider-tfe/issues/147
+    oauth_token_id = ""
+  }
 }
