@@ -488,6 +488,21 @@ resource "github_team_repository" "remote_gadgets" {
   permission = "pull"
 }
 
+#
+# .github
+#
+resource "github_repository" "dot_github" {
+  name          = ".github"
+  description   = "Community health files"
+  has_downloads = false
+  has_issues    = true
+}
+
+resource "github_team_repository" "dot_github" {
+  team_id    = github_team.reviewer.id
+  repository = github_repository.dot_github.name
+  permission = "pull"
+}
 
 #
 # maintenance
