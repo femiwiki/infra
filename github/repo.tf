@@ -55,7 +55,7 @@ resource "github_repository" "femiwiki_skin" {
   name           = "FemiwikiSkin"
   description    = ":jack_o_lantern: 페미위키 스킨"
   homepage_url   = "https://www.mediawiki.org/wiki/Special:MyLanguage/Skin:Femiwiki"
-  default_branch = "REL1_34"
+  default_branch = "master"
   has_downloads  = true
   has_issues     = true
   has_projects   = false
@@ -117,7 +117,7 @@ resource "github_repository" "extensions" {
   name           = each.key
   description    = each.value.description
   homepage_url   = "https://www.mediawiki.org/wiki/Special:MyLanguage/Extension:${each.key}"
-  default_branch = "REL1_34"
+  default_branch = "master"
   has_downloads  = true
   has_issues     = true
   has_projects   = false
