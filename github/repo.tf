@@ -49,6 +49,30 @@ resource "github_team_repository" "kubernetes" {
 }
 
 #
+# nomad
+#
+resource "github_repository" "nomad" {
+  name        = "nomad"
+  description = ":whale: Femiwiki nomad"
+  has_issues  = true
+}
+
+# resource "github_branch_protection" "nomad" {
+#   repository = github_repository.nomad.name
+#   branch     = "master"
+#
+#   required_pull_request_reviews {
+#     required_approving_review_count = 1
+#   }
+# }
+
+resource "github_team_repository" "nomad" {
+  team_id    = github_team.reviewer.id
+  repository = github_repository.nomad.name
+  permission = "pull"
+}
+
+#
 # skin
 #
 resource "github_repository" "femiwiki_skin" {
