@@ -250,6 +250,7 @@ resource "github_team_repository" "mediawiki" {
 resource "github_repository" "base" {
   name          = "base"
   description   = ":whale: Base docker image of https://github.com/femiwiki/mediawiki to accelerate build speed"
+  archived      = true
   has_downloads = true
   has_issues    = true
   has_wiki      = false
@@ -278,6 +279,7 @@ resource "github_team_repository" "base" {
 resource "github_repository" "base_extensions" {
   name          = "base-extensions"
   description   = ":whale: Base docker image of https://github.com/femiwiki/mediawiki to accelerate build speed"
+  archived      = true
   has_downloads = true
   has_issues    = true
   has_wiki      = false
