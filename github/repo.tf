@@ -56,7 +56,6 @@ resource "github_branch_protection" "kubernetes" {
 resource "github_team_repository" "kubernetes" {
   team_id    = github_team.reviewer.id
   repository = github_repository.kubernetes.name
-  permission = "pull"
 }
 
 #
@@ -81,7 +80,6 @@ resource "github_repository" "nomad" {
 resource "github_team_repository" "nomad" {
   team_id    = github_team.reviewer.id
   repository = github_repository.nomad.name
-  permission = "pull"
 }
 
 #
@@ -117,7 +115,6 @@ resource "github_branch_protection" "femiwiki_skin_REL" {
 resource "github_team_repository" "femiwiki_skin" {
   team_id    = github_team.reviewer.id
   repository = github_repository.femiwiki_skin.name
-  permission = "pull"
 }
 
 resource "github_repository_collaborator" "femiwiki_skin" {
@@ -204,7 +201,6 @@ resource "github_team_repository" "extensions" {
   for_each   = local.extensions
   team_id    = github_team.reviewer.id
   repository = each.key
-  permission = "pull"
 }
 
 resource "github_repository_collaborator" "extension_collaborators" {
@@ -247,7 +243,6 @@ resource "github_branch_protection" "femiwiki" {
 resource "github_team_repository" "femiwiki" {
   team_id    = github_team.reviewer.id
   repository = github_repository.femiwiki.name
-  permission = "pull"
 }
 
 #
@@ -282,7 +277,6 @@ resource "github_repository" "docker_mediawiki" {
 resource "github_team_repository" "mediawiki" {
   team_id    = github_team.reviewer.id
   repository = github_repository.docker_mediawiki.name
-  permission = "pull"
 }
 
 #
@@ -318,7 +312,6 @@ resource "github_branch_protection" "parsoid" {
 resource "github_team_repository" "parsoid" {
   team_id    = github_team.reviewer.id
   repository = github_repository.docker_parsoid.name
-  permission = "pull"
 }
 
 #
@@ -354,7 +347,6 @@ resource "github_branch_protection" "docker_restbase" {
 resource "github_team_repository" "docker_restbase" {
   team_id    = github_team.reviewer.id
   repository = github_repository.docker_restbase.name
-  permission = "pull"
 }
 
 #
@@ -391,7 +383,6 @@ resource "github_branch_protection" "rankingbot" {
 resource "github_team_repository" "rankingbot" {
   team_id    = github_team.reviewer.id
   repository = github_repository.rankingbot.name
-  permission = "pull"
 }
 
 #
@@ -427,7 +418,6 @@ resource "github_branch_protection" "backupbot" {
 resource "github_team_repository" "backupbot" {
   team_id    = github_team.reviewer.id
   repository = github_repository.backupbot.name
-  permission = "pull"
 }
 
 #
@@ -464,7 +454,6 @@ resource "github_branch_protection" "tweetbot" {
 resource "github_team_repository" "tweetbot" {
   team_id    = github_team.reviewer.id
   repository = github_repository.tweetbot.name
-  permission = "pull"
 }
 
 #
@@ -498,7 +487,6 @@ resource "github_branch_protection" "remote_gadgets" {
 resource "github_team_repository" "remote_gadgets" {
   team_id    = github_team.reviewer.id
   repository = github_repository.remote_gadgets.name
-  permission = "pull"
 }
 
 #
@@ -515,7 +503,6 @@ resource "github_repository" "dot_github" {
 resource "github_team_repository" "dot_github" {
   team_id    = github_team.reviewer.id
   repository = github_repository.dot_github.name
-  permission = "pull"
 }
 
 #
@@ -547,5 +534,4 @@ resource "github_branch_protection" "maintenance" {
 resource "github_team_repository" "maintenance" {
   team_id    = github_team.reviewer.id
   repository = github_repository.maintenance.name
-  permission = "pull"
 }
