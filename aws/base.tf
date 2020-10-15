@@ -1,5 +1,5 @@
 terraform {
-  required_version = ">= 0.13.4, < 0.14"
+  required_version = "~> 0.13.4"
 
   backend "remote" {
     organization = "femiwiki"
@@ -18,11 +18,11 @@ terraform {
 
 provider "aws" {
   region  = "ap-northeast-1"
-  version = ">= 2.30.0, < 3"
+  version = "~> 2.30"
 }
 
 provider "aws" {
   alias   = "us"
   region  = "us-east-1"
-  version = ">= 2.30.0, < 3"
+  version = "~> 2.30"
 }
