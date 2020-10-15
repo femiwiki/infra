@@ -7,6 +7,7 @@ resource "github_repository" "infra" {
   has_downloads        = true
   has_issues           = true
   vulnerability_alerts = true
+  archive_on_destroy   = true
 }
 
 resource "github_branch_protection" "infra" {
@@ -33,9 +34,10 @@ resource "github_team_repository" "infra" {
 # kubernetes
 #
 resource "github_repository" "kubernetes" {
-  name        = "kubernetes"
-  description = ":whale: Femiwiki kubernetes"
-  has_issues  = true
+  name               = "kubernetes"
+  description        = ":whale: Femiwiki kubernetes"
+  has_issues         = true
+  archive_on_destroy = true
 }
 
 resource "github_branch_protection" "kubernetes" {
@@ -61,9 +63,10 @@ resource "github_team_repository" "kubernetes" {
 # nomad
 #
 resource "github_repository" "nomad" {
-  name        = "nomad"
-  description = ":whale: Femiwiki nomad"
-  has_issues  = true
+  name               = "nomad"
+  description        = ":whale: Femiwiki nomad"
+  has_issues         = true
+  archive_on_destroy = true
 }
 
 # resource "github_branch_protection" "nomad" {
@@ -85,14 +88,15 @@ resource "github_team_repository" "nomad" {
 # skin
 #
 resource "github_repository" "femiwiki_skin" {
-  name           = "FemiwikiSkin"
-  description    = ":jack_o_lantern: 페미위키 스킨"
-  homepage_url   = "https://www.mediawiki.org/wiki/Special:MyLanguage/Skin:Femiwiki"
-  default_branch = "master"
-  has_downloads  = true
-  has_issues     = true
-  has_projects   = false
-  has_wiki       = false
+  name               = "FemiwikiSkin"
+  description        = ":jack_o_lantern: 페미위키 스킨"
+  homepage_url       = "https://www.mediawiki.org/wiki/Special:MyLanguage/Skin:Femiwiki"
+  default_branch     = "master"
+  has_downloads      = true
+  has_issues         = true
+  has_projects       = false
+  has_wiki           = false
+  archive_on_destroy = true
   topics = [
     "mediawiki-skin",
   ]
@@ -169,15 +173,16 @@ data "github_repository" "AchievementBadges" {
 }
 
 resource "github_repository" "extensions" {
-  for_each       = local.extensions
-  name           = each.key
-  description    = each.value.description
-  homepage_url   = "https://www.mediawiki.org/wiki/Special:MyLanguage/Extension:${each.key}"
-  default_branch = "master"
-  has_downloads  = true
-  has_issues     = true
-  has_projects   = false
-  has_wiki       = false
+  for_each           = local.extensions
+  name               = each.key
+  description        = each.value.description
+  homepage_url       = "https://www.mediawiki.org/wiki/Special:MyLanguage/Extension:${each.key}"
+  default_branch     = "master"
+  has_downloads      = true
+  has_issues         = true
+  has_projects       = false
+  has_wiki           = false
+  archive_on_destroy = true
   topics = [
     "mediawiki-extension",
   ]
@@ -217,12 +222,13 @@ resource "github_repository_collaborator" "extension_collaborators" {
 # femiwiki
 #
 resource "github_repository" "femiwiki" {
-  name          = "femiwiki"
-  description   = ":earth_asia: 문서화된 페미위키 기술 정보 및 이슈 트래킹 정보 제공"
-  homepage_url  = "https://femiwiki.com"
-  has_downloads = true
-  has_issues    = true
-  has_wiki      = false
+  name               = "femiwiki"
+  description        = ":earth_asia: 문서화된 페미위키 기술 정보 및 이슈 트래킹 정보 제공"
+  homepage_url       = "https://femiwiki.com"
+  has_downloads      = true
+  has_issues         = true
+  has_wiki           = false
+  archive_on_destroy = true
   topics = [
     "feminism",
     "wiki",
@@ -257,6 +263,7 @@ resource "github_repository" "docker_mediawiki" {
   has_downloads          = true
   has_issues             = true
   delete_branch_on_merge = true
+  archive_on_destroy     = true
   topics = [
     "docker-compose",
     "docker-image",
@@ -283,72 +290,15 @@ resource "github_team_repository" "mediawiki" {
 }
 
 #
-# base
-#
-resource "github_repository" "base" {
-  name          = "base"
-  description   = ":whale: Base docker image of https://github.com/femiwiki/mediawiki to accelerate build speed"
-  archived      = true
-  has_downloads = true
-  has_issues    = true
-  has_wiki      = false
-  topics        = ["docker-image"]
-}
-
-resource "github_branch_protection" "base" {
-  repository_id = github_repository.base.node_id
-  pattern       = "master"
-  # enforce_admins = true
-
-  required_pull_request_reviews {
-    required_approving_review_count = 1
-  }
-}
-
-resource "github_team_repository" "base" {
-  team_id    = github_team.reviewer.id
-  repository = github_repository.base.name
-  permission = "pull"
-}
-
-#
-# base extensions
-#
-resource "github_repository" "base_extensions" {
-  name          = "base-extensions"
-  description   = ":whale: Base docker image of https://github.com/femiwiki/mediawiki to accelerate build speed"
-  archived      = true
-  has_downloads = true
-  has_issues    = true
-  has_wiki      = false
-  topics        = ["docker-image", ]
-}
-
-resource "github_branch_protection" "base_extensions" {
-  repository_id = github_repository.base_extensions.node_id
-  pattern       = "master"
-  # enforce_admins = true
-
-  required_pull_request_reviews {
-    required_approving_review_count = 1
-  }
-}
-
-resource "github_team_repository" "base_extensions" {
-  team_id    = github_team.reviewer.id
-  repository = github_repository.base_extensions.name
-  permission = "pull"
-}
-
-#
 # parsoid
 #
 resource "github_repository" "docker_parsoid" {
-  name          = "docker-parsoid"
-  description   = ":whale: Dockerized parsoid"
-  has_downloads = true
-  has_issues    = true
-  has_wiki      = false
+  name               = "docker-parsoid"
+  description        = ":whale: Dockerized parsoid"
+  has_downloads      = true
+  has_issues         = true
+  has_wiki           = false
+  archive_on_destroy = true
   topics = [
     "docker-image",
     "parsoid",
@@ -379,11 +329,12 @@ resource "github_team_repository" "parsoid" {
 # restbase
 #
 resource "github_repository" "docker_restbase" {
-  name          = "docker-restbase"
-  description   = "📝 Dockerized RESTBase"
-  has_downloads = true
-  has_issues    = true
-  has_wiki      = false
+  name               = "docker-restbase"
+  description        = "📝 Dockerized RESTBase"
+  has_downloads      = true
+  has_issues         = true
+  has_wiki           = false
+  archive_on_destroy = true
   topics = [
     "docker-image",
     "restbase"
@@ -414,12 +365,13 @@ resource "github_team_repository" "docker_restbase" {
 # rankingbot
 #
 resource "github_repository" "rankingbot" {
-  name          = "rankingbot"
-  description   = ":robot: 랭킹봇"
-  homepage_url  = "https://femiwiki.com/w/%EC%82%AC%EC%9A%A9%EC%9E%90:%EB%9E%AD%ED%82%B9%EB%B4%87"
-  has_downloads = true
-  has_issues    = true
-  has_wiki      = false
+  name               = "rankingbot"
+  description        = ":robot: 랭킹봇"
+  homepage_url       = "https://femiwiki.com/w/%EC%82%AC%EC%9A%A9%EC%9E%90:%EB%9E%AD%ED%82%B9%EB%B4%87"
+  has_downloads      = true
+  has_issues         = true
+  has_wiki           = false
+  archive_on_destroy = true
   topics = [
     "bot",
     "docker-image",
@@ -450,11 +402,12 @@ resource "github_team_repository" "rankingbot" {
 # backupbot
 #
 resource "github_repository" "backupbot" {
-  name          = "backupbot"
-  description   = ":robot: 페미위키 MySQL 백업봇"
-  has_downloads = true
-  has_issues    = true
-  has_wiki      = false
+  name               = "backupbot"
+  description        = ":robot: 페미위키 MySQL 백업봇"
+  has_downloads      = true
+  has_issues         = true
+  has_wiki           = false
+  archive_on_destroy = true
   topics = [
     "bot",
     "docker-image",
@@ -485,12 +438,13 @@ resource "github_team_repository" "backupbot" {
 # tweetbot
 #
 resource "github_repository" "tweetbot" {
-  name          = "tweetbot"
-  description   = ":robot: 페미위키 트위터 봇"
-  homepage_url  = "https://femiwiki.com/w/%EC%82%AC%EC%9A%A9%EC%9E%90:%ED%8A%B8%EC%9C%97%EB%B4%87"
-  has_downloads = true
-  has_issues    = true
-  has_wiki      = false
+  name               = "tweetbot"
+  description        = ":robot: 페미위키 트위터 봇"
+  homepage_url       = "https://femiwiki.com/w/%EC%82%AC%EC%9A%A9%EC%9E%90:%ED%8A%B8%EC%9C%97%EB%B4%87"
+  has_downloads      = true
+  has_issues         = true
+  has_wiki           = false
+  archive_on_destroy = true
   topics = [
     "bot",
     "docker-image",
@@ -518,46 +472,16 @@ resource "github_team_repository" "tweetbot" {
 }
 
 #
-# ami
-#
-resource "github_repository" "ami" {
-  name          = "ami"
-  description   = ":package: Base AMI of Femiwiki"
-  archived      = true
-  has_downloads = true
-  has_issues    = true
-  has_wiki      = false
-}
-
-resource "github_branch_protection" "ami" {
-  repository_id     = github_repository.ami.node_id
-  pattern           = "master"
-  push_restrictions = []
-
-  required_pull_request_reviews {
-    dismiss_stale_reviews           = false
-    dismissal_restrictions          = []
-    require_code_owner_reviews      = false
-    required_approving_review_count = 1
-  }
-}
-
-resource "github_team_repository" "ami" {
-  team_id    = github_team.reviewer.id
-  repository = github_repository.ami.name
-  permission = "pull"
-}
-
-#
 # remote gadgets
 #
 resource "github_repository" "remote_gadgets" {
-  name        = "remote-gadgets"
-  description = "📽️ External repository for Javascript/CSS on FemiWiki"
-  has_issues  = true
-  has_wiki    = false
-  auto_init   = true
-  topics      = ["bot"]
+  name               = "remote-gadgets"
+  description        = "📽️ External repository for Javascript/CSS on FemiWiki"
+  has_issues         = true
+  has_wiki           = false
+  auto_init          = true
+  archive_on_destroy = true
+  topics             = ["bot"]
 }
 
 resource "github_branch_protection" "remote_gadgets" {
@@ -584,10 +508,11 @@ resource "github_team_repository" "remote_gadgets" {
 # .github
 #
 resource "github_repository" "dot_github" {
-  name          = ".github"
-  description   = "Community health files"
-  has_downloads = false
-  has_issues    = true
+  name               = ".github"
+  description        = "Community health files"
+  has_downloads      = false
+  has_issues         = true
+  archive_on_destroy = true
 }
 
 resource "github_team_repository" "dot_github" {
@@ -600,12 +525,13 @@ resource "github_team_repository" "dot_github" {
 # maintenance
 #
 resource "github_repository" "maintenance" {
-  name          = "maintenance"
-  description   = ":wrench: 페미위키 점검 페이지"
-  homepage_url  = "https://femiwiki.github.io/maintenance"
-  has_downloads = true
-  has_issues    = true
-  topics        = ["website"]
+  name               = "maintenance"
+  description        = ":wrench: 페미위키 점검 페이지"
+  homepage_url       = "https://femiwiki.github.io/maintenance"
+  has_downloads      = true
+  has_issues         = true
+  archive_on_destroy = true
+  topics             = ["website"]
 }
 
 resource "github_branch_protection" "maintenance" {
