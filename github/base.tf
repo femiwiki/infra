@@ -18,5 +18,5 @@ terraform {
 
 provider "github" {
   organization = "femiwiki"
-  version      = "~> 2.2"
+  version      = "~> 3.1"
 }
