@@ -18,11 +18,11 @@ terraform {
 
 provider "aws" {
   region  = "ap-northeast-1"
-  version = "~> 2.30"
+  version = "~> 3.10"
 }
 
 provider "aws" {
   alias   = "us"
   region  = "us-east-1"
-  version = "~> 2.30"
+  version = "~> 3.10"
 }

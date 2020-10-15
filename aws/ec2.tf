@@ -52,7 +52,6 @@ resource "aws_instance" "femiwiki" {
   root_block_device {
     delete_on_termination = true
     encrypted             = false
-    iops                  = 0
     volume_size           = 16
     volume_type           = "gp2"
   }
@@ -117,7 +116,6 @@ resource "aws_instance" "femiwiki_green" {
   root_block_device {
     delete_on_termination = true
     encrypted             = false
-    iops                  = 0
     volume_size           = 16
     volume_type           = "gp2"
   }
@@ -153,7 +151,6 @@ resource "aws_volume_attachment" "persistent_data" {
 
 resource "aws_ebs_volume" "persistent_data" {
   availability_zone = aws_instance.femiwiki_green.availability_zone
-  iops              = 0
   size              = 4
   tags = {
     Name = "Persistent data"
