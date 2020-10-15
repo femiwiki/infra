@@ -4,7 +4,6 @@
 resource "github_repository" "infra" {
   name                 = "infra"
   description          = ":evergreen_tree: Terraforming Femiwiki Infrastructure"
-  has_downloads        = true
   has_issues           = true
   vulnerability_alerts = true
   archive_on_destroy   = true
@@ -93,9 +92,7 @@ resource "github_repository" "femiwiki_skin" {
   description          = ":jack_o_lantern: 페미위키 스킨"
   homepage_url         = "https://www.mediawiki.org/wiki/Special:MyLanguage/Skin:Femiwiki"
   default_branch       = "master"
-  has_downloads        = true
   has_issues           = true
-  has_projects         = false
   has_wiki             = false
   archive_on_destroy   = true
   vulnerability_alerts = true
@@ -180,9 +177,7 @@ resource "github_repository" "extensions" {
   description          = each.value.description
   homepage_url         = "https://www.mediawiki.org/wiki/Special:MyLanguage/Extension:${each.key}"
   default_branch       = "master"
-  has_downloads        = true
   has_issues           = true
-  has_projects         = false
   has_wiki             = false
   archive_on_destroy   = true
   vulnerability_alerts = true
@@ -228,7 +223,6 @@ resource "github_repository" "femiwiki" {
   name                 = "femiwiki"
   description          = ":earth_asia: 문서화된 페미위키 기술 정보 및 이슈 트래킹 정보 제공"
   homepage_url         = "https://femiwiki.com"
-  has_downloads        = true
   has_issues           = true
   has_wiki             = false
   archive_on_destroy   = true
@@ -264,7 +258,6 @@ resource "github_team_repository" "femiwiki" {
 resource "github_repository" "docker_mediawiki" {
   name                   = "docker-mediawiki"
   description            = ":whale: Dockerized Femiwiki's mediawiki server"
-  has_downloads          = true
   has_issues             = true
   delete_branch_on_merge = true
   archive_on_destroy     = true
@@ -300,7 +293,6 @@ resource "github_team_repository" "mediawiki" {
 resource "github_repository" "docker_parsoid" {
   name                 = "docker-parsoid"
   description          = ":whale: Dockerized parsoid"
-  has_downloads        = true
   has_issues           = true
   has_wiki             = false
   archive_on_destroy   = true
@@ -337,7 +329,6 @@ resource "github_team_repository" "parsoid" {
 resource "github_repository" "docker_restbase" {
   name                 = "docker-restbase"
   description          = "📝 Dockerized RESTBase"
-  has_downloads        = true
   has_issues           = true
   has_wiki             = false
   archive_on_destroy   = true
@@ -375,7 +366,6 @@ resource "github_repository" "rankingbot" {
   name                 = "rankingbot"
   description          = ":robot: 랭킹봇"
   homepage_url         = "https://femiwiki.com/w/%EC%82%AC%EC%9A%A9%EC%9E%90:%EB%9E%AD%ED%82%B9%EB%B4%87"
-  has_downloads        = true
   has_issues           = true
   has_wiki             = false
   archive_on_destroy   = true
@@ -412,7 +402,6 @@ resource "github_team_repository" "rankingbot" {
 resource "github_repository" "backupbot" {
   name                 = "backupbot"
   description          = ":robot: 페미위키 MySQL 백업봇"
-  has_downloads        = true
   has_issues           = true
   has_wiki             = false
   archive_on_destroy   = true
@@ -450,7 +439,6 @@ resource "github_repository" "tweetbot" {
   name                 = "tweetbot"
   description          = ":robot: 페미위키 트위터 봇"
   homepage_url         = "https://femiwiki.com/w/%EC%82%AC%EC%9A%A9%EC%9E%90:%ED%8A%B8%EC%9C%97%EB%B4%87"
-  has_downloads        = true
   has_issues           = true
   has_wiki             = false
   archive_on_destroy   = true
@@ -521,7 +509,6 @@ resource "github_team_repository" "remote_gadgets" {
 resource "github_repository" "dot_github" {
   name                 = ".github"
   description          = "Community health files"
-  has_downloads        = false
   has_issues           = true
   archive_on_destroy   = true
   vulnerability_alerts = true
@@ -540,7 +527,6 @@ resource "github_repository" "maintenance" {
   name                 = "maintenance"
   description          = ":wrench: 페미위키 점검 페이지"
   homepage_url         = "https://femiwiki.github.io/maintenance"
-  has_downloads        = true
   has_issues           = true
   archive_on_destroy   = true
   vulnerability_alerts = true
