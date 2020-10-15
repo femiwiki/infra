@@ -10,6 +10,10 @@ locals {
       "mediawiki-extension",
     ],
   })
+  extension_branches = [
+    "master",
+    "REL*_*"
+  ]
 }
 
 #
@@ -26,21 +30,9 @@ resource "github_repository" "femiwiki_skin" {
 }
 
 resource "github_branch_protection" "femiwiki_skin" {
+  count             = length(local.extension_branches)
   repository_id     = github_repository.femiwiki_skin.node_id
-  pattern           = "master"
-  enforce_admins    = local.skin.enforce_admins
-  push_restrictions = local.skin.push_restrictions
-
-  required_pull_request_reviews {
-    dismiss_stale_reviews           = local.skin.dismiss_stale_reviews
-    require_code_owner_reviews      = local.skin.require_code_owner_reviews
-    required_approving_review_count = local.skin.required_approving_review_count
-  }
-}
-
-resource "github_branch_protection" "femiwiki_skin_REL" {
-  repository_id     = github_repository.femiwiki_skin.node_id
-  pattern           = "REL*"
+  pattern           = local.extension_branches[count.index]
   enforce_admins    = local.skin.enforce_admins
   push_restrictions = local.skin.push_restrictions
 
@@ -77,21 +69,9 @@ resource "github_repository" "unified_extension_for_femiwiki" {
 }
 
 resource "github_branch_protection" "unified_extension_for_femiwiki" {
+  count             = length(local.extension_branches)
   repository_id     = github_repository.unified_extension_for_femiwiki.node_id
-  pattern           = "master"
-  enforce_admins    = local.extension.enforce_admins
-  push_restrictions = local.extension.push_restrictions
-
-  required_pull_request_reviews {
-    dismiss_stale_reviews           = local.extension.dismiss_stale_reviews
-    require_code_owner_reviews      = local.extension.require_code_owner_reviews
-    required_approving_review_count = local.extension.required_approving_review_count
-  }
-}
-
-resource "github_branch_protection" "unified_extension_for_femiwiki_REL" {
-  repository_id     = github_repository.unified_extension_for_femiwiki.node_id
-  pattern           = "REL*"
+  pattern           = local.extension_branches[count.index]
   enforce_admins    = local.extension.enforce_admins
   push_restrictions = local.extension.push_restrictions
 
@@ -125,21 +105,9 @@ resource "github_repository" "faceted_category" {
 }
 
 resource "github_branch_protection" "faceted_category" {
+  count             = length(local.extension_branches)
   repository_id     = github_repository.faceted_category.node_id
-  pattern           = "master"
-  enforce_admins    = local.extension.enforce_admins
-  push_restrictions = local.extension.push_restrictions
-
-  required_pull_request_reviews {
-    dismiss_stale_reviews           = local.extension.dismiss_stale_reviews
-    require_code_owner_reviews      = local.extension.require_code_owner_reviews
-    required_approving_review_count = local.extension.required_approving_review_count
-  }
-}
-
-resource "github_branch_protection" "faceted_category_REL" {
-  repository_id     = github_repository.faceted_category.node_id
-  pattern           = "REL*"
+  pattern           = local.extension_branches[count.index]
   enforce_admins    = local.extension.enforce_admins
   push_restrictions = local.extension.push_restrictions
 
@@ -173,21 +141,9 @@ resource "github_repository" "category_intersection_search" {
 }
 
 resource "github_branch_protection" "category_intersection_search" {
+  count             = length(local.extension_branches)
   repository_id     = github_repository.category_intersection_search.node_id
-  pattern           = "master"
-  enforce_admins    = local.extension.enforce_admins
-  push_restrictions = local.extension.push_restrictions
-
-  required_pull_request_reviews {
-    dismiss_stale_reviews           = local.extension.dismiss_stale_reviews
-    require_code_owner_reviews      = local.extension.require_code_owner_reviews
-    required_approving_review_count = local.extension.required_approving_review_count
-  }
-}
-
-resource "github_branch_protection" "category_intersection_search_REL" {
-  repository_id     = github_repository.category_intersection_search.node_id
-  pattern           = "REL*"
+  pattern           = local.extension_branches[count.index]
   enforce_admins    = local.extension.enforce_admins
   push_restrictions = local.extension.push_restrictions
 
@@ -221,21 +177,9 @@ resource "github_repository" "sanctions" {
 }
 
 resource "github_branch_protection" "sanctions" {
+  count             = length(local.extension_branches)
   repository_id     = github_repository.sanctions.node_id
-  pattern           = "master"
-  enforce_admins    = local.extension.enforce_admins
-  push_restrictions = local.extension.push_restrictions
-
-  required_pull_request_reviews {
-    dismiss_stale_reviews           = local.extension.dismiss_stale_reviews
-    require_code_owner_reviews      = local.extension.require_code_owner_reviews
-    required_approving_review_count = local.extension.required_approving_review_count
-  }
-}
-
-resource "github_branch_protection" "sanctions_REL" {
-  repository_id     = github_repository.sanctions.node_id
-  pattern           = "REL*"
+  pattern           = local.extension_branches[count.index]
   enforce_admins    = local.extension.enforce_admins
   push_restrictions = local.extension.push_restrictions
 
@@ -269,21 +213,9 @@ resource "github_repository" "achievement_badges" {
 }
 
 resource "github_branch_protection" "achievement_badges" {
+  count             = length(local.extension_branches)
   repository_id     = github_repository.achievement_badges.node_id
-  pattern           = "master"
-  enforce_admins    = local.extension.enforce_admins
-  push_restrictions = local.extension.push_restrictions
-
-  required_pull_request_reviews {
-    dismiss_stale_reviews           = local.extension.dismiss_stale_reviews
-    require_code_owner_reviews      = local.extension.require_code_owner_reviews
-    required_approving_review_count = local.extension.required_approving_review_count
-  }
-}
-
-resource "github_branch_protection" "achievement_badges_REL" {
-  repository_id     = github_repository.achievement_badges.node_id
-  pattern           = "REL*"
+  pattern           = local.extension_branches[count.index]
   enforce_admins    = local.extension.enforce_admins
   push_restrictions = local.extension.push_restrictions
 
