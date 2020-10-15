@@ -1,11 +1,17 @@
 terraform {
-  required_version = ">=0.12.9, <0.13"
+  required_version = ">= 0.13.4, < 0.14"
 
   backend "remote" {
     organization = "femiwiki"
 
     workspaces {
       name = "github"
+    }
+  }
+
+  required_providers {
+    github = {
+      source = "hashicorp/github"
     }
   }
 }
