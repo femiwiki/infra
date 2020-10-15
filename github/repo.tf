@@ -109,9 +109,9 @@ resource "github_branch_protection" "femiwiki_skin" {
   push_restrictions = []
 }
 
-resource "github_branch_protection" "femiwiki_skin_REL1_34" {
+resource "github_branch_protection" "femiwiki_skin_REL" {
   repository_id = github_repository.femiwiki_skin.node_id
-  pattern       = "REL1_34"
+  pattern       = "REL*"
   # enforce_admins = true
   push_restrictions = []
 }
@@ -196,10 +196,10 @@ resource "github_branch_protection" "extension_protections" {
   # enforce_admins = true
 }
 
-resource "github_branch_protection" "extension_protections_REL1_34" {
+resource "github_branch_protection" "extension_protections_REL" {
   for_each          = local.extensions
   repository_id     = each.value.id
-  pattern           = "REL1_34"
+  pattern           = "REL*"
   push_restrictions = []
   # enforce_admins = true
 }
