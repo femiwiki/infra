@@ -107,6 +107,7 @@ resource "aws_instance" "femiwiki_green" {
   monitoring              = false
   iam_instance_profile    = aws_iam_instance_profile.femiwiki.name
   disable_api_termination = true
+  availability_zone       = aws_ebs_volume.persistent_data.availability_zone
 
   vpc_security_group_ids = [
     aws_default_security_group.default.id,
@@ -132,7 +133,7 @@ resource "aws_instance" "femiwiki_green" {
     Name = "experimental nomad server"
   }
 
-  user_data = file("res/bootstrap.sh")
+  user_data = replace(file("res/bootstrap.sh"), "PERSISTENT_DATA_VOLUME_ID", aws_ebs_volume.persistent_data.id)
 
   lifecycle {
     ignore_changes = [
@@ -148,7 +149,7 @@ resource "aws_eip" "femiwiki_green" {
 }
 
 resource "aws_ebs_volume" "persistent_data" {
-  availability_zone = aws_instance.femiwiki_green.availability_zone
+  availability_zone = "ap-northeast-1a"
   size              = 4
   tags = {
     Name = "Persistent data"

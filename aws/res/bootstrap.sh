@@ -25,6 +25,7 @@ yum install -y \
   yum-cron \
   jq \
   ripgrep \
+  unzip \
   'https://www.atoptool.nl/download/atop-2.4.0-1.x86_64.rpm'
 
 #
@@ -42,49 +43,95 @@ Defaults secure_path=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bi
 EOF
 
 #
-# k3s states EBS 마운트
+# 도커 설치
+# Reference: https://docs.aws.amazon.com/AmazonECS/latest/developerguide/docker-basics.html#install_docker
 #
-sudo mkdir -p /srv
-echo "UUID=$(blkid -s UUID -o value /dev/xvdf)  /srv  xfs  defaults,nofail  0  2" | sudo tee -a /etc/fstab
-sudo mount -a
+sudo amazon-linux-extras install -y docker=19.03.13
+sudo systemctl enable docker
+sudo usermod -a -G docker ec2-user
+# 이후 로그아웃한 뒤 재로그인
+
+# Clone Femiwiki Nomad configurations and specifications repository
+sudo -u ec2-user git clone https://github.com/femiwiki/nomad.git /home/ec2-user/nomad/
+GIT_REPO=/home/ec2-user/nomad
 
 #
-# k3s 설치
+# Nomad 설치 및 설정
+# Reference: https://learn.hashicorp.com/tutorials/nomad/production-deployment-guide-vm-with-consul
 #
-curl -sfL https://get.k3s.io |
-  INSTALL_K3S_VERSION='v1.17.4+k3s1' \
-  INSTALL_K3S_EXEC='server --write-kubeconfig-mode 644' \
-  sh
-# Reference: https://rancher.com/docs/k3s/latest/en/installation/install-options
+NOMAD_VERSION=0.12.5
+curl "https://releases.hashicorp.com/nomad/${NOMAD_VERSION}/nomad_${NOMAD_VERSION}_linux_amd64.zip" \
+    -Lo /home/ec2-user/nomad_linux_amd64.zip
+unzip /home/ec2-user/nomad_linux_amd64.zip -d /home/ec2-user
+sudo mv /home/ec2-user/nomad /usr/local/bin/nomad
+# Enable nomad autocompletion
+nomad -autocomplete-install
+complete -C /usr/local/bin/nomad nomad
+# Configure
+sudo mkdir -p /opt/nomad /etc/nomad.d
+sudo chmod 700 /etc/nomad.d
+sudo cp "${GIT_REPO}/production.hcl" /etc/nomad.d/nomad.hcl
+sudo cp "${GIT_REPO}/systemd/nomad.service" /etc/systemd/system/nomad.service
+sudo systemctl enable nomad
+sudo systemctl start nomad
 
-# Enable kubectl autocompletion
-kubectl completion bash > /etc/bash_completion.d/kubectl
+#
+# Consul 설치 및 설정
+# Reference: https://learn.hashicorp.com/tutorials/consul/deployment-guide
+#
+CONSUL_VERSION=1.8.4
+curl "https://releases.hashicorp.com/consul/${CONSUL_VERSION}/consul_${CONSUL_VERSION}_linux_amd64.zip" \
+    -Lo /home/ec2-user/consul_linux_amd64.zip
+unzip /home/ec2-user/consul_linux_amd64.zip -d /home/ec2-user
+sudo mv /home/ec2-user/consul /usr/local/bin/consul
+# Enable consul autocompletion
+consul -autocomplete-install
+complete -C /usr/bin/consul consul
+# Configure
+sudo useradd -rd /etc/consul.d -s /bin/false consul
+sudo mkdir -p /etc/consul.d /opt/consul
+sudo chown -r consul:consul /etc/consul.d
+sudo chown -r consul:consul /opt/consul
+sudo cp "${GIT_REPO}/consul/consul.hcl" /etc/consul.d/consul.hcl
+sudo chmod 640 /etc/consul.d/consul.hcl
+consul validate /etc/consul.d/consul.hcl
+sudo cp "${GIT_REPO}/systemd/consul.service" /etc/systemd/system/consul.service
+sudo systemctl enable consul
+sudo systemctl start consul
+
+#
+# Prepare stateful workloads with Container Storage Interface
+#
+cat <<'EOF' > /home/ec2-user/volume.hcl
+# volume registration
+type = "csi"
+id = "mysql"
+name = "mysql"
+external_id = "PERSISTENT_DATA_VOLUME_ID"
+access_mode = "single-node-writer"
+attachment_mode = "file-system"
+plugin_id = "aws-ebs0"
+EOF
 
 #
 # README 생성
 #
 sudo -u ec2-user tee /home/ec2-user/README <<'EOF' >/dev/null
-k3s 관련 바이너리들
+Nomad, Consul 관련 바이너리들
 
-    /usr/local/bin/k3s                k3s 바이너리
-    /usr/local/bin/k3s-killall.sh
-    /usr/local/bin/k3s-uninstall.sh
+    /usr/local/bin/nomad              nomad 바이너리
+    /usr/local/bin/consul             consul 바이너리
 
-그 외 커맨드라인 유틸리티들
+systemd 유닛 파일
 
-    /usr/local/bin/kubectl            kubernetes CLI
-    /usr/local/bin/ctr                containerd CLI
-    /usr/local/bin/crictl             CRI 클라이언트
+    /etc/systemd/system/nomad.service
+    /etc/systemd/system/consul.service
 
-k3s systemd 유닛 파일
-
-    /etc/systemd/system/k3s.service
-    /etc/systemd/system/k3s.service.env
-
-k3s 관련 파일들 위치
-
-    /var/lib/rancher/k3s                            k3s가 동적으로 생성한 데이터들
-    /etc/rancher/k3s/k3s.yaml                       kubeconfig 파일
+기타 관련 파일들 위치
+    /etc/nomad.d                                    Nomad configuration
+    /etc/consul.d                                   Consul configuration
+    /opt/nomad                                      Nomad data directory
+    /opt/consul                                     Consul data directory
 
 그 외 인스턴스가 어떻게 세팅되었는지는 아래 repo 참고
 
@@ -102,12 +149,4 @@ hide_userland_threads=1
 highlight_base_name=1
 highlight_megabytes=1
 tree_view=1
-EOF
-
-#
-# kubectl을 k로 alias
-#
-sudo -u ec2-user tee -a /home/ec2-user/.bashrc <<'EOF' >/dev/null
-alias k=kubectl
-complete -F __start_kubectl k
 EOF
