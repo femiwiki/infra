@@ -62,15 +62,14 @@ GIT_REPO=/home/ec2-user/nomad
 NOMAD_VERSION=0.12.6
 curl "https://releases.hashicorp.com/nomad/${NOMAD_VERSION}/nomad_${NOMAD_VERSION}_linux_amd64.zip" \
     -Lo /home/ec2-user/nomad_linux_amd64.zip
-unzip /home/ec2-user/nomad_linux_amd64.zip -d /home/ec2-user
-sudo mv /home/ec2-user/nomad /usr/local/bin/nomad
+unzip /home/ec2-user/nomad_linux_amd64.zip -d /usr/local/bin/
 # Enable nomad autocompletion
 nomad -autocomplete-install
 complete -C /usr/local/bin/nomad nomad
 # Configure
 sudo mkdir -p /opt/nomad /etc/nomad.d
 sudo chmod 700 /etc/nomad.d
-sudo cp "${GIT_REPO}/production.hcl" /etc/nomad.d/nomad.hcl
+sudo cp "${GIT_REPO}/nomad/production.hcl" /etc/nomad.d/nomad.hcl
 sudo cp "${GIT_REPO}/systemd/nomad.service" /etc/systemd/system/nomad.service
 sudo systemctl enable nomad
 sudo systemctl start nomad
@@ -82,22 +81,21 @@ sudo systemctl start nomad
 CONSUL_VERSION=1.8.4
 curl "https://releases.hashicorp.com/consul/${CONSUL_VERSION}/consul_${CONSUL_VERSION}_linux_amd64.zip" \
     -Lo /home/ec2-user/consul_linux_amd64.zip
-unzip /home/ec2-user/consul_linux_amd64.zip -d /home/ec2-user
-sudo mv /home/ec2-user/consul /usr/local/bin/consul
+unzip /home/ec2-user/consul_linux_amd64.zip -d /usr/local/bin/
 # Enable consul autocompletion
 consul -autocomplete-install
 complete -C /usr/bin/consul consul
 # Configure
 sudo useradd -rd /etc/consul.d -s /bin/false consul
 sudo mkdir -p /etc/consul.d /opt/consul
-sudo chown -r consul:consul /etc/consul.d
-sudo chown -r consul:consul /opt/consul
 sudo cp "${GIT_REPO}/consul/consul.hcl" /etc/consul.d/consul.hcl
 sudo chmod 640 /etc/consul.d/consul.hcl
-consul validate /etc/consul.d/consul.hcl
+sudo chown -R consul:consul /etc/consul.d
+sudo chown -R consul:consul /opt/consul
+sudo -u consul consul validate /etc/consul.d/consul.hcl
 sudo cp "${GIT_REPO}/systemd/consul.service" /etc/systemd/system/consul.service
 sudo systemctl enable consul
-sudo systemctl start consul
+sudo systemctl start consul || true
 
 #
 # Prepare stateful workloads with Container Storage Interface
