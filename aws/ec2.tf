@@ -18,7 +18,8 @@ data "aws_ami" "femiwiki_base" {
 }
 
 data "aws_ami" "amazon_linux_2" {
-  owners = ["amazon"]
+  owners      = ["amazon"]
+  most_recent = true
 
   filter {
     name   = "name"
