@@ -54,6 +54,7 @@ sudo usermod -a -G docker ec2-user
 # Clone Femiwiki Nomad configurations and specifications repository
 sudo -u ec2-user git clone https://github.com/femiwiki/nomad.git /home/ec2-user/nomad/
 GIT_REPO=/home/ec2-user/nomad
+cp "${GIT_REPO}/configs/secret.php.example" "${GIT_REPO}/configs/secret.php"
 
 #
 # Nomad 설치 및 설정
