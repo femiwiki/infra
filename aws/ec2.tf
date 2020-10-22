@@ -32,7 +32,7 @@ data "aws_ami" "amazon_linux_2" {
   }
 
   # 이 AMI로 고정함
-  name_regex = "^amzn2-ami-minimal-hvm-2.0.20191116.0-x86_64-ebs$"
+  name_regex = "^amzn2-ami-minimal-hvm-2.0.20200917.0-x86_64-ebs$"
 }
 
 # TODO: 없앨 예정
