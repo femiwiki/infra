@@ -46,7 +46,7 @@ EOF
 # 도커 설치
 # Reference: https://docs.aws.amazon.com/AmazonECS/latest/developerguide/docker-basics.html#install_docker
 #
-sudo amazon-linux-extras install -y docker=19.03.13
+sudo amazon-linux-extras install -y docker=18.09.9
 sudo systemctl enable docker
 sudo usermod -a -G docker ec2-user
 # 이후 로그아웃한 뒤 재로그인
@@ -59,7 +59,7 @@ GIT_REPO=/home/ec2-user/nomad
 # Nomad 설치 및 설정
 # Reference: https://learn.hashicorp.com/tutorials/nomad/production-deployment-guide-vm-with-consul
 #
-NOMAD_VERSION=0.12.5
+NOMAD_VERSION=0.12.6
 curl "https://releases.hashicorp.com/nomad/${NOMAD_VERSION}/nomad_${NOMAD_VERSION}_linux_amd64.zip" \
     -Lo /home/ec2-user/nomad_linux_amd64.zip
 unzip /home/ec2-user/nomad_linux_amd64.zip -d /home/ec2-user
