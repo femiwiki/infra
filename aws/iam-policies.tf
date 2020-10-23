@@ -282,3 +282,26 @@ data "aws_iam_policy_document" "upload_backup" {
     resources = ["${aws_s3_bucket.backups.arn}/*"]
   }
 }
+
+resource "aws_iam_policy" "mount_ebs_volumes" {
+  name        = "MountEbsVolumes"
+  description = "Allows to mount ebs volumes"
+
+  policy = data.aws_iam_policy_document.mount_ebs_volumes.json
+}
+
+data "aws_iam_policy_document" "mount_ebs_volumes" {
+  statement {
+    actions = [
+      "ec2:DescribeInstances",
+      "ec2:DescribeTags",
+      "ec2:DescribeVolumes",
+      "ec2:AttachVolume",
+      "ec2:DetachVolume",
+    ]
+    resources = [
+      aws_instance.femiwiki_green.arn,
+      aws_ebs_volume.persistent_data.arn
+    ]
+  }
+}
