@@ -293,9 +293,6 @@ resource "aws_iam_policy" "mount_ebs_volumes" {
 data "aws_iam_policy_document" "mount_ebs_volumes" {
   statement {
     actions = [
-      "ec2:DescribeInstances",
-      "ec2:DescribeTags",
-      "ec2:DescribeVolumes",
       "ec2:AttachVolume",
       "ec2:DetachVolume",
     ]
@@ -303,5 +300,14 @@ data "aws_iam_policy_document" "mount_ebs_volumes" {
       aws_instance.femiwiki_green.arn,
       aws_ebs_volume.persistent_data.arn
     ]
+  }
+
+  statement {
+    actions = [
+      "ec2:DescribeInstances",
+      "ec2:DescribeTags",
+      "ec2:DescribeVolumes",
+    ]
+    resources = ["*"]
   }
 }
