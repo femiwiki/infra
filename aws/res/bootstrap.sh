@@ -51,6 +51,15 @@ sudo systemctl enable docker
 sudo usermod -a -G docker ec2-user
 # 이후 로그아웃한 뒤 재로그인
 
+#
+# CNI 설치
+#
+CNI_VERSION=0.8.6
+curl -L -o cni-plugins.tgz "https://github.com/containernetworking/plugins/releases/download/v${CNI_VERSION}/cni-plugins-linux-amd64-v${CNI_VERSION}.tgz"
+sudo mkdir -p /opt/cni/bin
+sudo tar -C /opt/cni/bin -xzf cni-plugins.tgz
+rm cni-plugins.tgz
+
 # Clone Femiwiki Nomad configurations and specifications repository
 sudo -u ec2-user git clone https://github.com/femiwiki/nomad.git /home/ec2-user/nomad/
 GIT_REPO=/home/ec2-user/nomad
@@ -64,6 +73,7 @@ NOMAD_VERSION=0.12.6
 curl "https://releases.hashicorp.com/nomad/${NOMAD_VERSION}/nomad_${NOMAD_VERSION}_linux_amd64.zip" \
     -Lo /home/ec2-user/nomad_linux_amd64.zip
 unzip /home/ec2-user/nomad_linux_amd64.zip -d /usr/local/bin/
+rm /home/ec2-user/nomad_linux_amd64.zip
 # Enable nomad autocompletion
 nomad -autocomplete-install
 complete -C /usr/local/bin/nomad nomad
@@ -83,6 +93,7 @@ CONSUL_VERSION=1.8.4
 curl "https://releases.hashicorp.com/consul/${CONSUL_VERSION}/consul_${CONSUL_VERSION}_linux_amd64.zip" \
     -Lo /home/ec2-user/consul_linux_amd64.zip
 unzip /home/ec2-user/consul_linux_amd64.zip -d /usr/local/bin/
+rm /home/ec2-user/consul_linux_amd64.zip
 # Enable consul autocompletion
 consul -autocomplete-install
 complete -C /usr/bin/consul consul
