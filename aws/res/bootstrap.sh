@@ -69,7 +69,7 @@ cp "${GIT_REPO}/configs/secret.php.example" "${GIT_REPO}/configs/secret.php"
 # Nomad 설치 및 설정
 # Reference: https://learn.hashicorp.com/tutorials/nomad/production-deployment-guide-vm-with-consul
 #
-NOMAD_VERSION=0.12.6
+NOMAD_VERSION=0.12.7
 curl "https://releases.hashicorp.com/nomad/${NOMAD_VERSION}/nomad_${NOMAD_VERSION}_linux_amd64.zip" \
     -Lo /home/ec2-user/nomad_linux_amd64.zip
 unzip /home/ec2-user/nomad_linux_amd64.zip -d /usr/local/bin/
@@ -89,7 +89,7 @@ sudo systemctl start nomad
 # Consul 설치 및 설정
 # Reference: https://learn.hashicorp.com/tutorials/consul/deployment-guide
 #
-CONSUL_VERSION=1.8.4
+CONSUL_VERSION=1.8.5
 curl "https://releases.hashicorp.com/consul/${CONSUL_VERSION}/consul_${CONSUL_VERSION}_linux_amd64.zip" \
     -Lo /home/ec2-user/consul_linux_amd64.zip
 unzip /home/ec2-user/consul_linux_amd64.zip -d /usr/local/bin/
