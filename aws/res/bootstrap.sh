@@ -46,9 +46,9 @@ EOF
 # 도커 설치
 # Reference: https://docs.aws.amazon.com/AmazonECS/latest/developerguide/docker-basics.html#install_docker
 #
-sudo amazon-linux-extras install -y docker=18.09.9
-sudo systemctl enable docker
-sudo usermod -a -G docker ec2-user
+amazon-linux-extras install -y docker=18.09.9
+systemctl enable docker
+usermod -a -G docker ec2-user
 # 이후 로그아웃한 뒤 재로그인
 
 #
@@ -56,8 +56,8 @@ sudo usermod -a -G docker ec2-user
 #
 CNI_VERSION=0.8.6
 curl -L -o cni-plugins.tgz "https://github.com/containernetworking/plugins/releases/download/v${CNI_VERSION}/cni-plugins-linux-amd64-v${CNI_VERSION}.tgz"
-sudo mkdir -p /opt/cni/bin
-sudo tar -C /opt/cni/bin -xzf cni-plugins.tgz
+mkdir -p /opt/cni/bin
+tar -C /opt/cni/bin -xzf cni-plugins.tgz
 rm cni-plugins.tgz
 
 #
