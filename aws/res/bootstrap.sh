@@ -60,14 +60,8 @@ sudo mkdir -p /opt/cni/bin
 sudo tar -C /opt/cni/bin -xzf cni-plugins.tgz
 rm cni-plugins.tgz
 
-# Clone Femiwiki Nomad configurations and specifications repository
-sudo -u ec2-user git clone https://github.com/femiwiki/nomad.git /home/ec2-user/nomad/
-GIT_REPO=/home/ec2-user/nomad
-cp "${GIT_REPO}/configs/secret.php.example" "${GIT_REPO}/configs/secret.php"
-
 #
-# Nomad 설치 및 설정
-# Reference: https://learn.hashicorp.com/tutorials/nomad/production-deployment-guide-vm-with-consul
+# Nomad 설치
 #
 NOMAD_VERSION=0.12.7
 curl "https://releases.hashicorp.com/nomad/${NOMAD_VERSION}/nomad_${NOMAD_VERSION}_linux_amd64.zip" \
@@ -77,17 +71,9 @@ rm /home/ec2-user/nomad_linux_amd64.zip
 # Enable nomad autocompletion
 nomad -autocomplete-install
 complete -C /usr/local/bin/nomad nomad
-# Configure
-sudo mkdir -p /opt/nomad /etc/nomad.d
-sudo chmod 700 /etc/nomad.d
-sudo cp "${GIT_REPO}/nomad/production.hcl" /etc/nomad.d/nomad.hcl
-sudo cp "${GIT_REPO}/systemd/nomad.service" /etc/systemd/system/nomad.service
-sudo systemctl enable nomad
-sudo systemctl start nomad
 
 #
-# Consul 설치 및 설정
-# Reference: https://learn.hashicorp.com/tutorials/consul/deployment-guide
+# Consul 설치
 #
 CONSUL_VERSION=1.8.5
 curl "https://releases.hashicorp.com/consul/${CONSUL_VERSION}/consul_${CONSUL_VERSION}_linux_amd64.zip" \
@@ -97,17 +83,6 @@ rm /home/ec2-user/consul_linux_amd64.zip
 # Enable consul autocompletion
 consul -autocomplete-install
 complete -C /usr/bin/consul consul
-# Configure
-sudo useradd -rd /etc/consul.d -s /bin/false consul
-sudo mkdir -p /etc/consul.d /opt/consul
-sudo cp "${GIT_REPO}/consul/consul.hcl" /etc/consul.d/consul.hcl
-sudo chmod 640 /etc/consul.d/consul.hcl
-sudo chown -R consul:consul /etc/consul.d
-sudo chown -R consul:consul /opt/consul
-sudo -u consul consul validate /etc/consul.d/consul.hcl
-sudo cp "${GIT_REPO}/systemd/consul.service" /etc/systemd/system/consul.service
-sudo systemctl enable consul
-sudo systemctl start consul || true
 
 #
 # Prepare stateful workloads with Container Storage Interface
@@ -122,6 +97,13 @@ access_mode = "single-node-writer"
 attachment_mode = "file-system"
 plugin_id = "aws-ebs0"
 EOF
+
+#
+# Clone Femiwiki Nomad configurations and specifications repository
+#
+sudo -u ec2-user git clone https://github.com/femiwiki/nomad.git /home/ec2-user/nomad/
+# Configure Nomad, Consul and systemd
+/home/ec2-user/nomad/up
 
 #
 # README 생성
