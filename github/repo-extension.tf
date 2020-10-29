@@ -11,7 +11,9 @@ locals {
     ],
   })
   extension_branches = [
-    "master",
+    # Cannot protect translatable branches now.
+    # See https://phabricator.wikimedia.org/T235938#5592510 for detail.
+    # "master",
     "REL*_*"
   ]
 }
