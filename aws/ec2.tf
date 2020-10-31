@@ -52,7 +52,7 @@ resource "aws_instance" "femiwiki" {
   root_block_device {
     delete_on_termination = true
     encrypted             = false
-    volume_size           = 16
+    volume_size           = 24
     volume_type           = "gp2"
   }
 
