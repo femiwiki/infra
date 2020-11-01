@@ -143,12 +143,6 @@ resource "aws_eip" "femiwiki_green" {
   vpc      = true
 }
 
-resource "aws_volume_attachment" "persistent_data" {
-  device_name = "/dev/xvdf"
-  volume_id   = aws_ebs_volume.persistent_data.id
-  instance_id = aws_instance.femiwiki_green.id
-}
-
 resource "aws_ebs_volume" "persistent_data" {
   availability_zone = aws_instance.femiwiki_green.availability_zone
   size              = 4
