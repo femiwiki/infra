@@ -246,6 +246,39 @@ resource "github_team_repository" "docker_restbase" {
 }
 
 #
+# restbase
+#
+resource "github_repository" "docker_mathoid" {
+  name                 = "docker-mathoid"
+  description          = "📝 Dockerized Mathoid"
+  has_issues           = local.docker.has_issues
+  vulnerability_alerts = local.docker.vulnerability_alerts
+  archive_on_destroy   = local.docker.archive_on_destroy
+  topics = [
+    "docker-image",
+    "mathoid"
+  ]
+}
+
+resource "github_branch_protection" "docker_mathoid" {
+  repository_id     = github_repository.docker_mathoid.node_id
+  pattern           = "master"
+  enforce_admins    = local.docker.enforce_admins
+  push_restrictions = local.docker.push_restrictions
+
+  required_pull_request_reviews {
+    dismiss_stale_reviews           = local.docker.dismiss_stale_reviews
+    require_code_owner_reviews      = local.docker.require_code_owner_reviews
+    required_approving_review_count = local.docker.required_approving_review_count
+  }
+}
+
+resource "github_team_repository" "docker_mathoid" {
+  team_id    = github_team.reviewer.id
+  repository = github_repository.docker_mathoid.name
+}
+
+#
 # rankingbot
 #
 resource "github_repository" "rankingbot" {
