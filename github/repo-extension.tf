@@ -206,7 +206,7 @@ resource "github_repository_collaborator" "sanctions" {
 
 resource "github_repository" "achievement_badges" {
   name                 = "AchievementBadges"
-  description          = "TBD"
+  description          = ":1st_place_medal: Provides an achievement system"
   homepage_url         = "https://www.mediawiki.org/wiki/Special:MyLanguage/Extension:AchievementBadges"
   has_issues           = local.extension.has_issues
   vulnerability_alerts = local.extension.vulnerability_alerts
