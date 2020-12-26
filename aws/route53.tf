@@ -113,3 +113,16 @@ resource "aws_route53_record" "verifybing_femiwiki_com" {
   ttl     = 900
   zone_id = aws_route53_zone.femiwiki_com.zone_id
 }
+
+resource "aws_route53_health_check" "femiwiki_main_page" {
+  fqdn              = "femiwiki.com"
+  port              = 443
+  type              = "HTTPS"
+  failure_threshold = 3
+  request_interval  = 30
+  resource_path     = "/w/%ED%8E%98%EB%AF%B8%EC%9C%84%ED%82%A4:%EB%8C%80%EB%AC%B8"
+
+  tags = {
+    "Name" = "Femiwiki Main Page"
+  }
+}
