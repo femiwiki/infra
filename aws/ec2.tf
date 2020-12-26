@@ -128,6 +128,10 @@ resource "aws_instance" "femiwiki_green" {
     Name = "femiwiki"
   }
 
+  volume_tags = {
+    Name = "femiwiki"
+  }
+
   user_data = file("res/bootstrap.sh")
 
   lifecycle {
