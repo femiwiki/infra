@@ -460,33 +460,34 @@ resource "github_team_repository" "dot_github" {
 
 #
 # legunto
+# Commented because of https://github.com/femiwiki/infra/issues/78
 #
-resource "github_repository" "legunto" {
-  name                 = "legunto"
-  description          = "Fetch MediaWiki Scribunto modules from wikis"
-  default_branch       = local.default_repo.default_branch
-  has_issues           = local.default_repo.has_issues
-  vulnerability_alerts = local.default_repo.vulnerability_alerts
-  archive_on_destroy   = local.default_repo.archive_on_destroy
-}
+# resource "github_repository" "legunto" {
+#   name                 = "legunto"
+#   description          = "Fetch MediaWiki Scribunto modules from wikis"
+#   default_branch       = local.default_repo.default_branch
+#   has_issues           = local.default_repo.has_issues
+#   vulnerability_alerts = local.default_repo.vulnerability_alerts
+#   archive_on_destroy   = local.default_repo.archive_on_destroy
+# }
 
-resource "github_branch_protection" "legunto" {
-  repository_id     = github_repository.legunto.node_id
-  pattern           = local.default_repo.pattern
-  enforce_admins    = local.default_repo.enforce_admins
-  push_restrictions = local.default_repo.push_restrictions
+# resource "github_branch_protection" "legunto" {
+#   repository_id     = github_repository.legunto.node_id
+#   pattern           = local.default_repo.pattern
+#   enforce_admins    = local.default_repo.enforce_admins
+#   push_restrictions = local.default_repo.push_restrictions
 
-  required_pull_request_reviews {
-    dismiss_stale_reviews           = local.default_repo.dismiss_stale_reviews
-    require_code_owner_reviews      = local.default_repo.require_code_owner_reviews
-    required_approving_review_count = local.default_repo.required_approving_review_count
-  }
-}
+#   required_pull_request_reviews {
+#     dismiss_stale_reviews           = local.default_repo.dismiss_stale_reviews
+#     require_code_owner_reviews      = local.default_repo.require_code_owner_reviews
+#     required_approving_review_count = local.default_repo.required_approving_review_count
+#   }
+# }
 
-resource "github_team_repository" "legunto" {
-  team_id    = github_team.reviewer.id
-  repository = github_repository.legunto.name
-}
+# resource "github_team_repository" "legunto" {
+#   team_id    = github_team.reviewer.id
+#   repository = github_repository.legunto.name
+# }
 
 #
 # maintenance
