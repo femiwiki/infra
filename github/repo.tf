@@ -6,6 +6,7 @@ locals {
     archive_on_destroy   = true,
 
     # branch_protection
+    pattern                         = "master"
     push_restrictions               = [],
     enforce_admins                  = false,
     dismiss_stale_reviews           = false,
@@ -17,7 +18,9 @@ locals {
     enforce_admins = false,
   })
   docker = local.default_repo
-  bot    = local.default_repo
+  bot = merge(local.with_cd, {
+    pattern = "main"
+  })
 }
 
 #
@@ -296,7 +299,7 @@ resource "github_repository" "rankingbot" {
 
 resource "github_branch_protection" "rankingbot" {
   repository_id     = github_repository.rankingbot.node_id
-  pattern           = "master"
+  pattern           = local.bot.pattern
   enforce_admins    = local.bot.enforce_admins
   push_restrictions = local.bot.push_restrictions
 
@@ -329,7 +332,7 @@ resource "github_repository" "backupbot" {
 
 resource "github_branch_protection" "backupbot" {
   repository_id     = github_repository.backupbot.node_id
-  pattern           = "master"
+  pattern           = local.bot.pattern
   enforce_admins    = local.bot.enforce_admins
   push_restrictions = local.bot.push_restrictions
 
@@ -363,7 +366,7 @@ resource "github_repository" "tweetbot" {
 
 resource "github_branch_protection" "tweetbot" {
   repository_id     = github_repository.tweetbot.node_id
-  pattern           = "master"
+  pattern           = local.bot.pattern
   enforce_admins    = local.bot.enforce_admins
   push_restrictions = local.bot.push_restrictions
 
@@ -393,7 +396,7 @@ resource "github_repository" "remote_gadgets" {
 
 resource "github_branch_protection" "remote_gadgets" {
   repository_id     = github_repository.remote_gadgets.node_id
-  pattern           = "master"
+  pattern           = "main"
   enforce_admins    = local.default_repo.enforce_admins
   push_restrictions = local.default_repo.push_restrictions
 
@@ -420,6 +423,19 @@ resource "github_repository" "dot_github" {
   archive_on_destroy   = local.default_repo.archive_on_destroy
 }
 
+resource "github_branch_protection" "dot_github" {
+  repository_id     = github_repository.dot_github.node_id
+  pattern           = "main"
+  enforce_admins    = local.default_repo.enforce_admins
+  push_restrictions = local.default_repo.push_restrictions
+
+  required_pull_request_reviews {
+    dismiss_stale_reviews           = local.default_repo.dismiss_stale_reviews
+    require_code_owner_reviews      = local.default_repo.require_code_owner_reviews
+    required_approving_review_count = local.default_repo.required_approving_review_count
+  }
+}
+
 resource "github_team_repository" "dot_github" {
   team_id    = github_team.reviewer.id
   repository = github_repository.dot_github.name
@@ -440,7 +456,7 @@ resource "github_repository" "maintenance" {
 
 resource "github_branch_protection" "maintenance" {
   repository_id     = github_repository.maintenance.node_id
-  pattern           = "master"
+  pattern           = "main"
   enforce_admins    = local.default_repo.enforce_admins
   push_restrictions = local.default_repo.push_restrictions
 
