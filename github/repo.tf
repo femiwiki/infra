@@ -1,12 +1,13 @@
 locals {
   default_repo = {
     # repository
+    default_branch       = "main",
     has_issues           = true,
     vulnerability_alerts = true,
     archive_on_destroy   = true,
 
     # branch_protection
-    pattern                         = "master"
+    pattern                         = "main"
     push_restrictions               = [],
     enforce_admins                  = false,
     dismiss_stale_reviews           = false,
@@ -17,10 +18,13 @@ locals {
     # enforce_admins is temporarily disabled due to too few development members.
     enforce_admins = false,
   })
-  docker = local.default_repo
-  bot = merge(local.with_cd, {
-    pattern = "main"
+  docker = merge(local.default_repo, {
+    # enforce_admins is temporarily disabled due to too few development members.
+    enforce_admins = false,
+    default_branch = "master",
+    pattern        = "master"
   })
+  bot = local.with_cd
 }
 
 #
@@ -29,6 +33,7 @@ locals {
 resource "github_repository" "infra" {
   name                 = "infra"
   description          = ":evergreen_tree: Terraforming Femiwiki Infrastructure"
+  default_branch       = "master"
   has_issues           = local.with_cd.has_issues
   vulnerability_alerts = local.with_cd.vulnerability_alerts
   archive_on_destroy   = local.with_cd.archive_on_destroy
@@ -58,6 +63,7 @@ resource "github_team_repository" "infra" {
 resource "github_repository" "kubernetes" {
   name                 = "kubernetes"
   description          = ":whale: Femiwiki kubernetes"
+  default_branch       = local.with_cd.default_branch
   has_issues           = local.with_cd.has_issues
   vulnerability_alerts = local.with_cd.vulnerability_alerts
   archive_on_destroy   = local.with_cd.archive_on_destroy
@@ -65,7 +71,7 @@ resource "github_repository" "kubernetes" {
 
 resource "github_branch_protection" "kubernetes" {
   repository_id     = github_repository.kubernetes.node_id
-  pattern           = "master"
+  pattern           = local.with_cd.pattern
   enforce_admins    = local.with_cd.enforce_admins
   push_restrictions = local.with_cd.push_restrictions
 
@@ -87,6 +93,7 @@ resource "github_team_repository" "kubernetes" {
 resource "github_repository" "nomad" {
   name                 = "nomad"
   description          = ":whale: Femiwiki nomad"
+  default_branch       = "master"
   has_issues           = local.with_cd.has_issues
   vulnerability_alerts = local.with_cd.vulnerability_alerts
   archive_on_destroy   = local.with_cd.archive_on_destroy
@@ -117,6 +124,7 @@ resource "github_repository" "femiwiki" {
   name                 = "femiwiki"
   description          = ":earth_asia: 문서화된 페미위키 기술 정보 및 이슈 트래킹 정보 제공"
   homepage_url         = "https://femiwiki.com"
+  default_branch       = local.default_repo.default_branch
   has_issues           = local.default_repo.has_issues
   vulnerability_alerts = local.default_repo.vulnerability_alerts
   archive_on_destroy   = local.default_repo.archive_on_destroy
@@ -129,7 +137,7 @@ resource "github_repository" "femiwiki" {
 
 resource "github_branch_protection" "femiwiki" {
   repository_id     = github_repository.femiwiki.node_id
-  pattern           = "master"
+  pattern           = local.default_repo.pattern
   enforce_admins    = local.default_repo.enforce_admins
   push_restrictions = local.default_repo.push_restrictions
 
@@ -152,9 +160,10 @@ resource "github_repository" "docker_mediawiki" {
   name                   = "docker-mediawiki"
   description            = ":whale: Dockerized Femiwiki's mediawiki server"
   delete_branch_on_merge = true
-  has_issues             = local.with_cd.has_issues
-  vulnerability_alerts   = local.with_cd.vulnerability_alerts
-  archive_on_destroy     = local.with_cd.archive_on_destroy
+  default_branch         = local.docker.default_branch
+  has_issues             = local.docker.has_issues
+  vulnerability_alerts   = local.docker.vulnerability_alerts
+  archive_on_destroy     = local.docker.archive_on_destroy
   topics = [
     "docker-compose",
     "docker-image",
@@ -165,7 +174,7 @@ resource "github_repository" "docker_mediawiki" {
 
 resource "github_branch_protection" "mediawiki" {
   repository_id = github_repository.docker_mediawiki.node_id
-  pattern       = "master"
+  pattern       = local.docker.pattern
   # Disabled for https://github.com/femiwiki/infra/issues/59
   enforce_admins    = false
   push_restrictions = local.docker.push_restrictions
@@ -188,6 +197,7 @@ resource "github_team_repository" "mediawiki" {
 resource "github_repository" "docker_parsoid" {
   name                 = "docker-parsoid"
   description          = ":whale: Dockerized parsoid"
+  default_branch       = local.docker.default_branch
   has_issues           = local.docker.has_issues
   vulnerability_alerts = local.docker.vulnerability_alerts
   archive_on_destroy   = local.docker.archive_on_destroy
@@ -199,7 +209,7 @@ resource "github_repository" "docker_parsoid" {
 
 resource "github_branch_protection" "parsoid" {
   repository_id     = github_repository.docker_parsoid.node_id
-  pattern           = "master"
+  pattern           = local.docker.pattern
   enforce_admins    = local.docker.enforce_admins
   push_restrictions = local.docker.push_restrictions
 
@@ -221,6 +231,7 @@ resource "github_team_repository" "parsoid" {
 resource "github_repository" "docker_restbase" {
   name                 = "docker-restbase"
   description          = "📝 Dockerized RESTBase"
+  default_branch       = local.docker.default_branch
   has_issues           = local.docker.has_issues
   vulnerability_alerts = local.docker.vulnerability_alerts
   archive_on_destroy   = local.docker.archive_on_destroy
@@ -232,7 +243,7 @@ resource "github_repository" "docker_restbase" {
 
 resource "github_branch_protection" "docker_restbase" {
   repository_id     = github_repository.docker_restbase.node_id
-  pattern           = "master"
+  pattern           = local.docker.pattern
   enforce_admins    = local.docker.enforce_admins
   push_restrictions = local.docker.push_restrictions
 
@@ -254,6 +265,7 @@ resource "github_team_repository" "docker_restbase" {
 resource "github_repository" "docker_mathoid" {
   name                 = "docker-mathoid"
   description          = "📝 Dockerized Mathoid"
+  default_branch       = local.docker.default_branch
   has_issues           = local.docker.has_issues
   vulnerability_alerts = local.docker.vulnerability_alerts
   archive_on_destroy   = local.docker.archive_on_destroy
@@ -265,7 +277,7 @@ resource "github_repository" "docker_mathoid" {
 
 resource "github_branch_protection" "docker_mathoid" {
   repository_id     = github_repository.docker_mathoid.node_id
-  pattern           = "master"
+  pattern           = local.docker.pattern
   enforce_admins    = local.docker.enforce_admins
   push_restrictions = local.docker.push_restrictions
 
@@ -288,6 +300,7 @@ resource "github_repository" "rankingbot" {
   name                 = "rankingbot"
   description          = ":robot: 랭킹봇"
   homepage_url         = "https://femiwiki.com/w/%EC%82%AC%EC%9A%A9%EC%9E%90:%EB%9E%AD%ED%82%B9%EB%B4%87"
+  default_branch       = local.bot.default_branch
   has_issues           = local.bot.has_issues
   vulnerability_alerts = local.bot.vulnerability_alerts
   archive_on_destroy   = local.bot.archive_on_destroy
@@ -321,6 +334,7 @@ resource "github_team_repository" "rankingbot" {
 resource "github_repository" "backupbot" {
   name                 = "backupbot"
   description          = ":robot: 페미위키 MySQL 백업봇"
+  default_branch       = local.bot.default_branch
   has_issues           = local.bot.has_issues
   vulnerability_alerts = local.bot.vulnerability_alerts
   archive_on_destroy   = local.bot.archive_on_destroy
@@ -355,6 +369,7 @@ resource "github_repository" "tweetbot" {
   name                 = "tweetbot"
   description          = ":robot: 페미위키 트위터 봇"
   homepage_url         = "https://femiwiki.com/w/%EC%82%AC%EC%9A%A9%EC%9E%90:%ED%8A%B8%EC%9C%97%EB%B4%87"
+  default_branch       = local.bot.default_branch
   has_issues           = local.bot.has_issues
   vulnerability_alerts = local.bot.vulnerability_alerts
   archive_on_destroy   = local.bot.archive_on_destroy
@@ -388,6 +403,7 @@ resource "github_team_repository" "tweetbot" {
 resource "github_repository" "remote_gadgets" {
   name                 = "remote-gadgets"
   description          = "📽️ External repository for Javascript/CSS on FemiWiki"
+  default_branch       = local.default_repo.default_branch
   has_issues           = local.default_repo.has_issues
   vulnerability_alerts = local.default_repo.vulnerability_alerts
   archive_on_destroy   = local.default_repo.archive_on_destroy
@@ -396,7 +412,7 @@ resource "github_repository" "remote_gadgets" {
 
 resource "github_branch_protection" "remote_gadgets" {
   repository_id     = github_repository.remote_gadgets.node_id
-  pattern           = "main"
+  pattern           = local.default_repo.pattern
   enforce_admins    = local.default_repo.enforce_admins
   push_restrictions = local.default_repo.push_restrictions
 
@@ -418,6 +434,7 @@ resource "github_team_repository" "remote_gadgets" {
 resource "github_repository" "dot_github" {
   name                 = ".github"
   description          = "Community health files"
+  default_branch       = local.default_repo.default_branch
   has_issues           = local.default_repo.has_issues
   vulnerability_alerts = local.default_repo.vulnerability_alerts
   archive_on_destroy   = local.default_repo.archive_on_destroy
@@ -425,7 +442,7 @@ resource "github_repository" "dot_github" {
 
 resource "github_branch_protection" "dot_github" {
   repository_id     = github_repository.dot_github.node_id
-  pattern           = "main"
+  pattern           = local.default_repo.pattern
   enforce_admins    = local.default_repo.enforce_admins
   push_restrictions = local.default_repo.push_restrictions
 
@@ -448,6 +465,7 @@ resource "github_repository" "maintenance" {
   name                 = "maintenance"
   description          = ":wrench: 페미위키 점검 페이지"
   homepage_url         = "https://femiwiki.github.io/maintenance"
+  default_branch       = local.default_repo.default_branch
   has_issues           = local.default_repo.has_issues
   vulnerability_alerts = local.default_repo.vulnerability_alerts
   archive_on_destroy   = local.default_repo.archive_on_destroy
@@ -456,7 +474,7 @@ resource "github_repository" "maintenance" {
 
 resource "github_branch_protection" "maintenance" {
   repository_id     = github_repository.maintenance.node_id
-  pattern           = "main"
+  pattern           = local.default_repo.pattern
   enforce_admins    = local.default_repo.enforce_admins
   push_restrictions = local.default_repo.push_restrictions
 
