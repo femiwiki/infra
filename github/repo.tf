@@ -33,7 +33,7 @@ locals {
 resource "github_repository" "infra" {
   name                 = "infra"
   description          = ":evergreen_tree: Terraforming Femiwiki Infrastructure"
-  default_branch       = "master"
+  default_branch       = local.with_cd.default_branch
   has_issues           = local.with_cd.has_issues
   vulnerability_alerts = local.with_cd.vulnerability_alerts
   archive_on_destroy   = local.with_cd.archive_on_destroy
@@ -41,7 +41,7 @@ resource "github_repository" "infra" {
 
 resource "github_branch_protection" "infra" {
   repository_id     = github_repository.infra.node_id
-  pattern           = "master"
+  pattern           = local.with_cd.pattern
   enforce_admins    = local.with_cd.enforce_admins
   push_restrictions = local.with_cd.push_restrictions
 
