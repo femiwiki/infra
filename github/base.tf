@@ -1,5 +1,5 @@
 terraform {
-  required_version = "~> 0.13.4"
+  required_version = "~> 0.14.0"
 
   backend "remote" {
     organization = "femiwiki"
@@ -11,12 +11,12 @@ terraform {
 
   required_providers {
     github = {
-      source = "hashicorp/github"
+      source  = "hashicorp/github"
+      version = "~> 3.1"
     }
   }
 }
 
 provider "github" {
   organization = "femiwiki"
-  version      = "~> 3.1"
 }
