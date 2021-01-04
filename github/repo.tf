@@ -21,8 +21,6 @@ locals {
   docker = merge(local.default_repo, {
     # enforce_admins is temporarily disabled due to too few development members.
     enforce_admins = false,
-    default_branch = "master",
-    pattern        = "master"
   })
   bot = local.with_cd
 }
