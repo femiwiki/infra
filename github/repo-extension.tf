@@ -13,7 +13,7 @@ locals {
   extension_branches = [
     # Cannot protect translatable branches now.
     # See https://phabricator.wikimedia.org/T235938#5592510 for detail.
-    # "master",
+    # "main",
     "REL*_*"
   ]
 }
@@ -24,6 +24,7 @@ locals {
 resource "github_repository" "femiwiki_skin" {
   name                 = "FemiwikiSkin"
   description          = ":jack_o_lantern: 페미위키 스킨"
+  default_branch       = local.skin.default_branch
   homepage_url         = "https://www.mediawiki.org/wiki/Special:MyLanguage/Skin:Femiwiki"
   has_issues           = local.skin.has_issues
   vulnerability_alerts = local.skin.vulnerability_alerts
@@ -99,6 +100,7 @@ resource "github_repository_collaborator" "unified_extension_for_femiwiki" {
 resource "github_repository" "faceted_category" {
   name                 = "FacetedCategory"
   description          = "FacetedCategories extension"
+  default_branch       = local.extension.default_branch
   homepage_url         = "https://www.mediawiki.org/wiki/Special:MyLanguage/Extension:FacetedCategory"
   has_issues           = local.extension.has_issues
   vulnerability_alerts = local.extension.vulnerability_alerts
@@ -135,6 +137,7 @@ resource "github_repository_collaborator" "faceted_category" {
 resource "github_repository" "category_intersection_search" {
   name                 = "CategoryIntersectionSearch"
   description          = "provide special page show category intersection"
+  default_branch       = local.extension.default_branch
   homepage_url         = "https://www.mediawiki.org/wiki/Special:MyLanguage/Extension:CategoryIntersectionSearch"
   has_issues           = local.extension.has_issues
   vulnerability_alerts = local.extension.vulnerability_alerts
@@ -171,6 +174,7 @@ resource "github_repository_collaborator" "category_intersection_search" {
 resource "github_repository" "sanctions" {
   name                 = "Sanctions"
   description          = "🙅 Offers convenient way to handle sanctions."
+  default_branch       = local.extension.default_branch
   homepage_url         = "https://www.mediawiki.org/wiki/Special:MyLanguage/Extension:Sanctions"
   has_issues           = local.extension.has_issues
   vulnerability_alerts = local.extension.vulnerability_alerts
@@ -207,6 +211,7 @@ resource "github_repository_collaborator" "sanctions" {
 resource "github_repository" "achievement_badges" {
   name                 = "AchievementBadges"
   description          = ":1st_place_medal: Provides an achievement system"
+  default_branch       = local.extension.default_branch
   homepage_url         = "https://www.mediawiki.org/wiki/Special:MyLanguage/Extension:AchievementBadges"
   has_issues           = local.extension.has_issues
   vulnerability_alerts = local.extension.vulnerability_alerts
