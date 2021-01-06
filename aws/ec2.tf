@@ -61,11 +61,11 @@ resource "aws_instance" "femiwiki" {
   }
 
   tags = {
-    Name = "femiwiki (old)"
+    Name = "main server"
   }
 
   volume_tags = {
-    Name = "femiwiki"
+    Name = "main server"
   }
 
   user_data = <<EOF
@@ -125,11 +125,11 @@ resource "aws_instance" "femiwiki_green" {
   }
 
   tags = {
-    Name = "femiwiki"
+    Name = "experimental nomad server"
   }
 
   volume_tags = {
-    Name = "femiwiki"
+    Name = "experimental nomad server"
   }
 
   user_data = file("res/bootstrap.sh")
