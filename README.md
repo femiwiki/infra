@@ -5,7 +5,7 @@ Femiwiki Infra
 페미위키의 AWS 인프라가 정의되어있는 테라폼 코드입니다.
 
 ### Prerequisites
-- Terraform 0.12
+- Terraform
 - [Terraform Cloud] 계정
 
 ### Instructions
