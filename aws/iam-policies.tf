@@ -206,14 +206,31 @@ resource "aws_iam_policy" "amazon_s3_access" {
   policy = data.aws_iam_policy_document.amazon_s3_access.json
 }
 
+# Workaround of unnecessary change proposal issue. See references for the
+# further details.
+#
+# References:
+#   https://github.com/hashicorp/terraform/issues/27171#issuecomment-740249394
+#   https://github.com/hashicorp/terraform/issues/27282
+locals {
+  uploaded_files         = aws_s3_bucket.uploaded_files.arn
+  uploaded_files_thumb   = aws_s3_bucket.uploaded_files_thumb.arn
+  uploaded_files_temp    = aws_s3_bucket.uploaded_files_temp.arn
+  uploaded_files_deleted = aws_s3_bucket.uploaded_files_deleted.arn
+  backups                = aws_s3_bucket.backups.arn
+
+  femiwiki_green  = aws_instance.femiwiki_green.arn
+  persistent_data = aws_ebs_volume.persistent_data.arn
+}
+
 data "aws_iam_policy_document" "amazon_s3_access" {
   statement {
     actions = ["s3:*"]
     resources = [
-      "${aws_s3_bucket.uploaded_files.arn}/*",
-      "${aws_s3_bucket.uploaded_files_thumb.arn}/*",
-      "${aws_s3_bucket.uploaded_files_temp.arn}/*",
-      "${aws_s3_bucket.uploaded_files_deleted.arn}/*",
+      "${local.uploaded_files}/*",
+      "${local.uploaded_files_thumb}/*",
+      "${local.uploaded_files_temp}/*",
+      "${local.uploaded_files_deleted}/*",
     ]
   }
 
@@ -223,10 +240,10 @@ data "aws_iam_policy_document" "amazon_s3_access" {
       "s3:List*"
     ]
     resources = [
-      aws_s3_bucket.uploaded_files.arn,
-      aws_s3_bucket.uploaded_files_thumb.arn,
-      aws_s3_bucket.uploaded_files_temp.arn,
-      aws_s3_bucket.uploaded_files_deleted.arn
+      local.uploaded_files,
+      local.uploaded_files_thumb,
+      local.uploaded_files_temp,
+      local.uploaded_files_deleted,
     ]
   }
 }
@@ -279,7 +296,7 @@ resource "aws_iam_policy" "upload_backup" {
 data "aws_iam_policy_document" "upload_backup" {
   statement {
     actions   = ["s3:PutObject"]
-    resources = ["${aws_s3_bucket.backups.arn}/*"]
+    resources = ["${local.backups}/*"]
   }
 }
 
@@ -297,8 +314,8 @@ data "aws_iam_policy_document" "mount_ebs_volumes" {
       "ec2:DetachVolume",
     ]
     resources = [
-      aws_instance.femiwiki_green.arn,
-      aws_ebs_volume.persistent_data.arn
+      local.femiwiki_green,
+      local.persistent_data,
     ]
   }
 

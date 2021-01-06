@@ -74,7 +74,7 @@ data "aws_iam_policy_document" "uploaded_files" {
       identifiers = ["*"]
     }
 
-    resources = ["${aws_s3_bucket.uploaded_files.arn}/*"]
+    resources = ["${local.uploaded_files}/*"]
   }
 }
 
@@ -93,7 +93,7 @@ data "aws_iam_policy_document" "uploaded_files_thumb" {
       identifiers = ["*"]
     }
 
-    resources = ["${aws_s3_bucket.uploaded_files_thumb.arn}/*"]
+    resources = ["${local.uploaded_files_thumb}/*"]
   }
 }
 
