@@ -4,6 +4,10 @@ set -euo pipefail; IFS=$'\n\t'
 # Enable verbose mode
 set -x
 
+CNI_VERSION=0.9.0
+NOMAD_VERSION=1.0.1
+CONSUL_VERSION=1.9.1
+
 #
 # ec2-instance-connect 를 제일 먼저 설치
 #
@@ -56,7 +60,6 @@ usermod -a -G docker ec2-user
 #
 # CNI 설치
 #
-CNI_VERSION=0.8.6
 curl -L -o cni-plugins.tgz "https://github.com/containernetworking/plugins/releases/download/v${CNI_VERSION}/cni-plugins-linux-amd64-v${CNI_VERSION}.tgz"
 mkdir -p /opt/cni/bin
 tar -C /opt/cni/bin -xzf cni-plugins.tgz
@@ -65,7 +68,6 @@ rm cni-plugins.tgz
 #
 # Nomad 설치
 #
-NOMAD_VERSION=1.0.1
 curl "https://releases.hashicorp.com/nomad/${NOMAD_VERSION}/nomad_${NOMAD_VERSION}_linux_amd64.zip" \
     -Lo /home/ec2-user/nomad_linux_amd64.zip
 unzip /home/ec2-user/nomad_linux_amd64.zip -d /usr/local/bin/
@@ -77,7 +79,6 @@ complete -C /usr/local/bin/nomad nomad
 #
 # Consul 설치
 #
-CONSUL_VERSION=1.9.1
 curl "https://releases.hashicorp.com/consul/${CONSUL_VERSION}/consul_${CONSUL_VERSION}_linux_amd64.zip" \
     -Lo /home/ec2-user/consul_linux_amd64.zip
 unzip /home/ec2-user/consul_linux_amd64.zip -d /usr/local/bin/
