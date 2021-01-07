@@ -18,7 +18,8 @@ data "aws_ami" "femiwiki_base" {
 }
 
 data "aws_ami" "amazon_linux_2" {
-  owners = ["amazon"]
+  owners      = ["amazon"]
+  most_recent = true
 
   filter {
     name   = "name"
@@ -31,7 +32,9 @@ data "aws_ami" "amazon_linux_2" {
   }
 
   # 이 AMI로 고정함
-  name_regex = "^amzn2-ami-minimal-hvm-2.0.20191116.0-x86_64-ebs$"
+  # You can get latest image name by executing (with AWS CLI v1)
+  #   aws ec2 describe-images --filters "Name=name,Values=amzn2-ami-minimal-hvm-2.0.*-x86_64-ebs" --query 'sort_by(Images, &CreationDate)[::-1].[Name]'
+  name_regex = "^amzn2-ami-minimal-hvm-2.0.20201218.1-x86_64-ebs$"
 }
 
 # TODO: 없앨 예정
@@ -100,13 +103,16 @@ resource "aws_eip" "femiwiki" {
 }
 
 resource "aws_instance" "femiwiki_green" {
-  ebs_optimized           = true
-  ami                     = data.aws_ami.amazon_linux_2.image_id
-  instance_type           = "t3a.small"
-  key_name                = aws_key_pair.femiwiki_green.key_name
+  ebs_optimized = true
+  ami           = data.aws_ami.amazon_linux_2.image_id
+  instance_type = "t3a.small"
+  key_name      = aws_key_pair.femiwiki_green.key_name
+  # During expremental period
+  hibernation             = true
   monitoring              = false
   iam_instance_profile    = aws_iam_instance_profile.femiwiki.name
   disable_api_termination = true
+  availability_zone       = aws_ebs_volume.persistent_data.availability_zone
 
   vpc_security_group_ids = [
     aws_default_security_group.default.id,
@@ -132,7 +138,7 @@ resource "aws_instance" "femiwiki_green" {
     Name = "experimental nomad server"
   }
 
-  user_data = file("res/bootstrap.sh")
+  user_data = replace(file("res/bootstrap.sh"), "PERSISTENT_DATA_VOLUME_ID", aws_ebs_volume.persistent_data.id)
 
   lifecycle {
     ignore_changes = [
@@ -148,7 +154,7 @@ resource "aws_eip" "femiwiki_green" {
 }
 
 resource "aws_ebs_volume" "persistent_data" {
-  availability_zone = aws_instance.femiwiki_green.availability_zone
+  availability_zone = "ap-northeast-1a"
   size              = 4
   tags = {
     Name = "Persistent data"
