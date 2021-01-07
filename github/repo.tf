@@ -531,18 +531,18 @@ resource "github_repository" "caddy-wmcache" {
   archive_on_destroy   = local.default_repo.archive_on_destroy
 }
 
-resource "github_branch_protection" "caddy-wmcache" {
-  repository_id     = github_repository.maintenance.node_id
-  pattern           = local.default_repo.pattern
-  enforce_admins    = local.default_repo.enforce_admins
-  push_restrictions = local.default_repo.push_restrictions
-
-  required_pull_request_reviews {
-    dismiss_stale_reviews           = local.default_repo.dismiss_stale_reviews
-    require_code_owner_reviews      = local.default_repo.require_code_owner_reviews
-    required_approving_review_count = local.default_repo.required_approving_review_count
-  }
-}
+#resource "github_branch_protection" "caddy-wmcache" {
+#  repository_id     = github_repository.maintenance.node_id
+#  pattern           = local.default_repo.pattern
+#  enforce_admins    = local.default_repo.enforce_admins
+#  push_restrictions = local.default_repo.push_restrictions
+#
+#  required_pull_request_reviews {
+#    dismiss_stale_reviews           = local.default_repo.dismiss_stale_reviews
+#    require_code_owner_reviews      = local.default_repo.require_code_owner_reviews
+#    required_approving_review_count = local.default_repo.required_approving_review_count
+#  }
+#}
 
 resource "github_team_repository" "caddy-wmcache" {
   team_id    = github_team.reviewer.id
