@@ -145,32 +145,6 @@ resource "github_repository" "category_intersection_search" {
   topics               = local.extension.topics
 }
 
-resource "github_branch_protection" "category_intersection_search" {
-  count             = length(local.extension_branches)
-  repository_id     = github_repository.category_intersection_search.node_id
-  pattern           = local.extension_branches[count.index]
-  enforce_admins    = local.extension.enforce_admins
-  push_restrictions = local.extension.push_restrictions
-
-  required_pull_request_reviews {
-    dismiss_stale_reviews           = local.extension.dismiss_stale_reviews
-    require_code_owner_reviews      = local.extension.require_code_owner_reviews
-    required_approving_review_count = local.extension.required_approving_review_count
-  }
-}
-
-resource "github_team_repository" "category_intersection_search" {
-  team_id    = github_team.reviewer.id
-  repository = github_repository.category_intersection_search.name
-}
-
-# Give push access to @translatewiki https://github.com/femiwiki/femiwiki/issues/91
-resource "github_repository_collaborator" "category_intersection_search" {
-  repository = github_repository.category_intersection_search.name
-  username   = "translatewiki"
-  permission = "push"
-}
-
 resource "github_repository" "sanctions" {
   name                 = "Sanctions"
   description          = "🙅 Offers convenient way to handle sanctions."

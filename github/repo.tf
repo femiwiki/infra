@@ -67,24 +67,6 @@ resource "github_repository" "kubernetes" {
   archive_on_destroy   = local.with_cd.archive_on_destroy
 }
 
-resource "github_branch_protection" "kubernetes" {
-  repository_id     = github_repository.kubernetes.node_id
-  pattern           = local.with_cd.pattern
-  enforce_admins    = local.with_cd.enforce_admins
-  push_restrictions = local.with_cd.push_restrictions
-
-  required_pull_request_reviews {
-    dismiss_stale_reviews           = local.with_cd.dismiss_stale_reviews
-    require_code_owner_reviews      = local.with_cd.require_code_owner_reviews
-    required_approving_review_count = local.with_cd.required_approving_review_count
-  }
-}
-
-resource "github_team_repository" "kubernetes" {
-  team_id    = github_team.reviewer.id
-  repository = github_repository.kubernetes.name
-}
-
 #
 # nomad
 #
