@@ -56,18 +56,6 @@ resource "github_team_repository" "infra" {
 }
 
 #
-# kubernetes
-#
-resource "github_repository" "kubernetes" {
-  name                 = "kubernetes"
-  description          = ":whale: Femiwiki kubernetes"
-  default_branch       = local.with_cd.default_branch
-  has_issues           = local.with_cd.has_issues
-  vulnerability_alerts = local.with_cd.vulnerability_alerts
-  archive_on_destroy   = local.with_cd.archive_on_destroy
-}
-
-#
 # nomad
 #
 resource "github_repository" "nomad" {

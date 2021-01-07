@@ -134,17 +134,6 @@ resource "github_repository_collaborator" "faceted_category" {
   permission = "push"
 }
 
-resource "github_repository" "category_intersection_search" {
-  name                 = "CategoryIntersectionSearch"
-  description          = "provide special page show category intersection"
-  default_branch       = local.extension.default_branch
-  homepage_url         = "https://www.mediawiki.org/wiki/Special:MyLanguage/Extension:CategoryIntersectionSearch"
-  has_issues           = local.extension.has_issues
-  vulnerability_alerts = local.extension.vulnerability_alerts
-  archive_on_destroy   = local.extension.archive_on_destroy
-  topics               = local.extension.topics
-}
-
 resource "github_repository" "sanctions" {
   name                 = "Sanctions"
   description          = "🙅 Offers convenient way to handle sanctions."
