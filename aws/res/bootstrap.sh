@@ -65,7 +65,7 @@ rm cni-plugins.tgz
 #
 # Nomad 설치
 #
-NOMAD_VERSION=1.0.0
+NOMAD_VERSION=1.0.1
 curl "https://releases.hashicorp.com/nomad/${NOMAD_VERSION}/nomad_${NOMAD_VERSION}_linux_amd64.zip" \
     -Lo /home/ec2-user/nomad_linux_amd64.zip
 unzip /home/ec2-user/nomad_linux_amd64.zip -d /usr/local/bin/
@@ -77,7 +77,7 @@ complete -C /usr/local/bin/nomad nomad
 #
 # Consul 설치
 #
-CONSUL_VERSION=1.9.0
+CONSUL_VERSION=1.9.1
 curl "https://releases.hashicorp.com/consul/${CONSUL_VERSION}/consul_${CONSUL_VERSION}_linux_amd64.zip" \
     -Lo /home/ec2-user/consul_linux_amd64.zip
 unzip /home/ec2-user/consul_linux_amd64.zip -d /usr/local/bin/
