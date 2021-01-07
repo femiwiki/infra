@@ -121,7 +121,9 @@ resource "aws_instance" "femiwiki_green" {
 
   root_block_device {
     delete_on_termination = true
-    encrypted             = false
+    # required for enabling hibernation
+    # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/Hibernate.html#hibernating-prerequisites
+    encrypted             = true
     volume_size           = 16
     volume_type           = "gp2"
   }
