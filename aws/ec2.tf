@@ -78,6 +78,14 @@ set -euo pipefail; IFS=$'\n\t'
 # Enable verbose mode
 set -x
 
+# Set file size limit for docker logs
+cat <<'END' > /etc/docker/daemon.conf
+{
+  "log-opts": {"max-size": "100m"}
+}
+END
+systemctl restart docker
+
 sudo -u ec2-user git clone https://github.com/femiwiki/docker-mediawiki.git /home/ec2-user/mediawiki/
 # TODO: Download seceret from somewhere (https://github.com/femiwiki/femiwiki/issues/110)
 # TODO: Download database dump from S3 to /srv/mysql/
@@ -86,7 +94,7 @@ sudo -u ec2-user cp /home/ec2-user/mediawiki/configs/secret.php.example /home/ec
 sudo -u ec2-user cp /home/ec2-user/mediawiki/configs/bot-secret.sample.env /home/ec2-user/mediawiki/configs/bot-secret.env
 docker swarm init
 # docker stack deploy --prune -c /home/ec2-user/mediawiki/production.yml mediawiki
-# docker stack deploy --prune -c /home/ec2-user/database/bots.yml botse
+# docker stack deploy --prune -c /home/ec2-user/database/bots.yml bots
 EOF
 
   lifecycle {
