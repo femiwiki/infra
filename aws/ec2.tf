@@ -131,9 +131,9 @@ resource "aws_instance" "femiwiki_green" {
     delete_on_termination = true
     # required for enabling hibernation
     # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/Hibernate.html#hibernating-prerequisites
-    encrypted             = true
-    volume_size           = 16
-    volume_type           = "gp2"
+    encrypted   = true
+    volume_size = 16
+    volume_type = "gp2"
   }
 
   credit_specification {
