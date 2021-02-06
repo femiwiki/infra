@@ -53,12 +53,6 @@ EOF
 #   docker run --rm amazonlinux:2.0.20201218.1 amazon-linux-extras list | grep -A 1 docker
 #
 amazon-linux-extras install -y docker=18.09.9
-# Set file size limit for docker logs
-cat <<'EOF' > /etc/docker/daemon.conf
-{
-  "log-opts": {"max-size": "100m"}
-}
-EOF
 systemctl enable docker
 usermod -a -G docker ec2-user
 # 이후 로그아웃한 뒤 재로그인
