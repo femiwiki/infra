@@ -79,7 +79,7 @@ set -euo pipefail; IFS=$'\n\t'
 set -x
 
 yum install amazon-cloudwatch-agent
-cat <<'EOF' > /opt/aws/amazon-cloudwatch-agent/bin/config.json
+cat <<'CONFIG' > /opt/aws/amazon-cloudwatch-agent/bin/config.json
 {
   "metrics": {
     "metrics_collected": {
@@ -99,7 +99,7 @@ cat <<'EOF' > /opt/aws/amazon-cloudwatch-agent/bin/config.json
     }
   }
 }
-EOF
+CONFIG
 /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s -c file:/opt/aws/amazon-cloudwatch-agent/bin/config.json
 
 sudo -u ec2-user git clone https://github.com/femiwiki/docker-mediawiki.git /home/ec2-user/mediawiki/
