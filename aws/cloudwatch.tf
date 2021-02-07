@@ -37,10 +37,10 @@ resource "aws_cloudwatch_metric_alarm" "femiwiki_disk_used_cloud_watch_alarm" {
   period      = 300
   statistic   = "Maximum"
   dimensions = {
-    "device"   = "nvme0n1p1"
-    "fstype"   = "xfs"
-    "host"     = aws_instance.femiwiki.private_dns
-    "path"     = "/"
+    "device" = "nvme0n1p1"
+    "fstype" = "xfs"
+    "host"   = aws_instance.femiwiki.private_dns
+    "path"   = "/"
   }
   evaluation_periods  = "1"
   threshold           = "90"
