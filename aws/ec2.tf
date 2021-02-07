@@ -78,6 +78,30 @@ set -euo pipefail; IFS=$'\n\t'
 # Enable verbose mode
 set -x
 
+yum install amazon-cloudwatch-agent
+cat <<'EOF' > /opt/aws/amazon-cloudwatch-agent/bin/config.json
+{
+  "metrics": {
+    "metrics_collected": {
+      "disk": {
+        "measurement": [
+          "used_percent"
+        ],
+        "resources": [
+          "*"
+        ]
+      },
+      "mem": {
+        "measurement": [
+          "mem_used_percent"
+        ]
+      }
+    }
+  }
+}
+EOF
+/opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s -c file:/opt/aws/amazon-cloudwatch-agent/bin/config.json
+
 sudo -u ec2-user git clone https://github.com/femiwiki/docker-mediawiki.git /home/ec2-user/mediawiki/
 # TODO: Download seceret from somewhere (https://github.com/femiwiki/femiwiki/issues/110)
 # TODO: Download database dump from S3 to /srv/mysql/

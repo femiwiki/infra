@@ -27,6 +27,7 @@ yum install -y \
   tmux \
   git \
   yum-cron \
+  amazon-cloudwatch-agent \
   jq \
   ripgrep \
   unzip \
@@ -38,6 +39,32 @@ yum install -y \
 sed -i "s/update_cmd = default/update_cmd = minimal-security/" /etc/yum/yum-cron-hourly.conf
 sed -i "s/update_cmd = default/update_cmd = minimal-security/" /etc/yum/yum-cron.conf
 systemctl enable yum-cron
+
+#
+# cloudwatch-agent 실행
+#
+cat <<'EOF' > /opt/aws/amazon-cloudwatch-agent/bin/config.json
+{
+  "metrics": {
+    "metrics_collected": {
+      "disk": {
+        "measurement": [
+          "used_percent"
+        ],
+        "resources": [
+          "*"
+        ]
+      },
+      "mem": {
+        "measurement": [
+          "mem_used_percent"
+        ]
+      }
+    }
+  }
+}
+EOF
+/opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s -c file:/opt/aws/amazon-cloudwatch-agent/bin/config.json
 
 #
 # sudo 로 /usr/local/{bin,sbin} 안에 있는 커맨드를 실행할 수 있도록 설정
@@ -123,10 +150,11 @@ systemd 유닛 파일
     /etc/systemd/system/consul.service
 
 기타 관련 파일들 위치
-    /etc/nomad.d                                    Nomad configuration
-    /etc/consul.d                                   Consul configuration
-    /opt/nomad                                      Nomad data directory
-    /opt/consul                                     Consul data directory
+    /etc/nomad.d                                     Nomad configuration
+    /etc/consul.d                                    Consul configuration
+    /opt/nomad                                       Nomad data directory
+    /opt/consul                                      Consul data directory
+    /opt/aws/amazon-cloudwatch-agent/bin/config.json CloudWatch Agent Configuration File
 
 그 외 인스턴스가 어떻게 세팅되었는지는 아래 repo 참고
 

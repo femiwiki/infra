@@ -120,3 +120,8 @@ resource "aws_iam_role_policy_attachment" "femiwiki_mount_ebs_volumes" {
   role       = aws_iam_role.femiwiki.name
   policy_arn = aws_iam_policy.mount_ebs_volumes.arn
 }
+
+resource "aws_iam_role_policy_attachment" "femiwiki_cloud_watch_agent_server" {
+  role       = aws_iam_role.femiwiki.name
+  policy_arn = "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy" # AWS managed policy
+}
