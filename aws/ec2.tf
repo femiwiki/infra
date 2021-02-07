@@ -183,6 +183,6 @@ resource "aws_ebs_volume" "persistent_data" {
   availability_zone = "ap-northeast-1a"
   size              = 4
   tags = {
-    Name = "Persistent data"
+    Name = "experimental nomad server"
   }
 }
