@@ -115,20 +115,6 @@ consul -autocomplete-install
 complete -C /usr/bin/consul consul
 
 #
-# Prepare stateful workloads with Container Storage Interface
-#
-cat <<'EOF' > /home/ec2-user/volume.hcl
-# volume registration
-type = "csi"
-id = "mysql"
-name = "mysql"
-external_id = "PERSISTENT_DATA_VOLUME_ID"
-access_mode = "single-node-writer"
-attachment_mode = "file-system"
-plugin_id = "aws-ebs0"
-EOF
-
-#
 # Clone Femiwiki Nomad configurations and specifications repository
 #
 sudo -u ec2-user git clone https://github.com/femiwiki/nomad.git /home/ec2-user/nomad/
