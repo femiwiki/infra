@@ -72,10 +72,9 @@ resource "aws_security_group_rule" "femiwiki_ingress_nomad" {
   protocol          = "tcp"
   from_port         = 4646
   to_port           = 4646
-  # IP ranges for Terraform cloud API
-  # Got at Tue, 23 Mar 2021 11:22:40 +0000
-  # https://www.terraform.io/docs/cloud/api/ip-ranges.html
-  cidr_blocks = ["75.2.98.97/32", "99.83.150.238/32"]
+  # Allow everyone. Issue: https://github.com/femiwiki/nomad/issues/5
+  cidr_blocks      = ["0.0.0.0/0"]
+  ipv6_cidr_blocks = ["::/0"]
 }
 
 resource "aws_security_group_rule" "femiwiki_egress" {
