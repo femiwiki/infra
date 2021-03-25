@@ -105,11 +105,16 @@ complete -C /usr/local/bin/nomad nomad
 
 #
 # Consul 설치
+# Reference:
+#   - https://github.com/hashicorp/terraform-aws-consul/blob/master/modules/install-consul/install-consul
 #
 curl "https://releases.hashicorp.com/consul/${CONSUL_VERSION}/consul_${CONSUL_VERSION}_linux_amd64.zip" \
     -Lo /home/ec2-user/consul_linux_amd64.zip
 unzip /home/ec2-user/consul_linux_amd64.zip -d /usr/local/bin/
 rm /home/ec2-user/consul_linux_amd64.zip
+useradd consul
+chown -R consul:consul /opt/consul
+chmod a+x /opt/consul
 # Enable consul autocompletion
 consul -autocomplete-install
 complete -C /usr/bin/consul consul
