@@ -31,6 +31,9 @@ yum install -y \
   jq \
   ripgrep \
   unzip \
+  dnsmasq \
+  nc \
+  bind-utils \
   'https://www.atoptool.nl/download/atop-2.4.0-1.x86_64.rpm'
 
 #
@@ -118,6 +121,19 @@ chmod a+x /opt/consul
 # Enable consul autocompletion
 consul -autocomplete-install
 complete -C /usr/bin/consul consul
+
+#
+# dnsmasq 설정
+# References:
+# - https://learn.hashicorp.com/tutorials/consul/dns-forwarding#dnsmasq-setup
+# - https://aws.amazon.com/premiumsupport/knowledge-center/dns-resolution-failures-ec2-linux
+#
+groupadd -r dnsmasq
+useradd -r -g dnsmasq dnsmasq
+sudo mv /etc/dnsmasq.conf /etc/dnsmasq.conf.orig
+echo 'server=/consul/127.0.0.1#8600' >> /etc/dnsmasq.d/10-consul
+sudo systemctl restart dnsmasq.service
+sudo systemctl enable dnsmasq.service
 
 #
 # Clone Femiwiki Nomad configurations and specifications repository
