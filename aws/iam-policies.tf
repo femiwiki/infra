@@ -213,6 +213,7 @@ resource "aws_iam_policy" "amazon_s3_access" {
 #   https://github.com/hashicorp/terraform/issues/27171#issuecomment-740249394
 #   https://github.com/hashicorp/terraform/issues/27282
 locals {
+  secrets                = aws_s3_bucket.secrets.arn
   uploaded_files         = aws_s3_bucket.uploaded_files.arn
   uploaded_files_thumb   = aws_s3_bucket.uploaded_files_thumb.arn
   uploaded_files_temp    = aws_s3_bucket.uploaded_files_temp.arn
@@ -227,6 +228,7 @@ data "aws_iam_policy_document" "amazon_s3_access" {
   statement {
     actions = ["s3:*"]
     resources = [
+      "${local.secrets}/*",
       "${local.uploaded_files}/*",
       "${local.uploaded_files_thumb}/*",
       "${local.uploaded_files_temp}/*",
@@ -240,6 +242,7 @@ data "aws_iam_policy_document" "amazon_s3_access" {
       "s3:List*"
     ]
     resources = [
+      local.secrets,
       local.uploaded_files,
       local.uploaded_files_thumb,
       local.uploaded_files_temp,
