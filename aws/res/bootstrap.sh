@@ -77,6 +77,13 @@ Defaults secure_path=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bi
 EOF
 
 #
+# persistent_data EBS 마운트
+#
+sudo mkdir -p /srv
+echo "UUID=$(blkid -s UUID -o value /dev/xvdf)  /srv  xfs  defaults,nofail  0  2" | sudo tee -a /etc/fstab
+sudo mount -a
+
+#
 # 도커 설치
 # Reference: https://docs.aws.amazon.com/AmazonECS/latest/developerguide/docker-basics.html#install_docker
 # You can see supported docker versions with:
