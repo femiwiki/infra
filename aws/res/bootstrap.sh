@@ -123,8 +123,8 @@ curl "https://releases.hashicorp.com/consul/${CONSUL_VERSION}/consul_${CONSUL_VE
 unzip /home/ec2-user/consul_linux_amd64.zip -d /usr/local/bin/
 rm /home/ec2-user/consul_linux_amd64.zip
 useradd consul
-chown -R consul:consul /opt/consul
-chmod a+x /opt/consul
+chown -R consul:consul /usr/local/bin/consul
+chmod a+x /usr/local/bin/consul
 # Enable consul autocompletion
 consul -autocomplete-install
 complete -C /usr/bin/consul consul
