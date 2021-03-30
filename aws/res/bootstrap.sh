@@ -84,6 +84,16 @@ echo "UUID=$(blkid -s UUID -o value /dev/xvdf)  /srv  xfs  defaults,nofail  0  2
 sudo mount -a
 
 #
+# 스왑 메모리 생성
+# 아마존 리눅스에서는 기본으로 XFS를 쓰는데, 이 경우 fallocate 명령어를 쓰지 못한다.
+#
+sudo dd if=/dev/zero of=/swapfile bs=256M count=6
+sudo chmod 600 /swapfile
+sudo mkswap /swapfile
+echo '/swapfile swap swap defaults 0 0' | sudo tee -a /etc/fstab
+sudo swapon -a
+
+#
 # 도커 설치
 # Reference: https://docs.aws.amazon.com/AmazonECS/latest/developerguide/docker-basics.html#install_docker
 # You can see supported docker versions with:
@@ -110,6 +120,10 @@ curl "https://releases.hashicorp.com/nomad/${NOMAD_VERSION}/nomad_${NOMAD_VERSIO
     -Lo /home/ec2-user/nomad_linux_amd64.zip
 unzip /home/ec2-user/nomad_linux_amd64.zip -d /usr/local/bin/
 rm /home/ec2-user/nomad_linux_amd64.zip
+mv /usr/local/bin/nomad /usr/local/bin/nomad.orig
+# Download swap-enabled nomad
+curl "https://github.com/lens0021/swappiness-nomad/releases/download/v1.0.4-swap/nomad" \
+    -Lo /usr/local/bin/nomad
 # Enable nomad autocompletion
 nomad -autocomplete-install
 complete -C /usr/local/bin/nomad nomad
