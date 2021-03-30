@@ -143,6 +143,19 @@ sudo systemctl restart dnsmasq.service
 sudo systemctl enable dnsmasq.service
 
 #
+# htoprc 생성
+#
+sudo -u ec2-user mkdir -p /home/ec2-user/.config/htop
+sudo -u ec2-user tee /home/ec2-user/.config/htop/htoprc <<'EOF' >/dev/null
+header_margin=1
+hide_kernel_threads=1
+hide_userland_threads=1
+highlight_base_name=1
+highlight_megabytes=1
+tree_view=1
+EOF
+
+#
 # Clone Femiwiki Nomad configurations and specifications repository
 #
 sudo -u ec2-user git clone https://github.com/femiwiki/nomad.git /home/ec2-user/nomad/
@@ -173,17 +186,4 @@ systemd 유닛 파일
 그 외 인스턴스가 어떻게 세팅되었는지는 아래 repo 참고
 
     https://github.com/femiwiki/infra
-EOF
-
-#
-# htoprc 생성
-#
-sudo -u ec2-user mkdir -p /home/ec2-user/.config/htop
-sudo -u ec2-user tee /home/ec2-user/.config/htop/htoprc <<'EOF' >/dev/null
-header_margin=1
-hide_kernel_threads=1
-hide_userland_threads=1
-highlight_base_name=1
-highlight_megabytes=1
-tree_view=1
 EOF
