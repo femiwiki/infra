@@ -4,6 +4,7 @@ set -euo pipefail; IFS=$'\n\t'
 # Enable verbose mode
 set -x
 
+CNI_VERSION=0.9.1
 NOMAD_VERSION=1.0.4
 
 #
@@ -104,7 +105,8 @@ usermod -a -G docker ec2-user
 # 이후 로그아웃한 뒤 재로그인
 
 #
-# Nomad 설치
+# CNI 설치
+# Required for Nomad 'bridge' network
 #
 case $(uname -p) in
   "x86_64")
@@ -114,6 +116,14 @@ case $(uname -p) in
     PROCESSOR="arm64"
     ;;
 esac
+curl -L -o cni-plugins.tgz "https://github.com/containernetworking/plugins/releases/download/v${CNI_VERSION}/cni-plugins-linux-${PROCESSOR}-v${CNI_VERSION}.tgz"
+mkdir -p /opt/cni/bin
+tar -C /opt/cni/bin -xzf cni-plugins.tgz
+rm cni-plugins.tgz
+
+#
+# Nomad 설치
+#
 curl "https://releases.hashicorp.com/nomad/${NOMAD_VERSION}/nomad_${NOMAD_VERSION}_linux_${PROCESSOR}.zip" \
     -Lo /home/ec2-user/nomad.zip
 unzip /home/ec2-user/nomad.zip -d /usr/local/bin/
