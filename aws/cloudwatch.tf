@@ -50,7 +50,7 @@ resource "aws_cloudwatch_metric_alarm" "femiwiki_disk_used_cloud_watch_alarm" {
 }
 
 resource "aws_cloudwatch_metric_alarm" "femiwiki_green_cpu_credit_balance_cloud_watch_alarm" {
-  alarm_name  = "Femiwiki CPU credit balance cloud watch alarm"
+  alarm_name  = "Femiwiki green CPU credit balance cloud watch alarm"
   namespace   = "AWS/EC2"
   metric_name = "CPUCreditBalance"
   period      = 300
@@ -66,7 +66,7 @@ resource "aws_cloudwatch_metric_alarm" "femiwiki_green_cpu_credit_balance_cloud_
 }
 
 resource "aws_cloudwatch_metric_alarm" "femiwiki_green_burst_balance_cloud_watch_alarm" {
-  alarm_name  = "Femiwiki Burst Balance cloud watch alarm"
+  alarm_name  = "Femiwiki green Burst Balance cloud watch alarm"
   namespace   = "AWS/EBS"
   metric_name = "BurstBalance"
   period      = 300
@@ -82,7 +82,7 @@ resource "aws_cloudwatch_metric_alarm" "femiwiki_green_burst_balance_cloud_watch
 }
 
 resource "aws_cloudwatch_metric_alarm" "femiwiki_green_disk_used_cloud_watch_alarm" {
-  alarm_name  = "Femiwiki disk used cloud watch alarm"
+  alarm_name  = "Femiwiki green disk used cloud watch alarm"
   namespace   = "CWAgent"
   metric_name = "disk_used_percent"
   period      = 300
