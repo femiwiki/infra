@@ -106,10 +106,18 @@ usermod -a -G docker ec2-user
 #
 # Nomad 설치
 #
-curl "https://releases.hashicorp.com/nomad/${NOMAD_VERSION}/nomad_${NOMAD_VERSION}_linux_amd64.zip" \
-    -Lo /home/ec2-user/nomad_linux_amd64.zip
-unzip /home/ec2-user/nomad_linux_amd64.zip -d /usr/local/bin/
-rm /home/ec2-user/nomad_linux_amd64.zip
+case $(uname -p) in
+  "x86_64")
+    PROCESSOR="amd64"
+    ;;
+  "aarch64")
+    PROCESSOR="arm64"
+    ;;
+esac
+curl "https://releases.hashicorp.com/nomad/${NOMAD_VERSION}/nomad_${NOMAD_VERSION}_linux_${PROCESSOR}.zip" \
+    -Lo /home/ec2-user/nomad.zip
+unzip /home/ec2-user/nomad.zip -d /usr/local/bin/
+rm /home/ec2-user/nomad.zip
 # Enable nomad autocompletion
 nomad -autocomplete-install
 complete -C /usr/local/bin/nomad nomad
