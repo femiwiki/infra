@@ -144,7 +144,7 @@ resource "aws_eip" "femiwiki" {
 
 resource "aws_instance" "femiwiki_green" {
   ebs_optimized           = true
-  ami                     = data.aws_ami.amazon_linux_2_arm64.image_id
+  ami                     = data.aws_ami.amazon_linux_2.image_id
   instance_type           = "t3a.small"
   key_name                = aws_key_pair.femiwiki_green.key_name
   monitoring              = false
