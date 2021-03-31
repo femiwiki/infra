@@ -37,6 +37,26 @@ data "aws_ami" "amazon_linux_2" {
   name_regex = "^amzn2-ami-minimal-hvm-2.0.20201218.1-x86_64-ebs$"
 }
 
+data "aws_ami" "amazon_linux_2_arm64" {
+  owners      = ["amazon"]
+  most_recent = true
+
+  filter {
+    name   = "name"
+    values = ["amzn2-ami-minimal-hvm-2.0.*-arm64-ebs"]
+  }
+
+  filter {
+    name   = "ena-support"
+    values = ["true"]
+  }
+
+  # 이 AMI로 고정함
+  # You can get latest image name by executing (with AWS CLI v1)
+  #   aws ec2 describe-images --filters "Name=name,Values=amzn2-ami-minimal-hvm-2.0.*-arm64-ebs" --query 'sort_by(Images, &CreationDate)[::-1].[Name]'
+  name_regex = "^amzn2-ami-minimal-hvm-2.0.20210326.0-arm64-ebs$"
+}
+
 # TODO: 없앨 예정
 resource "aws_instance" "femiwiki" {
   ebs_optimized           = true
@@ -128,7 +148,7 @@ resource "aws_eip" "femiwiki" {
 
 resource "aws_instance" "femiwiki_green" {
   ebs_optimized = true
-  ami           = data.aws_ami.amazon_linux_2.image_id
+  ami           = data.aws_ami.amazon_linux_2_arm64.image_id
   instance_type = "t4g.small"
   key_name      = aws_key_pair.femiwiki_green.key_name
   # During experimental period
