@@ -195,7 +195,7 @@ resource "aws_eip" "femiwiki_green" {
 
 resource "aws_ebs_volume" "persistent_data" {
   availability_zone = "ap-northeast-1a"
-  size              = 4
+  size              = 8
   tags = {
     Name = "experimental nomad server"
   }
