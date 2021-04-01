@@ -104,7 +104,7 @@ cat <<'CONFIG' > /opt/aws/amazon-cloudwatch-agent/bin/config.json
           "used_percent"
         ],
         "resources": [
-          "*"
+          "/"
         ]
       },
       "mem": {
