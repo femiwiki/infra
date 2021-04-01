@@ -30,9 +30,7 @@ yum install -y \
   jq \
   ripgrep \
   unzip \
-  dnsmasq \
   nc \
-  bind-utils \
   'https://www.atoptool.nl/download/atop-2.4.0-1.x86_64.rpm'
 
 #
@@ -129,9 +127,9 @@ curl "https://releases.hashicorp.com/nomad/${NOMAD_VERSION}/nomad_${NOMAD_VERSIO
     -Lo /home/ec2-user/nomad.zip
 unzip /home/ec2-user/nomad.zip -d /usr/local/bin/
 rm /home/ec2-user/nomad.zip
-# Enable nomad autocompletion
 nomad -autocomplete-install
 complete -C /usr/local/bin/nomad nomad
+mkdir -p /opt/nomad /etc/nomad.d
 
 #
 # htoprc 생성
@@ -169,6 +167,7 @@ systemd 유닛 파일
     /etc/nomad.d                                     Nomad configuration
     /opt/nomad                                       Nomad data directory
     /opt/aws/amazon-cloudwatch-agent/bin/config.json CloudWatch Agent Configuration File
+    /srv                                             Persistent EBS volume mount point for MySQL, certicates, cache and so on
 
 그 외 인스턴스가 어떻게 세팅되었는지는 아래 repo 참고
 
