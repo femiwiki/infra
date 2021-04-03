@@ -59,7 +59,7 @@ resource "aws_cloudwatch_metric_alarm" "femiwiki_green_cpu_credit_balance_cloud_
     InstanceId = aws_instance.femiwiki_green.id
   }
   evaluation_periods  = "1"
-  threshold           = "108"
+  threshold           = "72"
   comparison_operator = "LessThanThreshold"
   datapoints_to_alarm = 1
   alarm_actions       = [aws_sns_topic.cloudwatch_alarms_topic.arn]
