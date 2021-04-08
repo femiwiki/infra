@@ -490,9 +490,9 @@ resource "github_team_repository" "maintenance" {
 }
 
 #
-# caddy-wmcache
+# caddy-mwcache
 #
-resource "github_repository" "caddy-wmcache" {
+resource "github_repository" "caddy-mwcache" {
   name                 = "caddy-wmcache"
   description          = ":wrench: Caddy anonymous cache plugin for MediaWiki"
   default_branch       = local.default_repo.default_branch
@@ -514,7 +514,7 @@ resource "github_repository" "caddy-wmcache" {
 #  }
 #}
 
-resource "github_team_repository" "caddy-wmcache" {
+resource "github_team_repository" "caddy-mwcache" {
   team_id    = github_team.reviewer.id
-  repository = github_repository.maintenance.name
+  repository = github_repository.caddy-mwcache.name
 }
