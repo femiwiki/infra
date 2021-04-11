@@ -138,7 +138,7 @@ EOF
 }
 
 resource "aws_eip" "femiwiki" {
-  instance = aws_instance.femiwiki.id
+  instance = aws_instance.femiwiki_green.id
   vpc      = true
 }
 
@@ -189,7 +189,7 @@ resource "aws_instance" "femiwiki_green" {
 }
 
 resource "aws_eip" "femiwiki_green" {
-  instance = aws_instance.femiwiki_green.id
+  instance = aws_instance.femiwiki.id
   vpc      = true
 }
 
