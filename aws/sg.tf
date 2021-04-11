@@ -77,6 +77,18 @@ resource "aws_security_group_rule" "femiwiki_ingress_nomad" {
   ipv6_cidr_blocks = ["::/0"]
 }
 
+# TODO Remove this rule after https://github.com/femiwiki/femiwiki/issues/116 is solved
+resource "aws_security_group_rule" "femiwiki_ingress_internal_mysql" {
+  security_group_id = aws_security_group.femiwiki.id
+  description       = "MySQL from Mediawiki"
+
+  type                     = "ingress"
+  protocol                 = "tcp"
+  from_port                = 3306
+  to_port                  = 3306
+  source_security_group_id = aws_security_group.femiwiki.id
+}
+
 resource "aws_security_group_rule" "femiwiki_egress" {
   security_group_id = aws_security_group.femiwiki.id
 
