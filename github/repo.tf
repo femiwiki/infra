@@ -1,7 +1,6 @@
 locals {
   default_repo = {
     # repository
-    default_branch       = "main",
     has_issues           = true,
     vulnerability_alerts = true,
     archive_on_destroy   = true,
@@ -31,10 +30,19 @@ locals {
 resource "github_repository" "infra" {
   name                 = "infra"
   description          = ":evergreen_tree: Terraforming Femiwiki Infrastructure"
-  default_branch       = local.with_cd.default_branch
   has_issues           = local.with_cd.has_issues
   vulnerability_alerts = local.with_cd.vulnerability_alerts
   archive_on_destroy   = local.with_cd.archive_on_destroy
+}
+
+resource "github_branch" "infra_main" {
+  repository = github_repository.infra.name
+  branch     = "main"
+}
+
+resource "github_branch_default" "infra" {
+  repository = github_repository.infra.name
+  branch     = github_branch.infra_main.branch
 }
 
 resource "github_branch_protection" "infra" {
@@ -61,10 +69,19 @@ resource "github_team_repository" "infra" {
 resource "github_repository" "nomad" {
   name                 = "nomad"
   description          = ":whale: Femiwiki nomad"
-  default_branch       = local.with_cd.default_branch
   has_issues           = local.with_cd.has_issues
   vulnerability_alerts = local.with_cd.vulnerability_alerts
   archive_on_destroy   = local.with_cd.archive_on_destroy
+}
+
+resource "github_branch" "nomad_main" {
+  repository = github_repository.nomad.name
+  branch     = "main"
+}
+
+resource "github_branch_default" "nomad" {
+  repository = github_repository.nomad.name
+  branch     = github_branch.nomad_main.branch
 }
 
 resource "github_branch_protection" "nomad" {
@@ -92,7 +109,6 @@ resource "github_repository" "femiwiki" {
   name                 = "femiwiki"
   description          = ":earth_asia: 문서화된 페미위키 기술 정보 및 이슈 트래킹 정보 제공"
   homepage_url         = "https://femiwiki.com"
-  default_branch       = local.default_repo.default_branch
   has_issues           = local.default_repo.has_issues
   vulnerability_alerts = local.default_repo.vulnerability_alerts
   archive_on_destroy   = local.default_repo.archive_on_destroy
@@ -101,6 +117,16 @@ resource "github_repository" "femiwiki" {
     "feminism",
     "wiki",
   ]
+}
+
+resource "github_branch" "femiwiki_main" {
+  repository = github_repository.femiwiki.name
+  branch     = "main"
+}
+
+resource "github_branch_default" "femiwiki" {
+  repository = github_repository.femiwiki.name
+  branch     = github_branch.femiwiki_main.branch
 }
 
 resource "github_branch_protection" "femiwiki" {
@@ -128,7 +154,6 @@ resource "github_repository" "docker_mediawiki" {
   name                   = "docker-mediawiki"
   description            = ":whale: Dockerized Femiwiki's mediawiki server"
   delete_branch_on_merge = true
-  default_branch         = local.docker.default_branch
   has_issues             = local.docker.has_issues
   vulnerability_alerts   = local.docker.vulnerability_alerts
   archive_on_destroy     = local.docker.archive_on_destroy
@@ -138,6 +163,16 @@ resource "github_repository" "docker_mediawiki" {
     "server",
     "wiki",
   ]
+}
+
+resource "github_branch" "mediawiki_main" {
+  repository = github_repository.docker_mediawiki.name
+  branch     = "main"
+}
+
+resource "github_branch_default" "mediawiki" {
+  repository = github_repository.docker_mediawiki.name
+  branch     = github_branch.mediawiki_main.branch
 }
 
 resource "github_branch_protection" "mediawiki" {
@@ -165,7 +200,6 @@ resource "github_team_repository" "mediawiki" {
 resource "github_repository" "docker_parsoid" {
   name                 = "docker-parsoid"
   description          = ":whale: Dockerized parsoid"
-  default_branch       = local.docker.default_branch
   has_issues           = local.docker.has_issues
   vulnerability_alerts = local.docker.vulnerability_alerts
   archive_on_destroy   = local.docker.archive_on_destroy
@@ -173,6 +207,16 @@ resource "github_repository" "docker_parsoid" {
     "docker-image",
     "parsoid",
   ]
+}
+
+resource "github_branch" "parsoid_main" {
+  repository = github_repository.docker_parsoid.name
+  branch     = "main"
+}
+
+resource "github_branch_default" "parsoid" {
+  repository = github_repository.docker_parsoid.name
+  branch     = github_branch.parsoid_main.branch
 }
 
 resource "github_branch_protection" "parsoid" {
@@ -199,7 +243,6 @@ resource "github_team_repository" "parsoid" {
 resource "github_repository" "docker_restbase" {
   name                 = "docker-restbase"
   description          = "📝 Dockerized RESTBase"
-  default_branch       = local.docker.default_branch
   has_issues           = local.docker.has_issues
   vulnerability_alerts = local.docker.vulnerability_alerts
   archive_on_destroy   = local.docker.archive_on_destroy
@@ -207,6 +250,16 @@ resource "github_repository" "docker_restbase" {
     "docker-image",
     "restbase"
   ]
+}
+
+resource "github_branch" "docker_restbase_main" {
+  repository = github_repository.docker_restbase.name
+  branch     = "main"
+}
+
+resource "github_branch_default" "docker_restbase" {
+  repository = github_repository.docker_restbase.name
+  branch     = github_branch.docker_restbase_main.branch
 }
 
 resource "github_branch_protection" "docker_restbase" {
@@ -233,7 +286,6 @@ resource "github_team_repository" "docker_restbase" {
 resource "github_repository" "docker_mathoid" {
   name                 = "docker-mathoid"
   description          = "📝 Dockerized Mathoid"
-  default_branch       = local.docker.default_branch
   has_issues           = local.docker.has_issues
   vulnerability_alerts = local.docker.vulnerability_alerts
   archive_on_destroy   = local.docker.archive_on_destroy
@@ -241,6 +293,16 @@ resource "github_repository" "docker_mathoid" {
     "docker-image",
     "mathoid"
   ]
+}
+
+resource "github_branch" "docker_mathoid_main" {
+  repository = github_repository.docker_mathoid.name
+  branch     = "main"
+}
+
+resource "github_branch_default" "docker_mathoid" {
+  repository = github_repository.docker_mathoid.name
+  branch     = github_branch.docker_mathoid_main.branch
 }
 
 resource "github_branch_protection" "docker_mathoid" {
@@ -268,7 +330,6 @@ resource "github_repository" "rankingbot" {
   name                 = "rankingbot"
   description          = ":robot: 랭킹봇"
   homepage_url         = "https://femiwiki.com/w/%EC%82%AC%EC%9A%A9%EC%9E%90:%EB%9E%AD%ED%82%B9%EB%B4%87"
-  default_branch       = local.bot.default_branch
   has_issues           = local.bot.has_issues
   vulnerability_alerts = local.bot.vulnerability_alerts
   archive_on_destroy   = local.bot.archive_on_destroy
@@ -276,6 +337,16 @@ resource "github_repository" "rankingbot" {
     "bot",
     "docker-image",
   ]
+}
+
+resource "github_branch" "rankingbot_main" {
+  repository = github_repository.rankingbot.name
+  branch     = "main"
+}
+
+resource "github_branch_default" "rankingbot" {
+  repository = github_repository.rankingbot.name
+  branch     = github_branch.rankingbot_main.branch
 }
 
 resource "github_branch_protection" "rankingbot" {
@@ -302,7 +373,6 @@ resource "github_team_repository" "rankingbot" {
 resource "github_repository" "backupbot" {
   name                 = "backupbot"
   description          = ":robot: 페미위키 MySQL 백업봇"
-  default_branch       = local.bot.default_branch
   has_issues           = local.bot.has_issues
   vulnerability_alerts = local.bot.vulnerability_alerts
   archive_on_destroy   = local.bot.archive_on_destroy
@@ -310,6 +380,16 @@ resource "github_repository" "backupbot" {
     "bot",
     "docker-image",
   ]
+}
+
+resource "github_branch" "backupbot_main" {
+  repository = github_repository.backupbot.name
+  branch     = "main"
+}
+
+resource "github_branch_default" "backupbot" {
+  repository = github_repository.backupbot.name
+  branch     = github_branch.backupbot_main.branch
 }
 
 resource "github_branch_protection" "backupbot" {
@@ -337,7 +417,6 @@ resource "github_repository" "tweetbot" {
   name                 = "tweetbot"
   description          = ":robot: 페미위키 트위터 봇"
   homepage_url         = "https://femiwiki.com/w/%EC%82%AC%EC%9A%A9%EC%9E%90:%ED%8A%B8%EC%9C%97%EB%B4%87"
-  default_branch       = local.bot.default_branch
   has_issues           = local.bot.has_issues
   vulnerability_alerts = local.bot.vulnerability_alerts
   archive_on_destroy   = local.bot.archive_on_destroy
@@ -345,6 +424,16 @@ resource "github_repository" "tweetbot" {
     "bot",
     "docker-image",
   ]
+}
+
+resource "github_branch" "tweetbot_main" {
+  repository = github_repository.tweetbot.name
+  branch     = "main"
+}
+
+resource "github_branch_default" "tweetbot" {
+  repository = github_repository.tweetbot.name
+  branch     = github_branch.tweetbot_main.branch
 }
 
 resource "github_branch_protection" "tweetbot" {
@@ -371,11 +460,20 @@ resource "github_team_repository" "tweetbot" {
 resource "github_repository" "remote_gadgets" {
   name                 = "remote-gadgets"
   description          = "📽️ External repository for Javascript/CSS on FemiWiki"
-  default_branch       = local.default_repo.default_branch
   has_issues           = local.default_repo.has_issues
   vulnerability_alerts = local.default_repo.vulnerability_alerts
   archive_on_destroy   = local.default_repo.archive_on_destroy
   topics               = ["bot"]
+}
+
+resource "github_branch" "remote_gadgets_main" {
+  repository = github_repository.remote_gadgets.name
+  branch     = "main"
+}
+
+resource "github_branch_default" "remote_gadgets" {
+  repository = github_repository.remote_gadgets.name
+  branch     = github_branch.remote_gadgets_main.branch
 }
 
 resource "github_branch_protection" "remote_gadgets" {
@@ -402,10 +500,19 @@ resource "github_team_repository" "remote_gadgets" {
 resource "github_repository" "dot_github" {
   name                 = ".github"
   description          = "Community health files"
-  default_branch       = local.default_repo.default_branch
   has_issues           = local.default_repo.has_issues
   vulnerability_alerts = local.default_repo.vulnerability_alerts
   archive_on_destroy   = local.default_repo.archive_on_destroy
+}
+
+resource "github_branch" "dot_github_main" {
+  repository = github_repository.dot_github.name
+  branch     = "main"
+}
+
+resource "github_branch_default" "dot_github" {
+  repository = github_repository.dot_github.name
+  branch     = github_branch.dot_github_main.branch
 }
 
 resource "github_branch_protection" "dot_github" {
@@ -432,10 +539,19 @@ resource "github_team_repository" "dot_github" {
 resource "github_repository" "legunto" {
   name                 = "legunto"
   description          = "Fetch MediaWiki Scribunto modules from wikis"
-  default_branch       = local.default_repo.default_branch
   has_issues           = local.default_repo.has_issues
   vulnerability_alerts = local.default_repo.vulnerability_alerts
   archive_on_destroy   = local.default_repo.archive_on_destroy
+}
+
+resource "github_branch" "legunto_main" {
+  repository = github_repository.legunto.name
+  branch     = "main"
+}
+
+resource "github_branch_default" "legunto" {
+  repository = github_repository.legunto.name
+  branch     = github_branch.legunto_main.branch
 }
 
 resource "github_branch_protection" "legunto" {
@@ -463,11 +579,20 @@ resource "github_repository" "maintenance" {
   name                 = "maintenance"
   description          = ":wrench: 페미위키 점검 페이지"
   homepage_url         = "https://femiwiki.github.io/maintenance"
-  default_branch       = local.default_repo.default_branch
   has_issues           = local.default_repo.has_issues
   vulnerability_alerts = local.default_repo.vulnerability_alerts
   archive_on_destroy   = local.default_repo.archive_on_destroy
   topics               = ["website"]
+}
+
+resource "github_branch" "maintenance_main" {
+  repository = github_repository.maintenance.name
+  branch     = "main"
+}
+
+resource "github_branch_default" "maintenance" {
+  repository = github_repository.maintenance.name
+  branch     = github_branch.maintenance_main.branch
 }
 
 resource "github_branch_protection" "maintenance" {
@@ -494,24 +619,23 @@ resource "github_team_repository" "maintenance" {
 resource "github_repository" "caddy-mwcache" {
   name                 = "caddy-mwcache"
   description          = ":wrench: Caddy anonymous cache plugin for MediaWiki"
-  default_branch       = local.default_repo.default_branch
   has_issues           = local.default_repo.has_issues
   vulnerability_alerts = local.default_repo.vulnerability_alerts
   archive_on_destroy   = local.default_repo.archive_on_destroy
 }
 
-#resource "github_branch_protection" "caddy-wmcache" {
-#  repository_id     = github_repository.maintenance.node_id
-#  pattern           = local.default_repo.pattern
-#  enforce_admins    = local.default_repo.enforce_admins
-#  push_restrictions = local.default_repo.push_restrictions
-#
-#  required_pull_request_reviews {
-#    dismiss_stale_reviews           = local.default_repo.dismiss_stale_reviews
-#    require_code_owner_reviews      = local.default_repo.require_code_owner_reviews
-#    required_approving_review_count = local.default_repo.required_approving_review_count
-#  }
-#}
+resource "github_branch_protection" "caddy-wmcache" {
+  repository_id     = github_repository.maintenance.node_id
+  pattern           = local.default_repo.pattern
+  enforce_admins    = local.default_repo.enforce_admins
+  push_restrictions = local.default_repo.push_restrictions
+
+  required_pull_request_reviews {
+    dismiss_stale_reviews           = local.default_repo.dismiss_stale_reviews
+    require_code_owner_reviews      = local.default_repo.require_code_owner_reviews
+    required_approving_review_count = local.default_repo.required_approving_review_count
+  }
+}
 
 resource "github_team_repository" "caddy-mwcache" {
   team_id    = github_team.reviewer.id

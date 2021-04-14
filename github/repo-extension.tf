@@ -24,12 +24,21 @@ locals {
 resource "github_repository" "femiwiki_skin" {
   name                 = "FemiwikiSkin"
   description          = ":jack_o_lantern: 페미위키 스킨"
-  default_branch       = local.skin.default_branch
   homepage_url         = "https://www.mediawiki.org/wiki/Special:MyLanguage/Skin:Femiwiki"
   has_issues           = local.skin.has_issues
   vulnerability_alerts = local.skin.vulnerability_alerts
   archive_on_destroy   = local.skin.archive_on_destroy
   topics               = local.skin.topics
+}
+
+resource "github_branch" "femiwiki_skin_main" {
+  repository = github_repository.femiwiki_skin.name
+  branch     = "main"
+}
+
+resource "github_branch_default" "femiwiki_skin" {
+  repository = github_repository.femiwiki_skin.name
+  branch     = github_branch.femiwiki_skin_main.branch
 }
 
 resource "github_branch_protection" "femiwiki_skin" {
@@ -71,6 +80,16 @@ resource "github_repository" "unified_extension_for_femiwiki" {
   topics               = local.extension.topics
 }
 
+resource "github_branch" "unified_extension_for_femiwiki_main" {
+  repository = github_repository.unified_extension_for_femiwiki.name
+  branch     = "main"
+}
+
+resource "github_branch_default" "unified_extension_for_femiwiki" {
+  repository = github_repository.unified_extension_for_femiwiki.name
+  branch     = github_branch.unified_extension_for_femiwiki_main.branch
+}
+
 resource "github_branch_protection" "unified_extension_for_femiwiki" {
   count             = length(local.extension_branches)
   repository_id     = github_repository.unified_extension_for_femiwiki.node_id
@@ -100,12 +119,21 @@ resource "github_repository_collaborator" "unified_extension_for_femiwiki" {
 resource "github_repository" "faceted_category" {
   name                 = "FacetedCategory"
   description          = "FacetedCategories extension"
-  default_branch       = local.extension.default_branch
   homepage_url         = "https://www.mediawiki.org/wiki/Special:MyLanguage/Extension:FacetedCategory"
   has_issues           = local.extension.has_issues
   vulnerability_alerts = local.extension.vulnerability_alerts
   archive_on_destroy   = local.extension.archive_on_destroy
   topics               = local.extension.topics
+}
+
+resource "github_branch" "faceted_category_main" {
+  repository = github_repository.faceted_category.name
+  branch     = "main"
+}
+
+resource "github_branch_default" "faceted_category" {
+  repository = github_repository.faceted_category.name
+  branch     = github_branch.faceted_category_main.branch
 }
 
 resource "github_branch_protection" "faceted_category" {
@@ -137,12 +165,21 @@ resource "github_repository_collaborator" "faceted_category" {
 resource "github_repository" "sanctions" {
   name                 = "Sanctions"
   description          = "🙅 Offers convenient way to handle sanctions."
-  default_branch       = local.extension.default_branch
   homepage_url         = "https://www.mediawiki.org/wiki/Special:MyLanguage/Extension:Sanctions"
   has_issues           = local.extension.has_issues
   vulnerability_alerts = local.extension.vulnerability_alerts
   archive_on_destroy   = local.extension.archive_on_destroy
   topics               = local.extension.topics
+}
+
+resource "github_branch" "sanctions_main" {
+  repository = github_repository.sanctions.name
+  branch     = "main"
+}
+
+resource "github_branch_default" "sanctions" {
+  repository = github_repository.sanctions.name
+  branch     = github_branch.sanctions_main.branch
 }
 
 resource "github_branch_protection" "sanctions" {
@@ -174,12 +211,21 @@ resource "github_repository_collaborator" "sanctions" {
 resource "github_repository" "achievement_badges" {
   name                 = "AchievementBadges"
   description          = ":1st_place_medal: Provides an achievement system"
-  default_branch       = local.extension.default_branch
   homepage_url         = "https://www.mediawiki.org/wiki/Special:MyLanguage/Extension:AchievementBadges"
   has_issues           = local.extension.has_issues
   vulnerability_alerts = local.extension.vulnerability_alerts
   archive_on_destroy   = local.extension.archive_on_destroy
   topics               = local.extension.topics
+}
+
+resource "github_branch" "achievement_badges_main" {
+  repository = github_repository.achievement_badges.name
+  branch     = "main"
+}
+
+resource "github_branch_default" "achievement_badges" {
+  repository = github_repository.achievement_badges.name
+  branch     = github_branch.achievement_badges_main.branch
 }
 
 resource "github_branch_protection" "achievement_badges" {
