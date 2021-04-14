@@ -75,6 +75,12 @@ Defaults secure_path=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bi
 EOF
 
 #
+# 시간대 설정
+#
+TZ=Asia/Seoul
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
+#
 # persistent_data EBS 마운트
 #
 sudo mkdir -p /srv
