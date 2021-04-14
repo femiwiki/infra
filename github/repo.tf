@@ -625,7 +625,7 @@ resource "github_repository" "caddy_mwcache" {
 }
 
 resource "github_branch_protection" "caddy_mwcache" {
-  repository_id     = github_repository.maintenance.node_id
+  repository_id     = github_repository.caddy_mwcache.node_id
   pattern           = local.default_repo.pattern
   enforce_admins    = local.default_repo.enforce_admins
   push_restrictions = local.default_repo.push_restrictions
