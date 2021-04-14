@@ -639,5 +639,5 @@ resource "github_branch_protection" "caddy_mwcache" {
 
 resource "github_team_repository" "caddy_mwcache" {
   team_id    = github_team.reviewer.id
-  repository = github_repository.caddy-mwcache.name
+  repository = github_repository.caddy_mwcache.name
 }
