@@ -23,7 +23,7 @@ locals {
 #
 resource "github_repository" "femiwiki_skin" {
   name                 = "FemiwikiSkin"
-  description          = ":jack_o_lantern: 페미위키 스킨"
+  description          = ":jack_o_lantern: FemiwikiSkin"
   homepage_url         = "https://www.mediawiki.org/wiki/Special:MyLanguage/Skin:Femiwiki"
   has_issues           = local.skin.has_issues
   vulnerability_alerts = local.skin.vulnerability_alerts

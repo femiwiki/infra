@@ -620,6 +620,16 @@ resource "github_repository" "caddy_mwcache" {
   has_issues           = local.default_repo.has_issues
   vulnerability_alerts = local.default_repo.vulnerability_alerts
   archive_on_destroy   = local.default_repo.archive_on_destroy
+
+  topics = [
+    "caddy",
+    "caddy2",
+    "plugin",
+    "caddy-plugin",
+    "caddy-module",
+    "cache",
+    "mediawiki",
+  ]
 }
 
 resource "github_branch_protection" "caddy_mwcache" {
