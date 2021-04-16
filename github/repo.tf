@@ -335,7 +335,6 @@ resource "github_repository" "rankingbot" {
   archive_on_destroy   = local.bot.archive_on_destroy
   topics = [
     "bot",
-    "docker-image",
   ]
 }
 
@@ -422,7 +421,6 @@ resource "github_repository" "tweetbot" {
   archive_on_destroy   = local.bot.archive_on_destroy
   topics = [
     "bot",
-    "docker-image",
   ]
 }
 
