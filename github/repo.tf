@@ -95,6 +95,11 @@ resource "github_branch_protection" "nomad" {
     require_code_owner_reviews      = local.with_cd.require_code_owner_reviews
     required_approving_review_count = local.with_cd.required_approving_review_count
   }
+
+  required_status_checks {
+    strict  = true
+    context = ["before-cd-test"]
+  }
 }
 
 resource "github_team_repository" "nomad" {
