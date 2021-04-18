@@ -141,7 +141,7 @@ resource "aws_cloudwatch_metric_alarm" "femiwiki_main_page" {
   period      = 60
   statistic   = "Minimum"
   dimensions = {
-    HealthCheckId = "65854b5e-a8cb-40f7-87ba-5d3055f9effd"
+    HealthCheckId = aws_route53_health_check.femiwiki_main_page.id
   }
   evaluation_periods  = "1"
   threshold           = 1
