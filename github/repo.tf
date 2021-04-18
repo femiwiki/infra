@@ -97,8 +97,8 @@ resource "github_branch_protection" "nomad" {
   }
 
   required_status_checks {
-    strict  = true
-    context = ["before-cd-test"]
+    strict   = true
+    contexts = ["before-cd-test"]
   }
 }
 
