@@ -654,3 +654,38 @@ resource "github_team_repository" "caddy_mwcache" {
   team_id    = github_team.reviewer.id
   repository = github_repository.caddy_mwcache.name
 }
+
+#
+# OOUIFemiwikiTheme
+#
+resource "github_repository" "ooui_femiwiki_theme" {
+  name                 = "OOUIFemiwikiTheme"
+  description          = ":jack_o_lantern: OOUI Femiwiki Theme"
+  has_issues           = local.default_repo.has_issues
+  vulnerability_alerts = local.default_repo.vulnerability_alerts
+  archive_on_destroy   = local.default_repo.archive_on_destroy
+
+  topics = [
+    "ooui-theme",
+    "ooui",
+    "theme",
+  ]
+}
+
+resource "github_branch_protection" "ooui_femiwiki_theme" {
+  repository_id     = github_repository.ooui_femiwiki_theme.node_id
+  pattern           = local.default_repo.pattern
+  enforce_admins    = local.default_repo.enforce_admins
+  push_restrictions = local.default_repo.push_restrictions
+
+  required_pull_request_reviews {
+    dismiss_stale_reviews           = local.default_repo.dismiss_stale_reviews
+    require_code_owner_reviews      = local.default_repo.require_code_owner_reviews
+    required_approving_review_count = local.default_repo.required_approving_review_count
+  }
+}
+
+resource "github_team_repository" "ooui_femiwiki_theme" {
+  team_id    = github_team.reviewer.id
+  repository = github_repository.ooui_femiwiki_theme.name
+}
