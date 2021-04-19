@@ -168,7 +168,7 @@ resource "aws_volume_attachment" "persistent_data" {
 resource "aws_instance" "femiwiki_arm64" {
   ebs_optimized           = true
   ami                     = data.aws_ami.amazon_linux_2_arm64.image_id
-  instance_type           = "t4g.nano"
+  instance_type           = "t4g.micro"
   key_name                = aws_key_pair.femiwiki.key_name
   monitoring              = false
   iam_instance_profile    = aws_iam_instance_profile.femiwiki.name
