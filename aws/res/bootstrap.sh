@@ -76,6 +76,7 @@ EOF
 
 #
 # persistent_data EBS 마운트
+# TODO Remove this section after closing https://github.com/femiwiki/nomad/issues/16
 #
 sudo mkdir -p /srv
 echo "UUID=$(blkid -s UUID -o value /dev/xvdf)  /srv  xfs  defaults,nofail  0  2" | sudo tee -a /etc/fstab

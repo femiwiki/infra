@@ -95,10 +95,16 @@ EOF
   }
 }
 
+# Interchanched temporarily
+# TODO fix after closing https://github.com/femiwiki/femiwiki/issues/116
 resource "aws_eip" "femiwiki" {
   instance = aws_instance.femiwiki_green.id
   vpc      = true
 }
+
+#
+# Exprimental Nomad server
+#
 
 resource "aws_instance" "femiwiki_green" {
   ebs_optimized           = true
@@ -146,6 +152,8 @@ resource "aws_instance" "femiwiki_green" {
   }
 }
 
+# Interchanched temporarily
+# TODO fix after closing https://github.com/femiwiki/femiwiki/issues/116
 resource "aws_eip" "femiwiki_green" {
   instance = aws_instance.femiwiki.id
   vpc      = true
@@ -165,6 +173,14 @@ resource "aws_volume_attachment" "persistent_data" {
   instance_id = aws_instance.femiwiki_green.id
 }
 
+#
+# Exprimental arm64 server
+#
+
+data "aws_availability_zone" "femiwiki_arm64" {
+  name = "ap-northeast-1a"
+}
+
 resource "aws_instance" "femiwiki_arm64" {
   ebs_optimized           = true
   ami                     = data.aws_ami.amazon_linux_2_arm64.image_id
@@ -173,7 +189,7 @@ resource "aws_instance" "femiwiki_arm64" {
   monitoring              = false
   iam_instance_profile    = aws_iam_instance_profile.femiwiki.name
   disable_api_termination = true
-  availability_zone       = aws_ebs_volume.persistent_data.availability_zone
+  availability_zone       = data.aws_availability_zone.femiwiki_arm64.name
 
   vpc_security_group_ids = [
     aws_default_security_group.default.id,
@@ -208,7 +224,31 @@ resource "aws_instance" "femiwiki_arm64" {
   }
 }
 
+resource "aws_ebs_volume" "persistent_data_mysql" {
+  availability_zone = data.aws_availability_zone.femiwiki_arm64.name
+  size              = 8
+  tags = {
+    Name = "mysql for experimental arm64 server"
+  }
+}
+
+resource "aws_ebs_volume" "persistent_data_caddycert" {
+  availability_zone = data.aws_availability_zone.femiwiki_arm64.name
+  size              = 1
+  tags = {
+    Name = "caddycert for experimental arm64 server"
+  }
+}
+
+resource "aws_ebs_volume" "persistent_data_secrets" {
+  availability_zone = data.aws_availability_zone.femiwiki_arm64.name
+  size              = 1
+  tags = {
+    Name = "secrets for experimental arm64 server"
+  }
+}
+
 resource "aws_eip" "femiwiki_arm64" {
-  instance = aws_instance.femiwiki.id
+  instance = aws_instance.femiwiki_arm64.id
   vpc      = true
 }
