@@ -219,8 +219,11 @@ locals {
   uploaded_files_deleted = aws_s3_bucket.uploaded_files_deleted.arn
   backups                = aws_s3_bucket.backups.arn
 
-  femiwiki_green  = aws_instance.femiwiki_green.arn
-  persistent_data = aws_ebs_volume.persistent_data.arn
+  femiwiki_green            = aws_instance.femiwiki_green.arn
+  persistent_data           = aws_ebs_volume.persistent_data.arn
+  persistent_data_mysql     = aws_ebs_volume.persistent_data_mysql.arn
+  persistent_data_caddycert = aws_ebs_volume.persistent_data_caddycert.arn
+  persistent_data_secrets   = aws_ebs_volume.persistent_data_secrets.arn
 }
 
 data "aws_iam_policy_document" "amazon_s3_access" {
@@ -316,6 +319,9 @@ data "aws_iam_policy_document" "mount_ebs_volumes" {
     resources = [
       local.femiwiki_green,
       local.persistent_data,
+      local.persistent_data_mysql,
+      local.persistent_data_caddycert,
+      local.persistent_data_secrets,
     ]
   }
 
