@@ -164,3 +164,51 @@ resource "aws_volume_attachment" "persistent_data" {
   volume_id   = aws_ebs_volume.persistent_data.id
   instance_id = aws_instance.femiwiki_green.id
 }
+
+resource "aws_instance" "femiwiki_arm64" {
+  ebs_optimized           = true
+  ami                     = data.aws_ami.amazon_linux_2_arm64.image_id
+  instance_type           = "t4g.nano"
+  key_name                = aws_key_pair.femiwiki.key_name
+  monitoring              = false
+  iam_instance_profile    = aws_iam_instance_profile.femiwiki.name
+  disable_api_termination = true
+  availability_zone       = aws_ebs_volume.persistent_data.availability_zone
+
+  vpc_security_group_ids = [
+    aws_default_security_group.default.id,
+    aws_security_group.femiwiki.id,
+  ]
+
+  root_block_device {
+    delete_on_termination = true
+    volume_size           = 16
+    volume_type           = "gp2"
+  }
+
+  credit_specification {
+    cpu_credits = "unlimited"
+  }
+
+  tags = {
+    Name = "experimental arm64 server"
+  }
+
+  volume_tags = {
+    Name = "experimental arm64 server"
+  }
+
+  user_data = file("res/bootstrap.sh")
+
+  lifecycle {
+    ignore_changes = [
+      ami,
+      user_data,
+    ]
+  }
+}
+
+resource "aws_eip" "femiwiki_arm64" {
+  instance = aws_instance.femiwiki.id
+  vpc      = true
+}
