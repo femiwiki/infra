@@ -223,7 +223,7 @@ locals {
   femiwiki_arm64            = aws_instance.femiwiki_arm64.arn
   persistent_data           = aws_ebs_volume.persistent_data.arn
   persistent_data_mysql     = aws_ebs_volume.persistent_data_mysql.arn
-  persistent_data_caddycert = aws_ebs_volume.persistent_data_caddycert.arn
+  persistent_data_caddycert = aws_ebs_volume.persistent_data_caddycerts.arn
   persistent_data_secrets   = aws_ebs_volume.persistent_data_secrets.arn
 }
 
