@@ -139,11 +139,11 @@ resource "aws_ebs_volume" "persistent_data_mysql" {
   }
 }
 
-resource "aws_ebs_volume" "persistent_data_caddycert" {
+resource "aws_ebs_volume" "persistent_data_caddycerts" {
   availability_zone = data.aws_availability_zone.femiwiki_arm64.name
   size              = 1
   tags = {
-    Name = "Caddycert for Experimental Arm 64 Server"
+    Name = "Caddycerts for Experimental Arm 64 Server"
   }
 }
 
