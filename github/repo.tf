@@ -181,10 +181,9 @@ resource "github_branch_default" "mediawiki" {
 }
 
 resource "github_branch_protection" "mediawiki" {
-  repository_id = github_repository.docker_mediawiki.node_id
-  pattern       = local.docker.pattern
-  # Disabled for https://github.com/femiwiki/infra/issues/59
-  enforce_admins    = false
+  repository_id     = github_repository.docker_mediawiki.node_id
+  pattern           = local.docker.pattern
+  enforce_admins    = local.docker.enforce_admins
   push_restrictions = local.docker.push_restrictions
 
   required_pull_request_reviews {
