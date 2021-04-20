@@ -1,10 +1,3 @@
-# TODO: 없앨 예정
-data "aws_ami" "femiwiki_base" {
-  most_recent = true
-  name_regex  = "^femiwiki-base \\d{4}-\\d{2}-\\d{2} \\d{2}_\\d{2}$"
-  owners      = ["self"]
-}
-
 data "aws_ami" "amazon_linux_2" {
   owners      = ["amazon"]
   most_recent = true
