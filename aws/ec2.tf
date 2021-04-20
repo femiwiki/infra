@@ -61,8 +61,6 @@ resource "aws_instance" "femiwiki_green" {
   }
 }
 
-# Interchanched temporarily
-# TODO fix after closing https://github.com/femiwiki/femiwiki/issues/116
 resource "aws_eip" "femiwiki" {
   instance = aws_instance.femiwiki_green.id
   vpc      = true
