@@ -143,14 +143,6 @@ resource "aws_ebs_volume" "persistent_data_caddycerts" {
   }
 }
 
-resource "aws_ebs_volume" "persistent_data_secrets" {
-  availability_zone = data.aws_availability_zone.femiwiki_arm64.name
-  size              = 1
-  tags = {
-    Name = "Secrets for Experimental Arm 64 Server"
-  }
-}
-
 resource "aws_eip" "femiwiki_arm64" {
   instance = aws_instance.femiwiki_arm64.id
   vpc      = true
