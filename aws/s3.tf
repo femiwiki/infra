@@ -1,3 +1,45 @@
+#
+# Secrets for MediaWiki run
+#
+
+resource "aws_s3_bucket" "secrets" {
+  bucket = "femiwiki-secrets"
+}
+
+resource "aws_s3_bucket_public_access_block" "secrets" {
+  bucket = aws_s3_bucket.secrets.id
+
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
+resource "aws_s3_bucket_policy" "secrets" {
+  bucket = aws_s3_bucket.secrets.bucket
+
+  policy = data.aws_iam_policy_document.secrets.json
+}
+
+data "aws_iam_policy_document" "secrets" {
+  # Prevent all human users downloading secret from S3.
+  statement {
+    effect = "Deny"
+    actions = ["s3:GetObject"]
+
+    principals {
+      type        = "AWS"
+      identifiers = ["arn:aws:iam::*"]
+    }
+
+    resources = ["${local.secrets}/*"]
+  }
+}
+
+#
+# Uploaded files (images and etc)
+#
+
 resource "aws_s3_bucket" "uploaded_files" {
   bucket = "femiwiki-uploaded-files"
 }
@@ -69,6 +111,10 @@ data "aws_iam_policy_document" "uploaded_files_thumb" {
     resources = ["${local.uploaded_files_thumb}/*"]
   }
 }
+
+#
+# Database dumps
+#
 
 resource "aws_s3_bucket" "backups" {
   bucket = "femiwiki-backups"

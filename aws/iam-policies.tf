@@ -213,6 +213,7 @@ resource "aws_iam_policy" "amazon_s3_access" {
 #   https://github.com/hashicorp/terraform/issues/27171#issuecomment-740249394
 #   https://github.com/hashicorp/terraform/issues/27282
 locals {
+  secrets                = aws_s3_bucket.secrets.arn
   uploaded_files         = aws_s3_bucket.uploaded_files.arn
   uploaded_files_thumb   = aws_s3_bucket.uploaded_files_thumb.arn
   uploaded_files_temp    = aws_s3_bucket.uploaded_files_temp.arn
@@ -287,6 +288,20 @@ data "aws_iam_policy_document" "route53" {
       "route53:GetChange",
     ]
     resources = ["arn:aws:route53:::change/*"]
+  }
+}
+
+resource "aws_iam_policy" "download_secrets" {
+  name        = "DownloadSecrets"
+  description = "Allows to download secrets"
+
+  policy = data.aws_iam_policy_document.download_secrets.json
+}
+
+data "aws_iam_policy_document" "download_secrets" {
+  statement {
+    actions   = ["s3:GetObject"]
+    resources = ["${local.secrets}/secrets.php"]
   }
 }
 

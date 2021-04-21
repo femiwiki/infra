@@ -111,6 +111,11 @@ resource "aws_iam_role_policy_attachment" "femiwiki_route53" {
   policy_arn = aws_iam_policy.route53.arn
 }
 
+resource "aws_iam_role_policy_attachment" "femiwiki_download_secrets" {
+  role       = aws_iam_role.femiwiki.name
+  policy_arn = aws_iam_policy.download_secrets.arn
+}
+
 resource "aws_iam_role_policy_attachment" "femiwiki_upload_backup" {
   role       = aws_iam_role.femiwiki.name
   policy_arn = aws_iam_policy.upload_backup.arn
