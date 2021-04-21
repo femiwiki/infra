@@ -18,10 +18,10 @@ resource "aws_s3_bucket_public_access_block" "secrets" {
 resource "aws_s3_bucket_policy" "secrets" {
   bucket = aws_s3_bucket.secrets.bucket
 
-  policy = data.aws_iam_policy_document.secrets.json
+  policy = data.aws_iam_policy_document.s3_secrets.json
 }
 
-data "aws_iam_policy_document" "secrets" {
+data "aws_iam_policy_document" "s3_secrets" {
   # Prevent all human users downloading secret from S3.
   statement {
     effect  = "Deny"
