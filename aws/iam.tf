@@ -2,7 +2,6 @@ locals {
   programmatic_users = [
     "femiwiki-email",
     "terraform-cloud",
-    "packer",
   ]
 }
 
@@ -23,11 +22,6 @@ resource "aws_iam_user" "programmatic_users" {
 resource "aws_iam_user_policy_attachment" "terraform_cloud" {
   user       = "terraform-cloud"
   policy_arn = aws_iam_policy.terraform_cloud.arn
-}
-
-resource "aws_iam_user_policy_attachment" "packer" {
-  user       = "packer"
-  policy_arn = aws_iam_policy.packer.arn
 }
 
 resource "aws_iam_user_policy" "ses_sending_access" {
