@@ -225,7 +225,6 @@ locals {
   persistent_data           = aws_ebs_volume.persistent_data.arn
   persistent_data_mysql     = aws_ebs_volume.persistent_data_mysql.arn
   persistent_data_caddycert = aws_ebs_volume.persistent_data_caddycerts.arn
-  persistent_data_secrets   = aws_ebs_volume.persistent_data_secrets.arn
 }
 
 data "aws_iam_policy_document" "amazon_s3_access" {
