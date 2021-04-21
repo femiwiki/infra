@@ -24,7 +24,7 @@ resource "aws_s3_bucket_policy" "secrets" {
 data "aws_iam_policy_document" "secrets" {
   # Prevent all human users downloading secret from S3.
   statement {
-    effect = "Deny"
+    effect  = "Deny"
     actions = ["s3:GetObject"]
 
     principals {
