@@ -75,14 +75,6 @@ Defaults secure_path=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bi
 EOF
 
 #
-# persistent_data EBS 마운트
-# TODO Remove this section after closing https://github.com/femiwiki/nomad/issues/16
-#
-sudo mkdir -p /srv
-echo "UUID=$(blkid -s UUID -o value /dev/xvdf)  /srv  xfs  defaults,nofail  0  2" | sudo tee -a /etc/fstab
-sudo mount -a
-
-#
 # 스왑 메모리 생성
 # 아마존 리눅스에서는 기본으로 XFS를 쓰는데, 이 경우 fallocate 명령어를 쓰지 못한다.
 #
