@@ -117,10 +117,6 @@ resource "aws_instance" "femiwiki_arm64" {
     Name = "Experimental Arm 64 Server"
   }
 
-  volume_tags = {
-    Name = "Experimental Arm 64 Server"
-  }
-
   user_data = file("res/bootstrap.sh")
 
   lifecycle {
