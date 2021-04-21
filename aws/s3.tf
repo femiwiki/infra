@@ -2,6 +2,25 @@ resource "aws_s3_bucket" "uploaded_files" {
   bucket = "femiwiki-uploaded-files"
 }
 
+resource "aws_s3_bucket_policy" "uploaded_files" {
+  bucket = aws_s3_bucket.uploaded_files.bucket
+
+  policy = data.aws_iam_policy_document.uploaded_files.json
+}
+
+data "aws_iam_policy_document" "uploaded_files" {
+  statement {
+    actions = ["s3:GetObject"]
+
+    principals {
+      type        = "AWS"
+      identifiers = ["*"]
+    }
+
+    resources = ["${local.uploaded_files}/*"]
+  }
+}
+
 resource "aws_s3_bucket" "uploaded_files_deleted" {
   bucket = "femiwiki-uploaded-files-deleted"
 }
@@ -30,25 +49,6 @@ resource "aws_s3_bucket_public_access_block" "uploaded_files_temp" {
 
 resource "aws_s3_bucket" "uploaded_files_thumb" {
   bucket = "femiwiki-uploaded-files-thumb"
-}
-
-resource "aws_s3_bucket_policy" "uploaded_files" {
-  bucket = aws_s3_bucket.uploaded_files.bucket
-
-  policy = data.aws_iam_policy_document.uploaded_files.json
-}
-
-data "aws_iam_policy_document" "uploaded_files" {
-  statement {
-    actions = ["s3:GetObject"]
-
-    principals {
-      type        = "AWS"
-      identifiers = ["*"]
-    }
-
-    resources = ["${local.uploaded_files}/*"]
-  }
 }
 
 resource "aws_s3_bucket_policy" "uploaded_files_thumb" {
