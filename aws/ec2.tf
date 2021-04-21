@@ -142,8 +142,3 @@ resource "aws_ebs_volume" "persistent_data_caddycerts" {
     Name = "Caddycerts for Experimental Arm 64 Server"
   }
 }
-
-resource "aws_eip" "femiwiki_arm64" {
-  instance = aws_instance.femiwiki_arm64.id
-  vpc      = true
-}

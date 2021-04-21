@@ -23,7 +23,7 @@ resource "aws_route53_record" "test_femiwiki_com" {
   name    = "test.femiwiki.com"
   type    = "A"
   zone_id = aws_route53_zone.femiwiki_com.zone_id
-  records = [aws_eip.femiwiki_arm64.public_ip]
+  records = [aws_eip.femiwiki.public_ip]
   ttl     = 300
 }
 
