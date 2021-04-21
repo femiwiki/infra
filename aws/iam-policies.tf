@@ -290,20 +290,6 @@ data "aws_iam_policy_document" "route53" {
   }
 }
 
-resource "aws_iam_policy" "upload_backup" {
-  name        = "UploadBackup"
-  description = "Allows to upload to the backup bucket"
-
-  policy = data.aws_iam_policy_document.upload_backup.json
-}
-
-data "aws_iam_policy_document" "upload_backup" {
-  statement {
-    actions   = ["s3:PutObject"]
-    resources = ["${local.backups}/*"]
-  }
-}
-
 resource "aws_iam_policy" "mount_ebs_volumes" {
   name        = "MountEbsVolumes"
   description = "Allows to mount ebs volumes"
@@ -334,5 +320,19 @@ data "aws_iam_policy_document" "mount_ebs_volumes" {
       "ec2:DescribeVolumes",
     ]
     resources = ["*"]
+  }
+}
+
+resource "aws_iam_policy" "upload_backup" {
+  name        = "UploadBackup"
+  description = "Allows to upload to the backup bucket"
+
+  policy = data.aws_iam_policy_document.upload_backup.json
+}
+
+data "aws_iam_policy_document" "upload_backup" {
+  statement {
+    actions   = ["s3:PutObject"]
+    resources = ["${local.backups}/*"]
   }
 }
