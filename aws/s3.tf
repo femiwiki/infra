@@ -29,7 +29,13 @@ data "aws_iam_policy_document" "s3_secrets" {
 
     principals {
       type        = "AWS"
-      identifiers = ["arn:aws:iam::*"]
+      identifiers = ["*"]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "aws:PrincipalType"
+      values   = ["User"]
     }
 
     resources = ["${local.secrets}/*"]
