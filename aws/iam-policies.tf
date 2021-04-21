@@ -272,7 +272,6 @@ data "aws_iam_policy_document" "mount_ebs_volumes" {
       local.persistent_data,
       local.persistent_data_mysql,
       local.persistent_data_caddycert,
-      local.persistent_data_secrets,
     ]
   }
 
