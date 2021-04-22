@@ -77,7 +77,7 @@ resource "github_issue_label" "operation" {
 resource "github_issue_label" "REL1_35" {
   for_each    = toset(data.github_repositories.actives.names)
   repository  = each.key
-  name        = "REL1_35"
+  name        = "MW1.35"
   color       = "5319e7"
   description = "MediaWiki 1.35"
 }
