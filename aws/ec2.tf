@@ -123,6 +123,8 @@ resource "aws_instance" "femiwiki_arm64" {
     ignore_changes = [
       ami,
       user_data,
+      # https://github.com/femiwiki/infra/issues/88
+      volume_tags,
     ]
   }
 }
