@@ -35,7 +35,7 @@ yum install -y \
   # ripgrep
 
 #
-# Install atop
+# Install atop and sysstat
 # Reference: https://aws.amazon.com/premiumsupport/knowledge-center/ec2-linux-configure-monitoring-tools/#Amazon_Linux_2
 #
 amazon-linux-extras install -y epel
