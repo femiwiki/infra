@@ -16,8 +16,9 @@ yum install -y ec2-instance-connect
 # 기본 유틸리티들 설치
 #
 yum autoremove -y postfix
-curl -Lo /etc/yum.repos.d/carlwgeorge-ripgrep-epel-7.repo \
-  'https://copr.fedorainfracloud.org/coprs/carlwgeorge/ripgrep/repo/epel-7/carlwgeorge-ripgrep-epel-7.repo'
+# Disabled temporarily, See https://github.com/femiwiki/femiwiki/issues/247
+# curl -Lo /etc/yum.repos.d/carlwgeorge-ripgrep-epel-7.repo \
+#   'https://copr.fedorainfracloud.org/coprs/carlwgeorge/ripgrep/repo/epel-7/carlwgeorge-ripgrep-epel-7.repo'
 yum update -y
 yum install -y \
   bash-completion \
@@ -28,10 +29,12 @@ yum install -y \
   yum-cron \
   amazon-cloudwatch-agent \
   jq \
-  ripgrep \
   unzip \
-  nc \
-  'https://www.atoptool.nl/download/atop-2.4.0-1.x86_64.rpm'
+  nc
+  # Disabled temporarily, See https://github.com/femiwiki/femiwiki/issues/248
+  # 'https://www.atoptool.nl/download/atop-2.4.0-1.x86_64.rpm'
+  # Disabled temporarily, See https://github.com/femiwiki/femiwiki/issues/247
+  # ripgrep
 
 #
 # yum-cron 설치
