@@ -1,14 +1,16 @@
 Femiwiki Infra
 ========
-[![Terraform Badge]][Terraform Cloud Link]
+[![Github checks Status]][github checks link] [![Terraform Badge]][Terraform Cloud Link]
 
 페미위키의 AWS 인프라가 정의되어있는 테라폼 코드입니다.
 
 ### Prerequisites
+
 - Terraform
 - [Terraform Cloud] 계정
 
 ### Instructions
+
 ```bash
 # https://app.terraform.io/app/settings/tokens 에서 본인의 토큰을 확인한 뒤
 # ~/.terraformrc 에 아래와 같이 테라폼 토큰 세팅
@@ -21,6 +23,8 @@ terraform init
 terraform plan
 ```
 
+[github checks status]: https://badgen.net/github/checks/femiwiki/infra/main
+[github checks link]: https://github.com/femiwiki/infra/actions
 [Terraform Badge]: https://badgen.net/badge/icon/terraform?label&icon=https://unpkg.com/badgen-icons@0.12.0/icons/terraform.svg
 [Terraform Cloud Link]: https://app.terraform.io/app/femiwiki/workspaces
 [Terraform Cloud]: https://app.terraform.io
