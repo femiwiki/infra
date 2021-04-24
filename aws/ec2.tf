@@ -57,6 +57,8 @@ resource "aws_instance" "femiwiki_green" {
     ignore_changes = [
       ami,
       user_data,
+      # https://github.com/femiwiki/infra/issues/88
+      volume_tags,
     ]
   }
 }
@@ -70,7 +72,7 @@ resource "aws_ebs_volume" "persistent_data" {
   availability_zone = "ap-northeast-1a"
   size              = 8
   tags = {
-    Name = "Main Server"
+    Name = "Mysql data-dir (legacy)"
   }
 }
 
