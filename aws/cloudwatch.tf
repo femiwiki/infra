@@ -14,22 +14,6 @@ resource "aws_cloudwatch_metric_alarm" "femiwiki_green_cpu_credit_balance_cloud_
   alarm_actions       = [aws_sns_topic.cloudwatch_alarms_topic.arn]
 }
 
-resource "aws_cloudwatch_metric_alarm" "femiwiki_green_burst_balance_cloud_watch_alarm" {
-  alarm_name  = "Femiwiki green Burst Balance cloud watch alarm"
-  namespace   = "AWS/EBS"
-  metric_name = "BurstBalance"
-  period      = 300
-  statistic   = "Minimum"
-  dimensions = {
-    VolumeId = aws_instance.femiwiki_green.root_block_device.0.volume_id
-  }
-  evaluation_periods  = "1"
-  threshold           = "75"
-  comparison_operator = "LessThanThreshold"
-  datapoints_to_alarm = 1
-  alarm_actions       = [aws_sns_topic.cloudwatch_alarms_topic.arn]
-}
-
 resource "aws_cloudwatch_metric_alarm" "femiwiki_green_disk_used_cloud_watch_alarm" {
   alarm_name  = "Femiwiki green disk used cloud watch alarm"
   namespace   = "CWAgent"
@@ -60,22 +44,6 @@ resource "aws_cloudwatch_metric_alarm" "femiwiki_arm64_cpu_credit_balance_cloud_
   }
   evaluation_periods  = "1"
   threshold           = "72"
-  comparison_operator = "LessThanThreshold"
-  datapoints_to_alarm = 1
-  alarm_actions       = [aws_sns_topic.cloudwatch_alarms_topic.arn]
-}
-
-resource "aws_cloudwatch_metric_alarm" "femiwiki_arm64_burst_balance_cloud_watch_alarm" {
-  alarm_name  = "Femiwiki arm64 Burst Balance cloud watch alarm"
-  namespace   = "AWS/EBS"
-  metric_name = "BurstBalance"
-  period      = 300
-  statistic   = "Minimum"
-  dimensions = {
-    VolumeId = aws_instance.femiwiki_arm64.root_block_device.0.volume_id
-  }
-  evaluation_periods  = "1"
-  threshold           = "75"
   comparison_operator = "LessThanThreshold"
   datapoints_to_alarm = 1
   alarm_actions       = [aws_sns_topic.cloudwatch_alarms_topic.arn]
