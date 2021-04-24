@@ -68,6 +68,11 @@ resource "aws_eip" "femiwiki" {
   vpc      = true
 }
 
+resource "aws_eip" "test_femiwiki" {
+  instance = aws_instance.femiwiki_arm64.id
+  vpc      = true
+}
+
 #
 # Exprimental arm64 server
 #
