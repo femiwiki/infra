@@ -23,7 +23,7 @@ resource "aws_instance" "femiwiki_green" {
   monitoring              = false
   iam_instance_profile    = aws_iam_instance_profile.femiwiki.name
   disable_api_termination = true
-  availability_zone       = aws_ebs_volume.persistent_data.availability_zone
+  availability_zone       = data.aws_availability_zone.femiwiki_arm64.name
 
   vpc_security_group_ids = [
     aws_default_security_group.default.id,
