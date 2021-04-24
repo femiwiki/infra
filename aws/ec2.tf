@@ -36,7 +36,7 @@ resource "aws_instance" "femiwiki_green" {
     # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/Hibernate.html#hibernating-prerequisites
     encrypted   = true
     volume_size = 16
-    volume_type = "gp2"
+    volume_type = "gp3"
   }
 
   credit_specification {
@@ -106,7 +106,7 @@ resource "aws_instance" "femiwiki_arm64" {
   root_block_device {
     delete_on_termination = true
     volume_size           = 16
-    volume_type           = "gp2"
+    volume_type           = "gp3"
   }
 
   credit_specification {
@@ -131,6 +131,7 @@ resource "aws_instance" "femiwiki_arm64" {
 
 resource "aws_ebs_volume" "persistent_data_mysql" {
   availability_zone = data.aws_availability_zone.femiwiki_arm64.name
+  type              = "gp3"
   size              = 8
   tags = {
     Name = "Mysql for Experimental Arm 64 Server"
@@ -139,6 +140,7 @@ resource "aws_ebs_volume" "persistent_data_mysql" {
 
 resource "aws_ebs_volume" "persistent_data_caddycerts" {
   availability_zone = data.aws_availability_zone.femiwiki_arm64.name
+  type              = "gp3"
   size              = 1
   tags = {
     Name = "Caddycerts for Experimental Arm 64 Server"
