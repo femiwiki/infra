@@ -74,12 +74,6 @@ resource "aws_ebs_volume" "persistent_data" {
   }
 }
 
-resource "aws_volume_attachment" "persistent_data" {
-  device_name = "/dev/xvdf"
-  volume_id   = aws_ebs_volume.persistent_data.id
-  instance_id = aws_instance.femiwiki_green.id
-}
-
 #
 # Exprimental arm64 server
 #
