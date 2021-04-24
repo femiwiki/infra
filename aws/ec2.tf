@@ -62,7 +62,7 @@ resource "aws_instance" "femiwiki_green" {
 }
 
 resource "aws_eip" "femiwiki" {
-  instance = aws_instance.femiwiki_arm64.id
+  instance = aws_instance.femiwiki_green.id
   vpc      = true
 }
 
