@@ -68,14 +68,6 @@ resource "aws_eip" "femiwiki" {
   vpc      = true
 }
 
-resource "aws_ebs_volume" "persistent_data" {
-  availability_zone = "ap-northeast-1a"
-  size              = 8
-  tags = {
-    Name = "Mysql data-dir (legacy)"
-  }
-}
-
 #
 # Exprimental arm64 server
 #
