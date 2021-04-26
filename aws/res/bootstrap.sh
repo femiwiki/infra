@@ -55,7 +55,7 @@ systemctl enable yum-cron
 #
 # cloudwatch-agent 실행
 #
-cat <<'EOF' > /opt/aws/amazon-cloudwatch-agent/bin/config.json
+cat <<'EOF' > /opt/aws/amazon-cloudwatch-agent/etc/config.json
 {
   "metrics": {
     "metrics_collected": {
@@ -77,7 +77,7 @@ cat <<'EOF' > /opt/aws/amazon-cloudwatch-agent/bin/config.json
   }
 }
 EOF
-/opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s -c file:/opt/aws/amazon-cloudwatch-agent/bin/config.json
+/opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s -c file:/opt/aws/amazon-cloudwatch-agent/etc/config.json
 
 #
 # sudo 로 /usr/local/{bin,sbin} 안에 있는 커맨드를 실행할 수 있도록 설정
