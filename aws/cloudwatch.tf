@@ -1,38 +1,3 @@
-resource "aws_cloudwatch_metric_alarm" "femiwiki_green_cpu_credit_balance_cloud_watch_alarm" {
-  alarm_name  = "Femiwiki green CPU credit balance cloud watch alarm"
-  namespace   = "AWS/EC2"
-  metric_name = "CPUCreditBalance"
-  period      = 300
-  statistic   = "Minimum"
-  dimensions = {
-    InstanceId = aws_instance.femiwiki_green.id
-  }
-  evaluation_periods  = "1"
-  threshold           = "72"
-  comparison_operator = "LessThanThreshold"
-  datapoints_to_alarm = 1
-  alarm_actions       = [aws_sns_topic.cloudwatch_alarms_topic.arn]
-}
-
-resource "aws_cloudwatch_metric_alarm" "femiwiki_green_disk_used_cloud_watch_alarm" {
-  alarm_name  = "Femiwiki green disk used cloud watch alarm"
-  namespace   = "CWAgent"
-  metric_name = "disk_used_percent"
-  period      = 300
-  statistic   = "Maximum"
-  dimensions = {
-    "device" = "nvme0n1p1"
-    "fstype" = "xfs"
-    "host"   = aws_instance.femiwiki_green.private_dns
-    "path"   = "/"
-  }
-  evaluation_periods  = "1"
-  threshold           = "90"
-  comparison_operator = "GreaterThanThreshold"
-  datapoints_to_alarm = 1
-  alarm_actions       = [aws_sns_topic.cloudwatch_alarms_topic.arn]
-}
-
 resource "aws_cloudwatch_metric_alarm" "femiwiki_arm64_cpu_credit_balance_cloud_watch_alarm" {
   alarm_name  = "Femiwiki arm64 CPU credit balance cloud watch alarm"
   namespace   = "AWS/EC2"
