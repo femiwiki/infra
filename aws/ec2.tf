@@ -99,7 +99,7 @@ resource "aws_instance" "femiwiki_consul_test" {
   key_name                = aws_key_pair.femiwiki.key_name
   monitoring              = false
   iam_instance_profile    = aws_iam_instance_profile.femiwiki.name
-  disable_api_termination = true
+  disable_api_termination = false # during test period
   availability_zone       = data.aws_availability_zone.femiwiki_arm64.name
 
   vpc_security_group_ids = [
@@ -126,7 +126,7 @@ resource "aws_instance" "femiwiki_consul_test" {
   lifecycle {
     ignore_changes = [
       ami,
-      user_data,
+      # user_data, # during test period
       # https://github.com/femiwiki/infra/issues/88
       volume_tags,
     ]
