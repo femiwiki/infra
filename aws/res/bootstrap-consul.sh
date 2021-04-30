@@ -186,6 +186,8 @@ sudo -u ec2-user git clone https://github.com/femiwiki/nomad.git /home/ec2-user/
 #
 # Bootstrap Nomad ACL
 #
+until nomad acl policy list > /dev/null; do
+  sleep 1; done;
 NOMAD_TOKEN="$(nomad acl bootstrap | tail -n +1 | head -n 1 | awk '{print $4}')"
 printf "\n# Nomad ACL token\nexport NOMAD_TOKEN=%s\n" "$NOMAD_TOKEN" >> /home/ec2-user/.bashrc
 
