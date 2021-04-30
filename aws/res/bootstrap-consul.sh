@@ -139,8 +139,6 @@ rm /home/ec2-user/nomad.zip
 nomad -autocomplete-install
 complete -C /usr/local/bin/nomad nomad
 mkdir -p /opt/nomad /etc/nomad.d
-NOMAD_TOKEN="$(nomad acl bootstrap | tail -n +1 | head -n 1 | awk '{print $4}')"
-printf "\n# Nomad ACL token\nexport NOMAD_TOKEN=%s\n" "$NOMAD_TOKEN" >> /home/ec2-user/.bashrc
 
 #
 # Consul 설치
@@ -184,6 +182,12 @@ EOF
 sudo -u ec2-user git clone https://github.com/femiwiki/nomad.git /home/ec2-user/nomad/
 # Configure Nomad, Consul and systemd
 /home/ec2-user/nomad/up
+
+#
+# Bootstrap Nomad ACL
+#
+NOMAD_TOKEN="$(nomad acl bootstrap | tail -n +1 | head -n 1 | awk '{print $4}')"
+printf "\n# Nomad ACL token\nexport NOMAD_TOKEN=%s\n" "$NOMAD_TOKEN" >> /home/ec2-user/.bashrc
 
 #
 # README 생성
