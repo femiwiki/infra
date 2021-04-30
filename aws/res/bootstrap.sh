@@ -138,7 +138,8 @@ rm /home/ec2-user/nomad.zip
 nomad -autocomplete-install
 complete -C /usr/local/bin/nomad nomad
 mkdir -p /opt/nomad /etc/nomad.d
-printf "\n\n# Nomad ACL token\nexport NOMAD_TOKEN=%s\n" "$(nomad acl bootstrap | tail -n +1 | head -n 1 | awk '{print $4}')" >> /home/ec2-user/.bashrc
+NOMAD_TOKEN="$(nomad acl bootstrap | tail -n +1 | head -n 1 | awk '{print $4}')"
+printf "\n# Nomad ACL token\nexport NOMAD_TOKEN=%s\n" "$NOMAD_TOKEN" >> /home/ec2-user/.bashrc
 
 #
 # htoprc 생성
