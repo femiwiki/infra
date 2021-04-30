@@ -22,7 +22,7 @@ resource "aws_eip" "test_femiwiki" {
 }
 
 #
-# Exprimental arm64 server
+# Femiwiki main server
 #
 
 data "aws_availability_zone" "femiwiki_arm64" {
