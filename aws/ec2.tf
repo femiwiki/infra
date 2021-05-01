@@ -118,7 +118,48 @@ resource "aws_instance" "femiwiki_consul_test" {
   }
 
   tags = {
-    Name = "Experimetal micro instance"
+    Name = "Experimetal micro instance for nomad clustrering"
+  }
+
+  user_data = file("res/bootstrap-consul.sh")
+
+  lifecycle {
+    ignore_changes = [
+      ami,
+      user_data,
+      # https://github.com/femiwiki/infra/issues/88
+      volume_tags,
+    ]
+  }
+}
+
+resource "aws_instance" "femiwiki_consul_test2" {
+  ebs_optimized           = true
+  ami                     = data.aws_ami.amazon_linux_2_arm64.image_id
+  instance_type           = "t4g.micro"
+  key_name                = aws_key_pair.femiwiki.key_name
+  monitoring              = false
+  iam_instance_profile    = aws_iam_instance_profile.femiwiki.name
+  disable_api_termination = false # during test period
+  availability_zone       = data.aws_availability_zone.femiwiki_arm64.name
+
+  vpc_security_group_ids = [
+    aws_default_security_group.default.id,
+    aws_security_group.femiwiki.id,
+  ]
+
+  root_block_device {
+    delete_on_termination = true
+    volume_size           = 12
+    volume_type           = "gp3"
+  }
+
+  credit_specification {
+    cpu_credits = "unlimited"
+  }
+
+  tags = {
+    Name = "Experimetal micro instance for nomad clustrering"
   }
 
   user_data = file("res/bootstrap-consul.sh")
