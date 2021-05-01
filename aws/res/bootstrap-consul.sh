@@ -31,7 +31,8 @@ yum install -y \
   amazon-cloudwatch-agent \
   jq \
   unzip \
-  nc
+  dnsmasq \
+  bind-utils
   # Disabled temporarily, See https://github.com/femiwiki/femiwiki/issues/247
   # ripgrep
 
@@ -157,6 +158,19 @@ consul -autocomplete-install
 complete -C /usr/bin/consul consul
 
 #
+# dnsmasq 설정
+# References:
+# - https://learn.hashicorp.com/tutorials/consul/dns-forwarding#dnsmasq-setup
+# - https://aws.amazon.com/premiumsupport/knowledge-center/dns-resolution-failures-ec2-linux
+#
+groupadd -r dnsmasq
+useradd -r -g dnsmasq dnsmasq
+sudo mv /etc/dnsmasq.conf /etc/dnsmasq.conf.orig
+echo 'server=/consul/127.0.0.1#8600' >> /etc/dnsmasq.d/10-consul
+sudo systemctl restart dnsmasq.service
+sudo systemctl enable dnsmasq.service
+
+#
 # TODO dns-forwarding (https://github.com/femiwiki/nomad/issues/8)
 # References:
 # - https://learn.hashicorp.com/tutorials/consul/dns-forwarding
@@ -181,7 +195,7 @@ EOF
 #
 sudo -u ec2-user git clone https://github.com/femiwiki/nomad.git /home/ec2-user/nomad/
 # Configure Nomad, Consul and systemd
-/home/ec2-user/nomad/up
+/home/ec2-user/nomad/up-consul-test
 
 #
 # Bootstrap Nomad ACL
