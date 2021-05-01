@@ -118,7 +118,8 @@ resource "aws_instance" "femiwiki_consul_test" {
   }
 
   tags = {
-    Name = "Experimetal micro instance for nomad clustrering"
+    Name   = "Experimetal micro instance for nomad clustrering"
+    Consul = "femiwiki"
   }
 
   user_data = file("res/bootstrap-consul.sh")
@@ -159,7 +160,8 @@ resource "aws_instance" "femiwiki_consul_test2" {
   }
 
   tags = {
-    Name = "Experimetal micro instance for nomad clustrering"
+    Name   = "Second experimetal micro instance for nomad clustrering"
+    Consul = "femiwiki"
   }
 
   user_data = file("res/bootstrap-consul.sh")
