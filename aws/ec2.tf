@@ -126,7 +126,7 @@ resource "aws_instance" "femiwiki_consul_test" {
   lifecycle {
     ignore_changes = [
       ami,
-      # user_data, # during test period
+      user_data,
       # https://github.com/femiwiki/infra/issues/88
       volume_tags,
     ]

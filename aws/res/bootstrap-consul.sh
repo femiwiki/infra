@@ -165,7 +165,6 @@ complete -C /usr/bin/consul consul
 #
 groupadd -r dnsmasq
 useradd -r -g dnsmasq dnsmasq
-sudo mv /etc/dnsmasq.conf /etc/dnsmasq.conf.orig
 echo 'server=/consul/127.0.0.1#8600' >> /etc/dnsmasq.d/10-consul
 sudo systemctl restart dnsmasq.service
 sudo systemctl enable dnsmasq.service
