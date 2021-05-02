@@ -105,6 +105,7 @@ resource "aws_instance" "femiwiki_consul_test" {
   vpc_security_group_ids = [
     aws_default_security_group.default.id,
     aws_security_group.femiwiki.id,
+    aws_security_group.nomad_cluster.id,
   ]
 
   root_block_device {
@@ -147,6 +148,7 @@ resource "aws_instance" "femiwiki_consul_test2" {
   vpc_security_group_ids = [
     aws_default_security_group.default.id,
     aws_security_group.femiwiki.id,
+    aws_security_group.nomad_cluster.id,
   ]
 
   root_block_device {
