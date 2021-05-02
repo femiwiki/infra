@@ -89,14 +89,36 @@ resource "aws_security_group_rule" "femiwiki_ingress_internal_mysql" {
   source_security_group_id = aws_security_group.femiwiki.id
 }
 
-resource "aws_security_group_rule" "femiwiki_ingress_internal_nomad_rpc" {
+resource "aws_security_group_rule" "femiwiki_ingress_internal_nomad" {
   security_group_id = aws_security_group.femiwiki.id
-  description       = "Nomad RPC"
+  description       = "Nomad"
 
   type                     = "ingress"
   protocol                 = "tcp"
   from_port                = 4646
   to_port                  = 4648
+  source_security_group_id = aws_security_group.femiwiki.id
+}
+
+resource "aws_security_group_rule" "femiwiki_ingress_internal_consul_rpc" {
+  security_group_id = aws_security_group.femiwiki.id
+  description       = "Consul Server RPC"
+
+  type                     = "ingress"
+  protocol                 = "tcp"
+  from_port                = 8300
+  to_port                  = 8300
+  source_security_group_id = aws_security_group.femiwiki.id
+}
+
+resource "aws_security_group_rule" "femiwiki_ingress_internal_consul_grpc" {
+  security_group_id = aws_security_group.femiwiki.id
+  description       = "Consul gRPC"
+
+  type                     = "ingress"
+  protocol                 = "tcp"
+  from_port                = 8502
+  to_port                  = 8502
   source_security_group_id = aws_security_group.femiwiki.id
 }
 
