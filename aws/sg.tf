@@ -100,28 +100,6 @@ resource "aws_security_group_rule" "femiwiki_ingress_internal_nomad" {
   source_security_group_id = aws_security_group.femiwiki.id
 }
 
-resource "aws_security_group_rule" "femiwiki_ingress_internal_consul_rpc" {
-  security_group_id = aws_security_group.femiwiki.id
-  description       = "Consul Server RPC"
-
-  type                     = "ingress"
-  protocol                 = "tcp"
-  from_port                = 8300
-  to_port                  = 8300
-  source_security_group_id = aws_security_group.femiwiki.id
-}
-
-resource "aws_security_group_rule" "femiwiki_ingress_internal_consul_grpc" {
-  security_group_id = aws_security_group.femiwiki.id
-  description       = "Consul gRPC"
-
-  type                     = "ingress"
-  protocol                 = "tcp"
-  from_port                = 8502
-  to_port                  = 8502
-  source_security_group_id = aws_security_group.femiwiki.id
-}
-
 resource "aws_security_group_rule" "femiwiki_egress" {
   security_group_id = aws_security_group.femiwiki.id
 
@@ -131,4 +109,87 @@ resource "aws_security_group_rule" "femiwiki_egress" {
   to_port          = 0
   cidr_blocks      = ["0.0.0.0/0"]
   ipv6_cidr_blocks = ["::/0"]
+}
+
+
+#
+# Consul ports
+#   Refernce: https://www.consul.io/docs/install/ports
+#
+
+resource "aws_security_group_rule" "femiwiki_ingress_internal_consul_dns_tcp" {
+  security_group_id = aws_security_group.femiwiki.id
+  description       = "The Consul DNS server (TCP)"
+
+  type                     = "ingress"
+  protocol                 = "tcp"
+  from_port                = 8600
+  to_port                  = 8600
+  source_security_group_id = aws_security_group.femiwiki.id
+}
+
+resource "aws_security_group_rule" "femiwiki_ingress_internal_consul_dns_udp" {
+  security_group_id = aws_security_group.femiwiki.id
+  description       = "The Consul DNS server (TCP)"
+
+  type                     = "ingress"
+  protocol                 = "udp"
+  from_port                = 8600
+  to_port                  = 8600
+  source_security_group_id = aws_security_group.femiwiki.id
+}
+
+resource "aws_security_group_rule" "femiwiki_ingress_internal_consul_api" {
+  security_group_id = aws_security_group.femiwiki.id
+  description       = "The HTTP API"
+
+  type                     = "ingress"
+  protocol                 = "tcp"
+  from_port                = 8500
+  to_port                  = 8500
+  source_security_group_id = aws_security_group.femiwiki.id
+}
+
+resource "aws_security_group_rule" "femiwiki_ingress_internal_consul_grpc" {
+  security_group_id = aws_security_group.femiwiki.id
+  description       = "The Consul gRPC API"
+
+  type                     = "ingress"
+  protocol                 = "tcp"
+  from_port                = 8502
+  to_port                  = 8502
+  source_security_group_id = aws_security_group.femiwiki.id
+}
+
+resource "aws_security_group_rule" "femiwiki_ingress_internal_consul_serf_tcp" {
+  security_group_id = aws_security_group.femiwiki.id
+  description       = "The Serf LAN ports (TCP)"
+
+  type                     = "ingress"
+  protocol                 = "tcp"
+  from_port                = 8301
+  to_port                  = 8302
+  source_security_group_id = aws_security_group.femiwiki.id
+}
+
+resource "aws_security_group_rule" "femiwiki_ingress_internal_consul_serf_udp" {
+  security_group_id = aws_security_group.femiwiki.id
+  description       = "The Serf LAN ports (UDP)"
+
+  type                     = "ingress"
+  protocol                 = "udp"
+  from_port                = 8301
+  to_port                  = 8302
+  source_security_group_id = aws_security_group.femiwiki.id
+}
+
+resource "aws_security_group_rule" "femiwiki_ingress_internal_consul_rpc" {
+  security_group_id = aws_security_group.femiwiki.id
+  description       = "Consul Server RPC address"
+
+  type                     = "ingress"
+  protocol                 = "tcp"
+  from_port                = 8300
+  to_port                  = 8300
+  source_security_group_id = aws_security_group.femiwiki.id
 }
