@@ -42,6 +42,7 @@ resource "aws_instance" "femiwiki_arm64" {
   vpc_security_group_ids = [
     aws_default_security_group.default.id,
     aws_security_group.femiwiki.id,
+    aws_security_group.nomad_cluster.id,
   ]
 
   root_block_device {
