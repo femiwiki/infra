@@ -1,11 +1,11 @@
-resource "aws_cloudwatch_metric_alarm" "femiwiki_arm64_cpu_credit_balance_cloud_watch_alarm" {
+resource "aws_cloudwatch_metric_alarm" "femiwiki_cpu_credit_balance_cloud_watch_alarm" {
   alarm_name  = "Femiwiki arm64 CPU credit balance cloud watch alarm"
   namespace   = "AWS/EC2"
   metric_name = "CPUCreditBalance"
   period      = 300
   statistic   = "Minimum"
   dimensions = {
-    InstanceId = aws_instance.femiwiki_arm64.id
+    InstanceId = aws_instance.femiwiki.id
   }
   evaluation_periods  = "1"
   threshold           = "72"
@@ -14,7 +14,7 @@ resource "aws_cloudwatch_metric_alarm" "femiwiki_arm64_cpu_credit_balance_cloud_
   alarm_actions       = [aws_sns_topic.cloudwatch_alarms_topic.arn]
 }
 
-resource "aws_cloudwatch_metric_alarm" "femiwiki_arm64_disk_used_cloud_watch_alarm" {
+resource "aws_cloudwatch_metric_alarm" "femiwiki_disk_used_cloud_watch_alarm" {
   alarm_name  = "Femiwiki arm64 disk used cloud watch alarm"
   namespace   = "CWAgent"
   metric_name = "disk_used_percent"
@@ -23,7 +23,7 @@ resource "aws_cloudwatch_metric_alarm" "femiwiki_arm64_disk_used_cloud_watch_ala
   dimensions = {
     "device" = "nvme0n1p1"
     "fstype" = "xfs"
-    "host"   = aws_instance.femiwiki_arm64.private_dns
+    "host"   = aws_instance.femiwiki.private_dns
     "path"   = "/"
   }
   evaluation_periods  = "1"
@@ -42,7 +42,7 @@ resource "aws_cloudwatch_metric_alarm" "persistent_data_mysql_used_cloud_watch_a
   dimensions = {
     "device" = "nvme1n1"
     "fstype" = "ext4"
-    "host"   = aws_instance.femiwiki_arm64.private_dns
+    "host"   = aws_instance.femiwiki.private_dns
     "path"   = "/opt/nomad/client/csi/node/aws-ebs0/staging/mysql/rw-file-system-single-node-writer"
   }
   evaluation_periods  = "1"

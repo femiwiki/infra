@@ -48,52 +48,6 @@ resource "aws_ebs_volume" "persistent_data_caddycerts" {
 }
 
 #
-# Femiwiki main server (taint)
-#
-
-resource "aws_instance" "femiwiki_arm64" {
-  ebs_optimized           = true
-  ami                     = data.aws_ami.amazon_linux_2_arm64.image_id
-  instance_type           = "t4g.small"
-  key_name                = aws_key_pair.femiwiki.key_name
-  monitoring              = false
-  iam_instance_profile    = aws_iam_instance_profile.femiwiki.name
-  disable_api_termination = true
-  availability_zone       = data.aws_availability_zone.femiwiki.name
-
-  vpc_security_group_ids = [
-    aws_default_security_group.default.id,
-    aws_security_group.femiwiki.id,
-    aws_security_group.nomad_cluster.id,
-  ]
-
-  root_block_device {
-    delete_on_termination = true
-    volume_size           = 16
-    volume_type           = "gp3"
-  }
-
-  credit_specification {
-    cpu_credits = "unlimited"
-  }
-
-  tags = {
-    Name = "Main Server (taint)"
-  }
-
-  user_data = file("res/bootstrap.sh")
-
-  lifecycle {
-    ignore_changes = [
-      ami,
-      user_data,
-      # https://github.com/femiwiki/infra/issues/88
-      volume_tags,
-    ]
-  }
-}
-
-#
 # Femiwiki main server
 #
 
