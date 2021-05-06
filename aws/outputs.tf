@@ -1,6 +1,6 @@
 output "nomad_addr" {
   description = "Address to our nomad cluster"
-  value       = "http://${aws_instance.femiwiki_arm64.public_ip}:4646"
+  value       = "http://${aws_instance.femiwiki.public_ip}:4646"
 }
 
 output "nomad_addr_consul_test" {
