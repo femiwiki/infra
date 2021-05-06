@@ -12,7 +12,7 @@ resource "aws_key_pair" "femiwiki_green" {
 }
 
 resource "aws_eip" "femiwiki" {
-  instance = aws_instance.femiwiki_arm64.id
+  instance = aws_instance.femiwiki.id
   vpc      = true
 }
 
