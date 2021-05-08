@@ -104,10 +104,8 @@ sudo swapon -a
 #
 # 도커 설치
 # Reference: https://docs.aws.amazon.com/AmazonECS/latest/developerguide/docker-basics.html#install_docker
-# You can see supported docker versions with:
-#   docker run --rm amazonlinux:2.0.20201218.1 amazon-linux-extras list | grep -A 1 docker
 #
-amazon-linux-extras install -y docker=18.09.9
+amazon-linux-extras install -y docker
 systemctl enable docker
 systemctl start docker
 usermod -a -G docker ec2-user
