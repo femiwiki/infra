@@ -16,7 +16,7 @@ resource "aws_cloudwatch_metric_alarm" "femiwiki_cpu_credit_balance_cloud_watch_
 
 resource "aws_cloudwatch_metric_alarm" "femiwiki_volume_idle_time_cloud_watch_alarm" {
   alarm_name  = "Femiwiki VolumeIdleTime"
-  namespace   = "AWS/EC2"
+  namespace   = "AWS/EBS"
   metric_name = "VolumeIdleTime"
   period      = 300
   statistic   = "Minimum"
@@ -56,7 +56,7 @@ resource "aws_cloudwatch_metric_alarm" "persistent_data_mysql_used_cloud_watch_a
   period      = 300
   statistic   = "Maximum"
   dimensions = {
-    "device" = "nvme1n1"
+    "device" = "nvme2n1"
     "fstype" = "ext4"
     "host"   = aws_instance.femiwiki.private_dns
     "path"   = "/opt/nomad/client/csi/node/aws-ebs0/staging/mysql/rw-file-system-single-node-writer"
