@@ -51,6 +51,7 @@ sudo systemctl restart atop.service crond.service sysstat.service
 sed -i "s/update_cmd = default/update_cmd = minimal-security/" /etc/yum/yum-cron-hourly.conf
 sed -i "s/update_cmd = default/update_cmd = minimal-security/" /etc/yum/yum-cron.conf
 sed -i "s/apply_updates = no/apply_updates = yes/" /etc/yum/yum-cron.conf
+sed -i "s~^exec /usr/sbin/yum-cron~exec /usr/bin/nice -n 19 /usr/sbin/yum-cron~" /etc/cron.hourly/0yum-hourly.cron
 systemctl enable yum-cron
 
 #
