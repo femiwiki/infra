@@ -111,8 +111,8 @@ locals {
     }
 
     windows = {
-      name        = "Microsoft Windows"
-      description = ""
+      name        = "Windows"
+      description = "Microsoft Windows"
       color       = "00A4EF"
     }
   }
