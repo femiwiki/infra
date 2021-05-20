@@ -100,14 +100,14 @@ locals {
 
     consul = {
       name        = "Consul"
-      description = "MediaWiki 1.35"
+      description = "HashiCorp Consul"
       color       = "ca2171"
     }
 
     yum = {
       name        = "yum"
       description = ""
-      color       = "0075ca"
+      color       = "bfd4f2"
     }
 
     windows = {
