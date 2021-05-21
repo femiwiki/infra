@@ -133,6 +133,12 @@ locals {
       description = ""
       color       = "005da9"
     }
+
+    search = {
+      name        = "search"
+      description = ""
+      color       = "bada55"
+    }
   }
 
   label_suite = {
@@ -154,6 +160,7 @@ locals {
         "cd",
         "note",
         "security",
+        "search",
 
         # AWS
         "ec2_instance_type",
