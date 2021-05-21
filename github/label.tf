@@ -65,7 +65,7 @@ locals {
     savings_plan = {
       name        = "Savings Plan"
       description = ""
-      color       = "F19643"
+      color       = "f19643"
     }
 
     ci = {
@@ -113,7 +113,13 @@ locals {
     windows = {
       name        = "Windows"
       description = "Microsoft Windows"
-      color       = "00A4EF"
+      color       = "00a4ef"
+    }
+
+    dependabot = {
+      name        = "dependabot"
+      description = "Dependabot"
+      color       = "3b67d6"
     }
   }
 
@@ -139,6 +145,7 @@ locals {
         "yum",
         "note",
         "windows",
+        "dependabot",
       ]
     )
 
