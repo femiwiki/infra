@@ -121,6 +121,12 @@ locals {
       description = "Dependabot"
       color       = "3b67d6"
     }
+
+    monetary = {
+      name        = "monetary"
+      description = ""
+      color       = "85bb65"
+    }
   }
 
   label_suite = {
@@ -133,19 +139,27 @@ locals {
       local.label_suite.base,
       local.label_suite.mw_ver,
       [
+        # general
         "epic",
-        "femiwiki_discussion_needed",
         "disruption",
         "operation",
+        "monetary",
         "cd",
+        "note",
+
+        # AWS
         "ec2_instance_type",
         "savings_plan",
+
+        # Softwares-specific
         "docker",
         "consul",
         "yum",
-        "note",
         "windows",
         "dependabot",
+
+        # etc
+        "femiwiki_discussion_needed",
       ]
     )
 
