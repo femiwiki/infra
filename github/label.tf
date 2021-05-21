@@ -80,6 +80,12 @@ locals {
       color       = "c5def5"
     }
 
+    mw1_34 = {
+      name        = "MW1.34"
+      description = "MediaWiki 1.35"
+      color       = "5319e7"
+    }
+
     mw1_35 = {
       name        = "MW1.35"
       description = "MediaWiki 1.35"
@@ -202,7 +208,7 @@ locals {
     FemiwikiSkin                = concat(local.label_suite.base, local.label_suite.mw_ver, ["femiwiki_discussion_needed"])
     AchievementBadges           = concat(local.label_suite.base, local.label_suite.mw_ver)
     FacetedCategory             = concat(local.label_suite.base, local.label_suite.mw_ver)
-    Sanctions                   = concat(local.label_suite.base, local.label_suite.mw_ver)
+    Sanctions                   = concat(local.label_suite.base, local.label_suite.mw_ver, ["mw1_34"])
     UnifiedExtensionForFemiwiki = concat(local.label_suite.base, local.label_suite.mw_ver)
   }
 
