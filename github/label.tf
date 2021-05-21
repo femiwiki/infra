@@ -150,6 +150,7 @@ locals {
         "disruption",
         "operation",
         "monetary",
+        "ci",
         "cd",
         "note",
         "security",
