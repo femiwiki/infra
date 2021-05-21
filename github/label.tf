@@ -184,7 +184,7 @@ locals {
     ".github"   = concat(local.label_suite.base, ["ci"])
     sns-discord = local.label_suite.base
 
-    docker-mediawiki = concat(local.label_suite.base, ["femiwiki_discussion_needed", "note"])
+    docker-mediawiki = concat(local.label_suite.base, ["femiwiki_discussion_needed", "note", "security"])
     docker-parsoid   = local.label_suite.base
     docker-restbase  = local.label_suite.base
     docker-mathoid   = local.label_suite.base
