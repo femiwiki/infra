@@ -145,11 +145,17 @@ locals {
       description = ""
       color       = "bada55"
     }
+
+    deprecation = {
+      name        = "deprecation"
+      description = ""
+      color       = "ee0701"
+    }
   }
 
   label_suite = {
     base   = ["bug", "enhancement", "invalid", "wontfix"]
-    mw_ver = ["mw1_35", "mw1_36"]
+    mw_ver = ["deprecation", "mw1_35", "mw1_36"]
   }
 
   repository_label_map = {
