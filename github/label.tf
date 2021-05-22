@@ -163,6 +163,12 @@ locals {
       description = ""
       color       = "f1c40e"
     }
+
+    performance = {
+      name        = "performance"
+      description = ""
+      color       = "ffa500"
+    }
   }
 
   label_suite = {
@@ -185,6 +191,7 @@ locals {
         "security",
         "search",
         "deprecation",
+        "performance",
 
         # AWS
         "ec2_instance_type",
@@ -213,6 +220,7 @@ locals {
         "security",
         "search",
         "monetary",
+        "performance",
 
         "ve",
         "restbase",
