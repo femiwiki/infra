@@ -154,14 +154,13 @@ locals {
   }
 
   label_suite = {
-    base   = ["bug", "enhancement", "invalid", "wontfix"]
-    mw_ver = ["deprecation", "mw1_35", "mw1_36"]
+    base     = ["bug", "enhancement", "invalid", "wontfix"]
+    base_ext = ["bug", "enhancement", "invalid", "wontfix", "deprecation"]
   }
 
   repository_label_map = {
     femiwiki = concat(
       local.label_suite.base,
-      local.label_suite.mw_ver,
       [
         # general
         "epic",
@@ -173,6 +172,7 @@ locals {
         "note",
         "security",
         "search",
+        "deprecation",
 
         # AWS
         "ec2_instance_type",
@@ -184,6 +184,8 @@ locals {
         "yum",
         "windows",
         "dependabot",
+        "mw1_35",
+        "mw1_36",
 
         # etc
         "femiwiki_discussion_needed",
@@ -211,12 +213,12 @@ locals {
     tweetbot   = local.label_suite.base
     rankingbot = local.label_suite.base
 
-    FemiwikiSkin                = concat(local.label_suite.base, local.label_suite.mw_ver, ["femiwiki_discussion_needed"])
-    AchievementBadges           = concat(local.label_suite.base, local.label_suite.mw_ver)
-    DiscordNotifications        = concat(local.label_suite.base, local.label_suite.mw_ver)
-    FacetedCategory             = concat(local.label_suite.base, local.label_suite.mw_ver)
-    Sanctions                   = concat(local.label_suite.base, local.label_suite.mw_ver, ["mw1_34"])
-    UnifiedExtensionForFemiwiki = concat(local.label_suite.base, local.label_suite.mw_ver)
+    FemiwikiSkin                = concat(local.label_suite.base_ext, ["femiwiki_discussion_needed", "mw1_35", "mw1_36"])
+    AchievementBadges           = concat(local.label_suite.base_ext, ["mw1_35", "mw1_36"])
+    DiscordNotifications        = concat(local.label_suite.base_ext, ["mw1_36"])
+    FacetedCategory             = concat(local.label_suite.base_ext, ["mw1_35", "mw1_36"])
+    Sanctions                   = concat(local.label_suite.base_ext, ["mw1_34", "mw1_35", "mw1_36"])
+    UnifiedExtensionForFemiwiki = concat(local.label_suite.base_ext, ["mw1_35", "mw1_36"])
   }
 
   // Flattening nested structures
