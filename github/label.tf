@@ -206,13 +206,25 @@ locals {
       ]
     )
 
+    docker-mediawiki = concat(
+      local.label_suite.base,
+      [
+        "femiwiki_discussion_needed",
+        "note",
+        "security",
+        "search",
+        "ve",
+        "restbase",
+        "monetary",
+      ]
+    )
+
     nomad = concat(local.label_suite.base, ["cd", "disruption", "consul", "restbase"])
 
     infra       = concat(local.label_suite.base, ["operation", "ec2_instance_type"])
     ".github"   = concat(local.label_suite.base, ["ci"])
     sns-discord = local.label_suite.base
 
-    docker-mediawiki = concat(local.label_suite.base, ["femiwiki_discussion_needed", "note", "security", "search", "ve", "restbase"])
     docker-parsoid   = local.label_suite.base
     docker-restbase  = concat(local.label_suite.base, ["restbase"])
     docker-mathoid   = local.label_suite.base
