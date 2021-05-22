@@ -151,6 +151,18 @@ locals {
       description = ""
       color       = "ee0701"
     }
+
+    ve = {
+      name        = "ve"
+      description = "Visual Editor"
+      color       = "5bace1"
+    }
+
+    restbase = {
+      name        = "RESTBase"
+      description = ""
+      color       = "f1c40e"
+    }
   }
 
   label_suite = {
@@ -186,21 +198,23 @@ locals {
         "dependabot",
         "mw1_35",
         "mw1_36",
+        "ve",
+        "restbase",
 
         # etc
         "femiwiki_discussion_needed",
       ]
     )
 
-    nomad = concat(local.label_suite.base, ["cd", "disruption", "consul"])
+    nomad = concat(local.label_suite.base, ["cd", "disruption", "consul", "restbase"])
 
     infra       = concat(local.label_suite.base, ["operation", "ec2_instance_type"])
     ".github"   = concat(local.label_suite.base, ["ci"])
     sns-discord = local.label_suite.base
 
-    docker-mediawiki = concat(local.label_suite.base, ["femiwiki_discussion_needed", "note", "security", "search"])
+    docker-mediawiki = concat(local.label_suite.base, ["femiwiki_discussion_needed", "note", "security", "search", "ve", "restbase"])
     docker-parsoid   = local.label_suite.base
-    docker-restbase  = local.label_suite.base
+    docker-restbase  = concat(local.label_suite.base, ["restbase"])
     docker-mathoid   = local.label_suite.base
 
     caddy-mwcache     = local.label_suite.base
@@ -213,11 +227,11 @@ locals {
     tweetbot   = local.label_suite.base
     rankingbot = local.label_suite.base
 
-    FemiwikiSkin                = concat(local.label_suite.base_ext, ["femiwiki_discussion_needed", "mw1_35", "mw1_36"])
+    FemiwikiSkin                = concat(local.label_suite.base_ext, ["femiwiki_discussion_needed", "ve", "mw1_35", "mw1_36"])
     AchievementBadges           = concat(local.label_suite.base_ext, ["mw1_35", "mw1_36"])
     DiscordNotifications        = concat(local.label_suite.base_ext, ["mw1_36"])
     FacetedCategory             = concat(local.label_suite.base_ext, ["mw1_35", "mw1_36"])
-    Sanctions                   = concat(local.label_suite.base_ext, ["mw1_34", "mw1_35", "mw1_36"])
+    Sanctions                   = concat(local.label_suite.base_ext, ["ve", "mw1_34", "mw1_35", "mw1_36"])
     UnifiedExtensionForFemiwiki = concat(local.label_suite.base_ext, ["mw1_35", "mw1_36"])
   }
 
