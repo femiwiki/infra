@@ -239,4 +239,8 @@ resource "github_issue_label" "femiwiki" {
   name        = local.label_definition[each.value.tag].name
   description = local.label_definition[each.value.tag].description
   color       = local.label_definition[each.value.tag].color
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
