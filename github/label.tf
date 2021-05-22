@@ -82,7 +82,7 @@ locals {
 
     mw1_34 = {
       name        = "MW1.34"
-      description = "MediaWiki 1.35"
+      description = "MediaWiki 1.34"
       color       = "5319e7"
     }
 
