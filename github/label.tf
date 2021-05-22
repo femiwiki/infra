@@ -3,13 +3,13 @@
 locals {
   label_definition = {
     bug = {
-      name        = "Bug"
+      name        = "bug"
       description = ""
       color       = "ee0701"
     }
 
     disruption = {
-      name        = "Service Disruption"
+      name        = "service disruption"
       description = ""
       color       = "ee0701"
     }
@@ -51,61 +51,61 @@ locals {
     }
 
     operation = {
-      name        = "Operation"
+      name        = "operation"
       description = "점검, 인프라 작업"
       color       = "85d659"
     }
 
     ec2_instance_type = {
-      name        = "EC2 Instance types"
+      name        = "ec2 instance types"
       description = ""
       color       = "f9d0c4"
     }
 
     savings_plan = {
-      name        = "Savings Plan"
+      name        = "savings plan"
       description = ""
       color       = "f19643"
     }
 
     ci = {
-      name        = "CI"
+      name        = "ci"
       description = "Continuous Integration"
       color       = "c5def5"
     }
 
     cd = {
-      name        = "CD"
+      name        = "cd"
       description = "Continuous Deployment"
       color       = "c5def5"
     }
 
     mw1_34 = {
-      name        = "MW1.34"
+      name        = "mw1.34"
       description = "MediaWiki 1.34"
       color       = "5319e7"
     }
 
     mw1_35 = {
-      name        = "MW1.35"
+      name        = "mw1.35"
       description = "MediaWiki 1.35"
       color       = "5319e7"
     }
 
     mw1_36 = {
-      name        = "MW1.36"
+      name        = "mw1.36"
       description = "MediaWiki 1.36"
       color       = "c5def5"
     }
 
     docker = {
-      name        = "Docker"
+      name        = "docker"
       description = ""
       color       = "0db7ed"
     }
 
     consul = {
-      name        = "Consul"
+      name        = "consul"
       description = "HashiCorp Consul"
       color       = "ca2171"
     }
@@ -117,7 +117,7 @@ locals {
     }
 
     windows = {
-      name        = "Windows"
+      name        = "windows"
       description = "Microsoft Windows"
       color       = "00a4ef"
     }
@@ -153,13 +153,13 @@ locals {
     }
 
     ve = {
-      name        = "ve"
+      name        = "visual editor"
       description = "Visual Editor"
       color       = "5bace1"
     }
 
     restbase = {
-      name        = "RESTBase"
+      name        = "restbase"
       description = ""
       color       = "f1c40e"
     }
