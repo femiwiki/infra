@@ -213,6 +213,7 @@ locals {
 
     FemiwikiSkin                = concat(local.label_suite.base, local.label_suite.mw_ver, ["femiwiki_discussion_needed"])
     AchievementBadges           = concat(local.label_suite.base, local.label_suite.mw_ver)
+    DiscordNotifications        = concat(local.label_suite.base, local.label_suite.mw_ver)
     FacetedCategory             = concat(local.label_suite.base, local.label_suite.mw_ver)
     Sanctions                   = concat(local.label_suite.base, local.label_suite.mw_ver, ["mw1_34"])
     UnifiedExtensionForFemiwiki = concat(local.label_suite.base, local.label_suite.mw_ver)
