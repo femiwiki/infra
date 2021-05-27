@@ -169,6 +169,18 @@ locals {
       description = ""
       color       = "ffa500"
     }
+
+    monitoring = {
+      name        = "monitoring"
+      description = ""
+      color       = "ffa500"
+    }
+
+    wikibase = {
+      name        = "wikibase"
+      description = ""
+      color       = "366998"
+    }
   }
 
   label_suite = {
@@ -192,6 +204,7 @@ locals {
         "search",
         "deprecation",
         "performance",
+        "monitoring",
 
         # AWS
         "ec2_instance_type",
@@ -207,6 +220,7 @@ locals {
         "mw1_36",
         "ve",
         "restbase",
+        "wikibase",
 
         # etc
         "femiwiki_discussion_needed",
@@ -224,6 +238,7 @@ locals {
 
         "ve",
         "restbase",
+        "wikibase",
         "mw1_36",
 
         "femiwiki_discussion_needed",
@@ -253,7 +268,7 @@ locals {
     FemiwikiSkin                = concat(local.label_suite.base_ext, ["femiwiki_discussion_needed", "ve", "search", "mw1_35", "mw1_36"])
     AchievementBadges           = concat(local.label_suite.base_ext, ["mw1_35", "mw1_36"])
     DiscordNotifications        = concat(local.label_suite.base_ext, ["mw1_36"])
-    FacetedCategory             = concat(local.label_suite.base_ext, ["mw1_35", "mw1_36"])
+    FacetedCategory             = concat(local.label_suite.base_ext, ["wikibase", "mw1_35", "mw1_36"])
     Sanctions                   = concat(local.label_suite.base_ext, ["ve", "mw1_34", "mw1_35", "mw1_36"])
     UnifiedExtensionForFemiwiki = concat(local.label_suite.base_ext, ["mw1_35", "mw1_36"])
   }
