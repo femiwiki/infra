@@ -270,7 +270,7 @@ locals {
     DiscordNotifications        = concat(local.label_suite.base_ext, ["mw1_36"])
     FacetedCategory             = concat(local.label_suite.base_ext, ["wikibase", "mw1_35", "mw1_36"])
     Sanctions                   = concat(local.label_suite.base_ext, ["ve", "mw1_34", "mw1_35", "mw1_36"])
-    UnifiedExtensionForFemiwiki = concat(local.label_suite.base_ext, ["mw1_35", "mw1_36"])
+    UnifiedExtensionForFemiwiki = concat(local.label_suite.base_ext, ["wikibase", "mw1_35", "mw1_36"])
   }
 
   // Flattening nested structures
