@@ -14,12 +14,10 @@ locals {
     required_approving_review_count = 1,
   }
   with_cd = merge(local.default_repo, {
-    # enforce_admins is temporarily disabled due to too few development members.
-    enforce_admins = false,
+    enforce_admins = true,
   })
   docker = merge(local.default_repo, {
-    # enforce_admins is temporarily disabled due to too few development members.
-    enforce_admins = false,
+    enforce_admins = true,
   })
   bot = local.with_cd
 }
