@@ -235,6 +235,8 @@ locals {
         "search",
         "monetary",
         "performance",
+        "deprecation",
+        "ci",
 
         "ve",
         "restbase",
