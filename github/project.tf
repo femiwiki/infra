@@ -10,6 +10,7 @@ resource "github_project_column" "columns" {
     "Blocked",
     "Workaround",
     "Done",
+    "Declined",
   ])
 
   project_id = github_organization_project.dev.id
