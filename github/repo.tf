@@ -6,18 +6,24 @@ locals {
     archive_on_destroy   = true,
 
     # branch_protection
-    pattern                         = "main"
-    push_restrictions               = [],
-    enforce_admins                  = false,
-    dismiss_stale_reviews           = false,
-    require_code_owner_reviews      = false,
-    required_approving_review_count = 1,
+    pattern           = "main"
+    push_restrictions = [],
+    enforce_admins    = false,
+    required_pull_request_reviews = [{
+      dismiss_stale_reviews           = false,
+      require_code_owner_reviews      = false,
+      required_approving_review_count = 1,
+    }]
   }
   with_cd = merge(local.default_repo, {
     enforce_admins = true,
+    # temporarily disable requiring reviews due to too few development members.
+    required_pull_request_reviews = [],
   })
   docker = merge(local.default_repo, {
     enforce_admins = true,
+    # temporarily disabled due to too few development members.
+    required_pull_request_reviews = [],
   })
   bot = local.with_cd
 }
@@ -49,10 +55,13 @@ resource "github_branch_protection" "infra" {
   enforce_admins    = local.with_cd.enforce_admins
   push_restrictions = local.with_cd.push_restrictions
 
-  required_pull_request_reviews {
-    dismiss_stale_reviews           = local.with_cd.dismiss_stale_reviews
-    require_code_owner_reviews      = local.with_cd.require_code_owner_reviews
-    required_approving_review_count = local.with_cd.required_approving_review_count
+  dynamic "required_pull_request_reviews" {
+    for_each = local.with_cd.required_pull_request_reviews
+    content {
+      dismiss_stale_reviews           = required_pull_request_reviews.value["dismiss_stale_reviews"]
+      require_code_owner_reviews      = required_pull_request_reviews.value["require_code_owner_reviews"]
+      required_approving_review_count = required_pull_request_reviews.value["required_approving_review_count"]
+    }
   }
 }
 
@@ -88,10 +97,13 @@ resource "github_branch_protection" "nomad" {
   enforce_admins    = local.with_cd.enforce_admins
   push_restrictions = local.with_cd.push_restrictions
 
-  required_pull_request_reviews {
-    dismiss_stale_reviews           = local.with_cd.dismiss_stale_reviews
-    require_code_owner_reviews      = local.with_cd.require_code_owner_reviews
-    required_approving_review_count = local.with_cd.required_approving_review_count
+  dynamic "required_pull_request_reviews" {
+    for_each = local.with_cd.required_pull_request_reviews
+    content {
+      dismiss_stale_reviews           = required_pull_request_reviews.value["dismiss_stale_reviews"]
+      require_code_owner_reviews      = required_pull_request_reviews.value["require_code_owner_reviews"]
+      required_approving_review_count = required_pull_request_reviews.value["required_approving_review_count"]
+    }
   }
 
   required_status_checks {
@@ -138,10 +150,13 @@ resource "github_branch_protection" "femiwiki" {
   enforce_admins    = local.default_repo.enforce_admins
   push_restrictions = local.default_repo.push_restrictions
 
-  required_pull_request_reviews {
-    dismiss_stale_reviews           = local.default_repo.dismiss_stale_reviews
-    require_code_owner_reviews      = local.default_repo.require_code_owner_reviews
-    required_approving_review_count = local.default_repo.required_approving_review_count
+  dynamic "required_pull_request_reviews" {
+    for_each = local.default_repo.required_pull_request_reviews
+    content {
+      dismiss_stale_reviews           = required_pull_request_reviews.value["dismiss_stale_reviews"]
+      require_code_owner_reviews      = required_pull_request_reviews.value["require_code_owner_reviews"]
+      required_approving_review_count = required_pull_request_reviews.value["required_approving_review_count"]
+    }
   }
 }
 
@@ -184,10 +199,13 @@ resource "github_branch_protection" "mediawiki" {
   enforce_admins    = local.docker.enforce_admins
   push_restrictions = local.docker.push_restrictions
 
-  required_pull_request_reviews {
-    dismiss_stale_reviews           = local.docker.dismiss_stale_reviews
-    require_code_owner_reviews      = local.docker.require_code_owner_reviews
-    required_approving_review_count = local.docker.required_approving_review_count
+  dynamic "required_pull_request_reviews" {
+    for_each = local.docker.required_pull_request_reviews
+    content {
+      dismiss_stale_reviews           = required_pull_request_reviews.value["dismiss_stale_reviews"]
+      require_code_owner_reviews      = required_pull_request_reviews.value["require_code_owner_reviews"]
+      required_approving_review_count = required_pull_request_reviews.value["required_approving_review_count"]
+    }
   }
 }
 
@@ -227,10 +245,13 @@ resource "github_branch_protection" "parsoid" {
   enforce_admins    = local.docker.enforce_admins
   push_restrictions = local.docker.push_restrictions
 
-  required_pull_request_reviews {
-    dismiss_stale_reviews           = local.docker.dismiss_stale_reviews
-    require_code_owner_reviews      = local.docker.require_code_owner_reviews
-    required_approving_review_count = local.docker.required_approving_review_count
+  dynamic "required_pull_request_reviews" {
+    for_each = local.docker.required_pull_request_reviews
+    content {
+      dismiss_stale_reviews           = required_pull_request_reviews.value["dismiss_stale_reviews"]
+      require_code_owner_reviews      = required_pull_request_reviews.value["require_code_owner_reviews"]
+      required_approving_review_count = required_pull_request_reviews.value["required_approving_review_count"]
+    }
   }
 }
 
@@ -270,10 +291,13 @@ resource "github_branch_protection" "docker_restbase" {
   enforce_admins    = local.docker.enforce_admins
   push_restrictions = local.docker.push_restrictions
 
-  required_pull_request_reviews {
-    dismiss_stale_reviews           = local.docker.dismiss_stale_reviews
-    require_code_owner_reviews      = local.docker.require_code_owner_reviews
-    required_approving_review_count = local.docker.required_approving_review_count
+  dynamic "required_pull_request_reviews" {
+    for_each = local.docker.required_pull_request_reviews
+    content {
+      dismiss_stale_reviews           = required_pull_request_reviews.value["dismiss_stale_reviews"]
+      require_code_owner_reviews      = required_pull_request_reviews.value["require_code_owner_reviews"]
+      required_approving_review_count = required_pull_request_reviews.value["required_approving_review_count"]
+    }
   }
 }
 
@@ -313,10 +337,13 @@ resource "github_branch_protection" "docker_mathoid" {
   enforce_admins    = local.docker.enforce_admins
   push_restrictions = local.docker.push_restrictions
 
-  required_pull_request_reviews {
-    dismiss_stale_reviews           = local.docker.dismiss_stale_reviews
-    require_code_owner_reviews      = local.docker.require_code_owner_reviews
-    required_approving_review_count = local.docker.required_approving_review_count
+  dynamic "required_pull_request_reviews" {
+    for_each = local.docker.required_pull_request_reviews
+    content {
+      dismiss_stale_reviews           = required_pull_request_reviews.value["dismiss_stale_reviews"]
+      require_code_owner_reviews      = required_pull_request_reviews.value["require_code_owner_reviews"]
+      required_approving_review_count = required_pull_request_reviews.value["required_approving_review_count"]
+    }
   }
 }
 
@@ -356,10 +383,13 @@ resource "github_branch_protection" "rankingbot" {
   enforce_admins    = local.bot.enforce_admins
   push_restrictions = local.bot.push_restrictions
 
-  required_pull_request_reviews {
-    dismiss_stale_reviews           = local.bot.dismiss_stale_reviews
-    require_code_owner_reviews      = local.bot.require_code_owner_reviews
-    required_approving_review_count = local.bot.required_approving_review_count
+  dynamic "required_pull_request_reviews" {
+    for_each = local.bot.required_pull_request_reviews
+    content {
+      dismiss_stale_reviews           = required_pull_request_reviews.value["dismiss_stale_reviews"]
+      require_code_owner_reviews      = required_pull_request_reviews.value["require_code_owner_reviews"]
+      required_approving_review_count = required_pull_request_reviews.value["required_approving_review_count"]
+    }
   }
 }
 
@@ -399,10 +429,13 @@ resource "github_branch_protection" "backupbot" {
   enforce_admins    = local.bot.enforce_admins
   push_restrictions = local.bot.push_restrictions
 
-  required_pull_request_reviews {
-    dismiss_stale_reviews           = local.bot.dismiss_stale_reviews
-    require_code_owner_reviews      = local.bot.require_code_owner_reviews
-    required_approving_review_count = local.bot.required_approving_review_count
+  dynamic "required_pull_request_reviews" {
+    for_each = local.bot.required_pull_request_reviews
+    content {
+      dismiss_stale_reviews           = required_pull_request_reviews.value["dismiss_stale_reviews"]
+      require_code_owner_reviews      = required_pull_request_reviews.value["require_code_owner_reviews"]
+      required_approving_review_count = required_pull_request_reviews.value["required_approving_review_count"]
+    }
   }
 }
 
@@ -442,10 +475,13 @@ resource "github_branch_protection" "tweetbot" {
   enforce_admins    = local.bot.enforce_admins
   push_restrictions = local.bot.push_restrictions
 
-  required_pull_request_reviews {
-    dismiss_stale_reviews           = local.bot.dismiss_stale_reviews
-    require_code_owner_reviews      = local.bot.require_code_owner_reviews
-    required_approving_review_count = local.bot.required_approving_review_count
+  dynamic "required_pull_request_reviews" {
+    for_each = local.bot.required_pull_request_reviews
+    content {
+      dismiss_stale_reviews           = required_pull_request_reviews.value["dismiss_stale_reviews"]
+      require_code_owner_reviews      = required_pull_request_reviews.value["require_code_owner_reviews"]
+      required_approving_review_count = required_pull_request_reviews.value["required_approving_review_count"]
+    }
   }
 }
 
@@ -482,10 +518,13 @@ resource "github_branch_protection" "remote_gadgets" {
   enforce_admins    = local.default_repo.enforce_admins
   push_restrictions = local.default_repo.push_restrictions
 
-  required_pull_request_reviews {
-    dismiss_stale_reviews           = local.default_repo.dismiss_stale_reviews
-    require_code_owner_reviews      = local.default_repo.require_code_owner_reviews
-    required_approving_review_count = local.default_repo.required_approving_review_count
+  dynamic "required_pull_request_reviews" {
+    for_each = local.default_repo.required_pull_request_reviews
+    content {
+      dismiss_stale_reviews           = required_pull_request_reviews.value["dismiss_stale_reviews"]
+      require_code_owner_reviews      = required_pull_request_reviews.value["require_code_owner_reviews"]
+      required_approving_review_count = required_pull_request_reviews.value["required_approving_review_count"]
+    }
   }
 }
 
@@ -521,10 +560,13 @@ resource "github_branch_protection" "dot_github" {
   enforce_admins    = local.default_repo.enforce_admins
   push_restrictions = local.default_repo.push_restrictions
 
-  required_pull_request_reviews {
-    dismiss_stale_reviews           = local.default_repo.dismiss_stale_reviews
-    require_code_owner_reviews      = local.default_repo.require_code_owner_reviews
-    required_approving_review_count = local.default_repo.required_approving_review_count
+  dynamic "required_pull_request_reviews" {
+    for_each = local.default_repo.required_pull_request_reviews
+    content {
+      dismiss_stale_reviews           = required_pull_request_reviews.value["dismiss_stale_reviews"]
+      require_code_owner_reviews      = required_pull_request_reviews.value["require_code_owner_reviews"]
+      required_approving_review_count = required_pull_request_reviews.value["required_approving_review_count"]
+    }
   }
 }
 
@@ -560,10 +602,13 @@ resource "github_branch_protection" "legunto" {
   enforce_admins    = local.default_repo.enforce_admins
   push_restrictions = local.default_repo.push_restrictions
 
-  required_pull_request_reviews {
-    dismiss_stale_reviews           = local.default_repo.dismiss_stale_reviews
-    require_code_owner_reviews      = local.default_repo.require_code_owner_reviews
-    required_approving_review_count = local.default_repo.required_approving_review_count
+  dynamic "required_pull_request_reviews" {
+    for_each = local.default_repo.required_pull_request_reviews
+    content {
+      dismiss_stale_reviews           = required_pull_request_reviews.value["dismiss_stale_reviews"]
+      require_code_owner_reviews      = required_pull_request_reviews.value["require_code_owner_reviews"]
+      required_approving_review_count = required_pull_request_reviews.value["required_approving_review_count"]
+    }
   }
 }
 
@@ -601,10 +646,13 @@ resource "github_branch_protection" "maintenance" {
   enforce_admins    = local.default_repo.enforce_admins
   push_restrictions = local.default_repo.push_restrictions
 
-  required_pull_request_reviews {
-    dismiss_stale_reviews           = local.default_repo.dismiss_stale_reviews
-    require_code_owner_reviews      = local.default_repo.require_code_owner_reviews
-    required_approving_review_count = local.default_repo.required_approving_review_count
+  dynamic "required_pull_request_reviews" {
+    for_each = local.default_repo.required_pull_request_reviews
+    content {
+      dismiss_stale_reviews           = required_pull_request_reviews.value["dismiss_stale_reviews"]
+      require_code_owner_reviews      = required_pull_request_reviews.value["require_code_owner_reviews"]
+      required_approving_review_count = required_pull_request_reviews.value["required_approving_review_count"]
+    }
   }
 }
 
@@ -640,10 +688,13 @@ resource "github_branch_protection" "caddy_mwcache" {
   enforce_admins    = local.default_repo.enforce_admins
   push_restrictions = local.default_repo.push_restrictions
 
-  required_pull_request_reviews {
-    dismiss_stale_reviews           = local.default_repo.dismiss_stale_reviews
-    require_code_owner_reviews      = local.default_repo.require_code_owner_reviews
-    required_approving_review_count = local.default_repo.required_approving_review_count
+  dynamic "required_pull_request_reviews" {
+    for_each = local.default_repo.required_pull_request_reviews
+    content {
+      dismiss_stale_reviews           = required_pull_request_reviews.value["dismiss_stale_reviews"]
+      require_code_owner_reviews      = required_pull_request_reviews.value["require_code_owner_reviews"]
+      required_approving_review_count = required_pull_request_reviews.value["required_approving_review_count"]
+    }
   }
 }
 
@@ -675,10 +726,13 @@ resource "github_branch_protection" "ooui_femiwiki_theme" {
   enforce_admins    = local.default_repo.enforce_admins
   push_restrictions = local.default_repo.push_restrictions
 
-  required_pull_request_reviews {
-    dismiss_stale_reviews           = local.default_repo.dismiss_stale_reviews
-    require_code_owner_reviews      = local.default_repo.require_code_owner_reviews
-    required_approving_review_count = local.default_repo.required_approving_review_count
+  dynamic "required_pull_request_reviews" {
+    for_each = local.default_repo.required_pull_request_reviews
+    content {
+      dismiss_stale_reviews           = required_pull_request_reviews.value["dismiss_stale_reviews"]
+      require_code_owner_reviews      = required_pull_request_reviews.value["require_code_owner_reviews"]
+      required_approving_review_count = required_pull_request_reviews.value["required_approving_review_count"]
+    }
   }
 }
 
