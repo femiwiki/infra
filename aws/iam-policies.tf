@@ -247,7 +247,7 @@ resource "aws_iam_policy" "download_secrets" {
 data "aws_iam_policy_document" "download_secrets" {
   statement {
     actions   = ["s3:GetObject"]
-    resources = ["${local.secrets}/secrets.php"]
+    resources = ["${local.secrets}/*"]
   }
 }
 
