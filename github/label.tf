@@ -44,6 +44,12 @@ locals {
       color       = "ffffff"
     }
 
+    upstreamed = {
+      name        = "upstreamed"
+      description = ""
+      color       = "ffffff"
+    }
+
     note = {
       name        = "글쓰기"
       description = "공지사항이나 블로그 글로 문서화해야하는 이슈"
@@ -184,8 +190,8 @@ locals {
   }
 
   label_suite = {
-    base     = ["bug", "enhancement", "invalid", "wontfix"]
-    base_ext = ["bug", "enhancement", "invalid", "wontfix", "deprecation"]
+    base     = ["bug", "enhancement", "invalid", "wontfix", "upstreamed"]
+    base_ext = ["bug", "enhancement", "invalid", "wontfix", "upstreamed", "deprecation"]
   }
 
   repository_label_map = {
@@ -261,7 +267,7 @@ locals {
     legunto           = local.label_suite.base
     maintenance       = local.label_suite.base
     OOUIFemiwikiTheme = local.label_suite.base
-    remote-gadgets    = concat(local.label_suite.base, ["windows", "search"])
+    remote-gadgets    = concat(local.label_suite.base, ["search", "windows"])
 
     backupbot  = local.label_suite.base
     tweetbot   = local.label_suite.base
