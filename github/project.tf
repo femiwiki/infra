@@ -9,7 +9,6 @@ resource "github_project_column" "columns" {
     "In Progress",
     "Blocked",
     "Workaround",
-    "Upstreamed",
     "Done",
     "Declined",
   ])
