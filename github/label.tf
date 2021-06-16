@@ -62,6 +62,12 @@ locals {
       color       = "85d659"
     }
 
+    patch_welcome = {
+      name        = "patch welcome"
+      description = ""
+      color       = "7057ff"
+    }
+
     ec2_instance_type = {
       name        = "ec2 instance types"
       description = ""
@@ -190,8 +196,8 @@ locals {
   }
 
   label_suite = {
-    base     = ["bug", "enhancement", "invalid", "wontfix", "upstreamed"]
-    base_ext = ["bug", "enhancement", "invalid", "wontfix", "upstreamed", "deprecation"]
+    base     = ["bug", "enhancement", "invalid", "wontfix", "patch_welcome", "upstreamed"]
+    base_ext = ["bug", "enhancement", "invalid", "wontfix", "patch_welcome", "upstreamed", "deprecation"]
   }
 
   repository_label_map = {
