@@ -23,7 +23,7 @@ terraform init
 terraform plan
 ```
 
-[github checks status]: https://badgen.net/github/checks/femiwiki/infra/main
+[github checks status]: https://badgen.net/github/checks/femiwiki/infra
 [github checks link]: https://github.com/femiwiki/infra/actions
 [Terraform Badge]: https://badgen.net/badge/icon/terraform?label&icon=https://unpkg.com/badgen-icons@0.12.0/icons/terraform.svg
 [Terraform Cloud Link]: https://app.terraform.io/app/femiwiki/workspaces
