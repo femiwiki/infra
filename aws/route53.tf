@@ -119,6 +119,7 @@ resource "aws_route53_health_check" "femiwiki_main_page" {
   port              = 443
   type              = "HTTPS"
   failure_threshold = 3
+  measure_latency   = true
   request_interval  = 30
   resource_path     = "/w/%ED%8E%98%EB%AF%B8%EC%9C%84%ED%82%A4:%EB%8C%80%EB%AC%B8"
 
