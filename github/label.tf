@@ -261,7 +261,7 @@ locals {
 
     nomad = concat(local.label_suite.base, ["cd", "disruption", "consul", "restbase"])
 
-    infra       = concat(local.label_suite.base, ["operation", "monitoring", "ec2_instance_type"])
+    infra       = concat(local.label_suite.base, ["operation", "monitoring", "disruption", "ec2_instance_type"])
     ".github"   = concat(local.label_suite.base, ["ci"])
     sns-discord = local.label_suite.base
 
