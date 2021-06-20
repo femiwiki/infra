@@ -24,7 +24,7 @@ resource "aws_cloudwatch_metric_alarm" "femiwiki_volume_idle_time_cloud_watch_al
     VolumeId = aws_instance.femiwiki.root_block_device[0].volume_id
   }
   evaluation_periods  = "1"
-  threshold           = "10"
+  threshold           = "20"
   comparison_operator = "LessThanThreshold"
   datapoints_to_alarm = 1
   alarm_actions       = [aws_sns_topic.cloudwatch_alarms_topic.arn]
