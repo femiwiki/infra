@@ -268,3 +268,52 @@ resource "github_repository_collaborator" "achievement_badges" {
   username   = "translatewiki"
   permission = "push"
 }
+
+resource "github_repository" "page_view_info_ga" {
+  name                 = "PageViewInfoGA"
+  description          = "📈 Implements PageViewService for GoogleAnalytics"
+  homepage_url         = "https://www.mediawiki.org/wiki/Special:MyLanguage/Extension:PageViewInfoGA"
+  has_issues           = local.extension.has_issues
+  vulnerability_alerts = local.extension.vulnerability_alerts
+  archive_on_destroy   = local.extension.archive_on_destroy
+  topics               = concat(local.extension.topics, ["google-analytics"])
+}
+
+resource "github_branch" "page_view_info_ga_main" {
+  repository = github_repository.page_view_info_ga.name
+  branch     = "main"
+}
+
+resource "github_branch_default" "page_view_info_ga" {
+  repository = github_repository.page_view_info_ga.name
+  branch     = github_branch.page_view_info_ga_main.branch
+}
+
+resource "github_branch_protection" "page_view_info_ga" {
+  count             = length(local.extension_branches)
+  repository_id     = github_repository.page_view_info_ga.node_id
+  pattern           = local.extension_branches[count.index]
+  enforce_admins    = local.extension.enforce_admins
+  push_restrictions = local.extension.push_restrictions
+
+  dynamic "required_pull_request_reviews" {
+    for_each = local.with_cd.required_pull_request_reviews
+    content {
+      dismiss_stale_reviews           = required_pull_request_reviews.value["dismiss_stale_reviews"]
+      require_code_owner_reviews      = required_pull_request_reviews.value["require_code_owner_reviews"]
+      required_approving_review_count = required_pull_request_reviews.value["required_approving_review_count"]
+    }
+  }
+}
+
+resource "github_team_repository" "page_view_info_ga" {
+  team_id    = github_team.reviewer.id
+  repository = github_repository.page_view_info_ga.name
+}
+
+# Give push access to @translatewiki https://github.com/femiwiki/femiwiki/issues/91
+resource "github_repository_collaborator" "page_view_info_ga" {
+  repository = github_repository.page_view_info_ga.name
+  username   = "translatewiki"
+  permission = "push"
+}

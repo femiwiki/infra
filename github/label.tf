@@ -285,6 +285,7 @@ locals {
     FacetedCategory             = concat(local.label_suite.base_ext, ["wikibase", "mw1_35", "mw1_36"])
     Sanctions                   = concat(local.label_suite.base_ext, ["ve", "mw1_34", "mw1_35", "mw1_36"])
     UnifiedExtensionForFemiwiki = concat(local.label_suite.base_ext, ["wikibase", "mw1_35", "mw1_36"])
+    PageViewInfoGA              = concat(local.label_suite.base_ext, [])
   }
 
   // Flattening nested structures
