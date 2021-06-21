@@ -282,11 +282,13 @@ resource "github_repository" "page_view_info_ga" {
 resource "github_branch" "page_view_info_ga_main" {
   repository = github_repository.page_view_info_ga.name
   branch     = "main"
+  depends_on = [github_repository.page_view_info_ga]
 }
 
 resource "github_branch_default" "page_view_info_ga" {
   repository = github_repository.page_view_info_ga.name
   branch     = github_branch.page_view_info_ga_main.branch
+  depends_on = [github_repository.page_view_info_ga]
 }
 
 resource "github_branch_protection" "page_view_info_ga" {
@@ -295,6 +297,7 @@ resource "github_branch_protection" "page_view_info_ga" {
   pattern           = local.extension_branches[count.index]
   enforce_admins    = local.extension.enforce_admins
   push_restrictions = local.extension.push_restrictions
+  depends_on        = [github_repository.page_view_info_ga]
 
   dynamic "required_pull_request_reviews" {
     for_each = local.with_cd.required_pull_request_reviews
@@ -309,6 +312,7 @@ resource "github_branch_protection" "page_view_info_ga" {
 resource "github_team_repository" "page_view_info_ga" {
   team_id    = github_team.reviewer.id
   repository = github_repository.page_view_info_ga.name
+  depends_on = [github_repository.page_view_info_ga]
 }
 
 # Give push access to @translatewiki https://github.com/femiwiki/femiwiki/issues/91
@@ -316,4 +320,5 @@ resource "github_repository_collaborator" "page_view_info_ga" {
   repository = github_repository.page_view_info_ga.name
   username   = "translatewiki"
   permission = "push"
+  depends_on = [github_repository.page_view_info_ga]
 }
