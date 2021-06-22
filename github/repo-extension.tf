@@ -14,7 +14,7 @@ locals {
     # Cannot protect translatable branches now.
     # See https://phabricator.wikimedia.org/T235938#5592510 for detail.
     # "main",
-    "REL*_*"
+    "REL[0-9]_[0-9][0-9]"
   ]
 }
 
