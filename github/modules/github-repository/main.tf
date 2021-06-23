@@ -3,8 +3,9 @@ resource "github_repository" "repository" {
   description          = var.description
   has_issues           = true
   vulnerability_alerts = true
-  archive_on_destroy   = true
   topics               = var.topics
+  archive_on_destroy   = true
+  auto_init            = true
 }
 
 resource "github_branch" "main_branch" {

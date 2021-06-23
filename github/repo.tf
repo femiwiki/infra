@@ -703,11 +703,17 @@ resource "github_team_repository" "caddy_mwcache" {
   repository = github_repository.caddy_mwcache.name
 }
 
+
+#
 # OOUIFemiwikiTheme
-module "ooui_femiwiki_theme" {
-  source      = "./modules/github-repository"
-  name        = "OOUIFemiwikiTheme"
-  description = ":jack_o_lantern: OOUI Femiwiki Theme"
+#
+resource "github_repository" "ooui_femiwiki_theme" {
+  name                 = "OOUIFemiwikiTheme"
+  description          = ":jack_o_lantern: OOUI Femiwiki Theme"
+  has_issues           = local.default_repo.has_issues
+  vulnerability_alerts = local.default_repo.vulnerability_alerts
+  archive_on_destroy   = local.default_repo.archive_on_destroy
+
   topics = [
     "ooui-theme",
     "ooui",
@@ -715,7 +721,23 @@ module "ooui_femiwiki_theme" {
   ]
 }
 
+resource "github_branch_protection" "ooui_femiwiki_theme" {
+  repository_id     = github_repository.ooui_femiwiki_theme.node_id
+  pattern           = local.default_repo.pattern
+  enforce_admins    = local.default_repo.enforce_admins
+  push_restrictions = local.default_repo.push_restrictions
+
+  dynamic "required_pull_request_reviews" {
+    for_each = local.default_repo.required_pull_request_reviews
+    content {
+      dismiss_stale_reviews           = required_pull_request_reviews.value["dismiss_stale_reviews"]
+      require_code_owner_reviews      = required_pull_request_reviews.value["require_code_owner_reviews"]
+      required_approving_review_count = required_pull_request_reviews.value["required_approving_review_count"]
+    }
+  }
+}
+
 resource "github_team_repository" "ooui_femiwiki_theme" {
   team_id    = github_team.reviewer.id
-  repository = module.ooui_femiwiki_theme.name
+  repository = github_repository.ooui_femiwiki_theme.name
 }
