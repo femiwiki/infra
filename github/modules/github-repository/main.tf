@@ -34,8 +34,8 @@ resource "github_branch_protection" "branch_protection" {
   }
 }
 
-// dynamic block should be used in the future... now uses just single static block.
-resource "github_team_repository" "team_repository" {
-  repository = github_repository.repository.name
-  team_id    = "3688706"
-}
+# Bug: https://github.com/integrations/terraform-provider-github/issues/769
+# resource "github_team_repository" "team_repository" {
+#   repository = github_repository.repository.name
+#   team_id    = "3688706"
+# }

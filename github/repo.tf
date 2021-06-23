@@ -703,9 +703,9 @@ resource "github_team_repository" "caddy_mwcache" {
   repository = github_repository.caddy_mwcache.name
 }
 
+# OOUIFemiwikiTheme
 module "ooui_femiwiki_theme" {
-  source = "./modules/github-repository"
-
+  source      = "./modules/github-repository"
   name        = "OOUIFemiwikiTheme"
   description = ":jack_o_lantern: OOUI Femiwiki Theme"
   topics = [
@@ -713,4 +713,9 @@ module "ooui_femiwiki_theme" {
     "ooui",
     "theme",
   ]
+}
+
+resource "github_team_repository" "ooui_femiwiki_theme" {
+  team_id    = github_team.reviewer.id
+  repository = module.ooui_femiwiki_theme.name
 }
