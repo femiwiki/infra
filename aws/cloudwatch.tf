@@ -56,7 +56,8 @@ resource "aws_cloudwatch_metric_alarm" "persistent_data_mysql_used_cloud_watch_a
   period      = 300
   statistic   = "Maximum"
   dimensions = {
-    "device" = "nvme2n1"
+    # TODO: Change dynamically
+    "device" = "nvme3n1"
     "fstype" = "ext4"
     "host"   = aws_instance.femiwiki.private_dns
     "path"   = "/opt/nomad/client/csi/node/aws-ebs0/staging/mysql/rw-file-system-single-node-writer"
