@@ -24,7 +24,7 @@ variable "patterns" {
 variable "enforce_admins" {
   description = ""
   type        = string
-  default     = true
+  default     = false
 }
 
 variable "required_pull_request_reviews" {
