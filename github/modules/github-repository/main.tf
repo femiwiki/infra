@@ -1,11 +1,13 @@
 resource "github_repository" "repository" {
-  name                 = var.name
-  description          = var.description
-  has_issues           = true
-  vulnerability_alerts = true
-  topics               = var.topics
-  archive_on_destroy   = true
-  auto_init            = true
+  name                   = var.name
+  description            = var.description
+  homepage_url           = var.homepage_url
+  has_issues             = true
+  delete_branch_on_merge = var.delete_branch_on_merge
+  auto_init              = true
+  archive_on_destroy     = true
+  topics                 = var.topics
+  vulnerability_alerts   = true
 }
 
 resource "github_branch" "main_branch" {
@@ -24,6 +26,14 @@ resource "github_branch_protection" "branch_protection" {
   pattern           = var.patterns[count.index]
   enforce_admins    = var.enforce_admins
   push_restrictions = []
+
+  dynamic "required_status_checks" {
+    for_each = var.required_status_checks_contexts
+    content {
+      strict   = true
+      contexts = required_status_checks.value
+    }
+  }
 
   dynamic "required_pull_request_reviews" {
     for_each = var.required_pull_request_reviews

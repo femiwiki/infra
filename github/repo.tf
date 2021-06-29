@@ -28,153 +28,47 @@ locals {
   bot = local.with_cd
 }
 
-#
-# infra
-#
-resource "github_repository" "infra" {
-  name                 = "infra"
-  description          = ":evergreen_tree: Terraforming Femiwiki Infrastructure"
-  has_issues           = local.with_cd.has_issues
-  vulnerability_alerts = local.with_cd.vulnerability_alerts
-  archive_on_destroy   = local.with_cd.archive_on_destroy
+module "infra" {
+  source                        = "./modules/github-repository"
+  name                          = "infra"
+  description                   = ":evergreen_tree: Terraforming Femiwiki Infrastructure"
+  enforce_admins                = local.with_cd.enforce_admins
+  required_pull_request_reviews = local.with_cd.required_pull_request_reviews
+  topics = [
+    "terraform",
+  ]
 }
 
-resource "github_branch" "infra_main" {
-  repository = github_repository.infra.name
-  branch     = "main"
+module "nomad" {
+  source                          = "./modules/github-repository"
+  name                            = "nomad"
+  description                     = ":whale: Femiwiki nomad"
+  enforce_admins                  = local.with_cd.enforce_admins
+  required_pull_request_reviews   = local.with_cd.required_pull_request_reviews
+  required_status_checks_contexts = [["before-cd-test"]]
+  topics = [
+    "nomad",
+  ]
 }
 
-resource "github_branch_default" "infra" {
-  repository = github_repository.infra.name
-  branch     = github_branch.infra_main.branch
-}
-
-resource "github_branch_protection" "infra" {
-  repository_id     = github_repository.infra.node_id
-  pattern           = local.with_cd.pattern
-  enforce_admins    = local.with_cd.enforce_admins
-  push_restrictions = local.with_cd.push_restrictions
-
-  dynamic "required_pull_request_reviews" {
-    for_each = local.with_cd.required_pull_request_reviews
-    content {
-      dismiss_stale_reviews           = required_pull_request_reviews.value["dismiss_stale_reviews"]
-      require_code_owner_reviews      = required_pull_request_reviews.value["require_code_owner_reviews"]
-      required_approving_review_count = required_pull_request_reviews.value["required_approving_review_count"]
-    }
-  }
-}
-
-resource "github_team_repository" "infra" {
-  team_id    = github_team.reviewer.id
-  repository = github_repository.infra.name
-}
-
-#
-# nomad
-#
-resource "github_repository" "nomad" {
-  name                 = "nomad"
-  description          = ":whale: Femiwiki nomad"
-  has_issues           = local.with_cd.has_issues
-  vulnerability_alerts = local.with_cd.vulnerability_alerts
-  archive_on_destroy   = local.with_cd.archive_on_destroy
-}
-
-resource "github_branch" "nomad_main" {
-  repository = github_repository.nomad.name
-  branch     = "main"
-}
-
-resource "github_branch_default" "nomad" {
-  repository = github_repository.nomad.name
-  branch     = github_branch.nomad_main.branch
-}
-
-resource "github_branch_protection" "nomad" {
-  repository_id     = github_repository.nomad.node_id
-  pattern           = local.with_cd.pattern
-  enforce_admins    = local.with_cd.enforce_admins
-  push_restrictions = local.with_cd.push_restrictions
-
-  dynamic "required_pull_request_reviews" {
-    for_each = local.with_cd.required_pull_request_reviews
-    content {
-      dismiss_stale_reviews           = required_pull_request_reviews.value["dismiss_stale_reviews"]
-      require_code_owner_reviews      = required_pull_request_reviews.value["require_code_owner_reviews"]
-      required_approving_review_count = required_pull_request_reviews.value["required_approving_review_count"]
-    }
-  }
-
-  required_status_checks {
-    strict   = true
-    contexts = ["before-cd-test"]
-  }
-}
-
-resource "github_team_repository" "nomad" {
-  team_id    = github_team.reviewer.id
-  repository = github_repository.nomad.name
-}
-
-#
-# femiwiki
-#
-resource "github_repository" "femiwiki" {
-  name                 = "femiwiki"
-  description          = ":earth_asia: 문서화된 페미위키 기술 정보 및 이슈 트래킹 정보 제공"
-  homepage_url         = "https://femiwiki.com"
-  has_issues           = local.default_repo.has_issues
-  vulnerability_alerts = local.default_repo.vulnerability_alerts
-  archive_on_destroy   = local.default_repo.archive_on_destroy
-
+module "femiwiki" {
+  source       = "./modules/github-repository"
+  name         = "femiwiki"
+  description  = ":earth_asia: 문서화된 페미위키 기술 정보 및 이슈 트래킹 정보 제공"
+  homepage_url = "https://femiwiki.com"
   topics = [
     "feminism",
     "wiki",
   ]
 }
 
-resource "github_branch" "femiwiki_main" {
-  repository = github_repository.femiwiki.name
-  branch     = "main"
-}
-
-resource "github_branch_default" "femiwiki" {
-  repository = github_repository.femiwiki.name
-  branch     = github_branch.femiwiki_main.branch
-}
-
-resource "github_branch_protection" "femiwiki" {
-  repository_id     = github_repository.femiwiki.node_id
-  pattern           = local.default_repo.pattern
-  enforce_admins    = local.default_repo.enforce_admins
-  push_restrictions = local.default_repo.push_restrictions
-
-  dynamic "required_pull_request_reviews" {
-    for_each = local.default_repo.required_pull_request_reviews
-    content {
-      dismiss_stale_reviews           = required_pull_request_reviews.value["dismiss_stale_reviews"]
-      require_code_owner_reviews      = required_pull_request_reviews.value["require_code_owner_reviews"]
-      required_approving_review_count = required_pull_request_reviews.value["required_approving_review_count"]
-    }
-  }
-}
-
-resource "github_team_repository" "femiwiki" {
-  team_id    = github_team.reviewer.id
-  repository = github_repository.femiwiki.name
-}
-
-#
-# mediawiki
-#
-resource "github_repository" "docker_mediawiki" {
-  name                   = "docker-mediawiki"
-  description            = ":whale: Dockerized Femiwiki's mediawiki server"
-  delete_branch_on_merge = true
-  has_issues             = local.docker.has_issues
-  vulnerability_alerts   = local.docker.vulnerability_alerts
-  archive_on_destroy     = local.docker.archive_on_destroy
+module "docker_mediawiki" {
+  source                        = "./modules/github-repository"
+  name                          = "docker-mediawiki"
+  description                   = ":whale: Dockerized Femiwiki's mediawiki server"
+  delete_branch_on_merge        = true
+  enforce_admins                = local.docker.enforce_admins
+  required_pull_request_reviews = local.docker.required_pull_request_reviews
   topics = [
     "docker-compose",
     "docker-image",
@@ -183,494 +77,119 @@ resource "github_repository" "docker_mediawiki" {
   ]
 }
 
-resource "github_branch" "mediawiki_main" {
-  repository = github_repository.docker_mediawiki.name
-  branch     = "main"
-}
-
-resource "github_branch_default" "mediawiki" {
-  repository = github_repository.docker_mediawiki.name
-  branch     = github_branch.mediawiki_main.branch
-}
-
-resource "github_branch_protection" "mediawiki" {
-  repository_id     = github_repository.docker_mediawiki.node_id
-  pattern           = local.docker.pattern
-  enforce_admins    = local.docker.enforce_admins
-  push_restrictions = local.docker.push_restrictions
-
-  dynamic "required_pull_request_reviews" {
-    for_each = local.docker.required_pull_request_reviews
-    content {
-      dismiss_stale_reviews           = required_pull_request_reviews.value["dismiss_stale_reviews"]
-      require_code_owner_reviews      = required_pull_request_reviews.value["require_code_owner_reviews"]
-      required_approving_review_count = required_pull_request_reviews.value["required_approving_review_count"]
-    }
-  }
-}
-
-resource "github_team_repository" "mediawiki" {
-  team_id    = github_team.reviewer.id
-  repository = github_repository.docker_mediawiki.name
-}
-
-#
-# parsoid
-#
-resource "github_repository" "docker_parsoid" {
-  name                 = "docker-parsoid"
-  description          = ":whale: Dockerized parsoid"
-  has_issues           = local.docker.has_issues
-  vulnerability_alerts = local.docker.vulnerability_alerts
-  archive_on_destroy   = local.docker.archive_on_destroy
+module "docker_parsoid" {
+  source                        = "./modules/github-repository"
+  name                          = "docker-parsoid"
+  description                   = ":whale: Dockerized parsoid"
+  enforce_admins                = local.docker.enforce_admins
+  required_pull_request_reviews = local.docker.required_pull_request_reviews
   topics = [
     "docker-image",
     "parsoid",
   ]
 }
 
-resource "github_branch" "parsoid_main" {
-  repository = github_repository.docker_parsoid.name
-  branch     = "main"
-}
-
-resource "github_branch_default" "parsoid" {
-  repository = github_repository.docker_parsoid.name
-  branch     = github_branch.parsoid_main.branch
-}
-
-resource "github_branch_protection" "parsoid" {
-  repository_id     = github_repository.docker_parsoid.node_id
-  pattern           = local.docker.pattern
-  enforce_admins    = local.docker.enforce_admins
-  push_restrictions = local.docker.push_restrictions
-
-  dynamic "required_pull_request_reviews" {
-    for_each = local.docker.required_pull_request_reviews
-    content {
-      dismiss_stale_reviews           = required_pull_request_reviews.value["dismiss_stale_reviews"]
-      require_code_owner_reviews      = required_pull_request_reviews.value["require_code_owner_reviews"]
-      required_approving_review_count = required_pull_request_reviews.value["required_approving_review_count"]
-    }
-  }
-}
-
-resource "github_team_repository" "parsoid" {
-  team_id    = github_team.reviewer.id
-  repository = github_repository.docker_parsoid.name
-}
-
-#
-# restbase
-#
-resource "github_repository" "docker_restbase" {
-  name                 = "docker-restbase"
-  description          = "📝 Dockerized RESTBase"
-  has_issues           = local.docker.has_issues
-  vulnerability_alerts = local.docker.vulnerability_alerts
-  archive_on_destroy   = local.docker.archive_on_destroy
+module "docker_restbase" {
+  source                        = "./modules/github-repository"
+  name                          = "docker-restbase"
+  description                   = "📝 Dockerized RESTBase"
+  enforce_admins                = local.docker.enforce_admins
+  required_pull_request_reviews = local.docker.required_pull_request_reviews
   topics = [
     "docker-image",
     "restbase"
   ]
 }
 
-resource "github_branch" "docker_restbase_main" {
-  repository = github_repository.docker_restbase.name
-  branch     = "main"
-}
-
-resource "github_branch_default" "docker_restbase" {
-  repository = github_repository.docker_restbase.name
-  branch     = github_branch.docker_restbase_main.branch
-}
-
-resource "github_branch_protection" "docker_restbase" {
-  repository_id     = github_repository.docker_restbase.node_id
-  pattern           = local.docker.pattern
-  enforce_admins    = local.docker.enforce_admins
-  push_restrictions = local.docker.push_restrictions
-
-  dynamic "required_pull_request_reviews" {
-    for_each = local.docker.required_pull_request_reviews
-    content {
-      dismiss_stale_reviews           = required_pull_request_reviews.value["dismiss_stale_reviews"]
-      require_code_owner_reviews      = required_pull_request_reviews.value["require_code_owner_reviews"]
-      required_approving_review_count = required_pull_request_reviews.value["required_approving_review_count"]
-    }
-  }
-}
-
-resource "github_team_repository" "docker_restbase" {
-  team_id    = github_team.reviewer.id
-  repository = github_repository.docker_restbase.name
-}
-
-#
-# restbase
-#
-resource "github_repository" "docker_mathoid" {
-  name                 = "docker-mathoid"
-  description          = "📝 Dockerized Mathoid"
-  has_issues           = local.docker.has_issues
-  vulnerability_alerts = local.docker.vulnerability_alerts
-  archive_on_destroy   = local.docker.archive_on_destroy
+module "docker_mathoid" {
+  source                        = "./modules/github-repository"
+  name                          = "docker-mathoid"
+  description                   = "📝 Dockerized Mathoid"
+  enforce_admins                = local.docker.enforce_admins
+  required_pull_request_reviews = local.docker.required_pull_request_reviews
   topics = [
     "docker-image",
-    "mathoid"
+    "mathoid",
   ]
 }
 
-resource "github_branch" "docker_mathoid_main" {
-  repository = github_repository.docker_mathoid.name
-  branch     = "main"
-}
 
-resource "github_branch_default" "docker_mathoid" {
-  repository = github_repository.docker_mathoid.name
-  branch     = github_branch.docker_mathoid_main.branch
-}
-
-resource "github_branch_protection" "docker_mathoid" {
-  repository_id     = github_repository.docker_mathoid.node_id
-  pattern           = local.docker.pattern
-  enforce_admins    = local.docker.enforce_admins
-  push_restrictions = local.docker.push_restrictions
-
-  dynamic "required_pull_request_reviews" {
-    for_each = local.docker.required_pull_request_reviews
-    content {
-      dismiss_stale_reviews           = required_pull_request_reviews.value["dismiss_stale_reviews"]
-      require_code_owner_reviews      = required_pull_request_reviews.value["require_code_owner_reviews"]
-      required_approving_review_count = required_pull_request_reviews.value["required_approving_review_count"]
-    }
-  }
-}
-
-resource "github_team_repository" "docker_mathoid" {
-  team_id    = github_team.reviewer.id
-  repository = github_repository.docker_mathoid.name
-}
-
-#
-# rankingbot
-#
-resource "github_repository" "rankingbot" {
-  name                 = "rankingbot"
-  description          = ":robot: 랭킹봇"
-  homepage_url         = "https://femiwiki.com/w/%EC%82%AC%EC%9A%A9%EC%9E%90:%EB%9E%AD%ED%82%B9%EB%B4%87"
-  has_issues           = local.bot.has_issues
-  vulnerability_alerts = local.bot.vulnerability_alerts
-  archive_on_destroy   = local.bot.archive_on_destroy
+module "rankingbot" {
+  source                        = "./modules/github-repository"
+  name                          = "rankingbot"
+  description                   = ":robot: 랭킹봇"
+  homepage_url                  = "https://femiwiki.com/w/%EC%82%AC%EC%9A%A9%EC%9E%90:%EB%9E%AD%ED%82%B9%EB%B4%87"
+  enforce_admins                = local.bot.enforce_admins
+  required_pull_request_reviews = local.bot.required_pull_request_reviews
   topics = [
     "bot",
   ]
 }
 
-resource "github_branch" "rankingbot_main" {
-  repository = github_repository.rankingbot.name
-  branch     = "main"
-}
-
-resource "github_branch_default" "rankingbot" {
-  repository = github_repository.rankingbot.name
-  branch     = github_branch.rankingbot_main.branch
-}
-
-resource "github_branch_protection" "rankingbot" {
-  repository_id     = github_repository.rankingbot.node_id
-  pattern           = local.bot.pattern
-  enforce_admins    = local.bot.enforce_admins
-  push_restrictions = local.bot.push_restrictions
-
-  dynamic "required_pull_request_reviews" {
-    for_each = local.bot.required_pull_request_reviews
-    content {
-      dismiss_stale_reviews           = required_pull_request_reviews.value["dismiss_stale_reviews"]
-      require_code_owner_reviews      = required_pull_request_reviews.value["require_code_owner_reviews"]
-      required_approving_review_count = required_pull_request_reviews.value["required_approving_review_count"]
-    }
-  }
-}
-
-resource "github_team_repository" "rankingbot" {
-  team_id    = github_team.reviewer.id
-  repository = github_repository.rankingbot.name
-}
-
-#
-# backupbot
-#
-resource "github_repository" "backupbot" {
-  name                 = "backupbot"
-  description          = ":robot: 페미위키 MySQL 백업봇"
-  has_issues           = local.bot.has_issues
-  vulnerability_alerts = local.bot.vulnerability_alerts
-  archive_on_destroy   = local.bot.archive_on_destroy
+module "backupbot" {
+  source                        = "./modules/github-repository"
+  name                          = "backupbot"
+  description                   = ":robot: 페미위키 MySQL 백업봇"
+  enforce_admins                = local.bot.enforce_admins
+  required_pull_request_reviews = local.bot.required_pull_request_reviews
   topics = [
     "bot",
     "docker-image",
+    "mysql",
   ]
 }
 
-resource "github_branch" "backupbot_main" {
-  repository = github_repository.backupbot.name
-  branch     = "main"
+module "tweetbot" {
+  source                        = "./modules/github-repository"
+  name                          = "tweetbot"
+  description                   = "🐦 페미위키 트위터 봇"
+  homepage_url                  = "https://femiwiki.com/w/%EC%82%AC%EC%9A%A9%EC%9E%90:%ED%8A%B8%EC%9C%97%EB%B4%87"
+  enforce_admins                = local.bot.enforce_admins
+  required_pull_request_reviews = local.bot.required_pull_request_reviews
+  topics = [
+    "bot",
+    "twitter",
+  ]
 }
 
-resource "github_branch_default" "backupbot" {
-  repository = github_repository.backupbot.name
-  branch     = github_branch.backupbot_main.branch
-}
-
-resource "github_branch_protection" "backupbot" {
-  repository_id     = github_repository.backupbot.node_id
-  pattern           = local.bot.pattern
-  enforce_admins    = local.bot.enforce_admins
-  push_restrictions = local.bot.push_restrictions
-
-  dynamic "required_pull_request_reviews" {
-    for_each = local.bot.required_pull_request_reviews
-    content {
-      dismiss_stale_reviews           = required_pull_request_reviews.value["dismiss_stale_reviews"]
-      require_code_owner_reviews      = required_pull_request_reviews.value["require_code_owner_reviews"]
-      required_approving_review_count = required_pull_request_reviews.value["required_approving_review_count"]
-    }
-  }
-}
-
-resource "github_team_repository" "backupbot" {
-  team_id    = github_team.reviewer.id
-  repository = github_repository.backupbot.name
-}
-
-#
-# tweetbot
-#
-resource "github_repository" "tweetbot" {
-  name                 = "tweetbot"
-  description          = ":robot: 페미위키 트위터 봇"
-  homepage_url         = "https://femiwiki.com/w/%EC%82%AC%EC%9A%A9%EC%9E%90:%ED%8A%B8%EC%9C%97%EB%B4%87"
-  has_issues           = local.bot.has_issues
-  vulnerability_alerts = local.bot.vulnerability_alerts
-  archive_on_destroy   = local.bot.archive_on_destroy
+module "remote_gadgets" {
+  source      = "./modules/github-repository"
+  name        = "remote-gadgets"
+  description = "📽️ External repository for Javascript/CSS on FemiWiki"
   topics = [
     "bot",
   ]
 }
 
-resource "github_branch" "tweetbot_main" {
-  repository = github_repository.tweetbot.name
-  branch     = "main"
+module "dot_github" {
+  source      = "./modules/github-repository"
+  name        = ".github"
+  description = "Community health files"
 }
 
-resource "github_branch_default" "tweetbot" {
-  repository = github_repository.tweetbot.name
-  branch     = github_branch.tweetbot_main.branch
+module "legunto" {
+  source      = "./modules/github-repository"
+  name        = "legunto"
+  description = "Fetch MediaWiki Scribunto modules from wikis"
+  topics = [
+    "scribunto",
+  ]
 }
 
-resource "github_branch_protection" "tweetbot" {
-  repository_id     = github_repository.tweetbot.node_id
-  pattern           = local.bot.pattern
-  enforce_admins    = local.bot.enforce_admins
-  push_restrictions = local.bot.push_restrictions
-
-  dynamic "required_pull_request_reviews" {
-    for_each = local.bot.required_pull_request_reviews
-    content {
-      dismiss_stale_reviews           = required_pull_request_reviews.value["dismiss_stale_reviews"]
-      require_code_owner_reviews      = required_pull_request_reviews.value["require_code_owner_reviews"]
-      required_approving_review_count = required_pull_request_reviews.value["required_approving_review_count"]
-    }
-  }
+module "maintenance" {
+  source       = "./modules/github-repository"
+  name         = "maintenance"
+  description  = ":wrench: 페미위키 점검 페이지"
+  homepage_url = "https://femiwiki.github.io/maintenance"
+  topics = [
+    "website",
+  ]
 }
 
-resource "github_team_repository" "tweetbot" {
-  team_id    = github_team.reviewer.id
-  repository = github_repository.tweetbot.name
-}
-
-#
-# remote gadgets
-#
-resource "github_repository" "remote_gadgets" {
-  name                 = "remote-gadgets"
-  description          = "📽️ External repository for Javascript/CSS on FemiWiki"
-  has_issues           = local.default_repo.has_issues
-  vulnerability_alerts = local.default_repo.vulnerability_alerts
-  archive_on_destroy   = local.default_repo.archive_on_destroy
-  topics               = ["bot"]
-}
-
-resource "github_branch" "remote_gadgets_main" {
-  repository = github_repository.remote_gadgets.name
-  branch     = "main"
-}
-
-resource "github_branch_default" "remote_gadgets" {
-  repository = github_repository.remote_gadgets.name
-  branch     = github_branch.remote_gadgets_main.branch
-}
-
-resource "github_branch_protection" "remote_gadgets" {
-  repository_id     = github_repository.remote_gadgets.node_id
-  pattern           = local.default_repo.pattern
-  enforce_admins    = local.default_repo.enforce_admins
-  push_restrictions = local.default_repo.push_restrictions
-
-  dynamic "required_pull_request_reviews" {
-    for_each = local.default_repo.required_pull_request_reviews
-    content {
-      dismiss_stale_reviews           = required_pull_request_reviews.value["dismiss_stale_reviews"]
-      require_code_owner_reviews      = required_pull_request_reviews.value["require_code_owner_reviews"]
-      required_approving_review_count = required_pull_request_reviews.value["required_approving_review_count"]
-    }
-  }
-}
-
-resource "github_team_repository" "remote_gadgets" {
-  team_id    = github_team.reviewer.id
-  repository = github_repository.remote_gadgets.name
-}
-
-#
-# .github
-#
-resource "github_repository" "dot_github" {
-  name                 = ".github"
-  description          = "Community health files"
-  has_issues           = local.default_repo.has_issues
-  vulnerability_alerts = local.default_repo.vulnerability_alerts
-  archive_on_destroy   = local.default_repo.archive_on_destroy
-}
-
-resource "github_branch" "dot_github_main" {
-  repository = github_repository.dot_github.name
-  branch     = "main"
-}
-
-resource "github_branch_default" "dot_github" {
-  repository = github_repository.dot_github.name
-  branch     = github_branch.dot_github_main.branch
-}
-
-resource "github_branch_protection" "dot_github" {
-  repository_id     = github_repository.dot_github.node_id
-  pattern           = local.default_repo.pattern
-  enforce_admins    = local.default_repo.enforce_admins
-  push_restrictions = local.default_repo.push_restrictions
-
-  dynamic "required_pull_request_reviews" {
-    for_each = local.default_repo.required_pull_request_reviews
-    content {
-      dismiss_stale_reviews           = required_pull_request_reviews.value["dismiss_stale_reviews"]
-      require_code_owner_reviews      = required_pull_request_reviews.value["require_code_owner_reviews"]
-      required_approving_review_count = required_pull_request_reviews.value["required_approving_review_count"]
-    }
-  }
-}
-
-resource "github_team_repository" "dot_github" {
-  team_id    = github_team.reviewer.id
-  repository = github_repository.dot_github.name
-}
-
-#
-# legunto
-#
-resource "github_repository" "legunto" {
-  name                 = "legunto"
-  description          = "Fetch MediaWiki Scribunto modules from wikis"
-  has_issues           = local.default_repo.has_issues
-  vulnerability_alerts = local.default_repo.vulnerability_alerts
-  archive_on_destroy   = local.default_repo.archive_on_destroy
-}
-
-resource "github_branch" "legunto_main" {
-  repository = github_repository.legunto.name
-  branch     = "main"
-}
-
-resource "github_branch_default" "legunto" {
-  repository = github_repository.legunto.name
-  branch     = github_branch.legunto_main.branch
-}
-
-resource "github_branch_protection" "legunto" {
-  repository_id     = github_repository.legunto.node_id
-  pattern           = local.default_repo.pattern
-  enforce_admins    = local.default_repo.enforce_admins
-  push_restrictions = local.default_repo.push_restrictions
-
-  dynamic "required_pull_request_reviews" {
-    for_each = local.default_repo.required_pull_request_reviews
-    content {
-      dismiss_stale_reviews           = required_pull_request_reviews.value["dismiss_stale_reviews"]
-      require_code_owner_reviews      = required_pull_request_reviews.value["require_code_owner_reviews"]
-      required_approving_review_count = required_pull_request_reviews.value["required_approving_review_count"]
-    }
-  }
-}
-
-resource "github_team_repository" "legunto" {
-  team_id    = github_team.reviewer.id
-  repository = github_repository.legunto.name
-}
-
-#
-# maintenance
-#
-resource "github_repository" "maintenance" {
-  name                 = "maintenance"
-  description          = ":wrench: 페미위키 점검 페이지"
-  homepage_url         = "https://femiwiki.github.io/maintenance"
-  has_issues           = local.default_repo.has_issues
-  vulnerability_alerts = local.default_repo.vulnerability_alerts
-  archive_on_destroy   = local.default_repo.archive_on_destroy
-  topics               = ["website"]
-}
-
-resource "github_branch" "maintenance_main" {
-  repository = github_repository.maintenance.name
-  branch     = "main"
-}
-
-resource "github_branch_default" "maintenance" {
-  repository = github_repository.maintenance.name
-  branch     = github_branch.maintenance_main.branch
-}
-
-resource "github_branch_protection" "maintenance" {
-  repository_id     = github_repository.maintenance.node_id
-  pattern           = local.default_repo.pattern
-  enforce_admins    = local.default_repo.enforce_admins
-  push_restrictions = local.default_repo.push_restrictions
-
-  dynamic "required_pull_request_reviews" {
-    for_each = local.default_repo.required_pull_request_reviews
-    content {
-      dismiss_stale_reviews           = required_pull_request_reviews.value["dismiss_stale_reviews"]
-      require_code_owner_reviews      = required_pull_request_reviews.value["require_code_owner_reviews"]
-      required_approving_review_count = required_pull_request_reviews.value["required_approving_review_count"]
-    }
-  }
-}
-
-resource "github_team_repository" "maintenance" {
-  team_id    = github_team.reviewer.id
-  repository = github_repository.maintenance.name
-}
-
-#
-# caddy-mwcache
-#
-resource "github_repository" "caddy_mwcache" {
-  name                 = "caddy-mwcache"
-  description          = ":wrench: Caddy anonymous cache plugin for MediaWiki"
-  has_issues           = local.default_repo.has_issues
-  vulnerability_alerts = local.default_repo.vulnerability_alerts
-  archive_on_destroy   = local.default_repo.archive_on_destroy
-
+module "caddy_mwcache" {
+  source      = "./modules/github-repository"
+  name        = "caddy-mwcache"
+  description = ":wrench: Caddy anonymous cache plugin for MediaWiki"
   topics = [
     "caddy",
     "caddy2",
@@ -682,26 +201,6 @@ resource "github_repository" "caddy_mwcache" {
   ]
 }
 
-resource "github_branch_protection" "caddy_mwcache" {
-  repository_id     = github_repository.caddy_mwcache.node_id
-  pattern           = local.default_repo.pattern
-  enforce_admins    = local.default_repo.enforce_admins
-  push_restrictions = local.default_repo.push_restrictions
-
-  dynamic "required_pull_request_reviews" {
-    for_each = local.default_repo.required_pull_request_reviews
-    content {
-      dismiss_stale_reviews           = required_pull_request_reviews.value["dismiss_stale_reviews"]
-      require_code_owner_reviews      = required_pull_request_reviews.value["require_code_owner_reviews"]
-      required_approving_review_count = required_pull_request_reviews.value["required_approving_review_count"]
-    }
-  }
-}
-
-resource "github_team_repository" "caddy_mwcache" {
-  team_id    = github_team.reviewer.id
-  repository = github_repository.caddy_mwcache.name
-}
 
 module "ooui_femiwiki_theme" {
   source      = "./modules/github-repository"

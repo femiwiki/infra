@@ -9,9 +9,22 @@ variable "description" {
   type        = string
 }
 
+variable "homepage_url" {
+  description = ""
+  type        = string
+  default     = ""
+}
+
 variable "topics" {
   description = ""
   type        = list(string)
+  default     = []
+}
+
+variable "delete_branch_on_merge" {
+  description = ""
+  type        = bool
+  default     = false
 }
 
 # Branch protection
@@ -23,7 +36,7 @@ variable "patterns" {
 
 variable "enforce_admins" {
   description = ""
-  type        = string
+  type        = bool
   default     = false
 }
 
@@ -42,3 +55,10 @@ variable "required_pull_request_reviews" {
     }
   ]
 }
+
+variable "required_status_checks_contexts" {
+  description = ""
+  type        = list(list(string))
+  default     = []
+}
+
