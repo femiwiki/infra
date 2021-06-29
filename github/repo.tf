@@ -194,7 +194,6 @@ module "caddy_mwcache" {
   ]
 }
 
-
 module "ooui_femiwiki_theme" {
   source      = "./modules/github-repository"
   name        = "OOUIFemiwikiTheme"
