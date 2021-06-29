@@ -1,14 +1,7 @@
 locals {
   default_repo = {
-    # repository
-    has_issues           = true,
-    vulnerability_alerts = true,
-    archive_on_destroy   = true,
-
     # branch_protection
-    pattern           = "main"
-    push_restrictions = [],
-    enforce_admins    = false,
+    enforce_admins = false,
     required_pull_request_reviews = [{
       dismiss_stale_reviews           = false,
       require_code_owner_reviews      = false,

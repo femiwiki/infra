@@ -62,3 +62,7 @@ variable "required_status_checks_contexts" {
   default     = []
 }
 
+variable "collaborator" {
+  type    = bool
+  default = false
+}

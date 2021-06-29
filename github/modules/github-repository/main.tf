@@ -49,3 +49,11 @@ resource "github_team_repository" "team_repository" {
   repository = github_repository.repository.name
   team_id    = "3688706"
 }
+
+# Give push access to @translatewiki https://github.com/femiwiki/femiwiki/issues/91
+resource "github_repository_collaborator" "repository_collaborator" {
+  count      = var.collaborator ? 1 : 0
+  repository = github_repository.repository.name
+  username   = "translatewiki"
+  permission = "push"
+}
