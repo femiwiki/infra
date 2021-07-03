@@ -17,7 +17,7 @@ resource "aws_eip" "femiwiki" {
 }
 
 resource "aws_eip" "test_femiwiki" {
-  instance = aws_instance.femiwiki_consul_test.id
+  instance = aws_instance.femiwiki_consul_test_server.id
   vpc = true
 }
 
