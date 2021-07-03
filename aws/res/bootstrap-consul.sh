@@ -95,16 +95,6 @@ Defaults secure_path=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bi
 EOF
 
 #
-# 스왑 메모리 생성
-# 아마존 리눅스에서는 기본으로 XFS를 쓰는데, 이 경우 fallocate 명령어를 쓰지 못한다.
-#
-sudo dd if=/dev/zero of=/swapfile bs=256M count=6
-sudo chmod 600 /swapfile
-sudo mkswap /swapfile
-echo '/swapfile swap swap defaults 0 0' | sudo tee -a /etc/fstab
-sudo swapon -a
-
-#
 # 도커 설치
 # Reference: https://docs.aws.amazon.com/AmazonECS/latest/developerguide/docker-basics.html#install_docker
 #
