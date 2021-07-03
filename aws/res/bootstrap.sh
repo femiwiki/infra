@@ -53,8 +53,7 @@ sed -i "s/update_cmd = default/update_cmd = minimal-security/" /etc/yum/yum-cron
 sed -i "s/apply_updates = no/apply_updates = yes/" /etc/yum/yum-cron.conf
 sed -i "s~^exec /usr/sbin/yum-cron~exec /usr/bin/nice -n 19 /usr/sbin/yum-cron~" /etc/cron.hourly/0yum-hourly.cron
 sed -i "s~^exec /usr/sbin/yum-cron~exec /usr/bin/nice -n 19 /usr/sbin/yum-cron~" /etc/cron.daily/0yum-daily.cron
-# Disabled temporarily, see https://github.com/femiwiki/femiwiki/issues/257
-# systemctl enable yum-cron
+systemctl enable yum-cron
 
 #
 # cloudwatch-agent 실행
