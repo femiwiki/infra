@@ -18,7 +18,7 @@ resource "aws_eip" "femiwiki" {
 
 resource "aws_eip" "test_femiwiki" {
   # instance = aws_instance.femiwiki_consul_test_server.id
-  vpc      = true
+  vpc = true
 }
 
 data "aws_availability_zone" "femiwiki" {
