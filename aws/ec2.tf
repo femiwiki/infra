@@ -69,7 +69,7 @@ resource "aws_instance" "femiwiki" {
 
   root_block_device {
     delete_on_termination = true
-    volume_size           = 16
+    volume_size           = 20
     volume_type           = "gp3"
   }
 
