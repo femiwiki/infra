@@ -110,6 +110,12 @@ locals {
       color       = "c5def5"
     }
 
+    mw1_37 = {
+      name        = "mw1.37"
+      description = "MediaWiki 1.37"
+      color       = "c5def5"
+    }
+
     docker = {
       name        = "docker"
       description = ""
@@ -230,6 +236,7 @@ locals {
         "dependabot",
         "mw1_35",
         "mw1_36",
+        "mw1_37",
         "ve",
         "restbase",
         "wikibase",
