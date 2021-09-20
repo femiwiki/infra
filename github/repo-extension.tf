@@ -87,3 +87,13 @@ module "page_view_info_ga" {
   patterns     = local.extension.patterns
   collaborator = local.extension.collaborator
 }
+
+module "discord_rc_feed" {
+  source       = "./modules/github-repository"
+  name         = "DiscordRCFeed"
+  description  = "🎮 Provides RCFeedEngine and RCFeedFormatter for Discord"
+  homepage_url = "https://www.mediawiki.org/wiki/Special:MyLanguage/Extension:DiscordRCFeed"
+  topics       = concat(local.extension.topics, ["discord"])
+  patterns     = local.extension.patterns
+  collaborator = local.extension.collaborator
+}
