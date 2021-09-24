@@ -91,7 +91,7 @@ module "page_view_info_ga" {
 module "discord_rc_feed" {
   source       = "./modules/github-repository"
   name         = "DiscordRCFeed"
-  description  = "🎮 Provides RCFeedEngine and RCFeedFormatter for Discord"
+  description  = "🎮 Provides MediaWiki's FormattedRCFeed and RCFeedFormatter for Discord"
   homepage_url = "https://www.mediawiki.org/wiki/Special:MyLanguage/Extension:DiscordRCFeed"
   topics       = concat(local.extension.topics, ["discord"])
   patterns     = local.extension.patterns
