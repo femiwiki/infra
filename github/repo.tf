@@ -70,18 +70,6 @@ module "docker_mediawiki" {
   ]
 }
 
-module "docker_parsoid" {
-  source                        = "./modules/github-repository"
-  name                          = "docker-parsoid"
-  description                   = ":whale: Dockerized parsoid"
-  enforce_admins                = local.docker.enforce_admins
-  required_pull_request_reviews = local.docker.required_pull_request_reviews
-  topics = [
-    "docker-image",
-    "parsoid",
-  ]
-}
-
 module "docker_restbase" {
   source                        = "./modules/github-repository"
   name                          = "docker-restbase"
