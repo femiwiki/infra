@@ -1,5 +1,5 @@
 resource "github_organization_project" "dev" {
-  name = "Development"
+  name = "femiwiki.com"
   body = ":shipit: 페미위키 관련된 기술적인 사안"
 }
 
