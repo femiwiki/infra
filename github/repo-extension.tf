@@ -10,8 +10,13 @@ locals {
   skin = merge(local.default_repo, {
     enforce_admins = true,
     # temporarily disable requiring reviews due to too few development members.
-    required_pull_request_reviews   = [],
-    required_status_checks_contexts = [["test"]]
+    required_pull_request_reviews = [],
+    required_status_checks_contexts = [[
+      "test (composer-test)",
+      "test (npm-test)",
+      "test (phan)",
+      "test (selenium)",
+    ]]
     topics = [
       "mediawiki-skin",
     ],
@@ -23,8 +28,13 @@ locals {
   extension = merge(local.default_repo, {
     enforce_admins = true,
     # temporarily disable requiring reviews due to too few development members.
-    required_pull_request_reviews   = [],
-    required_status_checks_contexts = [["test"]]
+    required_pull_request_reviews = [],
+    required_status_checks_contexts = [[
+      "test (composer-test)",
+      "test (npm-test)",
+      "test (phan)",
+      "test (selenium)",
+    ]]
 
     topics = [
       "mediawiki-extension",
