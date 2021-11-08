@@ -286,14 +286,14 @@ locals {
     tweetbot   = local.label_suite.base
     rankingbot = local.label_suite.base
 
-    FemiwikiSkin                = concat(local.label_suite.base_ext, ["femiwiki_discussion_needed", "ve", "search", "mw1_35", "mw1_36"])
-    AchievementBadges           = concat(local.label_suite.base_ext, ["mw1_35", "mw1_36"])
-    DiscordNotifications        = concat(local.label_suite.base_ext, ["mw1_36"])
+    FemiwikiSkin                = concat(local.label_suite.base_ext, ["femiwiki_discussion_needed", "ve", "search", "mw1_35", "mw1_36", "mw1_37"])
+    AchievementBadges           = concat(local.label_suite.base_ext, ["mw1_35", "mw1_36", "mw1_37"])
+    DiscordNotifications        = concat(local.label_suite.base_ext, ["mw1_36", "mw1_37"])
     DiscordRCFeed               = concat(local.label_suite.base_ext, ["mw1_37"])
-    FacetedCategory             = concat(local.label_suite.base_ext, ["wikibase", "mw1_35", "mw1_36"])
-    Sanctions                   = concat(local.label_suite.base_ext, ["ve", "mw1_34", "mw1_35", "mw1_36"])
-    UnifiedExtensionForFemiwiki = concat(local.label_suite.base_ext, ["wikibase", "mw1_35", "mw1_36"])
-    PageViewInfoGA              = concat(local.label_suite.base_ext, [])
+    FacetedCategory             = concat(local.label_suite.base_ext, ["wikibase", "mw1_35", "mw1_36", "mw1_37"])
+    Sanctions                   = concat(local.label_suite.base_ext, ["ve", "mw1_34", "mw1_35", "mw1_36", "mw1_37"])
+    UnifiedExtensionForFemiwiki = concat(local.label_suite.base_ext, ["wikibase", "mw1_35", "mw1_36", "mw1_37"])
+    PageViewInfoGA              = concat(local.label_suite.base_ext, ["mw1_37"])
   }
 
   // Flattening nested structures
