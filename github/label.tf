@@ -288,7 +288,6 @@ locals {
 
     FemiwikiSkin                = concat(local.label_suite.base_ext, ["femiwiki_discussion_needed", "ve", "search", "mw1_35", "mw1_36", "mw1_37"])
     AchievementBadges           = concat(local.label_suite.base_ext, ["mw1_35", "mw1_36", "mw1_37"])
-    DiscordNotifications        = concat(local.label_suite.base_ext, ["mw1_36", "mw1_37"])
     DiscordRCFeed               = concat(local.label_suite.base_ext, ["mw1_37"])
     FacetedCategory             = concat(local.label_suite.base_ext, ["wikibase", "mw1_35", "mw1_36", "mw1_37"])
     Sanctions                   = concat(local.label_suite.base_ext, ["ve", "mw1_34", "mw1_35", "mw1_36", "mw1_37"])
