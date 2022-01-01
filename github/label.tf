@@ -287,7 +287,7 @@ locals {
     legunto           = local.label_suite.base
     maintenance       = local.label_suite.base
     OOUIFemiwikiTheme = local.label_suite.base
-    remote-gadgets    = concat(local.label_suite.base, ["search", "windows"])
+    remote-gadgets    = concat(local.label_suite.base, ["search", "windows", "mw1_38"])
 
     backupbot  = local.label_suite.base
     tweetbot   = local.label_suite.base
