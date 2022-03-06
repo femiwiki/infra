@@ -94,7 +94,9 @@ resource "aws_route53_record" "femiwiki_com_txt" {
   zone_id = aws_route53_zone.femiwiki_com.zone_id
   records = [
     # Google Search Console
-    "google-site-verification=dBkD96hFbYlBf5-GsXjjownJrAGYQvUIPHPK4T9Dwko"
+    "google-site-verification=dBkD96hFbYlBf5-GsXjjownJrAGYQvUIPHPK4T9Dwko",
+    # Yandex Webmaster
+    "yandex-verification: a457abccca159922",
   ]
 }
 
@@ -106,7 +108,7 @@ resource "aws_route53_record" "github_challenge_femiwiki_com" {
   zone_id = aws_route53_zone.femiwiki_com.zone_id
 }
 
-resource "aws_route53_record" "verifybing_femiwiki_com" {
+resource "aws_route53_record" "bing_verifybing_femiwiki_com" {
   name    = "24475b093ea86d87f448bfcb0bbf50ee.femiwiki.com"
   type    = "CNAME"
   records = ["verify.bing.com"]
