@@ -124,11 +124,18 @@ data "aws_iam_policy_document" "uploaded_files_thumb" {
 
 resource "aws_s3_bucket" "backups" {
   bucket = "femiwiki-backups"
+}
 
-  lifecycle_rule {
-    enabled = true
-    id      = "Transition mysql dumps to Glacier Deep Archive after 14 days"
-    prefix  = "mysql/"
+resource "aws_s3_bucket_lifecycle_configuration" "backups" {
+  bucket = aws_s3_bucket.backups.id
+
+  rule {
+    status = "Enabled"
+    id     = "Transition mysql dumps to Glacier Deep Archive after 14 days"
+
+    filter {
+      prefix = "mysql/"
+    }
 
     # NOTE: STANDARD_IA 를 사용할 경우, S3 IA로 가는순간 30일치 요금이 무조건
     # 계산된다는 점을 주의해주세요.
