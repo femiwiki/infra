@@ -49,26 +49,6 @@ resource "aws_cloudwatch_metric_alarm" "femiwiki_disk_used_cloud_watch_alarm" {
   alarm_actions       = [aws_sns_topic.cloudwatch_alarms_topic.arn]
 }
 
-resource "aws_cloudwatch_metric_alarm" "persistent_data_mysql_used_cloud_watch_alarm" {
-  alarm_name  = "persistent data mysql disk used"
-  namespace   = "CWAgent"
-  metric_name = "disk_used_percent"
-  period      = 300
-  statistic   = "Maximum"
-  dimensions = {
-    # TODO: Change dynamically
-    "device" = "nvme3n1"
-    "fstype" = "ext4"
-    "host"   = aws_instance.femiwiki.private_dns
-    "path"   = "/opt/nomad/client/csi/node/aws-ebs0/staging/mysql/rw-file-system-single-node-writer"
-  }
-  threshold           = 90
-  comparison_operator = "GreaterThanThreshold"
-  datapoints_to_alarm = 1
-  evaluation_periods  = 1
-  alarm_actions       = [aws_sns_topic.cloudwatch_alarms_topic.arn]
-}
-
 resource "aws_cloudwatch_metric_alarm" "bounce_rate" {
   provider = aws.us
 
