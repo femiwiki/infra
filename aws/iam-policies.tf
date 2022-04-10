@@ -101,53 +101,6 @@ data "aws_iam_policy_document" "force_mfa" {
   }
 }
 
-resource "aws_iam_policy" "terraform_cloud" {
-  name        = "TerraformCloud"
-  description = ""
-  policy      = data.aws_iam_policy_document.terraform_cloud.json
-}
-
-data "aws_iam_policy_document" "terraform_cloud" {
-  statement {
-    actions = [
-      "autoscaling:*",
-      "cloudwatch:*",
-      "ec2:*",
-      "elasticloadbalancing:*",
-      "events:*",
-      "iam:*",
-      "lambda:*",
-      "logs:*",
-      "route53:*",
-      "route53domains:*",
-      "ses:*",
-      "sns:*",
-      "sqs:*",
-      "s3:*",
-      "tag:GetResources"
-    ]
-    resources = ["*"]
-  }
-
-  statement {
-    actions   = ["iam:CreateServiceLinkedRole"]
-    resources = ["*"]
-
-    condition {
-      test     = "StringEquals"
-      variable = "iam:AWSServiceName"
-      values = [
-        "autoscaling.amazonaws.com",
-        "ec2scheduled.amazonaws.com",
-        "elasticloadbalancing.amazonaws.com",
-        "spot.amazonaws.com",
-        "spotfleet.amazonaws.com",
-        "transitgateway.amazonaws.com"
-      ]
-    }
-  }
-}
-
 resource "aws_iam_policy" "amazon_s3_access" {
   name        = "AmazonS3Access"
   description = "Provide Access to Amazon S3 buckets."
@@ -292,5 +245,58 @@ data "aws_iam_policy_document" "upload_backup" {
   statement {
     actions   = ["s3:PutObject"]
     resources = ["${local.backups}/*"]
+  }
+}
+
+
+#
+# Policy documents for inline policies
+#
+
+data "aws_iam_policy_document" "ses_sending_access" {
+  statement {
+    actions   = ["ses:SendRawEmail"]
+    resources = ["*"]
+  }
+}
+
+data "aws_iam_policy_document" "terraform_cloud" {
+  statement {
+    actions = [
+      "autoscaling:*",
+      "cloudwatch:*",
+      "ec2:*",
+      "elasticloadbalancing:*",
+      "events:*",
+      "iam:*",
+      "lambda:*",
+      "logs:*",
+      "route53:*",
+      "route53domains:*",
+      "ses:*",
+      "sns:*",
+      "sqs:*",
+      "s3:*",
+      "tag:GetResources"
+    ]
+    resources = ["*"]
+  }
+
+  statement {
+    actions   = ["iam:CreateServiceLinkedRole"]
+    resources = ["*"]
+
+    condition {
+      test     = "StringEquals"
+      variable = "iam:AWSServiceName"
+      values = [
+        "autoscaling.amazonaws.com",
+        "ec2scheduled.amazonaws.com",
+        "elasticloadbalancing.amazonaws.com",
+        "spot.amazonaws.com",
+        "spotfleet.amazonaws.com",
+        "transitgateway.amazonaws.com"
+      ]
+    }
   }
 }
