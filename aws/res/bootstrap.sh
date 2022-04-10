@@ -67,8 +67,7 @@ cat <<'EOF' > /opt/aws/amazon-cloudwatch-agent/etc/config.json
           "used_percent"
         ],
         "resources": [
-          "/",
-          "/opt/nomad/client/csi/node/aws-ebs0/staging/mysql/rw-file-system-single-node-writer"
+          "/"
         ],
         "ignore_file_system_types": [
           "sysfs", "tmpfs", "devtmpfs", "overlay"
