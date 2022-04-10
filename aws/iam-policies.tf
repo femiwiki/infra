@@ -260,6 +260,16 @@ data "aws_iam_policy_document" "ses_sending_access" {
   }
 }
 
+data "aws_iam_policy_document" "github_lambda" {
+  statement {
+    actions = ["lambda:UpdateFunctionCode"]
+    resources = [
+      "arn:aws:lambda:ap-northeast-1:302617221463:function:DiscordNoti",
+      "arn:aws:lambda:us-east-1:302617221463:function:DiscordNoti",
+    ]
+  }
+}
+
 data "aws_iam_policy_document" "terraform_cloud" {
   statement {
     actions = [

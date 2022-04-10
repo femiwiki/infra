@@ -2,6 +2,7 @@ locals {
   programmatic_users = [
     "femiwiki-email",
     "terraform-cloud",
+    "github-lambda",
   ]
 }
 
@@ -19,16 +20,22 @@ resource "aws_iam_user" "programmatic_users" {
   name     = each.key
 }
 
+resource "aws_iam_user_policy" "ses_sending_access" {
+  name   = "AmazonSesSendingAccess"
+  user   = "femiwiki-email"
+  policy = data.aws_iam_policy_document.ses_sending_access.json
+}
+
 resource "aws_iam_user_policy" "terraform_cloud" {
   name   = "TerraformCloud"
   user   = "terraform-cloud"
   policy = data.aws_iam_policy_document.terraform_cloud.json
 }
 
-resource "aws_iam_user_policy" "ses_sending_access" {
-  name   = "AmazonSesSendingAccess"
-  user   = "femiwiki-email"
-  policy = data.aws_iam_policy_document.ses_sending_access.json
+resource "aws_iam_user_policy" "github_lambda" {
+  name   = "githubLambda"
+  user   = "github-lambda"
+  policy = data.aws_iam_policy_document.github_lambda.json
 }
 
 
