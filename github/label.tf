@@ -280,7 +280,7 @@ locals {
       ]
     )
 
-    infra       = concat(
+    infra = concat(
       local.label_suite.base, [
         "operation",
         "monitoring",
