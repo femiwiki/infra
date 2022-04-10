@@ -205,6 +205,12 @@ locals {
       description = ""
       color       = "366998"
     }
+
+    cloud_watch = {
+      name        = "cloud watch"
+      description = ""
+      color       = "230746"
+    }
   }
 
   label_suite = {
@@ -233,6 +239,7 @@ locals {
         # AWS
         "ec2_instance_type",
         "savings_plan",
+        "cloud_watch",
 
         # Softwares-specific
         "docker",
@@ -273,9 +280,17 @@ locals {
       ]
     )
 
-    nomad = concat(local.label_suite.base, ["cd", "disruption", "consul", "restbase"])
+    infra = concat(
+      local.label_suite.base, [
+        "operation",
+        "monitoring",
+        "disruption",
+        "ec2_instance_type",
+        "cloud_watch",
+      ]
+    )
 
-    infra       = concat(local.label_suite.base, ["operation", "monitoring", "disruption", "ec2_instance_type"])
+    nomad       = concat(local.label_suite.base, ["cd", "disruption", "consul", "restbase"])
     ".github"   = concat(local.label_suite.base, ["ci"])
     sns-discord = local.label_suite.base
 
