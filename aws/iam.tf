@@ -27,15 +27,17 @@ resource "aws_iam_user_policy" "ses_sending_access" {
 }
 
 resource "aws_iam_user_policy" "terraform_cloud" {
-  name   = "TerraformCloud"
-  user   = "terraform-cloud"
-  policy = data.aws_iam_policy_document.terraform_cloud.json
+  depends_on = [aws_iam_user.programmatic_users["terraform-cloud"]]
+  name       = "TerraformCloud"
+  user       = "terraform-cloud"
+  policy     = data.aws_iam_policy_document.terraform_cloud.json
 }
 
 resource "aws_iam_user_policy" "github_lambda" {
-  name   = "GithubLambda"
-  user   = "github-lambda"
-  policy = data.aws_iam_policy_document.github_lambda.json
+  depends_on = [aws_iam_user.programmatic_users["github-lambda"]]
+  name       = "GithubLambda"
+  user       = "github-lambda"
+  policy     = data.aws_iam_policy_document.github_lambda.json
 }
 
 
