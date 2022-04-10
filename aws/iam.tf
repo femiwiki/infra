@@ -19,22 +19,16 @@ resource "aws_iam_user" "programmatic_users" {
   name     = each.key
 }
 
-resource "aws_iam_user_policy_attachment" "terraform_cloud" {
-  user       = "terraform-cloud"
-  policy_arn = aws_iam_policy.terraform_cloud.arn
+resource "aws_iam_user_policy" "terraform_cloud" {
+  name   = "TerraformCloud"
+  user   = "terraform-cloud"
+  policy = data.aws_iam_policy_document.terraform_cloud.json
 }
 
 resource "aws_iam_user_policy" "ses_sending_access" {
   name   = "AmazonSesSendingAccess"
   user   = "femiwiki-email"
   policy = data.aws_iam_policy_document.ses_sending_access.json
-}
-
-data "aws_iam_policy_document" "ses_sending_access" {
-  statement {
-    actions   = ["ses:SendRawEmail"]
-    resources = ["*"]
-  }
 }
 
 
