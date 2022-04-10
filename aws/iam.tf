@@ -33,7 +33,7 @@ resource "aws_iam_user_policy" "terraform_cloud" {
 }
 
 resource "aws_iam_user_policy" "github_lambda" {
-  name   = "githubLambda"
+  name   = "GithubLambda"
   user   = "github-lambda"
   policy = data.aws_iam_policy_document.github_lambda.json
 }
