@@ -84,7 +84,7 @@ resource "aws_cloudwatch_metric_alarm" "complaint_rate" {
 resource "aws_cloudwatch_metric_alarm" "femiwiki_main_page" {
   provider = aws.us
 
-  alarm_name  = "Femiwiki_Main_Page-awsroute53-65854b5e-a8cb-40f7-87ba-5d3055f9effd-Low-HealthCheckStatus"
+  alarm_name  = "Femiwiki_Main_Page-awsroute53-Low-HealthCheckStatus"
   namespace   = "AWS/Route53"
   metric_name = "HealthCheckStatus"
   period      = 60
