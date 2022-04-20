@@ -275,6 +275,7 @@ locals {
         "restbase",
         "wikibase",
         "mw1_36",
+        "mw1_38",
 
         "femiwiki_discussion_needed",
       ]
