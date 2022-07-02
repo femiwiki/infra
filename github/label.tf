@@ -286,8 +286,11 @@ locals {
         "operation",
         "monitoring",
         "disruption",
+
+        # Products
         "ec2_instance_type",
         "cloud_watch",
+        "consul",
       ]
     )
 
