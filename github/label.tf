@@ -110,6 +110,18 @@ locals {
       color       = "c5def5"
     }
 
+    mw1_37 = {
+      name        = "mw1.37"
+      description = "MediaWiki 1.37"
+      color       = "c5def5"
+    }
+
+    mw1_38 = {
+      name        = "mw1.38"
+      description = "MediaWiki 1.38"
+      color       = "c5def5"
+    }
+
     docker = {
       name        = "docker"
       description = ""
@@ -193,6 +205,12 @@ locals {
       description = ""
       color       = "366998"
     }
+
+    cloud_watch = {
+      name        = "cloud watch"
+      description = ""
+      color       = "230746"
+    }
   }
 
   label_suite = {
@@ -221,6 +239,7 @@ locals {
         # AWS
         "ec2_instance_type",
         "savings_plan",
+        "cloud_watch",
 
         # Softwares-specific
         "docker",
@@ -230,6 +249,8 @@ locals {
         "dependabot",
         "mw1_35",
         "mw1_36",
+        "mw1_37",
+        "mw1_38",
         "ve",
         "restbase",
         "wikibase",
@@ -254,14 +275,23 @@ locals {
         "restbase",
         "wikibase",
         "mw1_36",
+        "mw1_38",
 
         "femiwiki_discussion_needed",
       ]
     )
 
-    nomad = concat(local.label_suite.base, ["cd", "disruption", "consul", "restbase"])
+    infra = concat(
+      local.label_suite.base, [
+        "operation",
+        "monitoring",
+        "disruption",
+        "ec2_instance_type",
+        "cloud_watch",
+      ]
+    )
 
-    infra       = concat(local.label_suite.base, ["operation", "monitoring", "disruption", "ec2_instance_type"])
+    nomad       = concat(local.label_suite.base, ["cd", "disruption", "consul", "restbase"])
     ".github"   = concat(local.label_suite.base, ["ci"])
     sns-discord = local.label_suite.base
 
@@ -273,19 +303,19 @@ locals {
     legunto           = local.label_suite.base
     maintenance       = local.label_suite.base
     OOUIFemiwikiTheme = local.label_suite.base
-    remote-gadgets    = concat(local.label_suite.base, ["search", "windows"])
+    remote-gadgets    = concat(local.label_suite.base, ["search", "windows", "mw1_38"])
 
     backupbot  = local.label_suite.base
     tweetbot   = local.label_suite.base
     rankingbot = local.label_suite.base
 
-    FemiwikiSkin                = concat(local.label_suite.base_ext, ["femiwiki_discussion_needed", "ve", "search", "mw1_35", "mw1_36"])
-    AchievementBadges           = concat(local.label_suite.base_ext, ["mw1_35", "mw1_36"])
-    DiscordNotifications        = concat(local.label_suite.base_ext, ["mw1_36"])
-    FacetedCategory             = concat(local.label_suite.base_ext, ["wikibase", "mw1_35", "mw1_36"])
-    Sanctions                   = concat(local.label_suite.base_ext, ["ve", "mw1_34", "mw1_35", "mw1_36"])
-    UnifiedExtensionForFemiwiki = concat(local.label_suite.base_ext, ["wikibase", "mw1_35", "mw1_36"])
-    PageViewInfoGA              = concat(local.label_suite.base_ext, [])
+    FemiwikiSkin                = concat(local.label_suite.base_ext, ["femiwiki_discussion_needed", "ve", "search", "mw1_35", "mw1_36", "mw1_37"])
+    AchievementBadges           = concat(local.label_suite.base_ext, ["mw1_35", "mw1_36", "mw1_37"])
+    DiscordRCFeed               = concat(local.label_suite.base_ext, ["mw1_37"])
+    FacetedCategory             = concat(local.label_suite.base_ext, ["wikibase", "mw1_35", "mw1_36", "mw1_37"])
+    Sanctions                   = concat(local.label_suite.base_ext, ["ve", "mw1_34", "mw1_35", "mw1_36", "mw1_37"])
+    UnifiedExtensionForFemiwiki = concat(local.label_suite.base_ext, ["wikibase", "mw1_35", "mw1_36", "mw1_37"])
+    PageViewInfoGA              = concat(local.label_suite.base_ext, ["mw1_37"])
   }
 
   // Flattening nested structures

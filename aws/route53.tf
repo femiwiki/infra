@@ -94,7 +94,9 @@ resource "aws_route53_record" "femiwiki_com_txt" {
   zone_id = aws_route53_zone.femiwiki_com.zone_id
   records = [
     # Google Search Console
-    "google-site-verification=dBkD96hFbYlBf5-GsXjjownJrAGYQvUIPHPK4T9Dwko"
+    "google-site-verification=dBkD96hFbYlBf5-GsXjjownJrAGYQvUIPHPK4T9Dwko",
+    # Yandex Webmaster
+    "yandex-verification: a457abccca159922",
   ]
 }
 

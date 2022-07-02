@@ -5,7 +5,7 @@ set -euo pipefail; IFS=$'\n\t'
 set -x
 
 CNI_VERSION=0.9.1
-NOMAD_VERSION=1.1.3
+NOMAD_VERSION=1.2.5
 
 #
 # ec2-instance-connect 를 제일 먼저 설치
@@ -67,8 +67,7 @@ cat <<'EOF' > /opt/aws/amazon-cloudwatch-agent/etc/config.json
           "used_percent"
         ],
         "resources": [
-          "/",
-          "/opt/nomad/client/csi/node/aws-ebs0/staging/mysql/rw-file-system-single-node-writer"
+          "/"
         ],
         "ignore_file_system_types": [
           "sysfs", "tmpfs", "devtmpfs", "overlay"
