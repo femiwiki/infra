@@ -30,6 +30,7 @@ jobs:
         continue-on-error: true
 
       - name: Init
+        if: github.repository_owner == 'femiwiki'
         id: init
         run: terraform init
 
