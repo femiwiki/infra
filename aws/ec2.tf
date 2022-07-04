@@ -17,7 +17,8 @@ resource "aws_eip" "femiwiki" {
 }
 
 resource "aws_eip" "test_femiwiki" {
-  vpc = true
+  instance = length(aws_instance.test_femiwiki) > 0 ? aws_instance.test_femiwiki[0].id : null
+  vpc      = true
 }
 
 data "aws_availability_zone" "femiwiki" {
@@ -47,7 +48,7 @@ resource "aws_ebs_volume" "persistent_data_caddycerts" {
 }
 
 #
-# Femiwiki main server
+# Femiwiki Main Server
 #
 
 resource "aws_instance" "femiwiki" {
@@ -78,6 +79,54 @@ resource "aws_instance" "femiwiki" {
 
   tags = {
     Name = "Main Server"
+  }
+
+  user_data = file("res/bootstrap.sh")
+
+  lifecycle {
+    ignore_changes = [
+      ami,
+      user_data,
+      # https://github.com/femiwiki/infra/issues/88
+      volume_tags,
+    ]
+  }
+}
+
+
+#
+# Femiwiki Test Server
+#
+
+resource "aws_instance" "test_femiwiki" {
+  count                   = 0
+  ebs_optimized           = true
+  ami                     = data.aws_ami.amazon_linux_2_arm64.image_id
+  instance_type           = "t4g.micro"
+  key_name                = aws_key_pair.femiwiki.key_name
+  monitoring              = false
+  iam_instance_profile    = aws_iam_instance_profile.femiwiki.name
+  disable_api_termination = true
+  availability_zone       = data.aws_availability_zone.femiwiki.name
+
+  vpc_security_group_ids = [
+    aws_default_security_group.default.id,
+    aws_security_group.femiwiki.id,
+    aws_security_group.nomad_cluster.id,
+  ]
+
+  root_block_device {
+    delete_on_termination = true
+    volume_size           = 8
+    volume_type           = "gp3"
+  }
+
+  credit_specification {
+    cpu_credits = "unlimited"
+  }
+
+  tags = {
+    Name = "Test Server"
   }
 
   user_data = file("res/bootstrap.sh")
