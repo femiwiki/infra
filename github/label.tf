@@ -275,6 +275,7 @@ locals {
         "restbase",
         "wikibase",
         "mw1_36",
+        "mw1_38",
 
         "femiwiki_discussion_needed",
       ]
@@ -285,8 +286,11 @@ locals {
         "operation",
         "monitoring",
         "disruption",
+
+        # Products
         "ec2_instance_type",
         "cloud_watch",
+        "consul",
       ]
     )
 
