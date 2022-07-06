@@ -99,7 +99,7 @@ resource "aws_instance" "femiwiki" {
 #
 
 resource "aws_instance" "test_femiwiki" {
-  count                   = 0
+  count                   = 1
   ebs_optimized           = true
   ami                     = data.aws_ami.amazon_linux_2_arm64.image_id
   instance_type           = "t4g.micro"
