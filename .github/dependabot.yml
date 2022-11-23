@@ -3,21 +3,21 @@ updates:
   - package-ecosystem: "terraform"
     directory: "/aws"
     schedule:
-      interval: "daily"
+      interval: monthly
     reviewers:
       - 'femiwiki/reviewer'
 
   - package-ecosystem: "terraform"
     directory: "/github"
     schedule:
-      interval: "daily"
+      interval: monthly
     reviewers:
       - 'femiwiki/reviewer'
 
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "daily"
+      interval: monthly
     reviewers:
       - 'femiwiki/reviewer'
     ignore:
