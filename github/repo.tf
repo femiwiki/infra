@@ -82,19 +82,6 @@ module "docker_restbase" {
   ]
 }
 
-module "docker_mathoid" {
-  source                        = "./modules/github-repository"
-  name                          = "docker-mathoid"
-  description                   = "📝 Dockerized Mathoid"
-  enforce_admins                = local.docker.enforce_admins
-  required_pull_request_reviews = local.docker.required_pull_request_reviews
-  topics = [
-    "docker-image",
-    "mathoid",
-  ]
-}
-
-
 module "rankingbot" {
   source                        = "./modules/github-repository"
   name                          = "rankingbot"
