@@ -24,7 +24,7 @@ variable "topics" {
 variable "delete_branch_on_merge" {
   description = ""
   type        = bool
-  default     = false
+  default     = true
 }
 
 # Branch protection
