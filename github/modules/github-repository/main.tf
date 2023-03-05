@@ -3,6 +3,7 @@ resource "github_repository" "repository" {
   description            = var.description
   homepage_url           = var.homepage_url
   has_issues             = true
+  allow_auto_merge       = true
   delete_branch_on_merge = var.delete_branch_on_merge
   auto_init              = true
   archive_on_destroy     = true
