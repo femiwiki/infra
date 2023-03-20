@@ -27,7 +27,7 @@ resource "aws_cloudwatch_metric_alarm" "femiwiki_volume_idle_time_cloud_watch_al
   comparison_operator = "LessThanThreshold"
   datapoints_to_alarm = 2
   evaluation_periods  = 2
-  alarm_actions       = [aws_sns_topic.cloudwatch_alarms_topic.arn]
+  alarm_actions       = []
 }
 
 resource "aws_cloudwatch_metric_alarm" "femiwiki_disk_used_cloud_watch_alarm" {
