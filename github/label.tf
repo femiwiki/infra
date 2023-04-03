@@ -128,6 +128,18 @@ locals {
       color       = "c5def5"
     }
 
+    mw1_40 = {
+      name        = "mw1.40"
+      description = "MediaWiki 1.40"
+      color       = "c5def5"
+    }
+
+    mw1_41 = {
+      name        = "mw1.41"
+      description = "MediaWiki 1.41"
+      color       = "c5def5"
+    }
+
     docker = {
       name        = "docker"
       description = ""
