@@ -11,7 +11,7 @@ resource "aws_cloudwatch_metric_alarm" "femiwiki_cpu_credit_balance_cloud_watch_
   comparison_operator = "LessThanThreshold"
   datapoints_to_alarm = 1
   evaluation_periods  = 1
-  alarm_actions       = [aws_sns_topic.cloudwatch_alarms_topic.arn]
+  alarm_actions       = []
 }
 
 resource "aws_cloudwatch_metric_alarm" "femiwiki_volume_idle_time_cloud_watch_alarm" {
