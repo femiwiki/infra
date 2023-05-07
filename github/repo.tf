@@ -179,3 +179,14 @@ module "ooui_femiwiki_theme" {
     "theme",
   ]
 }
+
+module "quibble_action" {
+  source      = "./modules/github-repository"
+  name        = "quibble-action"
+  description = "⏯️ Quibble is for setting up a MediaWiki instance and running various tests against it."
+  topics = [
+    "quibble",
+    "mediawiki",
+    "github-actions",
+  ]
+}
