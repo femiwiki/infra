@@ -97,6 +97,8 @@ resource "aws_route53_record" "femiwiki_com_txt" {
     "google-site-verification=dBkD96hFbYlBf5-GsXjjownJrAGYQvUIPHPK4T9Dwko",
     # Yandex Webmaster
     "yandex-verification: a457abccca159922",
+    # SPF (ref femiwiki/femiwiki#172)
+    "v=spf1 include:amazonses.com include:_spf.google.com include:mail.stibee.com ~all",
   ]
 }
 
@@ -113,6 +115,22 @@ resource "aws_route53_record" "verifybing_femiwiki_com" {
   type    = "CNAME"
   records = ["verify.bing.com"]
   ttl     = 900
+  zone_id = aws_route53_zone.femiwiki_com.zone_id
+}
+
+resource "aws_route53_record" "stb_dkim_femiwiki_com" {
+  name    = "stb._domainkey.femiwiki.com"
+  type    = "CNAME"
+  records = ["dkim.stibee.com"]
+  ttl     = 3600
+  zone_id = aws_route53_zone.femiwiki_com.zone_id
+}
+
+resource "aws_route53_record" "google_dkim_femiwiki_com" {
+  name    = "google._domainkey.femiwiki.com"
+  type    = "TXT"
+  records = ["v=DKIM1; k=rsa; p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAqkwdgQSLbba/NEub8/uugKIyF/j/gv9wT+U4vmO33hKPIZ750BxoEf1jX36zbsYCkD1dXRj7KxNQdAXzGBf30KFlSthy+qeWBby3ISea//Z/dMgEUYjGkVOTqITJVRxj7uBROpKZo2Z8pNRlRZWVIIarYLNJv8UprJRXrKclGg5vrZh7R0/OK3k8MkaIX0zEIDhtr0lpbp16hUZynij/j+hES2N+IKYuYMp7Nl9RRQFgk52OKxZMTUdLkynSiWtpyvgqrWez4d6imWodsxm5xqL9ax3hleRv7MWj+xy9GBZ6gXgt9EC3MTTLzLOVYS+FPLfA6DI+Zd2DGA2Bn/fg1QIDAQAB"]
+  ttl     = 3600
   zone_id = aws_route53_zone.femiwiki_com.zone_id
 }
 
