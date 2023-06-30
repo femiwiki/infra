@@ -137,7 +137,7 @@ resource "aws_route53_record" "google_dkim_femiwiki_com" {
 resource "aws_route53_record" "dmarc_femiwiki_com" {
   name    = "_dmarc.femiwiki.com"
   type    = "TXT"
-  records = "v=DMARC1; p=none; pct=100; rua=mailto:re+ftr8buqkh9i@dmarc.postmarkapp.com; sp=none; aspf=r;"
+  records = ["v=DMARC1; p=none; pct=100; rua=mailto:re+ftr8buqkh9i@dmarc.postmarkapp.com; sp=none; aspf=r;"]
   ttl     = 3600
   zone_id = aws_route53_zone.femiwiki_com.zone_id
 }
