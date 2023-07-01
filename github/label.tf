@@ -270,6 +270,7 @@ locals {
         "mw1_37",
         "mw1_38",
         "mw1_39",
+        "mw1_40",
         "ve",
         "restbase",
         "wikibase",
