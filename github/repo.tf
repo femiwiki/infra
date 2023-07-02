@@ -2,21 +2,14 @@ locals {
   default_repo = {
     # branch_protection
     enforce_admins = false,
-    required_pull_request_reviews = [{
-      dismiss_stale_reviews           = false,
-      require_code_owner_reviews      = false,
-      required_approving_review_count = 1,
-    }]
+    # temporarily disable requiring reviews due to too few development members.
+    required_pull_request_reviews = [],
   }
   with_cd = merge(local.default_repo, {
     enforce_admins = true,
-    # temporarily disable requiring reviews due to too few development members.
-    required_pull_request_reviews = [],
   })
   docker = merge(local.default_repo, {
     enforce_admins = true,
-    # temporarily disabled due to too few development members.
-    required_pull_request_reviews = [],
   })
   bot = local.with_cd
 }
