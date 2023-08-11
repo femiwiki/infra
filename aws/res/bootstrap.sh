@@ -143,6 +143,22 @@ tree_view=1
 EOF
 
 #
+# Install Vector agent
+# Reference: https://vector.dev/docs/setup/installation/package-managers/yum/
+#
+curl -1sLf 'https://repositories.timber.io/public/vector/cfg/setup/bash.rpm.sh' \
+  | sudo -E bash
+yum install -y vector
+rm /etc/vector/vector.toml
+tee /etc/vector/vector.toml <<'EOF' >/dev/null
+VECTOR_TOML
+EOF
+
+usermod -a -G docker vector
+systemctl enable vector
+systemctl start vector
+
+#
 # Clone Femiwiki Nomad configurations and specifications repository
 #
 sudo -u ec2-user git clone https://github.com/femiwiki/nomad.git /home/ec2-user/nomad/
