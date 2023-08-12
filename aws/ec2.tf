@@ -1,8 +1,3 @@
-variable "openobserve_password" {
-  type      = string
-  sensitive = true
-}
-
 # TODO: 없앨 예정
 # https://github.com/femiwiki/femiwiki/issues/132
 resource "aws_key_pair" "femiwiki" {
@@ -134,11 +129,7 @@ resource "aws_instance" "test_femiwiki" {
     Name = "Test Server"
   }
 
-  user_data = replace(
-    file("res/bootstrap.sh"),
-    "VECTOR_TOML",
-    replace(file("res/vector.toml"), "OPENOBSERVE_PASSWORD", var.openobserve_password)
-  )
+  user_data = file("res/bootstrap.sh")
 
   lifecycle {
     ignore_changes = [
