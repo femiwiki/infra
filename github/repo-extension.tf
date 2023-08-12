@@ -8,7 +8,6 @@ locals {
   extension_collaborator = true
 
   skin = merge(local.default_repo, {
-    enforce_admins = true,
     # temporarily disable requiring reviews due to too few development members.
     required_pull_request_reviews = [],
     required_status_checks_contexts = [[
@@ -26,7 +25,6 @@ locals {
 
   # local.default_repo is defined in repo.tf
   extension = merge(local.default_repo, {
-    enforce_admins = true,
     # temporarily disable requiring reviews due to too few development members.
     required_pull_request_reviews = [],
     required_status_checks_contexts = [[
