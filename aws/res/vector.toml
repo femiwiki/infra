@@ -6,18 +6,21 @@ enabled = true
 [sources.vector_logs]
 type = "internal_logs"
 
-[sinks.openobserve_vector_logs]
-type = "http"
+[transforms.vector_log_parser]
 inputs = ["vector_logs"]
-uri = "https://api.openobserve.ai/api/femiwiki_2lbGLNGsIgcwF9Y/vector_logs/_json"
-method = "post"
-auth.strategy = "basic"
-auth.user = "admin@femiwiki.com"
-auth.password = "OPENOBSERVE_PASSWORD"
-compression = "gzip"
-encoding.codec = "json"
-encoding.timestamp_format = "rfc3339"
-healthcheck.enabled = false
+type = "remap"
+source = '''
+structured = {}
+
+if is_string(.message) {
+  structured.msg = .message
+}
+if is_string(.metadata.level) {
+  structured.level = downcase!(.metadata.level)
+}
+
+.message = structured
+'''
 
 [sources.docker_logs]
 type = "docker_logs"
@@ -26,6 +29,7 @@ type = "docker_logs"
 inputs = ["docker_logs"]
 type = "remap"
 source = '''
+del(.container_created_at)
 if is_string(.image) && contains(string!(.image), ":") {
   .image_repository = split(string!(.image), r':')[0]
 }
@@ -37,10 +41,13 @@ if is_json(string!(.message)) {
 }
 '''
 
-[sinks.openobserve_docker_logs]
+[sinks.openobserve]
 type = "http"
-inputs = ["docker_json_parser",]
-uri = "https://api.openobserve.ai/api/femiwiki_2lbGLNGsIgcwF9Y/docker_logs/_json"
+inputs = [
+  "vector_log_parser",
+  "docker_json_parser",
+]
+uri = "https://api.openobserve.ai/api/femiwiki_2lbGLNGsIgcwF9Y/default/_json"
 method = "post"
 auth.strategy = "basic"
 auth.user = "admin@femiwiki.com"
