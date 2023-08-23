@@ -94,8 +94,8 @@ resource "aws_cloudwatch_metric_alarm" "femiwiki_main_page" {
   }
   threshold           = 1
   comparison_operator = "LessThanThreshold"
-  datapoints_to_alarm = 1
-  evaluation_periods  = 1
+  datapoints_to_alarm = 5
+  evaluation_periods  = 5
   alarm_actions       = [aws_sns_topic.cloudwatch_alarms_topic_us.arn]
   ok_actions          = [aws_sns_topic.cloudwatch_alarms_topic_us.arn]
 }
