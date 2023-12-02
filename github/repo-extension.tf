@@ -110,19 +110,6 @@ module "achievement_badges" {
   collaborator                    = local.extension.collaborator
 }
 
-module "page_view_info_ga" {
-  source                          = "./modules/github-repository"
-  name                            = "PageViewInfoGA"
-  description                     = "📈 Implements PageViewService for GoogleAnalytics"
-  homepage_url                    = "https://www.mediawiki.org/wiki/Special:MyLanguage/Extension:PageViewInfoGA"
-  topics                          = concat(local.extension.topics, ["google-analytics"])
-  enforce_admins                  = local.extension.enforce_admins
-  required_pull_request_reviews   = local.extension.required_pull_request_reviews
-  required_status_checks_contexts = local.extension.required_status_checks_contexts
-  patterns                        = local.extension.patterns
-  collaborator                    = local.extension.collaborator
-}
-
 module "discord_rc_feed" {
   source                          = "./modules/github-repository"
   name                            = "DiscordRCFeed"
