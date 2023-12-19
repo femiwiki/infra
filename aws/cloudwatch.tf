@@ -44,9 +44,10 @@ resource "aws_cloudwatch_metric_alarm" "femiwiki_disk_used_cloud_watch_alarm" {
   }
   threshold           = 90
   comparison_operator = "GreaterThanThreshold"
-  datapoints_to_alarm = 1
-  evaluation_periods  = 1
+  datapoints_to_alarm = 2
+  evaluation_periods  = 2
   alarm_actions       = [aws_sns_topic.cloudwatch_alarms_topic.arn]
+  ok_actions          = [aws_sns_topic.cloudwatch_alarms_topic.arn]
 }
 
 resource "aws_cloudwatch_metric_alarm" "bounce_rate" {
