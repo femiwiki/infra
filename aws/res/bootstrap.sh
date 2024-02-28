@@ -4,8 +4,8 @@ set -euo pipefail; IFS=$'\n\t'
 # Enable verbose mode
 set -x
 
-CNI_VERSION=0.9.1
-NOMAD_VERSION=1.3.0
+CNI_VERSION=1.4.0
+NOMAD_VERSION=1.7.5
 
 #
 # ec2-instance-connect 를 제일 먼저 설치
