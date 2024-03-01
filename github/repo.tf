@@ -183,3 +183,14 @@ module "quibble_action" {
     "github-actions",
   ]
 }
+
+module "lambda" {
+  source      = "./modules/github-repository"
+  name        = "lambda"
+  description = "A simple lambda function which subscribes AWS SNS to ping Femiwiki's Discord webhook."
+  topics = [
+    "lambda",
+    "aws",
+    "rust",
+  ]
+}
