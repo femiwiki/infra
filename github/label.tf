@@ -326,7 +326,7 @@ locals {
     caddy-mwcache     = local.label_suite.base
     legunto           = local.label_suite.base
     maintenance       = local.label_suite.base
-    OOUIFemiwikiTheme = local.label_suite.base
+    OOUIFemiwikiTheme = local.label_suite.base_ext
     remote-gadgets    = concat(local.label_suite.base, ["search", "windows", "mw1_38", "mw1_39", "mw1_40", "mw1_41"])
 
     backupbot  = local.label_suite.base
