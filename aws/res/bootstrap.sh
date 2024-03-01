@@ -26,7 +26,6 @@ yum install -y \
   htop \
   tmux \
   git \
-  yum-cron \
   amazon-cloudwatch-agent \
   jq \
   unzip \
@@ -36,24 +35,16 @@ yum install -y \
 
 #
 # Install atop and sysstat
-# Reference: https://aws.amazon.com/premiumsupport/knowledge-center/ec2-linux-configure-monitoring-tools/#Amazon_Linux_2
+# Reference: https://repost.aws/knowledge-center/ec2-linux-configure-monitoring-tools
 #
 amazon-linux-extras install -y epel
-sudo yum -y install sysstat atop --enablerepo=epel
-sudo sed -i 's/^LOGINTERVAL=600.*/LOGINTERVAL=60/' /etc/sysconfig/atop
-sudo sed -i -e 's|*/10|*/1|' -e 's|every 10 minutes|every 1 minute|' /etc/cron.d/sysstat
-sudo systemctl enable atop.service crond.service sysstat.service
-sudo systemctl restart atop.service crond.service sysstat.service
-
-#
-# yum-cron 설치
-#
-sed -i "s/update_cmd = default/update_cmd = minimal-security/" /etc/yum/yum-cron-hourly.conf
-sed -i "s/update_cmd = default/update_cmd = minimal-security/" /etc/yum/yum-cron.conf
-sed -i "s/apply_updates = no/apply_updates = yes/" /etc/yum/yum-cron.conf
-sed -i "s~^exec /usr/sbin/yum-cron~exec /usr/bin/nice -n 19 /usr/sbin/yum-cron~" /etc/cron.hourly/0yum-hourly.cron
-sed -i "s~^exec /usr/sbin/yum-cron~exec /usr/bin/nice -n 19 /usr/sbin/yum-cron~" /etc/cron.daily/0yum-daily.cron
-systemctl enable yum-cron
+yum -y install sysstat atop
+sed -i 's/^LOGINTERVAL=600.*/LOGINTERVAL=60/' /etc/sysconfig/atop
+mkdir -v /etc/systemd/system/sysstat-collect.timer.d/
+bash -c "sed -e 's|every 10 minutes|every 1 minute|g' -e '/^OnCalendar=/ s|/10$|/1|' /usr/lib/systemd/system/sysstat-collect.timer > /etc/systemd/system/sysstat-collect.timer.d/override.conf"
+sed -i 's|^SADC_OPTIONS=.*|SADC_OPTIONS=" -S XALL"|' /etc/sysconfig/sysstat
+sudo systemctl enable atop.service sysstat-collect.timer sysstat.service
+sudo systemctl restart atop.service sysstat-collect.timer sysstat.service
 
 #
 # cloudwatch-agent 실행
