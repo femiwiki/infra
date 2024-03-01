@@ -16,9 +16,8 @@ yum install -y ec2-instance-connect
 # 기본 유틸리티들 설치
 #
 yum autoremove -y postfix
-# Disabled temporarily, See https://github.com/femiwiki/femiwiki/issues/247
-# curl -Lo /etc/yum.repos.d/carlwgeorge-ripgrep-epel-7.repo \
-#   'https://copr.fedorainfracloud.org/coprs/carlwgeorge/ripgrep/repo/epel-7/carlwgeorge-ripgrep-epel-7.repo'
+# - ripgrep: Disabled temporarily (https://github.com/femiwiki/femiwiki/issues/247)
+# - dmidecode: required by Nomad (https://github.com/hashicorp/nomad/issues/19343#issuecomment-1845538511)
 yum update -y
 yum install -y \
   bash-completion \
@@ -29,7 +28,8 @@ yum install -y \
   amazon-cloudwatch-agent \
   jq \
   unzip \
-  nc
+  nc \
+  dmidecode
   # Disabled temporarily, See https://github.com/femiwiki/femiwiki/issues/247
   # ripgrep
 
