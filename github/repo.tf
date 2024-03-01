@@ -194,3 +194,13 @@ module "lambda" {
     "rust",
   ]
 }
+
+module "terraform-provider-mediawiki" {
+  source      = "./modules/github-repository"
+  name        = "terraform-provider-mediawiki"
+  description = "💜"
+  topics = [
+    "mediawiki",
+    "terraform-provider",
+  ]
+}
