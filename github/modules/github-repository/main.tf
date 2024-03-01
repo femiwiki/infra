@@ -9,6 +9,7 @@ resource "github_repository" "repository" {
   archive_on_destroy     = true
   topics                 = var.topics
   vulnerability_alerts   = true
+  has_discussions        = false
 }
 
 resource "github_branch" "main_branch" {
