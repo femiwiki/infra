@@ -26,7 +26,6 @@ resource "github_branch_protection" "branch_protection" {
   repository_id     = github_repository.repository.node_id
   pattern           = var.patterns[count.index]
   enforce_admins    = var.enforce_admins
-  push_restrictions = []
 
   dynamic "required_status_checks" {
     for_each = var.required_status_checks_contexts
