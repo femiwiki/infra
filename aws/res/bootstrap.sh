@@ -37,7 +37,6 @@ yum install -y \
 # Install atop and sysstat
 # Reference: https://repost.aws/knowledge-center/ec2-linux-configure-monitoring-tools
 #
-amazon-linux-extras install -y epel
 yum -y install sysstat atop
 sed -i 's/^LOGINTERVAL=600.*/LOGINTERVAL=60/' /etc/sysconfig/atop
 mkdir -v /etc/systemd/system/sysstat-collect.timer.d/
@@ -86,7 +85,7 @@ EOF
 # 도커 설치
 # Reference: https://docs.aws.amazon.com/AmazonECS/latest/developerguide/docker-basics.html#install_docker
 #
-amazon-linux-extras install -y docker
+yum install -y docker
 systemctl enable docker
 systemctl start docker
 usermod -a -G docker ec2-user
@@ -107,7 +106,7 @@ esac
 curl -L -o cni-plugins.tgz "https://github.com/containernetworking/plugins/releases/download/v${CNI_VERSION}/cni-plugins-linux-${PROCESSOR}-v${CNI_VERSION}.tgz"
 mkdir -p /opt/cni/bin
 tar -C /opt/cni/bin -xzf cni-plugins.tgz
-rm cni-plugins.tgz
+rm -f cni-plugins.tgz
 
 #
 # Nomad 설치
@@ -115,7 +114,7 @@ rm cni-plugins.tgz
 curl "https://releases.hashicorp.com/nomad/${NOMAD_VERSION}/nomad_${NOMAD_VERSION}_linux_${PROCESSOR}.zip" \
     -Lo /home/ec2-user/nomad.zip
 unzip /home/ec2-user/nomad.zip -d /usr/local/bin/
-rm /home/ec2-user/nomad.zip
+rm -f /home/ec2-user/nomad.zip
 nomad -autocomplete-install
 complete -C /usr/local/bin/nomad nomad
 mkdir -p /opt/nomad /etc/nomad.d
