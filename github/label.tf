@@ -80,6 +80,12 @@ locals {
       color       = "d4c5f9"
     }
 
+    help_wanted = {
+      name        = "help wanted"
+      description = "Extra attention is needed"
+      color       = "008672"
+    }
+
     invalid = {
       name        = "invalid"
       description = "This doesn't seem right"
