@@ -237,14 +237,13 @@ locals {
     }
   }
 
-  label_suite = {
-    base     = ["bug", "enhancement", "invalid", "wontfix", "patch_welcome", "upstreamed"]
-    base_ext = ["bug", "enhancement", "invalid", "wontfix", "patch_welcome", "upstreamed", "deprecation"]
-  }
+  base_label_suite = ["bug", "enhancement", "invalid", "wontfix", "help_wanted", "patch_welcome", "upstreamed"]
+  ext_label_suite  = concat(local.base_label_suite, ["deprecation"])
+
 
   repository_label_map = {
     femiwiki = concat(
-      local.label_suite.base,
+      local.base_label_suite,
       [
         # general
         "epic",
@@ -287,7 +286,7 @@ locals {
     )
 
     docker-mediawiki = concat(
-      local.label_suite.base,
+      local.base_label_suite,
       [
         "note",
         "security",
@@ -309,7 +308,7 @@ locals {
     )
 
     infra = concat(
-      local.label_suite.base, [
+      local.base_label_suite, [
         "operation",
         "monitoring",
         "disruption",
@@ -321,29 +320,29 @@ locals {
       ]
     )
 
-    nomad       = concat(local.label_suite.base, ["cd", "disruption", "consul", "restbase"])
-    ".github"   = concat(local.label_suite.base, ["ci"])
-    sns-discord = local.label_suite.base
+    nomad       = concat(local.base_label_suite, ["cd", "disruption", "consul", "restbase"])
+    ".github"   = concat(local.base_label_suite, ["ci"])
+    sns-discord = local.base_label_suite
 
-    docker-parsoid  = local.label_suite.base
-    docker-restbase = concat(local.label_suite.base, ["restbase"])
-    docker-mathoid  = local.label_suite.base
+    docker-parsoid  = local.base_label_suite
+    docker-restbase = concat(local.base_label_suite, ["restbase"])
+    docker-mathoid  = local.base_label_suite
 
-    caddy-mwcache     = local.label_suite.base
-    legunto           = local.label_suite.base
-    maintenance       = local.label_suite.base
-    OOUIFemiwikiTheme = local.label_suite.base_ext
-    remote-gadgets    = concat(local.label_suite.base, ["search", "windows", "mw1_38", "mw1_39", "mw1_40", "mw1_41"])
+    caddy-mwcache     = local.base_label_suite
+    legunto           = local.base_label_suite
+    maintenance       = local.base_label_suite
+    OOUIFemiwikiTheme = local.ext_label_suite
+    remote-gadgets    = concat(local.base_label_suite, ["search", "windows", "mw1_38", "mw1_39", "mw1_40", "mw1_41"])
 
-    backupbot  = local.label_suite.base
-    tweetbot   = local.label_suite.base
-    rankingbot = local.label_suite.base
+    backupbot  = local.base_label_suite
+    tweetbot   = local.base_label_suite
+    rankingbot = local.base_label_suite
 
-    FemiwikiSkin                = concat(local.label_suite.base_ext, ["femiwiki_discussion_needed", "ve", "search", "mw1_35", "mw1_36", "mw1_37", "mw1_39"])
-    AchievementBadges           = concat(local.label_suite.base_ext, ["mw1_35", "mw1_36", "mw1_37", "mw1_39"])
-    FacetedCategory             = concat(local.label_suite.base_ext, ["wikibase", "mw1_35", "mw1_36", "mw1_37", "mw1_39"])
-    Sanctions                   = concat(local.label_suite.base_ext, ["ve", "mw1_34", "mw1_35", "mw1_36", "mw1_37", "mw1_39"])
-    UnifiedExtensionForFemiwiki = concat(local.label_suite.base_ext, ["wikibase", "mw1_35", "mw1_36", "mw1_37", "mw1_39"])
+    FemiwikiSkin                = concat(local.ext_label_suite, ["femiwiki_discussion_needed", "ve", "search", "mw1_35", "mw1_36", "mw1_37", "mw1_39"])
+    AchievementBadges           = concat(local.ext_label_suite, ["mw1_35", "mw1_36", "mw1_37", "mw1_39"])
+    FacetedCategory             = concat(local.ext_label_suite, ["wikibase", "mw1_35", "mw1_36", "mw1_37", "mw1_39"])
+    Sanctions                   = concat(local.ext_label_suite, ["ve", "mw1_34", "mw1_35", "mw1_36", "mw1_37", "mw1_39"])
+    UnifiedExtensionForFemiwiki = concat(local.ext_label_suite, ["wikibase", "mw1_35", "mw1_36", "mw1_37", "mw1_39"])
   }
 
   // Flattening nested structures
