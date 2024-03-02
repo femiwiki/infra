@@ -8,10 +8,58 @@ locals {
       color       = "ee0701"
     }
 
+    cd = {
+      name        = "cd"
+      description = "Continuous Deployment"
+      color       = "c5def5"
+    }
+
+    ci = {
+      name        = "ci"
+      description = "Continuous Integration"
+      color       = "c5def5"
+    }
+
+    cloud_watch = {
+      name        = "cloud watch"
+      description = ""
+      color       = "230746"
+    }
+
+    consul = {
+      name        = "consul"
+      description = "HashiCorp Consul"
+      color       = "ca2171"
+    }
+
+    dependabot = {
+      name        = "dependabot"
+      description = "Dependabot"
+      color       = "3b67d6"
+    }
+
+    deprecation = {
+      name        = "deprecation"
+      description = ""
+      color       = "ee0701"
+    }
+
     disruption = {
       name        = "service disruption"
       description = ""
       color       = "ee0701"
+    }
+
+    docker = {
+      name        = "docker"
+      description = ""
+      color       = "0db7ed"
+    }
+
+    ec2_instance_type = {
+      name        = "ec2 instance types"
+      description = ""
+      color       = "f9d0c4"
     }
 
     enhancement = {
@@ -38,58 +86,16 @@ locals {
       color       = "e4e669"
     }
 
-    wontfix = {
-      name        = "wontfix"
-      description = "This will not be worked on"
-      color       = "ffffff"
-    }
-
-    upstreamed = {
-      name        = "upstreamed"
+    monetary = {
+      name        = "monetary"
       description = ""
-      color       = "ffffff"
+      color       = "85bb65"
     }
 
-    note = {
-      name        = "글쓰기"
-      description = "공지사항이나 블로그 글로 문서화해야하는 이슈"
-      color       = "0075ca"
-    }
-
-    operation = {
-      name        = "operation"
-      description = "점검, 인프라 작업"
-      color       = "85d659"
-    }
-
-    patch_welcome = {
-      name        = "patch welcome"
+    monitoring = {
+      name        = "monitoring"
       description = ""
-      color       = "7057ff"
-    }
-
-    ec2_instance_type = {
-      name        = "ec2 instance types"
-      description = ""
-      color       = "f9d0c4"
-    }
-
-    savings_plan = {
-      name        = "savings plan"
-      description = ""
-      color       = "f19643"
-    }
-
-    ci = {
-      name        = "ci"
-      description = "Continuous Integration"
-      color       = "c5def5"
-    }
-
-    cd = {
-      name        = "cd"
-      description = "Continuous Deployment"
-      color       = "c5def5"
+      color       = "ffa500"
     }
 
     mw1_34 = {
@@ -146,70 +152,22 @@ locals {
       color       = "c5def5"
     }
 
-    docker = {
-      name        = "docker"
+    note = {
+      name        = "글쓰기"
+      description = "공지사항이나 블로그 글로 문서화해야하는 이슈"
+      color       = "0075ca"
+    }
+
+    operation = {
+      name        = "operation"
+      description = "점검, 인프라 작업"
+      color       = "85d659"
+    }
+
+    patch_welcome = {
+      name        = "patch welcome"
       description = ""
-      color       = "0db7ed"
-    }
-
-    consul = {
-      name        = "consul"
-      description = "HashiCorp Consul"
-      color       = "ca2171"
-    }
-
-    yum = {
-      name        = "yum"
-      description = ""
-      color       = "bfd4f2"
-    }
-
-    windows = {
-      name        = "windows"
-      description = "Microsoft Windows"
-      color       = "00a4ef"
-    }
-
-    dependabot = {
-      name        = "dependabot"
-      description = "Dependabot"
-      color       = "3b67d6"
-    }
-
-    monetary = {
-      name        = "monetary"
-      description = ""
-      color       = "85bb65"
-    }
-
-    security = {
-      name        = "security"
-      description = ""
-      color       = "005da9"
-    }
-
-    search = {
-      name        = "search"
-      description = ""
-      color       = "bada55"
-    }
-
-    deprecation = {
-      name        = "deprecation"
-      description = ""
-      color       = "ee0701"
-    }
-
-    ve = {
-      name        = "visual editor"
-      description = "Visual Editor"
-      color       = "5bace1"
-    }
-
-    restbase = {
-      name        = "restbase"
-      description = ""
-      color       = "f1c40e"
+      color       = "7057ff"
     }
 
     performance = {
@@ -218,10 +176,40 @@ locals {
       color       = "ffa500"
     }
 
-    monitoring = {
-      name        = "monitoring"
+    restbase = {
+      name        = "restbase"
       description = ""
-      color       = "ffa500"
+      color       = "f1c40e"
+    }
+
+    savings_plan = {
+      name        = "savings plan"
+      description = ""
+      color       = "f19643"
+    }
+
+    search = {
+      name        = "search"
+      description = ""
+      color       = "bada55"
+    }
+
+    security = {
+      name        = "security"
+      description = ""
+      color       = "005da9"
+    }
+
+    upstreamed = {
+      name        = "upstreamed"
+      description = ""
+      color       = "ffffff"
+    }
+
+    ve = {
+      name        = "visual editor"
+      description = "Visual Editor"
+      color       = "5bace1"
     }
 
     wikibase = {
@@ -230,10 +218,22 @@ locals {
       color       = "366998"
     }
 
-    cloud_watch = {
-      name        = "cloud watch"
+    windows = {
+      name        = "windows"
+      description = "Microsoft Windows"
+      color       = "00a4ef"
+    }
+
+    wontfix = {
+      name        = "wontfix"
+      description = "This will not be worked on"
+      color       = "ffffff"
+    }
+
+    yum = {
+      name        = "yum"
       description = ""
-      color       = "230746"
+      color       = "bfd4f2"
     }
   }
 
