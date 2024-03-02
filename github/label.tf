@@ -140,6 +140,12 @@ locals {
       color       = "c5def5"
     }
 
+    mw1_42 = {
+      name        = "mw1.42"
+      description = "MediaWiki 1.42"
+      color       = "c5def5"
+    }
+
     docker = {
       name        = "docker"
       description = ""
