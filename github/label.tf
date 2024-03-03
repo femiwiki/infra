@@ -330,9 +330,7 @@ locals {
     ".github"   = concat(local.base_label_suite, ["ci"])
     sns-discord = local.base_label_suite
 
-    docker-parsoid  = local.base_label_suite
     docker-restbase = concat(local.base_label_suite, ["restbase"])
-    docker-mathoid  = local.base_label_suite
 
     caddy-mwcache     = local.base_label_suite
     legunto           = local.base_label_suite
