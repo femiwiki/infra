@@ -282,6 +282,7 @@ locals {
         "mw1_38",
         "mw1_39",
         "mw1_40",
+        "mw1_42",
         "ve",
         "restbase",
         "wikibase",
@@ -308,6 +309,7 @@ locals {
         "mw1_36",
         "mw1_38",
         "mw1_39",
+        "mw1_42",
 
         "femiwiki_discussion_needed",
       ]
