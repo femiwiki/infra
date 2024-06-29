@@ -350,7 +350,7 @@ locals {
     tweetbot   = local.base_label_suite
     rankingbot = local.base_label_suite
 
-    FemiwikiSkin                = concat(local.ext_label_suite, ["femiwiki_discussion_needed", "ve", "search", "mw1_35", "mw1_36", "mw1_37", "mw1_39", "mw1_42", "mw_43"])
+    FemiwikiSkin                = concat(local.ext_label_suite, ["femiwiki_discussion_needed", "ve", "search", "mw1_35", "mw1_36", "mw1_37", "mw1_39", "mw1_42", "mw1_43"])
     AchievementBadges           = concat(local.ext_label_suite, ["mw1_35", "mw1_36", "mw1_37", "mw1_39"])
     FacetedCategory             = concat(local.ext_label_suite, ["wikibase", "mw1_35", "mw1_36", "mw1_37", "mw1_39"])
     Sanctions                   = concat(local.ext_label_suite, ["ve", "mw1_34", "mw1_35", "mw1_36", "mw1_37", "mw1_39"])
