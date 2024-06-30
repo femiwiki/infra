@@ -338,8 +338,6 @@ locals {
     ".github"   = concat(local.base_label_suite, ["ci"])
     sns-discord = local.base_label_suite
 
-    docker-restbase = concat(local.base_label_suite, ["restbase"])
-
     caddy-mwcache     = local.base_label_suite
     legunto           = local.base_label_suite
     maintenance       = local.base_label_suite
@@ -351,9 +349,6 @@ locals {
     rankingbot = local.base_label_suite
 
     FemiwikiSkin                = concat(local.ext_label_suite, ["femiwiki_discussion_needed", "ve", "search", "mw1_35", "mw1_36", "mw1_37", "mw1_39", "mw1_42", "mw1_43"])
-    AchievementBadges           = concat(local.ext_label_suite, ["mw1_35", "mw1_36", "mw1_37", "mw1_39"])
-    FacetedCategory             = concat(local.ext_label_suite, ["wikibase", "mw1_35", "mw1_36", "mw1_37", "mw1_39"])
-    Sanctions                   = concat(local.ext_label_suite, ["ve", "mw1_34", "mw1_35", "mw1_36", "mw1_37", "mw1_39"])
     UnifiedExtensionForFemiwiki = concat(local.ext_label_suite, ["wikibase", "mw1_35", "mw1_36", "mw1_37", "mw1_39", "mw1_42"])
   }
 

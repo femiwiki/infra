@@ -4,6 +4,7 @@
 provider "registry.terraform.io/hashicorp/github" {
   version = "6.0.0"
   hashes = [
+    "h1:JN9FDT93mtIFE9oTZFJN8iBBkYM4VUBN35H9ejI0pKA=",
     "h1:jLOsi4Qu5g5D2/n/xg/CljAKCRH9F9paiWRZtyzWR+k=",
     "zh:0d12fde69c54d358af3a45cf1610b711e1cd6a5d0be8d71c24729f28faa4a67d",
     "zh:501fd9a181bbb1f3e70c3a54463bc16974569dddd1311fdd682c3b893ebc8455",
@@ -26,6 +27,7 @@ provider "registry.terraform.io/integrations/github" {
   version     = "6.2.1"
   constraints = "~> 6.0"
   hashes = [
+    "h1:TxhB0pHZ4QD6lGMws4wVmS5JHtNyuQ5m6WrvN4qtHa8=",
     "h1:ip7024qn1ewDqlNucxh07DHvuhSLZSqtTGewxNLeYYU=",
     "zh:172aa5141c525174f38504a0d2e69d0d16c0a0b941191b7170fe6ae4d7282e30",
     "zh:1a098b731fa658c808b591d030cc17cc7dfca1bf001c3c32e596f8c1bf980e9f",
