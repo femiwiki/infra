@@ -5,7 +5,7 @@ set -euo pipefail; IFS=$'\n\t'
 set -x
 
 CNI_VERSION=1.4.0
-NOMAD_VERSION=1.7.5
+NOMAD_VERSION=1.8.1
 
 #
 # ec2-instance-connect 를 제일 먼저 설치
