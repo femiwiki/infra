@@ -6,6 +6,7 @@ set -x
 
 CNI_VERSION=1.4.0
 NOMAD_VERSION=1.8.1
+CONSUL_VERSION=1.19.1
 
 #
 # ec2-instance-connect 를 제일 먼저 설치
@@ -29,9 +30,10 @@ yum install -y \
   jq \
   unzip \
   nc \
-  dmidecode
-  # Disabled temporarily, See https://github.com/femiwiki/femiwiki/issues/247
-  # ripgrep
+  dmidecode \
+  dnsmasq \
+  bind-utils \
+;
 
 #
 # Install atop and sysstat
@@ -120,6 +122,41 @@ complete -C /usr/local/bin/nomad nomad
 mkdir -p /opt/nomad /etc/nomad.d
 
 #
+# Consul 설치
+# Reference:
+#   - https://github.com/hashicorp/terraform-aws-consul/blob/master/modules/install-consul/install-consul
+#
+curl "https://releases.hashicorp.com/consul/${CONSUL_VERSION}/consul_${CONSUL_VERSION}_linux_${PROCESSOR}.zip" \
+    -Lo /home/ec2-user/consul.zip
+unzip /home/ec2-user/consul.zip -d /usr/local/bin/
+rm /home/ec2-user/consul.zip
+useradd consul
+chown -R consul:consul /usr/local/bin/consul
+chmod a+x /usr/local/bin/consul
+# Enable consul autocompletion
+consul -autocomplete-install
+complete -C /usr/bin/consul consul
+
+#
+# dnsmasq 설정
+# References:
+# - https://learn.hashicorp.com/tutorials/consul/dns-forwarding#dnsmasq-setup
+# - https://aws.amazon.com/premiumsupport/knowledge-center/dns-resolution-failures-ec2-linux
+#
+groupadd -r dnsmasq
+useradd -r -g dnsmasq dnsmasq
+echo 'server=/consul/127.0.0.1#8600' >> /etc/dnsmasq.d/10-consul
+sudo systemctl restart dnsmasq.service
+sudo systemctl enable dnsmasq.service
+
+#
+# TODO dns-forwarding (https://github.com/femiwiki/nomad/issues/8)
+# References:
+# - https://learn.hashicorp.com/tutorials/consul/dns-forwarding
+# - https://aws.amazon.com/premiumsupport/knowledge-center/dns-resolution-failures-ec2-linux
+#
+
+#
 # htoprc 생성
 #
 sudo -u ec2-user mkdir -p /home/ec2-user/.config/htop
@@ -136,24 +173,28 @@ EOF
 # Clone Femiwiki Nomad configurations and specifications repository
 #
 sudo -u ec2-user git clone https://github.com/femiwiki/nomad.git /home/ec2-user/nomad/
-# Configure Nomad and systemd
-/home/ec2-user/nomad/up
+# Configure Nomad, Consul and systemd
+/home/ec2-user/nomad/up-consul-test
 
 #
 # README 생성
 #
 sudo -u ec2-user tee /home/ec2-user/README <<'EOF' >/dev/null
-바이너리들
+Nomad, Consul 관련 바이너리들
 
     /usr/local/bin/nomad              nomad 바이너리
+    /usr/local/bin/consul             consul 바이너리
 
 systemd 유닛 파일
 
     /etc/systemd/system/nomad.service
+    /etc/systemd/system/consul.service
 
 기타 관련 파일들 위치
     /etc/nomad.d                                     Nomad configuration
+    /etc/consul.d                                    Consul configuration
     /opt/nomad                                       Nomad data directory
+    /opt/consul                                      Consul data directory
     /opt/aws/amazon-cloudwatch-agent/bin/config.json CloudWatch Agent Configuration File
     /srv                                             Persistent EBS volume mount point for MySQL, certicates, cache and so on
 
