@@ -174,7 +174,7 @@ EOF
 #
 sudo -u ec2-user git clone https://github.com/femiwiki/nomad.git /home/ec2-user/nomad/
 # Configure Nomad, Consul and systemd
-/home/ec2-user/nomad/up-consul-test
+/home/ec2-user/nomad/up
 
 #
 # README 생성
