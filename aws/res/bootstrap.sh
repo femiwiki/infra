@@ -9,9 +9,18 @@ NOMAD_VERSION=1.8.1
 CONSUL_VERSION=1.19.1
 
 #
-# ec2-instance-connect 를 제일 먼저 설치
+# ec2-instance-connect과 SSMAgent를 제일 먼저 설치
+# Reference: https://docs.aws.amazon.com/systems-manager/latest/userguide/agent-install-al2.html
 #
 yum install -y ec2-instance-connect
+case $(uname -p) in
+  "x86_64")
+    yum install -y https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_amd64/amazon-ssm-agent.rpm
+    ;;
+  "aarch64")
+    yum install -y https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_arm64/amazon-ssm-agent.rpm
+    ;;
+esac
 
 #
 # 기본 유틸리티들 설치
