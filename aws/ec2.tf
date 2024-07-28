@@ -17,7 +17,7 @@ resource "aws_eip" "femiwiki" {
 }
 
 resource "aws_eip" "test_femiwiki" {
-  instance = length(aws_instance.test_femiwiki) > 0 ? aws_instance.test_femiwiki[0].id : null
+  instance = aws_instance.test_femiwiki.id
   domain   = "vpc"
 }
 
@@ -99,7 +99,6 @@ resource "aws_instance" "femiwiki" {
 #
 
 resource "aws_instance" "test_femiwiki" {
-  count                   = 0
   ebs_optimized           = true
   ami                     = data.aws_ami.amazon_linux_2_arm64.image_id
   instance_type           = "t4g.micro"
@@ -137,6 +136,8 @@ resource "aws_instance" "test_femiwiki" {
       user_data,
       # https://github.com/femiwiki/infra/issues/88
       volume_tags,
+      # Because this is a test instance, it could be manually stopped.
+      instance_state,
     ]
   }
 }
