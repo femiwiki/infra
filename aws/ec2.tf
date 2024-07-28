@@ -87,8 +87,6 @@ resource "aws_instance" "femiwiki" {
     ignore_changes = [
       ami,
       user_data,
-      # https://github.com/femiwiki/infra/issues/88
-      volume_tags,
     ]
   }
 }
@@ -134,10 +132,6 @@ resource "aws_instance" "test_femiwiki" {
     ignore_changes = [
       ami,
       user_data,
-      # https://github.com/femiwiki/infra/issues/88
-      volume_tags,
-      # Because this is a test instance, it could be manually stopped.
-      instance_state,
     ]
   }
 }
