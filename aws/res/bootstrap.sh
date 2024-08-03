@@ -132,7 +132,7 @@ rm -f cni-plugins.tgz
 curl "https://releases.hashicorp.com/nomad/${NOMAD_VERSION}/nomad_${NOMAD_VERSION}_linux_${PROCESSOR}.zip" \
     -Lo /home/ec2-user/nomad.zip
 unzip /home/ec2-user/nomad.zip -d /usr/local/bin/
-rm -f /home/ec2-user/nomad.zip
+rm -f /usr/local/bin/LICENSE.txt /home/ec2-user/nomad.zip
 nomad -autocomplete-install
 complete -C /usr/local/bin/nomad nomad
 mkdir -p /opt/nomad /etc/nomad.d
@@ -145,7 +145,7 @@ mkdir -p /opt/nomad /etc/nomad.d
 curl "https://releases.hashicorp.com/consul/${CONSUL_VERSION}/consul_${CONSUL_VERSION}_linux_${PROCESSOR}.zip" \
     -Lo /home/ec2-user/consul.zip
 unzip /home/ec2-user/consul.zip -d /usr/local/bin/
-rm /home/ec2-user/consul.zip
+rm -f /usr/local/bin/LICENSE.txt /home/ec2-user/consul.zip
 useradd consul
 chown -R consul:consul /usr/local/bin/consul
 chmod a+x /usr/local/bin/consul
