@@ -59,9 +59,16 @@ sudo systemctl restart atop.service sysstat-collect.timer sysstat.service
 #
 # cloudwatch-agent 실행
 #
-cat <<'EOF' > /opt/aws/amazon-cloudwatch-agent/etc/config.json
+cat <<'EOF' > /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json
 {
+  "agent": {
+    "metrics_collection_interval": 60
+  },
   "metrics": {
+    "namespace": "CWAgent",
+    "append_dimensions": {
+      "InstanceId": "${aws:InstanceId}"
+    },
     "metrics_collected": {
       "disk": {
         "measurement": [
@@ -76,14 +83,14 @@ cat <<'EOF' > /opt/aws/amazon-cloudwatch-agent/etc/config.json
       },
       "mem": {
         "measurement": [
-          "mem_used_percent"
+          "used_percent"
         ]
       }
     }
   }
 }
 EOF
-/opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s -c file:/opt/aws/amazon-cloudwatch-agent/etc/config.json
+/opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json
 
 #
 # sudo 로 /usr/local/{bin,sbin} 안에 있는 커맨드를 실행할 수 있도록 설정
