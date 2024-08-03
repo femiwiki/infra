@@ -168,15 +168,18 @@ complete -C /usr/bin/consul consul
 # - https://learn.hashicorp.com/tutorials/consul/dns-forwarding
 # - https://aws.amazon.com/premiumsupport/knowledge-center/dns-resolution-failures-ec2-linux
 #
-mkdir -p /etc/systemd/resolved.conf.d
-cat <<'EOF' > /etc/systemd/resolved.conf.d/consul.conf
+ENABLE_DNS_FORWARDING=false
+if [ $ENABLE_DNS_FORWARDING = "true" ]; then
+  mkdir -p /etc/systemd/resolved.conf.d
+  cat <<'EOF' > /etc/systemd/resolved.conf.d/consul.conf
 [Resolve]
 DNS=127.0.0.1:8600
 DNSSEC=false
 Domains=~consul
 EOF
-echo 'DNSStubListener=false' >> /etc/systemd/resolved.conf
-systemctl restart systemd-resolved
+  echo 'DNSStubListener=false' >> /etc/systemd/resolved.conf
+  systemctl restart systemd-resolved
+fi
 
 #
 # htoprc 생성
