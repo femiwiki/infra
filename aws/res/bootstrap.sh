@@ -121,7 +121,11 @@ case $(uname -p) in
     PROCESSOR="arm64"
     ;;
 esac
-curl -L -o cni-plugins.tgz "https://github.com/containernetworking/plugins/releases/download/v${CNI_VERSION}/cni-plugins-linux-${PROCESSOR}-v${CNI_VERSION}.tgz"
+curl \
+  --location \
+  --output cni-plugins.tgz \
+  --silent \
+  "https://github.com/containernetworking/plugins/releases/download/v${CNI_VERSION}/cni-plugins-linux-${PROCESSOR}-v${CNI_VERSION}.tgz"
 mkdir -p /opt/cni/bin
 tar -C /opt/cni/bin -xzf cni-plugins.tgz
 rm -f cni-plugins.tgz
@@ -129,8 +133,11 @@ rm -f cni-plugins.tgz
 #
 # Nomad 설치
 #
-curl "https://releases.hashicorp.com/nomad/${NOMAD_VERSION}/nomad_${NOMAD_VERSION}_linux_${PROCESSOR}.zip" \
-    -Lo /home/ec2-user/nomad.zip
+curl \
+  --location \
+  --output /home/ec2-user/nomad.zip \
+  --silent \
+  "https://releases.hashicorp.com/nomad/${NOMAD_VERSION}/nomad_${NOMAD_VERSION}_linux_${PROCESSOR}.zip"
 unzip /home/ec2-user/nomad.zip -d /usr/local/bin/
 rm -f /usr/local/bin/LICENSE.txt /home/ec2-user/nomad.zip
 nomad -autocomplete-install
@@ -142,8 +149,11 @@ mkdir -p /opt/nomad /etc/nomad.d
 # Reference:
 #   - https://github.com/hashicorp/terraform-aws-consul/blob/master/modules/install-consul/install-consul
 #
-curl "https://releases.hashicorp.com/consul/${CONSUL_VERSION}/consul_${CONSUL_VERSION}_linux_${PROCESSOR}.zip" \
-    -Lo /home/ec2-user/consul.zip
+curl \
+  --location \
+  --output /home/ec2-user/consul.zip \
+  --silent \
+  "https://releases.hashicorp.com/consul/${CONSUL_VERSION}/consul_${CONSUL_VERSION}_linux_${PROCESSOR}.zip"
 unzip /home/ec2-user/consul.zip -d /usr/local/bin/
 rm -f /usr/local/bin/LICENSE.txt /home/ec2-user/consul.zip
 useradd consul
@@ -207,12 +217,11 @@ systemd 유닛 파일
     /etc/systemd/system/consul.service
 
 기타 관련 파일들 위치
-    /etc/nomad.d                                     Nomad configuration
-    /etc/consul.d                                    Consul configuration
-    /opt/nomad                                       Nomad data directory
-    /opt/consul                                      Consul data directory
-    /opt/aws/amazon-cloudwatch-agent/bin/config.json CloudWatch Agent Configuration File
-    /srv                                             Persistent EBS volume mount point for MySQL, certicates, cache and so on
+    /etc/nomad.d   Nomad configuration
+    /etc/consul.d  Consul configuration
+    /opt/nomad     Nomad data directory
+    /opt/consul    Consul data directory
+    /srv           Persistent EBS volume mount point for MySQL, certicates, cache and so on
 
 그 외 인스턴스가 어떻게 세팅되었는지는 아래 repo 참고
 
