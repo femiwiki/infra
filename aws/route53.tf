@@ -66,6 +66,16 @@ resource "aws_route53_record" "femiwiki_com_mx" {
   zone_id = aws_route53_zone.femiwiki_com.zone_id
 }
 
+resource "aws_route53_record" "bounce_femiwiki_com_mx" {
+  name = "bounce.femiwiki.com"
+  records = [
+    "10 feedback-smtp.us-east-1.amazonses.com"
+  ]
+  ttl     = 3600
+  type    = "MX"
+  zone_id = aws_route53_zone.femiwiki_com.zone_id
+}
+
 resource "aws_route53_record" "femiwiki_com_ns" {
   name = "femiwiki.com"
   records = [
@@ -99,6 +109,16 @@ resource "aws_route53_record" "femiwiki_com_txt" {
     "yandex-verification: a457abccca159922",
     # SPF (ref femiwiki/femiwiki#172)
     "v=spf1 include:amazonses.com include:_spf.google.com include:mail.stibee.com ~all",
+  ]
+}
+
+resource "aws_route53_record" "bounce_femiwiki_com_txt" {
+  name    = "bounce.femiwiki.com"
+  ttl     = 900
+  type    = "TXT"
+  zone_id = aws_route53_zone.femiwiki_com.zone_id
+  records = [
+    "v=spf1 include:amazonses.com ~all",
   ]
 }
 
