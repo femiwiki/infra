@@ -97,14 +97,16 @@ resource "aws_instance" "femiwiki" {
 #
 
 resource "aws_instance" "test_femiwiki" {
-  ebs_optimized           = true
-  ami                     = data.aws_ami.amazon_linux_2_arm64.image_id
-  instance_type           = "t4g.micro"
-  key_name                = aws_key_pair.femiwiki.key_name
-  monitoring              = false
-  iam_instance_profile    = aws_iam_instance_profile.femiwiki.name
-  disable_api_termination = true
-  availability_zone       = data.aws_availability_zone.femiwiki.name
+  ami                         = data.aws_ami.amazon_linux_2_arm64.image_id
+  availability_zone           = data.aws_availability_zone.femiwiki.name
+  disable_api_termination     = true
+  ebs_optimized               = true
+  iam_instance_profile        = aws_iam_instance_profile.femiwiki.name
+  instance_type               = "t4g.micro"
+  key_name                    = aws_key_pair.femiwiki.key_name
+  monitoring                  = false
+  user_data                   = file("res/bootstrap.sh")
+  user_data_replace_on_change = true
 
   vpc_security_group_ids = [
     aws_default_security_group.default.id,
@@ -126,12 +128,9 @@ resource "aws_instance" "test_femiwiki" {
     Name = "Test Server"
   }
 
-  user_data = file("res/bootstrap.sh")
-
   lifecycle {
     ignore_changes = [
       ami,
-      user_data,
     ]
   }
 }
