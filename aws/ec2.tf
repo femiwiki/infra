@@ -102,7 +102,7 @@ resource "aws_instance" "test_femiwiki" {
   disable_api_termination     = true
   ebs_optimized               = true
   iam_instance_profile        = aws_iam_instance_profile.femiwiki.name
-  instance_type               = "t4g.micro"
+  instance_type               = "t4g.small"
   key_name                    = aws_key_pair.femiwiki.key_name
   monitoring                  = false
   user_data                   = file("res/bootstrap.sh")
