@@ -40,7 +40,6 @@ yum install -y \
   unzip \
   nc \
   dmidecode \
-  dnsmasq \
   bind-utils \
 ;
 
@@ -164,23 +163,20 @@ consul -autocomplete-install
 complete -C /usr/bin/consul consul
 
 #
-# TODO: Configure dnsmasq for Consul dns forwarding
-# References:
-# - https://learn.hashicorp.com/tutorials/consul/dns-forwarding#dnsmasq-setup
-# - https://aws.amazon.com/premiumsupport/knowledge-center/dns-resolution-failures-ec2-linux
-#
-# groupadd -r dnsmasq
-# useradd -r -g dnsmasq dnsmasq
-# echo 'server=/consul/127.0.0.1#8600' >> /etc/dnsmasq.d/10-consul
-# sudo systemctl restart dnsmasq.service
-# sudo systemctl enable dnsmasq.service
-
-#
-# TODO dns-forwarding (https://github.com/femiwiki/nomad/issues/8)
+# Setup systemd-resolved to forward DNS for Consul service discovery
 # References:
 # - https://learn.hashicorp.com/tutorials/consul/dns-forwarding
 # - https://aws.amazon.com/premiumsupport/knowledge-center/dns-resolution-failures-ec2-linux
 #
+mkdir -p /etc/systemd/resolved.conf.d
+cat <<'EOF' > /etc/systemd/resolved.conf.d/consul.conf
+[Resolve]
+DNS=127.0.0.1:8600
+DNSSEC=false
+Domains=~consul
+EOF
+echo 'DNSStubListener=false' >> /etc/systemd/resolved.conf
+systemctl restart systemd-resolved
 
 #
 # htoprc 생성
