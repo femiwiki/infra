@@ -30,3 +30,18 @@ plugin "docker" {
     }
   }
 }
+%{ if enable_consul == true }
+consul {
+  address = "127.0.0.1:8500"
+
+  service_identity {
+    aud = ["consul.io"]
+    ttl = "1h"
+  }
+
+  task_identity {
+    aud = ["consul.io"]
+    ttl = "1h"
+  }
+}
+%{ endif }
