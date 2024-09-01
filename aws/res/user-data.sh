@@ -142,6 +142,9 @@ rm -f /usr/local/bin/LICENSE.txt /home/ec2-user/nomad.zip
 nomad -autocomplete-install
 complete -C /usr/local/bin/nomad nomad
 mkdir -p /opt/nomad /etc/nomad.d
+echo <EOF >/etc/nomad.d/default.hcl
+${nomad_config}
+EOF
 
 #
 # Consul 설치
@@ -161,6 +164,9 @@ chmod a+x /usr/local/bin/consul
 # Enable consul autocompletion
 consul -autocomplete-install
 complete -C /usr/bin/consul consul
+echo <EOF >/etc/consul.d/consul.hcl
+${consul_config}
+EOF
 
 #
 # Setup systemd-resolved to forward DNS for Consul service discovery
