@@ -13,7 +13,7 @@ CONSUL_VERSION=1.19.1
 # Reference: https://docs.aws.amazon.com/systems-manager/latest/userguide/agent-install-al2.html
 #
 yum install -y ec2-instance-connect
-case $$(uname -p) in
+case $(uname -p) in
   "x86_64")
     yum install -y https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_amd64/amazon-ssm-agent.rpm
     ;;
@@ -112,7 +112,7 @@ usermod -a -G docker ec2-user
 # CNI 설치
 # Required for Nomad 'bridge' network
 #
-case $$(uname -p) in
+case $(uname -p) in
   "x86_64")
     PROCESSOR="amd64"
     ;;
