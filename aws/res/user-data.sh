@@ -164,7 +164,6 @@ curl \
 unzip /home/ec2-user/consul.zip -d /usr/local/bin/
 rm -f /usr/local/bin/LICENSE.txt /home/ec2-user/consul.zip
 useradd consul
-chown -R consul:consul /usr/local/bin/consul
 chmod a+x /usr/local/bin/consul
 # Enable consul autocompletion
 consul -autocomplete-install
@@ -212,8 +211,6 @@ EOF
 # Clone Femiwiki Nomad configurations and specifications repository
 #
 sudo -u ec2-user git clone https://github.com/femiwiki/nomad.git /home/ec2-user/nomad/
-# Configure Nomad, Consul and systemd
-/home/ec2-user/nomad/up
 
 #
 # README 생성
