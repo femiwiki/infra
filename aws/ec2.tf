@@ -81,12 +81,14 @@ resource "aws_instance" "femiwiki" {
     Name = "Main Server"
   }
 
-  user_data = file("res/bootstrap.sh")
+  user_data = templatefile("res/user-data.sh", {
+    enable_dns_forwarding = "false"
+  })
+  user_data_replace_on_change = false
 
   lifecycle {
     ignore_changes = [
       ami,
-      user_data,
     ]
   }
 }
@@ -105,8 +107,11 @@ resource "aws_instance" "test_femiwiki" {
   instance_type               = "t4g.small"
   key_name                    = aws_key_pair.femiwiki.key_name
   monitoring                  = false
-  user_data                   = file("res/bootstrap.sh")
   user_data_replace_on_change = true
+
+  user_data = templatefile("res/user-data.sh", {
+    enable_dns_forwarding = "false"
+  })
 
   vpc_security_group_ids = [
     aws_default_security_group.default.id,

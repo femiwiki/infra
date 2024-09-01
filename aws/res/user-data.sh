@@ -13,7 +13,7 @@ CONSUL_VERSION=1.19.1
 # Reference: https://docs.aws.amazon.com/systems-manager/latest/userguide/agent-install-al2.html
 #
 yum install -y ec2-instance-connect
-case $(uname -p) in
+case $$(uname -p) in
   "x86_64")
     yum install -y https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_amd64/amazon-ssm-agent.rpm
     ;;
@@ -66,7 +66,7 @@ cat <<'EOF' > /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json
   "metrics": {
     "namespace": "CWAgent",
     "append_dimensions": {
-      "InstanceId": "${aws:InstanceId}"
+      "InstanceId": "$${aws:InstanceId}"
     },
     "metrics_collected": {
       "disk": {
@@ -112,7 +112,7 @@ usermod -a -G docker ec2-user
 # CNI 설치
 # Required for Nomad 'bridge' network
 #
-case $(uname -p) in
+case $$(uname -p) in
   "x86_64")
     PROCESSOR="amd64"
     ;;
@@ -124,7 +124,7 @@ curl \
   --location \
   --output cni-plugins.tgz \
   --silent \
-  "https://github.com/containernetworking/plugins/releases/download/v${CNI_VERSION}/cni-plugins-linux-${PROCESSOR}-v${CNI_VERSION}.tgz"
+  "https://github.com/containernetworking/plugins/releases/download/v$${CNI_VERSION}/cni-plugins-linux-$${PROCESSOR}-v$${CNI_VERSION}.tgz"
 mkdir -p /opt/cni/bin
 tar -C /opt/cni/bin -xzf cni-plugins.tgz
 rm -f cni-plugins.tgz
@@ -136,7 +136,7 @@ curl \
   --location \
   --output /home/ec2-user/nomad.zip \
   --silent \
-  "https://releases.hashicorp.com/nomad/${NOMAD_VERSION}/nomad_${NOMAD_VERSION}_linux_${PROCESSOR}.zip"
+  "https://releases.hashicorp.com/nomad/$${NOMAD_VERSION}/nomad_$${NOMAD_VERSION}_linux_$${PROCESSOR}.zip"
 unzip /home/ec2-user/nomad.zip -d /usr/local/bin/
 rm -f /usr/local/bin/LICENSE.txt /home/ec2-user/nomad.zip
 nomad -autocomplete-install
@@ -152,7 +152,7 @@ curl \
   --location \
   --output /home/ec2-user/consul.zip \
   --silent \
-  "https://releases.hashicorp.com/consul/${CONSUL_VERSION}/consul_${CONSUL_VERSION}_linux_${PROCESSOR}.zip"
+  "https://releases.hashicorp.com/consul/$${CONSUL_VERSION}/consul_$${CONSUL_VERSION}_linux_$${PROCESSOR}.zip"
 unzip /home/ec2-user/consul.zip -d /usr/local/bin/
 rm -f /usr/local/bin/LICENSE.txt /home/ec2-user/consul.zip
 useradd consul
@@ -168,15 +168,18 @@ complete -C /usr/bin/consul consul
 # - https://learn.hashicorp.com/tutorials/consul/dns-forwarding
 # - https://aws.amazon.com/premiumsupport/knowledge-center/dns-resolution-failures-ec2-linux
 #
-mkdir -p /etc/systemd/resolved.conf.d
-cat <<'EOF' > /etc/systemd/resolved.conf.d/consul.conf
+ENABLE_DNS_FORWARDING=$${enable_dns_forwarding}
+if [ $ENABLE_DNS_FORWARDING = "true" ]; then
+  mkdir -p /etc/systemd/resolved.conf.d
+  cat <<'EOF' > /etc/systemd/resolved.conf.d/consul.conf
 [Resolve]
 DNS=127.0.0.1:8600
 DNSSEC=false
 Domains=~consul
 EOF
-echo 'DNSStubListener=false' >> /etc/systemd/resolved.conf
-systemctl restart systemd-resolved
+  echo 'DNSStubListener=false' >> /etc/systemd/resolved.conf
+  systemctl restart systemd-resolved
+fi
 
 #
 # htoprc 생성
