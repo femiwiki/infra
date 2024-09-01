@@ -9,7 +9,7 @@ ConditionFileNotEmpty=/etc/nomad.d/default.hcl
 
 [Service]
 ExecStart=/usr/local/bin/nomad agent -config /etc/nomad.d
-ExecReload=/bin/kill -HUP $MAINPID
+ExecReload=/bin/kill -HUP \$MAINPID
 KillMode=process
 Restart=on-failure
 LimitNOFILE=65536

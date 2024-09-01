@@ -143,10 +143,10 @@ rm -f /usr/local/bin/LICENSE.txt /home/ec2-user/nomad.zip
 nomad -autocomplete-install
 complete -C /usr/local/bin/nomad nomad
 mkdir -p /opt/nomad /etc/nomad.d
-echo <EOF >/etc/systemd/system/nomad.service
+cat <EOF >/etc/systemd/system/nomad.service
 ${nomad_service}
 EOF
-echo <EOF >/etc/nomad.d/default.hcl
+cat <EOF >/etc/nomad.d/default.hcl
 ${nomad_config}
 EOF
 
@@ -169,10 +169,11 @@ chmod a+x /usr/local/bin/consul
 # Enable consul autocompletion
 consul -autocomplete-install
 complete -C /usr/bin/consul consul
-echo <EOF >/etc/systemd/system/consul.service
+mkdir -p /opt/consul /etc/consul.d
+cat <EOF >/etc/systemd/system/consul.service
 ${consul_service}
 EOF
-echo <EOF >/etc/consul.d/consul.hcl
+cat <EOF >/etc/consul.d/consul.hcl
 ${consul_config}
 EOF
 
