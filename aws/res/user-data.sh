@@ -190,7 +190,7 @@ Domains=~consul
 EOF
 echo 'DNSStubListener=false' >> /etc/systemd/resolved.conf
 systemctl restart systemd-resolved
-${ endif }
+%{ endif }
 
 #
 # htoprc 생성
