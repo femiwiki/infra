@@ -89,6 +89,9 @@ resource "aws_instance" "femiwiki" {
     })
     consul_service = file("res/consul.service")
     consul_config  = file("res/consul.hcl")
+
+    start_nomad  = true
+    start_consul = false
   })
   user_data_replace_on_change = false
 
@@ -123,6 +126,9 @@ resource "aws_instance" "test_femiwiki" {
     })
     consul_service = file("res/consul.service")
     consul_config  = file("res/consul.hcl")
+
+    start_nomad  = true
+    start_consul = true
   })
 
   vpc_security_group_ids = [
