@@ -83,6 +83,12 @@ resource "aws_instance" "femiwiki" {
 
   user_data = templatefile("res/user-data.sh", {
     enable_dns_forwarding = "false"
+    nomad_service         = file("res/nomad.service")
+    nomad_config = templatefile("res/nomad.hcl", {
+      enable_consul = false
+    })
+    consul_service = file("res/consul.service")
+    consul_config  = file("res/consul.hcl")
   })
   user_data_replace_on_change = false
 
@@ -110,7 +116,13 @@ resource "aws_instance" "test_femiwiki" {
   user_data_replace_on_change = true
 
   user_data = templatefile("res/user-data.sh", {
-    enable_dns_forwarding = "false"
+    enable_dns_forwarding = false
+    nomad_service         = file("res/nomad.service")
+    nomad_config = templatefile("res/nomad.hcl", {
+      enable_consul = true
+    })
+    consul_service = file("res/consul.service")
+    consul_config  = file("res/consul.hcl")
   })
 
   vpc_security_group_ids = [
