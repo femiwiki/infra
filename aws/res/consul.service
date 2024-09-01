@@ -1,0 +1,25 @@
+# https://learn.hashicorp.com/tutorials/consul/deployment-guide#configure-systemd
+# https://github.com/hashicorp/terraform-aws-consul/blob/master/modules/run-consul/run-consul
+[Unit]
+Description="HashiCorp Consul - A service mesh solution"
+Documentation=https://www.consul.io/
+Requires=network-online.target
+After=network-online.target
+ConditionFileNotEmpty=/etc/consul.d/consul.hcl
+
+[Service]
+# Only one Consul server is deployed. We should set type to exec
+# See https://learn.hashicorp.com/tutorials/consul/deployment-guide#configure-systemd
+Type=exec
+User=consul
+Group=consul
+ExecStart=/usr/local/bin/consul agent -config-dir=/etc/consul.d/
+ExecReload=/usr/local/bin/consul reload
+ExecStop=/usr/local/bin/consul leave
+KillMode=process
+Restart=on-failure
+TimeoutSec=300s
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target
