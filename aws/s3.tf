@@ -42,6 +42,13 @@ data "aws_iam_policy_document" "s3_secrets" {
   }
 }
 
+resource "aws_s3_bucket_versioning" "secrets" {
+  bucket = aws_s3_bucket.secrets.id
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+
 #
 # Uploaded files (images and etc)
 #
