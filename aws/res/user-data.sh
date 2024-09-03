@@ -241,22 +241,6 @@ EOF
 %{ if start_nomad || start_consul }
 systemctl daemon-reload
 %{ endif }
-%{ if start_nomad }
-# https://github.com/hashicorp/terraform-aws-nomad/blob/master/modules/run-nomad/run-nomad
-systemctl enable --now nomad.service
-
-# Wait Nomad
-until nomad acl policy list > /dev/null; do
-  sleep 1; done;
-
-NOMAD_ACL_BOOTSTRAP="$(nomad acl bootstrap)"
-
-NOMAD_ACCESSOR_ID="$(echo "$NOMAD_ACL_BOOTSTRAP" | grep 'Accessor ID' | rev | cut -d' ' -f1 | rev)"
-NOMAD_TOKEN="$(echo "$NOMAD_ACL_BOOTSTRAP" | grep 'Secret ID' | rev | cut -d' ' -f1 | rev)"
-
-# Write NOMAD_TOKEN as a local file
-echo "NOMAD_TOKEN=$NOMAD_TOKEN" >> "/etc/environment"
-%{ endif }
 %{ if start_consul }
 # https://github.com/hashicorp/terraform-aws-consul/blob/master/modules/run-consul/run-consul
 systemctl enable --now consul.service
@@ -272,4 +256,20 @@ CONSUL_TOKEN="$(echo "$CONSUL_ACL_BOOTSTRAP" | grep SecretID | rev | cut -d' ' -
 
 # Write CONSUL_TOKEN as a local file
 echo "CONSUL_HTTP_TOKEN=$CONSUL_TOKEN" >> "/etc/environment"
+%{ endif }
+%{ if start_nomad }
+# https://github.com/hashicorp/terraform-aws-nomad/blob/master/modules/run-nomad/run-nomad
+systemctl enable --now nomad.service
+
+# Wait Nomad
+until nomad acl policy list > /dev/null; do
+  sleep 1; done;
+
+NOMAD_ACL_BOOTSTRAP="$(nomad acl bootstrap)"
+
+NOMAD_ACCESSOR_ID="$(echo "$NOMAD_ACL_BOOTSTRAP" | grep 'Accessor ID' | rev | cut -d' ' -f1 | rev)"
+NOMAD_TOKEN="$(echo "$NOMAD_ACL_BOOTSTRAP" | grep 'Secret ID' | rev | cut -d' ' -f1 | rev)"
+
+# Write NOMAD_TOKEN as a local file
+echo "NOMAD_TOKEN=$NOMAD_TOKEN" >> "/etc/environment"
 %{ endif }
