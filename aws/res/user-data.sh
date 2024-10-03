@@ -252,7 +252,8 @@ until consul members > /dev/null; do
 CONSUL_ACL_BOOTSTRAP="$(consul acl bootstrap)"
 
 CONSUL_ACCESSOR_ID="$(echo "$CONSUL_ACL_BOOTSTRAP" | grep AccessorID | rev | cut -d' ' -f1 | rev)"
-CONSUL_TOKEN="$(echo "$CONSUL_ACL_BOOTSTRAP" | grep SecretID | rev | cut -d' ' -f1 | rev)"
+CONSUL_HTTP_TOKEN="$(echo "$CONSUL_ACL_BOOTSTRAP" | grep SecretID | rev | cut -d' ' -f1 | rev)"
+export CONSUL_HTTP_TOKEN
 
 # Write CONSUL_TOKEN as a local file
 echo "CONSUL_HTTP_TOKEN=$CONSUL_TOKEN" >> "/etc/environment"
@@ -269,6 +270,7 @@ NOMAD_ACL_BOOTSTRAP="$(nomad acl bootstrap)"
 
 NOMAD_ACCESSOR_ID="$(echo "$NOMAD_ACL_BOOTSTRAP" | grep 'Accessor ID' | rev | cut -d' ' -f1 | rev)"
 NOMAD_TOKEN="$(echo "$NOMAD_ACL_BOOTSTRAP" | grep 'Secret ID' | rev | cut -d' ' -f1 | rev)"
+export NOMAD_TOKEN
 
 # Write NOMAD_TOKEN as a local file
 echo "NOMAD_TOKEN=$NOMAD_TOKEN" >> "/etc/environment"
