@@ -5,8 +5,8 @@ set -euo pipefail; IFS=$'\n\t'
 set -x
 
 CNI_VERSION=1.4.0
-NOMAD_VERSION=1.8.1
-CONSUL_VERSION=1.19.1
+NOMAD_VERSION=1.8.4
+CONSUL_VERSION=1.19.2
 
 #
 # ec2-instance-connect과 SSMAgent를 제일 먼저 설치
