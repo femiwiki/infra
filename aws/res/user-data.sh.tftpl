@@ -139,10 +139,10 @@ curl \
   --output /home/ec2-user/nomad.zip \
   --silent \
   "https://releases.hashicorp.com/nomad/$${NOMAD_VERSION}/nomad_$${NOMAD_VERSION}_linux_$${PROCESSOR}.zip"
-unzip /home/ec2-user/nomad.zip -d /usr/local/bin/
-rm -f /usr/local/bin/LICENSE.txt /home/ec2-user/nomad.zip
+unzip /home/ec2-user/nomad.zip -d /usr/bin/ -x LICENSE.txt && \
+  rm -f /home/ec2-user/nomad.zip
 nomad -autocomplete-install
-complete -C /usr/local/bin/nomad nomad
+complete -C /usr/bin/nomad nomad
 mkdir -p /opt/nomad /etc/nomad.d
 cat <<EOF >/etc/systemd/system/nomad.service
 ${nomad_service}
@@ -162,10 +162,10 @@ curl \
   --output /home/ec2-user/consul.zip \
   --silent \
   "https://releases.hashicorp.com/consul/$${CONSUL_VERSION}/consul_$${CONSUL_VERSION}_linux_$${PROCESSOR}.zip"
-unzip /home/ec2-user/consul.zip -d /usr/local/bin/
-rm -f /usr/local/bin/LICENSE.txt /home/ec2-user/consul.zip
+unzip /home/ec2-user/consul.zip -d /usr/bin/ -x LICENSE.txt && \
+  rm -f /home/ec2-user/consul.zip
 useradd consul
-chmod a+x /usr/local/bin/consul
+chmod a+x /usr/bin/consul
 # Enable consul autocompletion
 consul -autocomplete-install
 complete -C /usr/bin/consul consul
@@ -223,8 +223,8 @@ sudo -u ec2-user git clone https://github.com/femiwiki/nomad.git /home/ec2-user/
 sudo -u ec2-user tee /home/ec2-user/README <<'EOF' >/dev/null
 Nomad, Consul 관련 바이너리들
 
-    /usr/local/bin/nomad              nomad 바이너리
-    /usr/local/bin/consul             consul 바이너리
+    /usr/bin/nomad              nomad 바이너리
+    /usr/bin/consul             consul 바이너리
 
 systemd 유닛 파일
 

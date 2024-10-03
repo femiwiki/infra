@@ -1,5 +1,5 @@
 # https://learn.hashicorp.com/tutorials/consul/deployment-guide#configure-systemd
-# https://github.com/hashicorp/terraform-aws-consul/blob/master/modules/run-consul/run-consul
+# https://github.com/hashicorp/consul/blob/v1.19.2/.release/linux/package/usr/lib/systemd/system/consul.service
 [Unit]
 Description="HashiCorp Consul - A service mesh solution"
 Documentation=https://www.consul.io/
@@ -8,15 +8,16 @@ After=network-online.target
 ConditionFileNotEmpty=/etc/consul.d/consul.hcl
 
 [Service]
-ExecStart=/usr/local/bin/consul agent -config-dir=/etc/consul.d/
-ExecReload=/usr/local/bin/consul reload
-ExecStop=/usr/local/bin/consul leave
-KillMode=process
-Restart=on-failure
-TimeoutSec=300s
-LimitNOFILE=65536
+Type=notify
+EnvironmentFile=-/etc/consul.d/consul.env
 User=root
 Group=root
+ExecStart=/usr/bin/consul agent -config-dir=/etc/consul.d/
+ExecReload=/bin/kill --signal HUP $MAINPID
+KillMode=process
+KillSignal=SIGTERM
+Restart=on-failure
+LimitNOFILE=65536
 
 [Install]
 WantedBy=multi-user.target
