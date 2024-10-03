@@ -32,6 +32,7 @@ plugin "docker" {
 }
 %{ if enable_consul == true }
 consul {
+  enabled = true
   address = "127.0.0.1:8500"
 
   service_identity {
