@@ -256,7 +256,7 @@ CONSUL_HTTP_TOKEN="$(echo "$CONSUL_ACL_BOOTSTRAP" | grep SecretID | rev | cut -d
 export CONSUL_HTTP_TOKEN
 
 # Write CONSUL_TOKEN as a local file
-echo "CONSUL_HTTP_TOKEN=$CONSUL_TOKEN" >> "/etc/environment"
+echo "CONSUL_HTTP_TOKEN=$CONSUL_HTTP_TOKEN" >> "/etc/environment"
 %{ endif }
 %{ if start_nomad }
 # https://github.com/hashicorp/terraform-aws-nomad/blob/master/modules/run-nomad/run-nomad
