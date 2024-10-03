@@ -272,4 +272,6 @@ NOMAD_TOKEN="$(echo "$NOMAD_ACL_BOOTSTRAP" | grep 'Secret ID' | rev | cut -d' ' 
 
 # Write NOMAD_TOKEN as a local file
 echo "NOMAD_TOKEN=$NOMAD_TOKEN" >> "/etc/environment"
+
+nomad setup consul -y
 %{ endif }
