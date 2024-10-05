@@ -142,7 +142,7 @@ dnf config-manager --add-repo https://rpm.releases.hashicorp.com/AmazonLinux/has
 # Reference: https://learn.hashicorp.com/tutorials/nomad/production-deployment-guide-vm-with-consul
 #
 dnf install -y "nomad-$${NOMAD_VERSION}"
-cat <<EOF >/etc/nomad.d/default.hcl
+cat <<EOF >/etc/nomad.d/nomad.hcl
 ${nomad_config}
 EOF
 
