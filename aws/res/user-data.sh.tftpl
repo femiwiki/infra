@@ -109,6 +109,14 @@ systemctl start docker
 usermod -a -G docker ec2-user
 # 이후 로그아웃한 뒤 재로그인
 
+# Add hostname to /etc/hosts and Docker bridge network IP to /etc/resolv.conf (at the top)
+# https://github.com/hashicorp/nomad/blob/v1.8.4/terraform/shared/scripts/server.sh
+echo "127.0.0.1 $(hostname)" | tee --append /etc/hosts
+DOCKER_BRIDGE_IP_ADDRESS=(`ifconfig docker0 2>/dev/null|awk '/inet addr:/ {print $2}'|sed 's/addr://'`)
+echo "nameserver $DOCKER_BRIDGE_IP_ADDRESS" | tee /etc/resolv.conf.new
+cat /etc/resolv.conf | tee --append /etc/resolv.conf.new
+mv /etc/resolv.conf.new /etc/resolv.conf
+
 #
 # CNI 설치
 # Required for Nomad 'bridge' network
@@ -130,23 +138,14 @@ mkdir -p /opt/cni/bin
 tar -C /opt/cni/bin -xzf cni-plugins.tgz
 rm -f cni-plugins.tgz
 
+# Add hashicorp repo
+dnf-config-manager --add-repo https://rpm.releases.hashicorp.com/AmazonLinux/hashicorp.repo
+
 #
 # Nomad 설치
 # Reference: https://learn.hashicorp.com/tutorials/nomad/production-deployment-guide-vm-with-consul
 #
-curl \
-  --location \
-  --output /home/ec2-user/nomad.zip \
-  --silent \
-  "https://releases.hashicorp.com/nomad/$${NOMAD_VERSION}/nomad_$${NOMAD_VERSION}_linux_$${PROCESSOR}.zip"
-unzip /home/ec2-user/nomad.zip -d /usr/bin/ -x LICENSE.txt && \
-  rm -f /home/ec2-user/nomad.zip
-nomad -autocomplete-install
-complete -C /usr/bin/nomad nomad
-mkdir -p /opt/nomad /etc/nomad.d
-cat <<EOF >/etc/systemd/system/nomad.service
-${nomad_service}
-EOF
+dnf install -y "nomad-$${NOMAD_VERSION}"
 cat <<EOF >/etc/nomad.d/default.hcl
 ${nomad_config}
 EOF
@@ -157,29 +156,14 @@ EOF
 #   https://github.com/hashicorp/terraform-aws-consul/blob/master/modules/install-consul/install-consul
 #   https://learn.hashicorp.com/tutorials/nomad/production-deployment-guide-vm-with-consul
 #
-curl \
-  --location \
-  --output /home/ec2-user/consul.zip \
-  --silent \
-  "https://releases.hashicorp.com/consul/$${CONSUL_VERSION}/consul_$${CONSUL_VERSION}_linux_$${PROCESSOR}.zip"
-unzip /home/ec2-user/consul.zip -d /usr/bin/ -x LICENSE.txt && \
-  rm -f /home/ec2-user/consul.zip
-useradd consul
-chmod a+x /usr/bin/consul
-# Enable consul autocompletion
-consul -autocomplete-install
-complete -C /usr/bin/consul consul
-mkdir -p /opt/consul /etc/consul.d
-cat <<EOF >/etc/systemd/system/consul.service
-${consul_service}
-EOF
+dnf install -y "consul-$${CONSUL_VERSION}"
 cat <<EOF >/etc/consul.d/consul.hcl
 ${consul_config}
 EOF
+IP_ADDRESS=$(curl http://instance-data/latest/meta-data/local-ipv4)
+sed -i "s/IP_ADDRESS/$IP_ADDRESS/g" /etc/consul.d/consul.hcl
 
-curl -L -o consul-cni.zip "https://releases.hashicorp.com/consul-cni/$${CONSUL_CNI_VERSION}/consul-cni_$${CONSUL_CNI_VERSION}_linux_$${PROCESSOR}".zip && \
-  unzip consul-cni.zip -d /opt/cni/bin -x LICENSE.txt &&\
-  rm consul-cni.zip
+dnf install -y consul-cni-$${CONSUL_CNI_VERSION}
 
 %{ if enable_dns_forwarding }
 #
