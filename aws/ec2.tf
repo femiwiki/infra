@@ -83,12 +83,10 @@ resource "aws_instance" "femiwiki" {
 
   user_data = templatefile("res/user-data.sh.tftpl", {
     enable_dns_forwarding = false
-    nomad_service         = file("res/nomad.service")
     nomad_config = templatefile("res/nomad.hcl", {
       enable_consul = false
     })
-    consul_service = file("res/consul.service")
-    consul_config  = file("res/consul.hcl")
+    consul_config = file("res/consul.hcl")
 
     start_nomad  = true
     start_consul = false
@@ -121,12 +119,10 @@ resource "aws_instance" "test_femiwiki" {
 
   user_data = templatefile("res/user-data.sh.tftpl", {
     enable_dns_forwarding = true
-    nomad_service         = file("res/nomad.service")
     nomad_config = templatefile("res/nomad.hcl", {
       enable_consul = true
     })
-    consul_service = file("res/consul.service")
-    consul_config  = file("res/consul.hcl")
+    consul_config = file("res/consul.hcl")
 
     start_nomad  = true
     start_consul = true
