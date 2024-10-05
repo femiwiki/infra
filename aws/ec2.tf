@@ -148,6 +148,10 @@ resource "aws_instance" "test_femiwiki" {
     cpu_credits = "unlimited"
   }
 
+  metadata_options {
+    instance_metadata_tags = "enabled"
+  }
+
   tags = {
     Name                   = "Test Server"
     consul-cloud-auto-join = "true"
