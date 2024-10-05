@@ -175,12 +175,16 @@ Domains=~consul
 EOF
 echo 'DNSStubListener=false' >> /etc/systemd/resolved.conf
 systemctl restart systemd-resolved
+# This should not be required, but anyway
+iptables --table nat --append OUTPUT --destination localhost --protocol udp --match udp --dport 53 --jump REDIRECT --to-ports 8600
+iptables --table nat --append OUTPUT --destination localhost --protocol tcp --match tcp --dport 53 --jump REDIRECT --to-ports 8600
 %{ endif }
 
 # Add Docker bridge network IP to /etc/resolv.conf (at the top)
 # https://github.com/hashicorp/nomad/blob/v1.8.4/terraform/shared/scripts/server.sh
 DOCKER_BRIDGE_IP_ADDRESS="$(ifconfig docker0 2>/dev/null | grep inet | xargs | cut -d' ' -f2)"
 echo "nameserver $DOCKER_BRIDGE_IP_ADDRESS" | tee /etc/resolv.conf.new
+echo "nameserver 127.0.0.1" | tee /etc/resolv.conf.new
 cat /etc/resolv.conf | tee --append /etc/resolv.conf.new
 mv /etc/resolv.conf.new /etc/resolv.conf
 
