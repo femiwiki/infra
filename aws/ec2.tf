@@ -153,8 +153,8 @@ resource "aws_instance" "test_femiwiki" {
   }
 
   tags = {
-    Name                   = "Test Server"
-    consul-cloud-auto-join = "true"
+    Name           = "Test Server"
+    ConsulAutoJoin = "auto-join"
   }
 
   lifecycle {
