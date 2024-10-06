@@ -213,12 +213,13 @@ data "aws_iam_policy_document" "mount_ebs_volumes" {
       "ec2:AttachVolume",
       "ec2:DetachVolume",
     ]
-    resources = [
+    resources = concat([
       aws_instance.femiwiki.arn,
       aws_ebs_volume.persistent_data_mysql.arn,
       aws_ebs_volume.persistent_data_caddycerts.arn,
       aws_ebs_volume.persistent_data_caddycerts_green.arn,
-    ]
+      ], [for instance in aws_instance.femiwiki_green : instance.arn]
+    )
   }
 
   statement {
