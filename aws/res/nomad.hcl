@@ -17,6 +17,11 @@ server {
 
 client {
   enabled = true
+%{ if main_elastic_ip == true }
+  meta {
+    main_elastic_ip = "true"
+  }
+%{ endif }
 }
 
 plugin "docker" {
