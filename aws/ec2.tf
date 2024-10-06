@@ -47,6 +47,15 @@ resource "aws_ebs_volume" "persistent_data_caddycerts" {
   }
 }
 
+resource "aws_ebs_volume" "persistent_data_caddycerts_green" {
+  availability_zone = data.aws_availability_zone.femiwiki.name
+  type              = "gp3"
+  size              = 1
+  tags = {
+    Name = "Caddycerts for the green cluster"
+  }
+}
+
 #
 # Femiwiki Main Server
 #
