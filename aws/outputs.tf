@@ -3,6 +3,11 @@ output "nomad_addr" {
   value       = "http://${aws_instance.femiwiki.public_ip}:4646"
 }
 
+output "nomad_private_ip" {
+  description = "Address to our nomad cluster"
+  value       = aws_instance.femiwiki.private_ip
+}
+
 output "test_nomad_addr" {
   description = "Address to our nomad cluster"
   value       = aws_eip.test_femiwiki.public_ip
