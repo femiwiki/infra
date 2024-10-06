@@ -9,8 +9,7 @@ server           = true
 advertise_addr   = "{{GetInterfaceIP \"ens5\"}}"
 bind_addr        = "0.0.0.0"
 client_addr      = "0.0.0.0"
-bootstrap        = true
-bootstrap_expect = 1
+bootstrap_expect = 2
 # Cloud Auto-join
 # https://www.consul.io/docs/install/cloud-auto-join#amazon-ec2
 # https://github.com/hashicorp/nomad/blob/v1.8.4/terraform/aws/modules/hashistack/hashistack.tf#L41-L43
