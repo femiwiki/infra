@@ -17,8 +17,8 @@ resource "aws_eip" "femiwiki" {
 }
 
 resource "aws_eip" "test_femiwiki" {
-  instance = aws_instance.femiwiki.id
-  domain   = "vpc"
+  # instance = aws_instance.femiwiki.id
+  domain = "vpc"
 }
 
 data "aws_availability_zone" "femiwiki" {
@@ -59,61 +59,6 @@ resource "aws_ebs_volume" "persistent_data_caddycerts_green" {
     Name = "Caddycerts for the green cluster"
   }
 }
-
-#
-# Femiwiki Blue Cluster
-#
-resource "aws_instance" "femiwiki" {
-  ebs_optimized           = true
-  ami                     = data.aws_ami.amazon_linux_2_arm64.image_id
-  instance_type           = "t4g.small"
-  key_name                = aws_key_pair.femiwiki.key_name
-  monitoring              = false
-  iam_instance_profile    = aws_iam_instance_profile.femiwiki.name
-  disable_api_termination = true
-  availability_zone       = data.aws_availability_zone.femiwiki.name
-
-  vpc_security_group_ids = [
-    aws_default_security_group.default.id,
-    aws_security_group.femiwiki.id,
-    aws_security_group.nomad_cluster.id,
-  ]
-
-  root_block_device {
-    delete_on_termination = true
-    volume_size           = 20
-    volume_type           = "gp3"
-  }
-
-  credit_specification {
-    cpu_credits = "unlimited"
-  }
-
-  tags = {
-    Name = "Main Server"
-  }
-
-  user_data = templatefile("res/user-data.sh.tftpl", {
-    enable_dns_forwarding = false
-    nomad_config = templatefile("res/nomad.hcl", {
-      enable_consul = false
-    })
-    consul_config = file("res/consul.hcl")
-
-    start_nomad  = true
-    start_consul = false
-    bootstrap    = true
-  })
-  user_data_replace_on_change = false
-
-  lifecycle {
-    ignore_changes = [
-      ami,
-      user_data,
-    ]
-  }
-}
-
 
 #
 # Femiwiki Green Cluster

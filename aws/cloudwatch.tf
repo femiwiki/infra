@@ -1,19 +1,3 @@
-resource "aws_cloudwatch_metric_alarm" "femiwiki_cpu_credit_balance_cloud_watch_alarm" {
-  alarm_name  = "Femiwiki CPU credit balance"
-  namespace   = "AWS/EC2"
-  metric_name = "CPUCreditBalance"
-  period      = 300
-  statistic   = "Minimum"
-  dimensions = {
-    InstanceId = aws_instance.femiwiki.id
-  }
-  threshold           = 72
-  comparison_operator = "LessThanThreshold"
-  datapoints_to_alarm = 1
-  evaluation_periods  = 1
-  alarm_actions       = []
-}
-
 resource "aws_cloudwatch_metric_alarm" "femiwiki_volume_idle_time_cloud_watch_alarm" {
   alarm_name  = "Femiwiki VolumeIdleTime"
   namespace   = "AWS/EBS"
@@ -21,7 +5,7 @@ resource "aws_cloudwatch_metric_alarm" "femiwiki_volume_idle_time_cloud_watch_al
   period      = 300
   statistic   = "Minimum"
   dimensions = {
-    VolumeId = aws_instance.femiwiki.root_block_device[0].volume_id
+    VolumeId = aws_instance.femiwiki_green[0].root_block_device[0].volume_id
   }
   threshold           = 20
   comparison_operator = "LessThanThreshold"
@@ -39,7 +23,7 @@ resource "aws_cloudwatch_metric_alarm" "femiwiki_disk_used_cloud_watch_alarm" {
   dimensions = {
     "device" = "nvme0n1p1"
     "fstype" = "xfs"
-    "host"   = aws_instance.femiwiki.private_dns
+    "host"   = aws_instance.femiwiki_green[0].private_dns
     "path"   = "/"
   }
   threshold           = 90
