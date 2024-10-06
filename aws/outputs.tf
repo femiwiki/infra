@@ -1,23 +1,13 @@
-# Deprecated
-output "nomad_addr" {
-  description = "Address to our nomad cluster"
-  value       = "http://${aws_instance.femiwiki.public_ip}:4646"
-}
-
 output "nomad_blue_public_ip" {
   description = "Address to our nomad cluster"
-  value       = aws_instance.femiwiki.public_ip
-}
-
-# Deprecated
-output "nomad_private_ip" {
-  description = "Address to our nomad cluster"
-  value       = aws_instance.femiwiki.private_ip
+  # placeholder
+  value = aws_instance.femiwiki_green[0].public_ip
 }
 
 output "nomad_blue_private_ip" {
   description = "Address to our nomad cluster"
-  value       = aws_instance.femiwiki.private_ip
+  # placeholder
+  value = aws_instance.femiwiki_green[0].private_ip
 }
 
 output "nomad_green_public_ip" {
