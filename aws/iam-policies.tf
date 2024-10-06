@@ -121,10 +121,6 @@ locals {
   uploaded_files_temp    = aws_s3_bucket.uploaded_files_temp.arn
   uploaded_files_deleted = aws_s3_bucket.uploaded_files_deleted.arn
   backups                = aws_s3_bucket.backups.arn
-
-  femiwiki                  = aws_instance.femiwiki.arn
-  persistent_data_mysql     = aws_ebs_volume.persistent_data_mysql.arn
-  persistent_data_caddycert = aws_ebs_volume.persistent_data_caddycerts.arn
 }
 
 data "aws_iam_policy_document" "amazon_s3_access" {
@@ -218,9 +214,10 @@ data "aws_iam_policy_document" "mount_ebs_volumes" {
       "ec2:DetachVolume",
     ]
     resources = [
-      local.femiwiki,
-      local.persistent_data_mysql,
-      local.persistent_data_caddycert,
+      aws_instance.femiwiki.arn,
+      aws_ebs_volume.persistent_data_mysql.arn,
+      aws_ebs_volume.persistent_data_caddycerts.arn,
+      aws_ebs_volume.persistent_data_caddycerts_green.arn,
     ]
   }
 
