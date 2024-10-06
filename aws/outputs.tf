@@ -5,7 +5,7 @@ output "nomad_addr" {
 
 output "test_nomad_addr" {
   description = "Address to our nomad cluster"
-  value       = "http://${aws_eip.test_femiwiki.public_ip}:4646"
+  value       = aws_eip.test_femiwiki.public_ip
 }
 
 output "ebs_mysql_id" {
