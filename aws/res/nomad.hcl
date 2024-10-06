@@ -7,8 +7,7 @@ acl {
 
 server {
   enabled = true
-  # A value of 1 does not provide any fault tolerance and is not recommended for production use cases.
-  bootstrap_expect = 1
+  bootstrap_expect = 2
 
   default_scheduler_config {
     # Memory oversubscription is opt-in in Nomad 1.1
