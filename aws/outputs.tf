@@ -22,6 +22,10 @@ output "ebs_mysql_id" {
   value = aws_ebs_volume.persistent_data_mysql.id
 }
 
+output "ebs_mysql_green_id" {
+  value = aws_ebs_volume.persistent_data_mysql_green.id
+}
+
 output "ebs_caddycerts_id" {
   value = aws_ebs_volume.persistent_data_caddycerts.id
 }
