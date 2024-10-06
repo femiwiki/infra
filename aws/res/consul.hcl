@@ -6,7 +6,6 @@ acl {
 }
 
 server           = true
-node_name        = "femiwiki"
 advertise_addr   = "{{GetInterfaceIP \"ens5\"}}"
 bind_addr        = "0.0.0.0"
 client_addr      = "0.0.0.0"
