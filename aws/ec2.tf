@@ -17,7 +17,7 @@ resource "aws_eip" "femiwiki" {
 }
 
 resource "aws_eip" "test_femiwiki" {
-  instance = aws_instance.test_femiwiki[0].id
+  instance = aws_instance.femiwiki_green[0].id
   domain   = "vpc"
 }
 
@@ -61,9 +61,8 @@ resource "aws_ebs_volume" "persistent_data_caddycerts_green" {
 }
 
 #
-# Femiwiki Main Server
+# Femiwiki Blue Cluster
 #
-
 resource "aws_instance" "femiwiki" {
   ebs_optimized           = true
   ami                     = data.aws_ami.amazon_linux_2_arm64.image_id
@@ -117,10 +116,9 @@ resource "aws_instance" "femiwiki" {
 
 
 #
-# Femiwiki Test Server
+# Femiwiki Green Cluster
 #
-
-resource "aws_instance" "test_femiwiki" {
+resource "aws_instance" "femiwiki_green" {
   count                       = 2
   ami                         = data.aws_ami.amazon_linux_2_arm64.image_id
   availability_zone           = data.aws_availability_zone.femiwiki.name
