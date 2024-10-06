@@ -15,7 +15,7 @@ output "test_nomad_public_ip" {
 
 output "test_nomad_private_ip" {
   description = "Address to our nomad cluster"
-  value       = aws_instance.test_femiwiki.public_ip
+  value       = aws_instance.test_femiwiki[0].public_ip
 }
 
 output "ebs_mysql_id" {

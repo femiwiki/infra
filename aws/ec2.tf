@@ -17,7 +17,7 @@ resource "aws_eip" "femiwiki" {
 }
 
 resource "aws_eip" "test_femiwiki" {
-  instance = aws_instance.test_femiwiki.id
+  instance = aws_instance.test_femiwiki[0].id
   domain   = "vpc"
 }
 
@@ -90,6 +90,7 @@ resource "aws_instance" "femiwiki" {
 
     start_nomad  = true
     start_consul = false
+    bootstrap    = true
   })
   user_data_replace_on_change = false
 
@@ -107,6 +108,7 @@ resource "aws_instance" "femiwiki" {
 #
 
 resource "aws_instance" "test_femiwiki" {
+  count                       = 2
   ami                         = data.aws_ami.amazon_linux_2_arm64.image_id
   availability_zone           = data.aws_availability_zone.femiwiki.name
   disable_api_termination     = true
@@ -126,6 +128,7 @@ resource "aws_instance" "test_femiwiki" {
 
     start_nomad  = true
     start_consul = true
+    bootstrap    = count.index == 0
   })
 
   vpc_security_group_ids = [
@@ -156,6 +159,7 @@ resource "aws_instance" "test_femiwiki" {
   lifecycle {
     ignore_changes = [
       ami,
+      user_data,
     ]
   }
 }
