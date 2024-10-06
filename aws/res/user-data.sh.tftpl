@@ -243,6 +243,7 @@ systemctl enable --now consul.service
 until consul members > /dev/null; do
   sleep 1; done;
 
+%{ if bootstrap }
 CONSUL_ACL_BOOTSTRAP="$(consul acl bootstrap)"
 
 CONSUL_ACCESSOR_ID="$(echo "$CONSUL_ACL_BOOTSTRAP" | grep AccessorID | rev | cut -d' ' -f1 | rev)"
@@ -252,6 +253,7 @@ export CONSUL_HTTP_TOKEN
 # Write CONSUL_TOKEN as a local file
 echo "CONSUL_HTTP_TOKEN=$CONSUL_HTTP_TOKEN" >> "/etc/environment"
 %{ endif }
+%{ endif }
 %{ if start_nomad }
 # https://github.com/hashicorp/terraform-aws-nomad/blob/master/modules/run-nomad/run-nomad
 systemctl enable --now nomad.service
@@ -260,6 +262,7 @@ systemctl enable --now nomad.service
 until nomad acl policy list > /dev/null; do
   sleep 1; done;
 
+%{ if bootstrap }
 NOMAD_ACL_BOOTSTRAP="$(nomad acl bootstrap)"
 
 NOMAD_ACCESSOR_ID="$(echo "$NOMAD_ACL_BOOTSTRAP" | grep 'Accessor ID' | rev | cut -d' ' -f1 | rev)"
@@ -268,6 +271,7 @@ export NOMAD_TOKEN
 
 # Write NOMAD_TOKEN as a local file
 echo "NOMAD_TOKEN=$NOMAD_TOKEN" >> "/etc/environment"
+%{ endif }
 
 nomad setup consul -y
 %{ endif }
