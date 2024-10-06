@@ -271,7 +271,7 @@ export NOMAD_TOKEN
 
 # Write NOMAD_TOKEN as a local file
 echo "NOMAD_TOKEN=$NOMAD_TOKEN" >> "/etc/environment"
-%{ endif }
 
 nomad setup consul -y
+%{ endif }
 %{ endif }
