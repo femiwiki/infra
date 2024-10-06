@@ -8,7 +8,7 @@ output "nomad_private_ip" {
   value       = aws_instance.femiwiki.private_ip
 }
 
-output "test_nomad_addr" {
+output "test_nomad_public_ip" {
   description = "Address to our nomad cluster"
   value       = aws_eip.test_femiwiki.public_ip
 }
