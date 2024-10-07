@@ -64,13 +64,13 @@ resource "aws_ebs_volume" "persistent_data_caddycerts_green" {
 # Femiwiki Green Cluster
 #
 resource "aws_instance" "femiwiki_green" {
-  count                       = 2
+  count                       = 3
   ami                         = data.aws_ami.amazon_linux_2_arm64.image_id
   availability_zone           = data.aws_availability_zone.femiwiki.name
   disable_api_termination     = true
   ebs_optimized               = true
   iam_instance_profile        = aws_iam_instance_profile.femiwiki.name
-  instance_type               = "t4g.small"
+  instance_type               = count.index < 2 ? "t4g.small" : "t4g.micro"
   key_name                    = aws_key_pair.femiwiki.key_name
   monitoring                  = false
   user_data_replace_on_change = true
