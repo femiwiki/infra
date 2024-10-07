@@ -64,7 +64,7 @@ resource "aws_ebs_volume" "persistent_data_caddycerts_green" {
 # Femiwiki Green Cluster
 #
 resource "aws_instance" "femiwiki_green" {
-  count                       = 3
+  count                       = 2
   ami                         = data.aws_ami.amazon_linux_2_arm64.image_id
   availability_zone           = data.aws_availability_zone.femiwiki.name
   disable_api_termination     = true
