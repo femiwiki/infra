@@ -49,7 +49,7 @@ prometheus.remote_write "metrics_service" {
 
 loki.write "grafana_cloud_loki" {
   endpoint {
-    url = "https://logs-prod-030.grafana.net/loki/api/v1/push"
+    url = "${loki_endpoint}"
 
     basic_auth {
       username = "${loki_username}"

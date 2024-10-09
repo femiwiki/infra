@@ -86,9 +86,10 @@ resource "aws_instance" "femiwiki_green" {
     alloy_config = templatefile("res/config.alloy.tftpl", {
       prometheus_endpoint = "https://prometheus-prod-49-prod-ap-northeast-0.grafana.net/api/prom/push"
       prometheus_username = "1835631"
+      prometheus_password = var.prometheus_password
+      loki_endpoint       = "https://logs-prod-030.grafana.net/loki/api/v1/push"
       loki_username       = "1017101"
-      password            = var.prometheus_password
-      main_elastic_ip     = count.index == 0
+      loki_password       = var.prometheus_password
     })
 
     start_nomad  = true
