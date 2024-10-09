@@ -23,7 +23,7 @@ esac
 # Reference: https://docs.aws.amazon.com/systems-manager/latest/userguide/agent-install-al2.html
 #
 dnf install -y ec2-instance-connect
-dnf install -y "https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_${PROCESSOR}/amazon-ssm-agent.rpm"
+dnf install -y "https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_$${PROCESSOR}/amazon-ssm-agent.rpm"
 
 #
 # 기본 유틸리티들 설치
