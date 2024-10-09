@@ -77,7 +77,8 @@ resource "aws_instance" "femiwiki_green" {
 
   user_data = templatefile("res/user-data.sh.tftpl", {
     enable_dns_forwarding = true
-    nomad_config = templatefile("res/nomad.hcl", {
+    nomad_config = templatefile("res/nomad.hcl.tftpl", {
+      name            = "femiwiki-${count.index + 1}${count.index == 0 ? "-main" : ""}"
       enable_consul   = true
       main_elastic_ip = count.index == 0
     })
