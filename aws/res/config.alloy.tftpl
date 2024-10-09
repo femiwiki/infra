@@ -42,7 +42,7 @@ prometheus.remote_write "metrics_service" {
 
     basic_auth {
       username = "${prometheus_username}"
-      password = "${password}"
+      password = "${prometheus_password}"
     }
   }
 }
@@ -53,7 +53,7 @@ loki.write "grafana_cloud_loki" {
 
     basic_auth {
       username = "${loki_username}"
-      password = "${password}"
+      password = "${loki_password}"
     }
   }
 }

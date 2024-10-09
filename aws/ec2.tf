@@ -89,7 +89,7 @@ resource "aws_instance" "femiwiki_green" {
       prometheus_password = var.prometheus_password
       loki_endpoint       = "https://logs-prod-030.grafana.net/loki/api/v1/push"
       loki_username       = "1017101"
-      loki_password       = var.prometheus_password
+      loki_password       = var.loki_password
     })
 
     start_nomad  = true
