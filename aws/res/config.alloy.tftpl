@@ -5,7 +5,7 @@ discovery.relabel "alloy_check" {
 
   rule {
     target_label = "instance"
-    replacement  = constants.hostname
+    replacement  = "${name}"
   }
 
   rule {
@@ -65,7 +65,7 @@ discovery.relabel "metrics_integrations_integrations_nomad" {
 
   rule {
     target_label = "instance"
-    replacement  = constants.hostname
+    replacement  = "${name}"
   }
 }
 

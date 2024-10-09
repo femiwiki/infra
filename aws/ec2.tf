@@ -84,6 +84,7 @@ resource "aws_instance" "femiwiki_green" {
     })
     consul_config = file("res/consul.hcl")
     alloy_config = templatefile("res/config.alloy.tftpl", {
+      name                = "femiwiki-${count.index + 1}${count.index == 0 ? "-main" : ""}"
       prometheus_endpoint = "https://prometheus-prod-49-prod-ap-northeast-0.grafana.net/api/prom/push"
       prometheus_username = "1835631"
       prometheus_password = var.prometheus_password
