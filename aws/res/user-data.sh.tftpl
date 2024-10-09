@@ -57,40 +57,18 @@ sudo systemctl enable atop.service sysstat-collect.timer sysstat.service
 sudo systemctl restart atop.service sysstat-collect.timer sysstat.service
 
 #
-# cloudwatch-agent 실행
+# Install and configure Grafana Alloy
 #
-cat <<'EOF' > /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json
-{
-  "agent": {
-    "metrics_collection_interval": 60
-  },
-  "metrics": {
-    "namespace": "CWAgent",
-    "append_dimensions": {
-      "InstanceId": "$${aws:InstanceId}"
-    },
-    "metrics_collected": {
-      "disk": {
-        "measurement": [
-          "used_percent"
-        ],
-        "resources": [
-          "/"
-        ],
-        "ignore_file_system_types": [
-          "sysfs", "tmpfs", "devtmpfs", "overlay"
-        ]
-      },
-      "mem": {
-        "measurement": [
-          "used_percent"
-        ]
-      }
-    }
-  }
-}
+wget -q -O gpg.key https://rpm.grafana.com/gpg.key
+rpm --import gpg.key
+rm gpg.key
+echo -e '[grafana]\nname=grafana\nbaseurl=https://rpm.grafana.com\nrepo_gpgcheck=1\nenabled=1\ngpgcheck=1\ngpgkey=https://rpm.grafana.com/gpg.key\nsslverify=1
+sslcacert=/etc/pki/tls/certs/ca-bundle.crt' | tee /etc/yum.repos.d/grafana.repo
+dnf install -y alloy
+cat <<'EOF' > /etc/alloy/config.alloy
+${alloy_config}
 EOF
-/opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json
+systemctl restart alloy
 
 #
 # sudo 로 /usr/local/{bin,sbin} 안에 있는 커맨드를 실행할 수 있도록 설정

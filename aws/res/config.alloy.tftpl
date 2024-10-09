@@ -1,0 +1,111 @@
+prometheus.exporter.self "alloy_check" { }
+
+discovery.relabel "alloy_check" {
+  targets = prometheus.exporter.self.alloy_check.targets
+
+  rule {
+    target_label = "instance"
+    replacement  = constants.hostname
+  }
+
+  rule {
+    target_label = "alloy_hostname"
+    replacement  = constants.hostname
+  }
+
+  rule {
+    target_label = "job"
+    replacement  = "integrations/alloy-check"
+  }
+}
+
+prometheus.scrape "alloy_check" {
+  targets    = discovery.relabel.alloy_check.output
+  forward_to = [prometheus.relabel.alloy_check.receiver]
+
+  scrape_interval = "60s"
+}
+
+prometheus.relabel "alloy_check" {
+  forward_to = [prometheus.remote_write.metrics_service.receiver]
+
+  rule {
+    source_labels = ["__name__"]
+    regex         = "(prometheus_target_sync_length_seconds_sum|prometheus_target_scrapes_.*|prometheus_target_interval.*|prometheus_sd_discovered_targets|alloy_build.*|prometheus_remote_write_wal_samples_appended_total|process_start_time_seconds)"
+    action        = "keep"
+  }
+}
+
+prometheus.remote_write "metrics_service" {
+  endpoint {
+    url = "${prometheus_endpoint}"
+
+    basic_auth {
+      username = "${prometheus_username}"
+      password = "${prometheus_password}"
+    }
+  }
+}
+
+loki.write "grafana_cloud_loki" {
+  endpoint {
+    url = "${loki_endpoint}"
+
+    basic_auth {
+      username = "${loki_username}"
+      password = "${loki_password}"
+    }
+  }
+}
+
+discovery.relabel "metrics_integrations_integrations_nomad" {
+  targets = [{
+      __address__ = "127.0.0.1:4646",
+  }]
+
+  rule {
+    target_label = "instance"
+    replacement  = constants.hostname
+  }
+}
+
+prometheus.scrape "metrics_integrations_integrations_nomad" {
+  targets    = discovery.relabel.metrics_integrations_integrations_nomad.output
+  forward_to = [prometheus.relabel.metrics_integrations_integrations_nomad.receiver]
+  job_name   = "integrations/nomad"
+  params     = {
+    format = ["prometheus"],
+  }
+  metrics_path = "/v1/metrics"
+}
+
+prometheus.relabel "metrics_integrations_integrations_nomad" {
+  forward_to = [prometheus.remote_write.metrics_service.receiver]
+
+  rule {
+    source_labels = ["__name__"]
+    regex         = string.join([
+      "up",
+      "nomad_client_allocated_cpu",
+      "nomad_client_allocated_disk",
+      "nomad_client_allocated_memory",
+      "nomad_client_allocs_cpu_total_percent",
+      "nomad_client_allocs_cpu_total_ticks",
+      "nomad_client_allocs_memory_cache",
+      "nomad_client_allocs_memory_rss",
+      "nomad_client_host_cpu_idle",
+      "nomad_client_host_disk_available",
+      "nomad_client_host_disk_inodes_percent",
+      "nomad_client_host_disk_size",
+      "nomad_client_host_memory_available",
+      "nomad_client_host_memory_free",
+      "nomad_client_host_memory_total",
+      "nomad_client_host_memory_used",
+      "nomad_client_unallocated_cpu",
+      "nomad_client_unallocated_disk",
+      "nomad_client_unallocated_memory",
+      "nomad_client_uptime",
+    ], "|")
+    action        = "keep"
+  }
+}
