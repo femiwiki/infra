@@ -109,7 +109,7 @@ resource "aws_instance" "femiwiki_green" {
   }
 
   tags = {
-    Name           = count.index == 0 ? "Femiwiki Server" : "Femiwiki Server ${count.index + 1}"
+    Name           = "Femiwiki Server ${count.index + 1}"
     ConsulAutoJoin = "auto-join"
   }
 
