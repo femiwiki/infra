@@ -58,6 +58,57 @@ loki.write "grafana_cloud_loki" {
   }
 }
 
+// Linux
+
+discovery.relabel "integrations_node_exporter" {
+  targets = prometheus.exporter.unix.integrations_node_exporter.targets
+
+  rule {
+    target_label = "instance"
+    replacement  = "${name}"
+  }
+
+  rule {
+    target_label = "job"
+    replacement = "integrations/node_exporter"
+  }
+}
+
+prometheus.exporter.unix "integrations_node_exporter" {
+  disable_collectors = ["ipvs", "btrfs", "infiniband", "xfs", "zfs"]
+
+  filesystem {
+    fs_types_exclude     = "^(autofs|binfmt_misc|bpf|cgroup2?|configfs|debugfs|devpts|devtmpfs|tmpfs|fusectl|hugetlbfs|iso9660|mqueue|nsfs|overlay|proc|procfs|pstore|rpc_pipefs|securityfs|selinuxfs|squashfs|sysfs|tracefs)$"
+    mount_points_exclude = "^/(dev|proc|run/credentials/.+|sys|var/lib/docker/.+)($|/)"
+    mount_timeout        = "5s"
+  }
+
+  netclass {
+    ignored_devices = "^(veth.*|cali.*|[a-f0-9]{15})$"
+  }
+
+  netdev {
+    device_exclude = "^(veth.*|cali.*|[a-f0-9]{15})$"
+  }
+}
+
+prometheus.scrape "integrations_node_exporter" {
+  targets    = discovery.relabel.integrations_node_exporter.output
+  forward_to = [prometheus.relabel.integrations_node_exporter.receiver]
+}
+
+prometheus.relabel "integrations_node_exporter" {
+  forward_to = [prometheus.remote_write.metrics_service.receiver]
+
+  rule {
+    source_labels = ["__name__"]
+    regex         = "node_scrape_collector_.+"
+    action        = "drop"
+  }
+}
+
+// nomad
+
 discovery.relabel "metrics_integrations_integrations_nomad" {
   targets = [{
       __address__ = "127.0.0.1:4646",
@@ -89,10 +140,13 @@ prometheus.relabel "metrics_integrations_integrations_nomad" {
       "nomad_client_allocated_cpu",
       "nomad_client_allocated_disk",
       "nomad_client_allocated_memory",
+      "nomad_client_allocs_cpu_allocated",
       "nomad_client_allocs_cpu_total_percent",
       "nomad_client_allocs_cpu_total_ticks",
+      "nomad_client_allocs_memory_allocated",
       "nomad_client_allocs_memory_cache",
       "nomad_client_allocs_memory_rss",
+      "nomad_client_allocs_memory_usage",
       "nomad_client_host_cpu_idle",
       "nomad_client_host_disk_available",
       "nomad_client_host_disk_inodes_percent",
