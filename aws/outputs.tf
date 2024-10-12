@@ -29,5 +29,5 @@ output "ebs_caddycerts_id" {
 }
 
 output "ebs_caddycerts_green_id" {
-  value = aws_ebs_volume.persistent_data_caddycerts_green.id
+  value = aws_ebs_volume.persistent_data_caddycerts.id
 }
