@@ -216,7 +216,7 @@ data "aws_iam_policy_document" "mount_ebs_volumes" {
     resources = concat([
       aws_ebs_volume.persistent_data_mysql.arn,
       aws_ebs_volume.persistent_data_caddycerts.arn,
-      aws_ebs_volume.persistent_data_caddycerts_green.arn,
+      aws_ebs_volume.persistent_data_caddycerts.arn,
       ], [for instance in aws_instance.femiwiki_green : instance.arn]
     )
   }
