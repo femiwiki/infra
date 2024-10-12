@@ -84,7 +84,7 @@ dnf install -y docker
 systemctl enable docker
 systemctl start docker
 usermod -a -G docker ec2-user
-# 이후 로그아웃한 뒤 재로그인
+usermod -a -G docker alloy
 
 # Add hostname to /etc/hosts
 # https://github.com/hashicorp/nomad/blob/v1.8.4/terraform/shared/scripts/server.sh
@@ -111,6 +111,7 @@ dnf install -y "nomad-$${NOMAD_VERSION}"
 cat <<EOF >/etc/nomad.d/nomad.hcl
 ${nomad_config}
 EOF
+usermod -a -G docker nomad
 
 #
 # Consul 설치

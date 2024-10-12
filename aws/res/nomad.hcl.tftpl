@@ -32,11 +32,19 @@ client {
 
 plugin "docker" {
   config {
+    extra_labels = ["*"]
     # CSI Node plugins must run as privileged Docker jobs
     allow_privileged = true
-
     volumes {
       enabled = true
+    }
+    logging {
+      # Alloy's discovery.docker does not support the default type
+      # https://github.com/grafana/loki/issues/6165#issuecomment-1969418500
+      type = "journald"
+      config {
+        labels-regex = "com\\.hashicorp\\.nomad.*"
+      }
     }
   }
 }

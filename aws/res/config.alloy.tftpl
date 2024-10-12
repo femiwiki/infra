@@ -59,47 +59,37 @@ loki.write "grafana_cloud_loki" {
 }
 
 // Linux
-
 discovery.relabel "integrations_node_exporter" {
   targets = prometheus.exporter.unix.integrations_node_exporter.targets
-
   rule {
     target_label = "instance"
     replacement  = "${name}"
   }
-
   rule {
     target_label = "job"
     replacement = "integrations/node_exporter"
   }
 }
-
 prometheus.exporter.unix "integrations_node_exporter" {
   disable_collectors = ["ipvs", "btrfs", "infiniband", "xfs", "zfs"]
-
   filesystem {
     fs_types_exclude     = "^(autofs|binfmt_misc|bpf|cgroup2?|configfs|debugfs|devpts|devtmpfs|tmpfs|fusectl|hugetlbfs|iso9660|mqueue|nsfs|overlay|proc|procfs|pstore|rpc_pipefs|securityfs|selinuxfs|squashfs|sysfs|tracefs)$"
     mount_points_exclude = "^/(dev|proc|run/credentials/.+|sys|var/lib/docker/.+)($|/)"
     mount_timeout        = "5s"
   }
-
   netclass {
     ignored_devices = "^(veth.*|cali.*|[a-f0-9]{15})$"
   }
-
   netdev {
     device_exclude = "^(veth.*|cali.*|[a-f0-9]{15})$"
   }
 }
-
 prometheus.scrape "integrations_node_exporter" {
   targets    = discovery.relabel.integrations_node_exporter.output
   forward_to = [prometheus.relabel.integrations_node_exporter.receiver]
 }
-
 prometheus.relabel "integrations_node_exporter" {
   forward_to = [prometheus.remote_write.metrics_service.receiver]
-
   rule {
     source_labels = ["__name__"]
     regex         = "node_scrape_collector_.+"
@@ -107,19 +97,61 @@ prometheus.relabel "integrations_node_exporter" {
   }
 }
 
-// nomad
+// Docker. Alloy's discovery.docker does not support the default type
+// https://github.com/grafana/loki/issues/6165#issuecomment-1969418500
+// 
+loki.relabel "journal" {
+  forward_to = []
+  // https://developer.hashicorp.com/nomad/docs/drivers/docker#extra_labels
+  rule {
+    source_labels = ["__journal__systemd_unit"]
+    target_label  = "unit"
+  }
+  rule {
+    source_labels = ["__journal__hostname"]
+    target_label  = "host"
+  }
+  rule {
+    source_labels = ["__journal_com_hashicorp_nomad_node_name"]
+    target_label  = "nomad_node_name"
+  }
+  rule {
+    source_labels = ["__journal_com_hashicorp_nomad_node_id"]
+    target_label  = "nomad_node_id"
+  }
+  rule {
+    source_labels = ["__journal_com_hashicorp_nomad_job_name"]
+    target_label  = "nomad_job"
+  }
+  rule {
+    source_labels = ["__journal_com_hashicorp_nomad_task_group_name"]
+    target_label  = "nomad_group"
+  }
+  rule {
+    source_labels = ["__journal_com_hashicorp_nomad_alloc_id"]
+    target_label  = "nomad_alloc_id"
+  }
+  rule {
+    source_labels = ["__journal_com_hashicorp_nomad_task_name"]
+    target_label  = "nomad_task"
+  }
+}
+loki.source.journal "read"  {
+  forward_to    = [loki.write.grafana_cloud_loki.receiver]
+  relabel_rules = loki.relabel.journal.rules
+  labels        = {component = "loki.source.journal"}
+}
 
+// Nomad
 discovery.relabel "metrics_integrations_integrations_nomad" {
   targets = [{
       __address__ = "127.0.0.1:4646",
   }]
-
   rule {
     target_label = "instance"
     replacement  = "${name}"
   }
 }
-
 prometheus.scrape "metrics_integrations_integrations_nomad" {
   targets    = discovery.relabel.metrics_integrations_integrations_nomad.output
   forward_to = [prometheus.relabel.metrics_integrations_integrations_nomad.receiver]
@@ -129,10 +161,8 @@ prometheus.scrape "metrics_integrations_integrations_nomad" {
   }
   metrics_path = "/v1/metrics"
 }
-
 prometheus.relabel "metrics_integrations_integrations_nomad" {
   forward_to = [prometheus.remote_write.metrics_service.receiver]
-
   rule {
     source_labels = ["__name__"]
     regex         = string.join([
