@@ -43,7 +43,7 @@ plugin "docker" {
       # https://github.com/grafana/loki/issues/6165#issuecomment-1969418500
       type = "journald"
       config {
-        labels-regex = "com\\.hashicorp\\.nomad.*"
+        labels-regex = "com\\\\.hashicorp\\\\.nomad.*"
       }
     }
   }
