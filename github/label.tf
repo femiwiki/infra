@@ -289,6 +289,7 @@ locals {
         "mw1_39",
         "mw1_40",
         "mw1_42",
+        "mw1_43",
         "ve",
         "restbase",
         "wikibase",
@@ -316,6 +317,7 @@ locals {
         "mw1_38",
         "mw1_39",
         "mw1_42",
+        "mw1_43",
 
         "femiwiki_discussion_needed",
       ]
@@ -349,7 +351,7 @@ locals {
     rankingbot = local.base_label_suite
 
     FemiwikiSkin                = concat(local.ext_label_suite, ["femiwiki_discussion_needed", "ve", "search", "mw1_35", "mw1_36", "mw1_37", "mw1_39", "mw1_42", "mw1_43"])
-    UnifiedExtensionForFemiwiki = concat(local.ext_label_suite, ["wikibase", "mw1_35", "mw1_36", "mw1_37", "mw1_39", "mw1_42"])
+    UnifiedExtensionForFemiwiki = concat(local.ext_label_suite, ["wikibase", "mw1_35", "mw1_36", "mw1_37", "mw1_39", "mw1_42", "mw1_43"])
   }
 
   // Flattening nested structures
