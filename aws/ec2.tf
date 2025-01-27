@@ -17,8 +17,8 @@ resource "aws_eip" "femiwiki" {
 }
 
 resource "aws_eip" "test_femiwiki" {
-  # instance = aws_instance.femiwiki.id
-  domain = "vpc"
+  instance = aws_instance.femiwiki_green[1].id
+  domain   = "vpc"
 }
 
 data "aws_availability_zone" "femiwiki" {
