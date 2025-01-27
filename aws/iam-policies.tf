@@ -200,6 +200,28 @@ data "aws_iam_policy_document" "download_secrets" {
   }
 }
 
+resource "aws_iam_policy" "access_caddycerts" {
+  name        = "AccessCaddycerts"
+  description = "Allows to read and write caddycerts"
+
+  policy = data.aws_iam_policy_document.access_caddycerts.json
+}
+
+data "aws_iam_policy_document" "access_caddycerts" {
+  statement {
+    actions   = ["s3:ListBucket"]
+    resources = ["${local.secrets}"]
+  }
+  statement {
+    actions = [
+      "s3:GetObject",
+      "s3:PutObject",
+      "s3:DeleteObject",
+    ]
+    resources = ["${local.secrets}/caddycerts/*"]
+  }
+}
+
 resource "aws_iam_policy" "mount_ebs_volumes" {
   name        = "MountEbsVolumes"
   description = "Allows to mount ebs volumes"
