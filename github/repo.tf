@@ -49,12 +49,13 @@ module "femiwiki" {
 }
 
 module "docker_mediawiki" {
-  source                        = "./modules/github-repository"
-  name                          = "docker-mediawiki"
-  description                   = ":whale: Dockerized Femiwiki's mediawiki server"
-  delete_branch_on_merge        = true
-  enforce_admins                = local.docker.enforce_admins
-  required_pull_request_reviews = local.docker.required_pull_request_reviews
+  source                          = "./modules/github-repository"
+  name                            = "docker-mediawiki"
+  description                     = ":whale: Dockerized Femiwiki's mediawiki server"
+  delete_branch_on_merge          = true
+  enforce_admins                  = local.docker.enforce_admins
+  required_pull_request_reviews   = local.docker.required_pull_request_reviews
+  required_status_checks_contexts = [["php-lint", "caddy-fmt", "etc-lint"]]
   topics = [
     "docker-compose",
     "docker-image",
