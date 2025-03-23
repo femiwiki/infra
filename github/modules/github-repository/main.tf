@@ -1,15 +1,20 @@
 resource "github_repository" "repository" {
-  name                   = var.name
-  description            = var.description
-  homepage_url           = var.homepage_url
-  has_issues             = true
-  allow_auto_merge       = true
-  delete_branch_on_merge = var.delete_branch_on_merge
-  auto_init              = true
-  archive_on_destroy     = true
-  topics                 = var.topics
-  vulnerability_alerts   = true
-  has_discussions        = false
+  name                      = var.name
+  description               = var.description
+  homepage_url              = var.homepage_url
+  has_issues                = true
+  allow_auto_merge          = true
+  delete_branch_on_merge    = var.delete_branch_on_merge
+  auto_init                 = true
+  archive_on_destroy        = true
+  topics                    = var.topics
+  vulnerability_alerts      = true
+  has_discussions           = false
+  has_projects              = false
+  has_wiki                  = false
+  allow_merge_commit        = false
+  allow_rebase_merge        = false
+  squash_merge_commit_title = "PR_TITLE"
 }
 
 resource "github_branch" "main_branch" {
@@ -23,10 +28,11 @@ resource "github_branch_default" "branch_default" {
 }
 
 resource "github_branch_protection" "branch_protection" {
-  count             = length(var.patterns)
-  repository_id     = github_repository.repository.node_id
-  pattern           = var.patterns[count.index]
-  enforce_admins    = var.enforce_admins
+  count                   = length(var.patterns)
+  repository_id           = github_repository.repository.node_id
+  pattern                 = var.patterns[count.index]
+  enforce_admins          = var.enforce_admins
+  required_linear_history = true
 
   dynamic "required_status_checks" {
     for_each = var.required_status_checks_contexts
