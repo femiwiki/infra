@@ -51,8 +51,8 @@ module "femiwiki_skin" {
   topics                          = local.skin.topics
   enforce_admins                  = local.skin.enforce_admins
   required_pull_request_reviews   = local.skin.required_pull_request_reviews
-  required_status_checks_contexts = local.skin.required_status_checks_contexts
-  patterns                        = local.skin.patterns
+  required_status_checks_contexts = [concat(local.skin.required_status_checks_contexts[0], ["semantic-pull-request"])]
+  patterns                        = ["main"]
   collaborator                    = local.skin.collaborator
 }
 
