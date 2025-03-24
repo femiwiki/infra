@@ -44,40 +44,29 @@ locals {
 
 # skin
 module "femiwiki_skin" {
-  source                        = "./modules/github-repository"
-  name                          = "FemiwikiSkin"
-  description                   = ":jack_o_lantern: FemiwikiSkin"
-  homepage_url                  = "https://www.mediawiki.org/wiki/Special:MyLanguage/Skin:Femiwiki"
-  topics                        = local.skin.topics
-  enforce_admins                = local.skin.enforce_admins
-  required_pull_request_reviews = local.skin.required_pull_request_reviews
-  patterns                      = ["main"]
-  collaborator                  = local.skin.collaborator
-  required_status_checks_contexts = [[
-    "test (REL1_42, composer-test)",
-    "test (REL1_42, npm-test)",
-    "test (REL1_42, phan)",
-    "test (REL1_42, selenium)",
-    "semantic-pull-request",
-  ]]
+  source                          = "./modules/github-repository"
+  name                            = "FemiwikiSkin"
+  description                     = ":jack_o_lantern: FemiwikiSkin"
+  homepage_url                    = "https://www.mediawiki.org/wiki/Special:MyLanguage/Skin:Femiwiki"
+  topics                          = local.skin.topics
+  enforce_admins                  = local.skin.enforce_admins
+  required_pull_request_reviews   = local.skin.required_pull_request_reviews
+  required_status_checks_contexts = [concat(local.skin.required_status_checks_contexts[0], ["semantic-pull-request"])]
+  patterns                        = ["main"]
+  collaborator                    = local.skin.collaborator
 }
 
 # extensions
 
 module "unified_extension_for_femiwiki" {
-  source                        = "./modules/github-repository"
-  name                          = "UnifiedExtensionForFemiwiki"
-  description                   = "Unified Extension For Femiwiki"
-  homepage_url                  = "https://www.mediawiki.org/wiki/Special:MyLanguage/Extension:UnifiedExtensionForFemiwiki"
-  topics                        = local.extension.topics
-  enforce_admins                = local.extension.enforce_admins
-  required_pull_request_reviews = local.extension.required_pull_request_reviews
-  patterns                      = []
-  collaborator                  = local.extension.collaborator
-  required_status_checks_contexts = [[
-    "test (REL1_42)",
-    "test (REL1_42)",
-    "test (REL1_42)",
-    "test (REL1_42)",
-  ]]
+  source                          = "./modules/github-repository"
+  name                            = "UnifiedExtensionForFemiwiki"
+  description                     = "Unified Extension For Femiwiki"
+  homepage_url                    = "https://www.mediawiki.org/wiki/Special:MyLanguage/Extension:UnifiedExtensionForFemiwiki"
+  topics                          = local.extension.topics
+  enforce_admins                  = local.extension.enforce_admins
+  required_pull_request_reviews   = local.extension.required_pull_request_reviews
+  required_status_checks_contexts = local.extension.required_status_checks_contexts
+  patterns                        = []
+  collaborator                    = local.extension.collaborator
 }
