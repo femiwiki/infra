@@ -28,10 +28,10 @@ locals {
     # temporarily disable requiring reviews due to too few development members.
     required_pull_request_reviews = [],
     required_status_checks_contexts = [[
-      "test (composer-test)",
-      "test (npm-test)",
-      "test (phan)",
-      "test (selenium)",
+      "test (REL1_42, composer-test)",
+      "test (REL1_42, npm-test)",
+      "test (REL1_42, phan)",
+      "test (REL1_42, selenium)",
     ]]
 
     topics = [
