@@ -67,6 +67,6 @@ module "unified_extension_for_femiwiki" {
   enforce_admins                  = local.extension.enforce_admins
   required_pull_request_reviews   = local.extension.required_pull_request_reviews
   required_status_checks_contexts = local.extension.required_status_checks_contexts
-  patterns                        = []
+  patterns                        = ["main"]
   collaborator                    = local.extension.collaborator
 }
