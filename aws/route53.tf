@@ -162,6 +162,14 @@ resource "aws_route53_record" "dmarc_femiwiki_com" {
   zone_id = aws_route53_zone.femiwiki_com.zone_id
 }
 
+resource "aws_route53_record" "atproto_femiwiki_com" {
+  name    = "_atproto.femiwiki.com"
+  type    = "TXT"
+  records = ["did=did:plc:t5ahhzntx76wmzp6rgt36mml"]
+  ttl     = 3600
+  zone_id = aws_route53_zone.femiwiki_com.zone_id
+}
+
 resource "aws_route53_health_check" "femiwiki_main_page" {
   fqdn              = "femiwiki.com"
   port              = 443
