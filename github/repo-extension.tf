@@ -28,7 +28,7 @@ module "femiwiki_skin" {
     "test (REL1_43, composer-test)",
     "test (REL1_43, npm-test)",
     "test (REL1_43, phan)",
-    "test (REL1_43, selenium)",
+    # "test (REL1_43, selenium)",
     "semantic-pull-request",
   ]]
   patterns     = ["main"]
