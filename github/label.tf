@@ -2,12 +2,6 @@
 
 locals {
   label_definition = {
-    bug = {
-      name        = "bug"
-      description = ""
-      color       = "ee0701"
-    }
-
     cd = {
       name        = "cd"
       description = "Continuous Deployment"
@@ -249,7 +243,7 @@ locals {
     }
   }
 
-  base_label_suite = ["bug", "enhancement", "invalid", "wontfix", "help_wanted", "patch_welcome", "upstreamed"]
+  base_label_suite = ["enhancement", "invalid", "wontfix", "help_wanted", "patch_welcome", "upstreamed"]
   ext_label_suite  = concat(local.base_label_suite, ["deprecation"])
 
 
