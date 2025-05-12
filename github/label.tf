@@ -158,6 +158,12 @@ locals {
       color       = "c5def5"
     }
 
+    mw1_44 = {
+      name        = "mw1.44"
+      description = "MediaWiki 1.44"
+      color       = "c5def5"
+    }
+
     note = {
       name        = "글쓰기"
       description = "공지사항이나 블로그 글로 문서화해야하는 이슈"
