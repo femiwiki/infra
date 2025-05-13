@@ -296,6 +296,8 @@ locals {
         "mw1_40",
         "mw1_42",
         "mw1_43",
+        "mw1_44",
+        "mw1_45",
         "ve",
         "restbase",
         "wikibase",
@@ -324,6 +326,8 @@ locals {
         "mw1_39",
         "mw1_42",
         "mw1_43",
+        "mw1_44",
+        "mw1_45",
 
         "femiwiki_discussion_needed",
       ]
@@ -356,8 +360,8 @@ locals {
     tweetbot   = local.base_label_suite
     rankingbot = local.base_label_suite
 
-    FemiwikiSkin                = concat(local.ext_label_suite, ["femiwiki_discussion_needed", "ve", "search", "mw1_35", "mw1_36", "mw1_37", "mw1_39", "mw1_42", "mw1_43"])
-    UnifiedExtensionForFemiwiki = concat(local.ext_label_suite, ["wikibase", "mw1_35", "mw1_36", "mw1_37", "mw1_39", "mw1_42", "mw1_43"])
+    FemiwikiSkin                = concat(local.ext_label_suite, ["femiwiki_discussion_needed", "ve", "search", "mw1_35", "mw1_36", "mw1_37", "mw1_39", "mw1_42", "mw1_43", "mw1_44", "mw1_45"])
+    UnifiedExtensionForFemiwiki = concat(local.ext_label_suite, ["wikibase", "mw1_35", "mw1_36", "mw1_37", "mw1_39", "mw1_42", "mw1_43", "mw1_44", "mw1_45"])
   }
 
   // Flattening nested structures
