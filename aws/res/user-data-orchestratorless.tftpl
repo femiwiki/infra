@@ -78,6 +78,11 @@ systemctl enable docker
 systemctl start docker
 usermod -a -G docker ec2-user
 usermod -a -G docker alloy
+cat << EOF >> /etc/docker/daemon.json
+{
+  "log-driver": "journald"
+}
+EOF
 
 # Add hostname to /etc/hosts
 # https://github.com/hashicorp/nomad/blob/v1.8.4/terraform/shared/scripts/server.sh
@@ -102,3 +107,105 @@ EOF
 sudo -u ec2-user tee /home/ec2-user/README <<'EOF' >/dev/null
 https://github.com/femiwiki/infra
 EOF
+
+# Launch Memcached
+docker run \
+  --name memcached \
+  -detach \
+  --network=host \
+  memcached:1.6.23-alpine memcached
+
+# Launch MySQL
+mkdir -p /srv/
+# TODO: mount
+mount /dev/nvme1n1 /srv/mysql
+mkdir -p /etc/mysql/
+curl -sL https://github.com/femiwiki/nomad/raw/main/mysql/my.cnf -o /etc/mysql/my.cnf
+docker run \
+  --name mysql \
+  --detach \
+  -v /srv/mysql/:/srv/mysql/ \
+  -v /etc/mysql/:/etc/mysql/ \
+  -e MYSQL_RANDOM_ROOT_PASSWORD=yes \
+  --network=host \
+  mysql/mysql-server:8.0.32
+
+# Launch Fastcgi
+mkdir /a/
+chown ec2-user:ec2-user /a/
+aws s3 cp s3://femiwiki-secrets/secrets.php /a/
+aws s3 cp s3://femiwiki-secrets/analytics-credentials-file.json /a/
+mkdir -p /usr/local/etc/php/conf.d/
+curl -sL https://github.com/femiwiki/nomad/raw/main/php/opcache-recommended.ini -o /usr/local/etc/php/conf.d/opcache-recommended.ini
+mkdir -p /usr/local/etc/php/
+curl -sL https://github.com/femiwiki/nomad/raw/main/php/php.ini -o /usr/local/etc/php/php.ini
+mkdir -p /usr/local/etc/
+curl -sL https://github.com/femiwiki/nomad/raw/main/php/php-fpm.conf -o /usr/local/etc/php-fpm.conf
+
+mkdir -p /srv/femiwiki.com/sitemap
+mkdir -p /tmp/cache
+chown -R 33:33 /tmp/cache
+
+cat <<EOF > /a/Hotfix.php
+<?php
+/**
+ * Use this file for hotfixes
+ *
+ * @file
+ */
+
+\$wgAutoConfirmAge = 3600;
+\$wgUnifiedExtensionForFemiwikiBlockByEmail = false;
+\$wgUnifiedExtensionForFemiwikiRelatedArticlesUseLinks = false;
+
+// Maintenance
+// 점검이 끝나면 아래 라인 주석처리한 뒤, 아래 문서 내용을 비우면 됨
+// https://femiwiki.com/w/%EB%AF%B8%EB%94%94%EC%96%B4%EC%9C%84%ED%82%A4:Sitenotice
+// \$wgReadOnly = '데이터베이스 업그레이드 작업이 진행 중입니다. 작업이 진행되는 동안 사이트 이용이 제한됩니다.';
+
+// 업로드를 막고싶을때엔 아래 라인 주석 해제하면 됨
+// \$wgEnableUploads = false;
+EOF
+
+DOCKER_IMAGE=ghcr.io/femiwiki/femiwiki:2025-05-11T15-43-6cc034fd
+MYSQL_PWD="$(docker run --rm -v /a/:/a/ php -r 'require "/a/secrets.php"; echo $wgDBpassword;')"
+docker run \
+  --name fastcgi \
+  --detach \
+  -v /a/secrets.php:/a/secrets.php \
+  -v /a/Hotfix.php:/a/Hotfix.php \
+  -v /a/analytics-credentials-file.json:/a/analytics-credentials-file.json \
+  -v /usr/local/etc/php/conf.d/opcache-recommended.ini:/usr/local/etc/php/conf.d/opcache-recommended.ini \
+  -v /usr/local/etc/php/php.ini:/usr/local/etc/php/php.ini \
+  -v /usr/local/etc/php-fpm.conf:/usr/local/etc/php-fpm.conf \
+  -v /tmp/cache:/tmp/cache \
+  -e MEDIAWIKI_SKIP_INSTALL=1 \
+  -e MEDIAWIKI_SKIP_IMPORT_SITES=1 \
+  -e MEDIAWIKI_SKIP_UPDATE=1 \
+  -e WG_DB_SERVER=127.0.0.1:3306 \
+  -e WG_DB_USER=root \
+  -e WG_DB_PASSWORD="$MYSQL_PWD" \
+  -e NOMAD_UPSTREAM_ADDR_memcached=127.0.0.1:11211 \
+  --network=host \
+  $DOCKER_IMAGE
+
+# Launch Caddy
+mkdir -p /srv/femiwiki.com/sitemap
+curl -sL https://github.com/femiwiki/nomad/raw/main/caddy/Caddyfile -o /srv/femiwiki.com/Caddyfile
+curl -sL https://github.com/femiwiki/nomad/raw/main/res/robots.txt -o /srv/femiwiki.com/robots.txt
+docker run \
+  --name http \
+  --detach \
+  -v /srv/femiwiki.com/Caddyfile:/srv/femiwiki.com/Caddyfile \
+  -v /srv/femiwiki.com/robots.txt:/srv/femiwiki.com/robots.txt \
+  -v /srv/femiwiki.com/sitemap:/srv/femiwiki.com/sitemap \
+  -e FASTCGI_ADDR=127.0.0.1:9000 \
+  -e AWS_REGION=ap-northeast-1 \
+  -e S3_USE_IAM_PROVIDER=true \
+  -e S3_HOST=s3.ap-northeast-1.amazonaws.com \
+  -e S3_BUCKET=femiwiki-secrets \
+  -e S3_PREFIX=caddycerts \
+  --network=host \
+  --entrypoint caddy \
+  ghcr.io/femiwiki/femiwiki:2025-04-23T15-03-0bb0acf0 \
+  run
