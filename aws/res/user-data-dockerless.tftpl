@@ -4,11 +4,6 @@ set -euo pipefail; IFS=$'\n\t'
 # Enable verbose mode
 set -x
 
-CNI_VERSION=1.4.0
-NOMAD_VERSION=1.9.1
-CONSUL_VERSION=1.19.2
-CONSUL_CNI_VERSION=1.5.1
-
 case $(uname -p) in
   "x86_64")
     PROCESSOR="amd64"
@@ -19,7 +14,7 @@ case $(uname -p) in
 esac
 
 #
-# ec2-instance-connect과 SSMAgent를 제일 먼저 설치
+# Install ec2-instance-connect and SSMAgent
 # Reference: https://docs.aws.amazon.com/systems-manager/latest/userguide/agent-install-al2.html
 #
 dnf install -y ec2-instance-connect
@@ -30,7 +25,6 @@ dnf install -y "https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/l
 #
 dnf autoremove -y postfix
 # - ripgrep: Disabled temporarily (https://github.com/femiwiki/femiwiki/issues/247)
-# - dmidecode: required by Nomad (https://github.com/hashicorp/nomad/issues/19343#issuecomment-1845538511)
 dnf install -y \
   bash-completion \
   vim-enhanced \
@@ -40,7 +34,6 @@ dnf install -y \
   jq \
   unzip \
   nc \
-  dmidecode \
   bind-utils \
 ;
 
@@ -76,84 +69,9 @@ cat <<'EOF' > /etc/sudoers.d/10-sudo-path
 Defaults secure_path=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin
 EOF
 
-#
-# 도커 설치
-# Reference: https://docs.aws.amazon.com/AmazonECS/latest/developerguide/docker-basics.html#install_docker
-#
-dnf install -y docker
-systemctl enable docker
-systemctl start docker
-usermod -a -G docker ec2-user
-usermod -a -G docker alloy
-
 # Add hostname to /etc/hosts
 # https://github.com/hashicorp/nomad/blob/v1.8.4/terraform/shared/scripts/server.sh
 echo "127.0.0.1 $(hostname)" | tee --append /etc/hosts
-
-#
-# CNI 설치
-# Required for Nomad 'bridge' network
-#
-curl -sLo cni-plugins.tgz \
-  "https://github.com/containernetworking/plugins/releases/download/v$${CNI_VERSION}/cni-plugins-linux-$${PROCESSOR}-v$${CNI_VERSION}.tgz"
-mkdir -p /opt/cni/bin
-tar -C /opt/cni/bin -xzf cni-plugins.tgz
-rm -f cni-plugins.tgz
-
-# Add hashicorp repo
-dnf config-manager --add-repo https://rpm.releases.hashicorp.com/AmazonLinux/hashicorp.repo
-
-#
-# Nomad 설치
-# Reference: https://learn.hashicorp.com/tutorials/nomad/production-deployment-guide-vm-with-consul
-#
-dnf install -y "nomad-$${NOMAD_VERSION}"
-cat <<EOF >/etc/nomad.d/nomad.hcl
-${nomad_config}
-EOF
-usermod -a -G docker nomad
-
-#
-# Consul 설치
-# Reference:
-#   https://github.com/hashicorp/terraform-aws-consul/blob/master/modules/install-consul/install-consul
-#   https://learn.hashicorp.com/tutorials/nomad/production-deployment-guide-vm-with-consul
-#
-dnf install -y "consul-$${CONSUL_VERSION}"
-cat <<EOF >/etc/consul.d/consul.hcl
-${consul_config}
-EOF
-
-dnf install -y consul-cni-$${CONSUL_CNI_VERSION}
-
-%{ if enable_dns_forwarding }
-#
-# Setup systemd-resolved to forward DNS for Consul service discovery
-# References:
-# - https://learn.hashicorp.com/tutorials/consul/dns-forwarding
-# - https://aws.amazon.com/premiumsupport/knowledge-center/dns-resolution-failures-ec2-linux
-#
-mkdir -p /etc/systemd/resolved.conf.d
-cat <<'EOF' > /etc/systemd/resolved.conf.d/consul.conf
-[Resolve]
-DNS=127.0.0.1:8600
-DNSSEC=false
-Domains=~consul
-EOF
-echo 'DNSStubListener=false' >> /etc/systemd/resolved.conf
-systemctl restart systemd-resolved
-# This should not be required, but anyway
-iptables --table nat --append OUTPUT --destination localhost --protocol udp --match udp --dport 53 --jump REDIRECT --to-ports 8600
-iptables --table nat --append OUTPUT --destination localhost --protocol tcp --match tcp --dport 53 --jump REDIRECT --to-ports 8600
-%{ endif }
-
-# Add Docker bridge network IP to /etc/resolv.conf (at the top)
-# https://github.com/hashicorp/nomad/blob/v1.8.4/terraform/shared/scripts/server.sh
-DOCKER_BRIDGE_IP_ADDRESS="$(ifconfig docker0 2>/dev/null | grep inet | xargs | cut -d' ' -f2)"
-echo "nameserver $DOCKER_BRIDGE_IP_ADDRESS" | tee /etc/resolv.conf.new
-echo "nameserver 127.0.0.1" | tee /etc/resolv.conf.new
-cat /etc/resolv.conf | tee --append /etc/resolv.conf.new
-mv /etc/resolv.conf.new /etc/resolv.conf
 
 #
 # htoprc 생성
@@ -169,76 +87,8 @@ tree_view=1
 EOF
 
 #
-# Clone Femiwiki Nomad configurations and specifications repository
-#
-sudo -u ec2-user git clone https://github.com/femiwiki/nomad.git /home/ec2-user/nomad/
-
-#
 # README 생성
 #
 sudo -u ec2-user tee /home/ec2-user/README <<'EOF' >/dev/null
-Nomad, Consul 관련 바이너리들
-
-    /usr/bin/nomad              nomad 바이너리
-    /usr/bin/consul             consul 바이너리
-
-systemd 유닛 파일
-
-    /etc/systemd/system/nomad.service
-    /etc/systemd/system/consul.service
-
-기타 관련 파일들 위치
-    /etc/nomad.d   Nomad configuration
-    /etc/consul.d  Consul configuration
-    /opt/nomad     Nomad data directory
-    /opt/consul    Consul data directory
-    /srv           Persistent EBS volume mount point for MySQL, certicates, cache and so on
-
-그 외 인스턴스가 어떻게 세팅되었는지는 아래 repo 참고
-
-    https://github.com/femiwiki/infra
+https://github.com/femiwiki/infra
 EOF
-
-%{ if start_nomad || start_consul }
-systemctl daemon-reload
-%{ endif }
-%{ if start_consul }
-# https://github.com/hashicorp/terraform-aws-consul/blob/master/modules/run-consul/run-consul
-systemctl enable --now consul.service
-
-# Wait Consul
-until consul members > /dev/null; do
-  sleep 1; done;
-
-%{ if bootstrap }
-CONSUL_ACL_BOOTSTRAP="$(consul acl bootstrap)"
-
-CONSUL_ACCESSOR_ID="$(echo "$CONSUL_ACL_BOOTSTRAP" | grep AccessorID | rev | cut -d' ' -f1 | rev)"
-CONSUL_HTTP_TOKEN="$(echo "$CONSUL_ACL_BOOTSTRAP" | grep SecretID | rev | cut -d' ' -f1 | rev)"
-export CONSUL_HTTP_TOKEN
-
-# Write CONSUL_TOKEN as a local file
-echo "CONSUL_HTTP_TOKEN=$CONSUL_HTTP_TOKEN" >> "/etc/environment"
-%{ endif }
-%{ endif }
-%{ if start_nomad }
-# https://github.com/hashicorp/terraform-aws-nomad/blob/master/modules/run-nomad/run-nomad
-systemctl enable --now nomad.service
-
-# Wait Nomad
-until nomad acl policy list > /dev/null; do
-  sleep 1; done;
-
-%{ if bootstrap }
-NOMAD_ACL_BOOTSTRAP="$(nomad acl bootstrap)"
-
-NOMAD_ACCESSOR_ID="$(echo "$NOMAD_ACL_BOOTSTRAP" | grep 'Accessor ID' | rev | cut -d' ' -f1 | rev)"
-NOMAD_TOKEN="$(echo "$NOMAD_ACL_BOOTSTRAP" | grep 'Secret ID' | rev | cut -d' ' -f1 | rev)"
-export NOMAD_TOKEN
-
-# Write NOMAD_TOKEN as a local file
-echo "NOMAD_TOKEN=$NOMAD_TOKEN" >> "/etc/environment"
-
-nomad setup consul -y
-%{ endif }
-%{ endif }
