@@ -48,6 +48,64 @@ resource "aws_ebs_volume" "persistent_data_caddycerts" {
 }
 
 #
+# Femiwiki Blue Cluster
+#
+resource "aws_instance" "femiwiki_blue" {
+  ami                         = data.aws_ami.amazon_linux_2_arm64.image_id
+  availability_zone           = data.aws_availability_zone.femiwiki.name
+  disable_api_termination     = true
+  ebs_optimized               = true
+  iam_instance_profile        = aws_iam_instance_profile.femiwiki.name
+  instance_type               = "t4g.nano"
+  key_name                    = aws_key_pair.femiwiki.key_name
+  monitoring                  = false
+  user_data_replace_on_change = false
+
+  user_data = templatefile("res/user-data-dockerless.tftpl", {
+    alloy_config = templatefile("res/config.alloy.tftpl", {
+      name                = "femiwiki-dockerless"
+      prometheus_endpoint = "https://prometheus-prod-49-prod-ap-northeast-0.grafana.net/api/prom/push"
+      prometheus_username = "1835631"
+      prometheus_password = var.prometheus_password
+      loki_endpoint       = "https://logs-prod-030.grafana.net/loki/api/v1/push"
+      loki_username       = "1017101"
+      loki_password       = var.loki_password
+    })
+  })
+
+  vpc_security_group_ids = [
+    aws_default_security_group.default.id,
+    aws_security_group.femiwiki.id,
+    aws_security_group.nomad_cluster.id,
+  ]
+
+  root_block_device {
+    delete_on_termination = true
+    volume_size           = 16
+    volume_type           = "gp3"
+  }
+
+  credit_specification {
+    cpu_credits = "unlimited"
+  }
+
+  metadata_options {
+    instance_metadata_tags = "enabled"
+  }
+
+  tags = {
+    Name = "Femiwiki Server dockerless"
+  }
+
+  lifecycle {
+    ignore_changes = [
+      ami,
+      user_data,
+    ]
+  }
+}
+
+#
 # Femiwiki Green Cluster
 #
 resource "aws_instance" "femiwiki_green" {
@@ -117,3 +175,4 @@ resource "aws_instance" "femiwiki_green" {
     ]
   }
 }
+
