@@ -61,9 +61,9 @@ resource "aws_instance" "femiwiki_blue" {
   monitoring                  = false
   user_data_replace_on_change = false
 
-  user_data = templatefile("res/user-data-dockerless.tftpl", {
+  user_data = templatefile("res/user-data-orchestratorless.tftpl", {
     alloy_config = templatefile("res/config.alloy.tftpl", {
-      name                = "femiwiki-dockerless"
+      name                = "femiwiki-orchestratorless"
       prometheus_endpoint = "https://prometheus-prod-49-prod-ap-northeast-0.grafana.net/api/prom/push"
       prometheus_username = "1835631"
       prometheus_password = var.prometheus_password
@@ -94,7 +94,7 @@ resource "aws_instance" "femiwiki_blue" {
   }
 
   tags = {
-    Name = "Femiwiki Server dockerless"
+    Name = "Femiwiki Server orchestratorless"
   }
 
   lifecycle {

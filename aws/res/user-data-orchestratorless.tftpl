@@ -69,6 +69,16 @@ cat <<'EOF' > /etc/sudoers.d/10-sudo-path
 Defaults secure_path=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin
 EOF
 
+#
+# 도커 설치
+# Reference: https://docs.aws.amazon.com/AmazonECS/latest/developerguide/docker-basics.html#install_docker
+#
+dnf install -y docker
+systemctl enable docker
+systemctl start docker
+usermod -a -G docker ec2-user
+usermod -a -G docker alloy
+
 # Add hostname to /etc/hosts
 # https://github.com/hashicorp/nomad/blob/v1.8.4/terraform/shared/scripts/server.sh
 echo "127.0.0.1 $(hostname)" | tee --append /etc/hosts
