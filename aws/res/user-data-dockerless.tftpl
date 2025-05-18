@@ -1,0 +1,94 @@
+#!/bin/bash
+set -euo pipefail; IFS=$'\n\t'
+
+# Enable verbose mode
+set -x
+
+case $(uname -p) in
+  "x86_64")
+    PROCESSOR="amd64"
+    ;;
+  "aarch64")
+    PROCESSOR="arm64"
+    ;;
+esac
+
+#
+# Install ec2-instance-connect and SSMAgent
+# Reference: https://docs.aws.amazon.com/systems-manager/latest/userguide/agent-install-al2.html
+#
+dnf install -y ec2-instance-connect
+dnf install -y "https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_$${PROCESSOR}/amazon-ssm-agent.rpm"
+
+#
+# 기본 유틸리티들 설치
+#
+dnf autoremove -y postfix
+# - ripgrep: Disabled temporarily (https://github.com/femiwiki/femiwiki/issues/247)
+dnf install -y \
+  bash-completion \
+  vim-enhanced \
+  htop \
+  tmux \
+  git \
+  jq \
+  unzip \
+  nc \
+  bind-utils \
+;
+
+#
+# Install atop and sysstat
+# Reference: https://repost.aws/knowledge-center/ec2-linux-configure-monitoring-tools
+#
+dnf -y install sysstat atop
+sed -i 's/^LOGINTERVAL=600.*/LOGINTERVAL=60/' /etc/sysconfig/atop
+mkdir -v /etc/systemd/system/sysstat-collect.timer.d/
+bash -c "sed -e 's|every 10 minutes|every 1 minute|g' -e '/^OnCalendar=/ s|/10$|/1|' /usr/lib/systemd/system/sysstat-collect.timer > /etc/systemd/system/sysstat-collect.timer.d/override.conf"
+sed -i 's|^SADC_OPTIONS=.*|SADC_OPTIONS=" -S XALL"|' /etc/sysconfig/sysstat
+systemctl enable atop.service sysstat-collect.timer sysstat.service
+systemctl restart atop.service sysstat-collect.timer sysstat.service
+
+#
+# Install and configure Grafana Alloy
+#
+curl -sLo gpg.key https://rpm.grafana.com/gpg.key
+rpm --import gpg.key && rm gpg.key
+echo -e '[grafana]\nname=grafana\nbaseurl=https://rpm.grafana.com\nrepo_gpgcheck=1\nenabled=1\ngpgcheck=1\ngpgkey=https://rpm.grafana.com/gpg.key\nsslverify=1
+sslcacert=/etc/pki/tls/certs/ca-bundle.crt' | tee /etc/yum.repos.d/grafana.repo
+dnf install -y alloy
+cat <<'EOF' > /etc/alloy/config.alloy
+${alloy_config}
+EOF
+systemctl restart alloy
+
+#
+# sudo 로 /usr/local/{bin,sbin} 안에 있는 커맨드를 실행할 수 있도록 설정
+#
+cat <<'EOF' > /etc/sudoers.d/10-sudo-path
+Defaults secure_path=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin
+EOF
+
+# Add hostname to /etc/hosts
+# https://github.com/hashicorp/nomad/blob/v1.8.4/terraform/shared/scripts/server.sh
+echo "127.0.0.1 $(hostname)" | tee --append /etc/hosts
+
+#
+# htoprc 생성
+#
+sudo -u ec2-user mkdir -p /home/ec2-user/.config/htop
+sudo -u ec2-user tee /home/ec2-user/.config/htop/htoprc <<'EOF' >/dev/null
+header_margin=1
+hide_kernel_threads=1
+hide_userland_threads=1
+highlight_base_name=1
+highlight_megabytes=1
+tree_view=1
+EOF
+
+#
+# README 생성
+#
+sudo -u ec2-user tee /home/ec2-user/README <<'EOF' >/dev/null
+https://github.com/femiwiki/infra
+EOF
