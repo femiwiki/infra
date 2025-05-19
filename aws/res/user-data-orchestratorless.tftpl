@@ -209,3 +209,12 @@ docker run \
   --entrypoint caddy \
   ghcr.io/femiwiki/femiwiki:2025-04-23T15-03-0bb0acf0 \
   run
+
+# Setup backupbot
+dnf install -y cronie
+systemctl enable --now crond
+cat <<EOF > backupbot.crontab
+0 6 * * * docker run --rm -v /a/:/a/ -e LOCAL_SETTINGS=/a/secrets.php -e WG_DB_SERVER=127.0.0.1 -e WG_DB_USER=root --network=host ghcr.io/femiwiki/backupbot:2025-05-19T12-11-9aa37a1a 2>&1
+EOF
+crontab backupbot.crontab
+rm backupbot.crontab
