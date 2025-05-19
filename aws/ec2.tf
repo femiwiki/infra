@@ -85,6 +85,8 @@ resource "aws_instance" "femiwiki_blue" {
     volume_type           = "gp3"
   }
 
+  # TODO Mount MySQL dir EBS
+
   credit_specification {
     cpu_credits = "unlimited"
   }
