@@ -166,8 +166,10 @@ cat <<EOF > /a/Hotfix.php
 // \$wgEnableUploads = false;
 EOF
 
-DOCKER_IMAGE=ghcr.io/femiwiki/femiwiki:2025-05-11T15-43-6cc034fd
+DOCKER_IMAGE=ghcr.io/femiwiki/femiwiki:2025-05-20t16-56-0159a394
 MYSQL_PWD="$(docker run --rm -v /a/:/a/ php -r 'require "/a/secrets.php"; echo $wgDBpassword;')"
+docker pull $DOCKER_IMAGE
+docker rm -f fastcgi
 docker run \
   --name fastcgi \
   --detach \
