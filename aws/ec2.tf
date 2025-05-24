@@ -12,13 +12,13 @@ resource "aws_key_pair" "femiwiki_green" {
 }
 
 resource "aws_eip" "femiwiki" {
-  instance = aws_instance.femiwiki_blue.id
+  instance = aws_instance.femiwiki.id
   domain   = "vpc"
   tags     = { Name = "femiwiki.com" }
 }
 
 resource "aws_eip" "test_femiwiki" {
-  instance = aws_eip.femiwiki.instance == aws_instance.femiwiki_blue.id ? null : aws_instance.femiwiki_blue.id
+  instance = aws_eip.femiwiki.instance == aws_instance.femiwiki.id ? null : aws_instance.femiwiki.id
   domain   = "vpc"
   tags     = { Name = "test.femiwiki.com" }
 }
@@ -49,10 +49,14 @@ resource "aws_ebs_volume" "persistent_data_caddycerts" {
   }
 }
 
+moved {
+  from = aws_instance.femiwiki_blue
+  to   = aws_instance.femiwiki
+}
 #
 # Femiwiki Blue Cluster
 #
-resource "aws_instance" "femiwiki_blue" {
+resource "aws_instance" "femiwiki" {
   ami                         = data.aws_ami.amazon_linux_2_arm64.image_id
   availability_zone           = data.aws_availability_zone.femiwiki.name
   disable_api_termination     = true
@@ -78,7 +82,6 @@ resource "aws_instance" "femiwiki_blue" {
   vpc_security_group_ids = [
     aws_default_security_group.default.id,
     aws_security_group.femiwiki.id,
-    aws_security_group.nomad_cluster.id,
   ]
 
   root_block_device {
@@ -108,75 +111,3 @@ resource "aws_instance" "femiwiki_blue" {
     ]
   }
 }
-
-#
-# Femiwiki Green Cluster
-#
-resource "aws_instance" "femiwiki_green" {
-  count                       = 1
-  ami                         = data.aws_ami.amazon_linux_2_arm64.image_id
-  availability_zone           = data.aws_availability_zone.femiwiki.name
-  disable_api_termination     = false
-  ebs_optimized               = true
-  iam_instance_profile        = aws_iam_instance_profile.femiwiki.name
-  instance_type               = "t4g.nano"
-  key_name                    = aws_key_pair.femiwiki.key_name
-  monitoring                  = false
-  user_data_replace_on_change = true
-
-  user_data = templatefile("res/user-data.sh.tftpl", {
-    enable_dns_forwarding = true
-    nomad_config = templatefile("res/nomad.hcl.tftpl", {
-      name            = "femiwiki-${count.index + 1}${count.index == 0 ? "-main" : ""}"
-      enable_consul   = true
-      main_elastic_ip = count.index == 0
-    })
-    consul_config = file("res/consul.hcl")
-    alloy_config = templatefile("res/config.alloy.tftpl", {
-      name                = "femiwiki-${count.index + 1}${count.index == 0 ? "-main" : ""}"
-      prometheus_endpoint = "https://prometheus-prod-49-prod-ap-northeast-0.grafana.net/api/prom/push"
-      prometheus_username = "1835631"
-      prometheus_password = var.prometheus_password
-      loki_endpoint       = "https://logs-prod-030.grafana.net/loki/api/v1/push"
-      loki_username       = "1017101"
-      loki_password       = var.loki_password
-    })
-
-    start_nomad  = true
-    start_consul = true
-    bootstrap    = count.index == 0
-  })
-
-  vpc_security_group_ids = [
-    aws_default_security_group.default.id,
-    aws_security_group.femiwiki.id,
-    aws_security_group.nomad_cluster.id,
-  ]
-
-  root_block_device {
-    delete_on_termination = true
-    volume_size           = 16
-    volume_type           = "gp3"
-  }
-
-  credit_specification {
-    cpu_credits = "unlimited"
-  }
-
-  metadata_options {
-    instance_metadata_tags = "enabled"
-  }
-
-  tags = {
-    Name           = "Femiwiki Server ${count.index + 1}"
-    ConsulAutoJoin = "auto-join"
-  }
-
-  lifecycle {
-    ignore_changes = [
-      ami,
-      user_data,
-    ]
-  }
-}
-

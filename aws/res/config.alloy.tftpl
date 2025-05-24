@@ -102,7 +102,6 @@ prometheus.relabel "integrations_node_exporter" {
 // 
 loki.relabel "journal" {
   forward_to = []
-  // https://developer.hashicorp.com/nomad/docs/drivers/docker#extra_labels
   rule {
     source_labels = ["__journal__systemd_unit"]
     target_label  = "unit"
@@ -111,85 +110,9 @@ loki.relabel "journal" {
     source_labels = ["__journal__hostname"]
     target_label  = "host"
   }
-  rule {
-    source_labels = ["__journal_com_hashicorp_nomad_node_name"]
-    target_label  = "nomad_node_name"
-  }
-  rule {
-    source_labels = ["__journal_com_hashicorp_nomad_node_id"]
-    target_label  = "nomad_node_id"
-  }
-  rule {
-    source_labels = ["__journal_com_hashicorp_nomad_job_name"]
-    target_label  = "nomad_job"
-  }
-  rule {
-    source_labels = ["__journal_com_hashicorp_nomad_task_group_name"]
-    target_label  = "nomad_group"
-  }
-  rule {
-    source_labels = ["__journal_com_hashicorp_nomad_alloc_id"]
-    target_label  = "nomad_alloc_id"
-  }
-  rule {
-    source_labels = ["__journal_com_hashicorp_nomad_task_name"]
-    target_label  = "nomad_task"
-  }
 }
 loki.source.journal "read"  {
   forward_to    = [loki.write.grafana_cloud_loki.receiver]
   relabel_rules = loki.relabel.journal.rules
   labels        = {component = "loki.source.journal"}
-}
-
-// Nomad
-discovery.relabel "metrics_integrations_integrations_nomad" {
-  targets = [{
-      __address__ = "127.0.0.1:4646",
-  }]
-  rule {
-    target_label = "instance"
-    replacement  = "${name}"
-  }
-}
-prometheus.scrape "metrics_integrations_integrations_nomad" {
-  targets    = discovery.relabel.metrics_integrations_integrations_nomad.output
-  forward_to = [prometheus.relabel.metrics_integrations_integrations_nomad.receiver]
-  job_name   = "integrations/nomad"
-  params     = {
-    format = ["prometheus"],
-  }
-  metrics_path = "/v1/metrics"
-}
-prometheus.relabel "metrics_integrations_integrations_nomad" {
-  forward_to = [prometheus.remote_write.metrics_service.receiver]
-  rule {
-    source_labels = ["__name__"]
-    regex         = string.join([
-      "up",
-      "nomad_client_allocated_cpu",
-      "nomad_client_allocated_disk",
-      "nomad_client_allocated_memory",
-      "nomad_client_allocs_cpu_allocated",
-      "nomad_client_allocs_cpu_total_percent",
-      "nomad_client_allocs_cpu_total_ticks",
-      "nomad_client_allocs_memory_allocated",
-      "nomad_client_allocs_memory_cache",
-      "nomad_client_allocs_memory_rss",
-      "nomad_client_allocs_memory_usage",
-      "nomad_client_host_cpu_idle",
-      "nomad_client_host_disk_available",
-      "nomad_client_host_disk_inodes_percent",
-      "nomad_client_host_disk_size",
-      "nomad_client_host_memory_available",
-      "nomad_client_host_memory_free",
-      "nomad_client_host_memory_total",
-      "nomad_client_host_memory_used",
-      "nomad_client_unallocated_cpu",
-      "nomad_client_unallocated_disk",
-      "nomad_client_unallocated_memory",
-      "nomad_client_uptime",
-    ], "|")
-    action        = "keep"
-  }
 }
