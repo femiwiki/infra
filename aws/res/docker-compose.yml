@@ -1,61 +1,72 @@
-# This compose file is for develompent and build testing
 version: '3'
 services:
   http:
-    image: ghcr.io/femiwiki/femiwiki:latest
+    image: ghcr.io/femiwiki/femiwiki:2025-05-20t16-56-0159a394
     command: caddy run
-    ports:
-      - 8080:8080
     volumes:
-      - caddy:/etc/caddycerts
-      - ./development/Caddyfile:/srv/femiwiki.com/Caddyfile:ro
+      - /srv/femiwiki.com/Caddyfile:/srv/femiwiki.com/Caddyfile
+      - /srv/femiwiki.com/robots.txt:/srv/femiwiki.com/robots.txt
+      - /srv/femiwiki.com/sitemap:/srv/femiwiki.com/sitemap
     environment:
-      - CADDYPATH=/etc/caddycerts
+      FASTCGI_ADDR: 127.0.0.1:9000
+      AWS_REGION: ap-northeast-1
+      S3_USE_IAM_PROVIDER: true
+      S3_HOST: s3.ap-northeast-1.amazonaws.com
+      S3_BUCKET: femiwiki-secrets
+      S3_PREFIX: caddycerts
     deploy:
       restart_policy:
         condition: on-failure
         delay: 5s
         max_attempts: 3
         window: 120s
-    logging:
-      options:
-        max-size: '100m'
+    network_mode: host
+    restart: always
+
   fastcgi:
-    image: ghcr.io/femiwiki/femiwiki:latest
+    image: ghcr.io/femiwiki/femiwiki:2025-05-20t16-56-0159a394
     volumes:
-      # Mount secrets.php, LocalSettings.php and site-list.xml
-      - ./development:/a:ro
-      - l18n_cache:/tmp/cache
+      - /a/secrets.php:/a/secrets.php
+      - /a/Hotfix.php:/a/Hotfix.php
+      - /a/analytics-credentials-file.json:/a/analytics-credentials-file.json
+      - /usr/local/etc/php/conf.d/opcache-recommended.ini:/usr/local/etc/php/conf.d/opcache-recommended.ini
+      - /usr/local/etc/php/php.ini:/usr/local/etc/php/php.ini
+      - /usr/local/etc/php-fpm.conf:/usr/local/etc/php-fpm.conf
+      - /tmp/cache:/tmp/cache
     environment:
-      MEDIAWIKI_DEBUG_MODE: 'true'
-      MEDIAWIKI_SERVER: http://127.0.0.1:8080
-      WG_INTERNAL_SERVER: http://http:8080
-      WG_DB_SERVER: mysql
-      WG_DB_USER: DB_USERNAME
-      WG_DB_PASSWORD: DB_PASSWORD
-      WG_MEMCACHED_SERVERS: http:8080
-    # https://github.com/docker/cli/issues/3880
+      MEDIAWIKI_SKIP_IMPORT_SITES: '1'
+      MEDIAWIKI_SKIP_INSTALL: '1'
+      MEDIAWIKI_SKIP_UPDATE: '1'
+      WG_CDN_SERVERS: 127.0.0.1:80
+      WG_DB_SERVER: '127.0.0.1:3306'
+      WG_DB_USER: mediawiki
+      DB_PASSWORD_FILE: /a/db_user_password.txt
+      WG_INTERNAL_SERVER: http://127.0.0.1:80
+      WG_MEMCACHED_SERVERS: 127.0.0.1:11211
+    secrets:
+      - db_user_password
     depends_on:
       - mysql
       - memcached
-  mysql:
-    image: mysql/mysql-server:8.0
-    command: --default-authentication-plugin=mysql_native_password
-    volumes:
-      - database:/var/lib/mysql
-    environment:
-      - MYSQL_ROOT_PASSWORD=localfemiwikipassword
-      - MYSQL_DATABASE=femiwiki
-      - MYSQL_USER=DB_USERNAME # secrets.php.example에 적힌 기본값
-      - MYSQL_PASSWORD=DB_PASSWORD # secrets.php.example에 적힌 기본값
-    networks:
-      default:
-        aliases:
-          - DB_HOSTNAME # secrets.php.example에 적힌 기본값
-  memcached:
-    image: memcached:1-alpine
+    network_mode: host
+    restart: always
 
-volumes:
-  database:
-  caddy:
-  l18n_cache:
+  mysql:
+    image: mysql/mysql-server:8.0.32
+    volumes:
+      - /srv/mysql:/srv/mysql
+      - /etc/mysql:/etc/mysql
+    environment:
+      MYSQL_RANDOM_ROOT_PASSWORD: 'yes'
+    network_mode: host
+    restart: always
+
+  memcached:
+    image: memcached:1.6.23-alpine
+    network_mode: host
+    restart: always
+
+secrets:
+  db_user_password:
+    file: /a/db_user_password.txt
+    
