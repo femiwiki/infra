@@ -2,7 +2,7 @@ name: femiwiki
 
 services:
   http:
-    image: ghcr.io/femiwiki/femiwiki:2025-05-24t14-45-a0d78cdd
+    image: ghcr.io/femiwiki/femiwiki:2025-05-24t17-47-df7f1357
     command: caddy run
     volumes:
       - type: bind
@@ -29,9 +29,11 @@ services:
         window: 120s
     network_mode: host
     restart: always
+    depends_on:
+      - fastcgi
 
   fastcgi:
-    image: ghcr.io/femiwiki/femiwiki:2025-05-24t14-45-a0d78cdd
+    image: ghcr.io/femiwiki/femiwiki:2025-05-24t17-47-df7f1357
     volumes:
       - type: bind
         source: /a/secrets.php
@@ -57,7 +59,7 @@ services:
       MEDIAWIKI_SKIP_INSTALL: '1'
       MEDIAWIKI_SKIP_UPDATE: '1'
       WG_CDN_SERVERS: 127.0.0.1:80
-      WG_DB_SERVER: '127.0.0.1:3306'
+      WG_DB_SERVER: 127.0.0.1:3306
       WG_DB_USER: mediawiki
       DB_PASSWORD_FILE: /run/secrets/db_user_password
       WG_INTERNAL_SERVER: http://127.0.0.1:80
@@ -88,4 +90,3 @@ services:
 secrets:
   db_user_password:
     file: /a/db_user_password.txt
-    
