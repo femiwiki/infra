@@ -12,12 +12,12 @@ resource "aws_key_pair" "femiwiki_green" {
 }
 
 resource "aws_eip" "femiwiki" {
-  instance = aws_instance.femiwiki_green[0].id
+  instance = aws_instance.femiwiki_blue.id
   domain   = "vpc"
 }
 
 resource "aws_eip" "test_femiwiki" {
-  instance = aws_instance.femiwiki_green[1].id
+  instance = aws_instance.femiwiki_blue.id
   domain   = "vpc"
 }
 
