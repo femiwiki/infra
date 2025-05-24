@@ -110,6 +110,14 @@ loki.relabel "journal" {
     source_labels = ["__journal__hostname"]
     target_label  = "host"
   }
+  rule {
+    source_labels = ["__journal_container_name"]
+    target_label  = "docker_container_name"
+  }
+  rule {
+    source_labels = ["__journal_container_id"]
+    target_label  = "docker_container_id"
+  }
 }
 loki.source.journal "read"  {
   forward_to    = [loki.write.grafana_cloud_loki.receiver]
