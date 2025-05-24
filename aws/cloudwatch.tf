@@ -71,7 +71,7 @@ resource "aws_cloudwatch_metric_alarm" "femiwiki_pages" {
 
   for_each = aws_route53_health_check.femiwiki_pages
 
-  alarm_name  = "Main Page awsroute53 Low-HealthCheckStatus"
+  alarm_name  = "${each.key} awsroute53 Low-HealthCheckStatus"
   namespace   = "AWS/Route53"
   metric_name = "HealthCheckStatus"
   period      = 60
