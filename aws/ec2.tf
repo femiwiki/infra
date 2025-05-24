@@ -18,7 +18,7 @@ resource "aws_eip" "femiwiki" {
 }
 
 resource "aws_eip" "test_femiwiki" {
-  instance = aws_instance.femiwiki_blue.id
+  instance = aws_eip.femiwiki.instance == aws_instance.femiwiki_blue.id ? null : aws_instance.femiwiki_blue.id
   domain   = "vpc"
   tags     = { Name = "test.femiwiki.com" }
 }
