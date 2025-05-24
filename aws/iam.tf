@@ -123,11 +123,6 @@ resource "aws_iam_role_policy_attachment" "femiwiki_upload_backup" {
   policy_arn = aws_iam_policy.upload_backup.arn
 }
 
-resource "aws_iam_role_policy_attachment" "femiwiki_mount_ebs_volumes" {
-  role       = aws_iam_role.femiwiki.name
-  policy_arn = aws_iam_policy.mount_ebs_volumes.arn
-}
-
 resource "aws_iam_role_policy_attachment" "femiwiki_managed_policies" {
   for_each = toset([
     "AmazonSSMManagedInstanceCore",
