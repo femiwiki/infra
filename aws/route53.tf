@@ -170,11 +170,6 @@ resource "aws_route53_record" "atproto_femiwiki_com" {
   zone_id = aws_route53_zone.femiwiki_com.zone_id
 }
 
-moved {
-  from = aws_route53_health_check.femiwiki_main_page
-  to   = aws_route53_health_check.femiwiki_pages["페미위키:대문"]
-}
-
 resource "aws_route53_health_check" "femiwiki_pages" {
   for_each = toset([
     "페미위키:대문",

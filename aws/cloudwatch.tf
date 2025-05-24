@@ -66,10 +66,6 @@ resource "aws_cloudwatch_metric_alarm" "complaint_rate" {
   treat_missing_data  = "ignore"
 }
 
-moved {
-  from = aws_cloudwatch_metric_alarm.femiwiki_main_page
-  to   = aws_cloudwatch_metric_alarm.femiwiki_pages["페미위키:대문"]
-}
 resource "aws_cloudwatch_metric_alarm" "femiwiki_pages" {
   provider = aws.us
 
