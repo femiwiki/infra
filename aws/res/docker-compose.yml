@@ -1,7 +1,7 @@
 version: '3'
 services:
   http:
-    image: ghcr.io/femiwiki/femiwiki:2025-05-20t16-56-0159a394
+    image: ghcr.io/femiwiki/femiwiki:2025-05-24t14-45-a0d78cdd
     command: caddy run
     volumes:
       - /srv/femiwiki.com/Caddyfile:/srv/femiwiki.com/Caddyfile
@@ -24,7 +24,7 @@ services:
     restart: always
 
   fastcgi:
-    image: ghcr.io/femiwiki/femiwiki:2025-05-20t16-56-0159a394
+    image: ghcr.io/femiwiki/femiwiki:2025-05-24t14-45-a0d78cdd
     volumes:
       - /a/secrets.php:/a/secrets.php
       - /a/Hotfix.php:/a/Hotfix.php
