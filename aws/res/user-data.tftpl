@@ -155,6 +155,11 @@ cat <<EOF > /a/Hotfix.php
 // \$wgEnableUploads = false;
 EOF
 
+# http
+mkdir -p /srv/femiwiki.com/sitemap
+curl -sL https://github.com/femiwiki/nomad/raw/main/caddy/Caddyfile -o /srv/femiwiki.com/Caddyfile
+curl -sL https://github.com/femiwiki/nomad/raw/main/res/robots.txt -o /srv/femiwiki.com/robots.txt
+
 cat <<'EOF' > /root/docker-compose.yml
 ${docker_compose_yml}
 EOF
