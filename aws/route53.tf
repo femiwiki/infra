@@ -170,16 +170,25 @@ resource "aws_route53_record" "atproto_femiwiki_com" {
   zone_id = aws_route53_zone.femiwiki_com.zone_id
 }
 
-resource "aws_route53_health_check" "femiwiki_main_page" {
+moved {
+  from = aws_route53_health_check.femiwiki_main_page
+  to   = aws_route53_health_check.femiwiki_pages["페미위키:대문"]
+}
+
+resource "aws_route53_health_check" "femiwiki_pages" {
+  for_each = toset([
+    "페미위키:대문",
+    "특수:빈문서",
+  ])
   fqdn              = "femiwiki.com"
   port              = 443
   type              = "HTTPS"
   failure_threshold = 3
   measure_latency   = true
   request_interval  = 30
-  resource_path     = "/w/%ED%8E%98%EB%AF%B8%EC%9C%84%ED%82%A4:%EB%8C%80%EB%AC%B8"
+  resource_path     = "/w/${urlencode(each.key)}"
 
   tags = {
-    "Name" = "Femiwiki Main Page"
+    "Name" = "Femiwiki ${each.key}"
   }
 }
