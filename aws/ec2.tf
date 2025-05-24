@@ -14,11 +14,13 @@ resource "aws_key_pair" "femiwiki_green" {
 resource "aws_eip" "femiwiki" {
   instance = aws_instance.femiwiki_blue.id
   domain   = "vpc"
+  tags     = { Name = "femiwiki.com" }
 }
 
 resource "aws_eip" "test_femiwiki" {
   instance = aws_instance.femiwiki_blue.id
   domain   = "vpc"
+  tags     = { Name = "test.femiwiki.com" }
 }
 
 data "aws_availability_zone" "femiwiki" {
