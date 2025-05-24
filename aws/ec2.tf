@@ -18,7 +18,7 @@ resource "aws_eip" "femiwiki" {
 }
 
 resource "aws_eip" "test_femiwiki" {
-  instance = aws_eip.femiwiki.instance == aws_instance.femiwiki.id ? null : aws_instance.femiwiki.id
+  instance = aws_eip.femiwiki.instance == aws_instance.test_femiwiki.id ? null : aws_instance.test_femiwiki.id
   domain   = "vpc"
   tags     = { Name = "test.femiwiki.com" }
 }
@@ -61,7 +61,8 @@ resource "aws_instance" "femiwiki" {
   user_data_replace_on_change = false
 
   user_data = templatefile("res/user-data.tftpl", {
-    mount_mysql = "true"
+    mount_mysql      = "true"
+    db_user_password = var.db_user_password
     alloy_config = templatefile("res/config.alloy.tftpl", {
       name                = "femiwiki"
       prometheus_endpoint = "https://prometheus-prod-49-prod-ap-northeast-0.grafana.net/api/prom/push"
@@ -119,7 +120,8 @@ resource "aws_instance" "test_femiwiki" {
   user_data_replace_on_change = false
 
   user_data = templatefile("res/user-data.tftpl", {
-    mount_mysql = ""
+    mount_mysql      = ""
+    db_user_password = var.db_user_password
     alloy_config = templatefile("res/config.alloy.tftpl", {
       name                = "test.femiwiki"
       prometheus_endpoint = "https://prometheus-prod-49-prod-ap-northeast-0.grafana.net/api/prom/push"

@@ -40,7 +40,7 @@ services:
       WG_CDN_SERVERS: 127.0.0.1:80
       WG_DB_SERVER: '127.0.0.1:3306'
       WG_DB_USER: mediawiki
-      DB_PASSWORD_FILE: /a/db_user_password.txt
+      DB_PASSWORD_FILE: /run/secrets//db_user_password.txt
       WG_INTERNAL_SERVER: http://127.0.0.1:80
       WG_MEMCACHED_SERVERS: 127.0.0.1:11211
     secrets:
