@@ -110,7 +110,9 @@ EOF
 
 # MySQL
 mkdir -p /srv/
-mount /dev/nvme1n1 /srv/mysql
+if [ -n "${mount_mysql}" ]; then
+  mount /dev/nvme1n1 /srv/mysql
+fi
 mkdir -p /etc/mysql/
 curl -sL https://github.com/femiwiki/nomad/raw/main/mysql/my.cnf -o /etc/mysql/my.cnf
 

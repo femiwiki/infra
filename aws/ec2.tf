@@ -61,6 +61,7 @@ resource "aws_instance" "femiwiki" {
   user_data_replace_on_change = false
 
   user_data = templatefile("res/user-data.tftpl", {
+    mount_mysql = "true"
     alloy_config = templatefile("res/config.alloy.tftpl", {
       name                = "femiwiki"
       prometheus_endpoint = "https://prometheus-prod-49-prod-ap-northeast-0.grafana.net/api/prom/push"
@@ -118,6 +119,7 @@ resource "aws_instance" "test_femiwiki" {
   user_data_replace_on_change = false
 
   user_data = templatefile("res/user-data.tftpl", {
+    mount_mysql = ""
     alloy_config = templatefile("res/config.alloy.tftpl", {
       name                = "test.femiwiki"
       prometheus_endpoint = "https://prometheus-prod-49-prod-ap-northeast-0.grafana.net/api/prom/push"
