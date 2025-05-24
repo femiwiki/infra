@@ -60,9 +60,9 @@ resource "aws_instance" "femiwiki" {
   monitoring                  = false
   user_data_replace_on_change = false
 
-  user_data = templatefile("res/user-data-orchestratorless.tftpl", {
+  user_data = templatefile("res/user-data.tftpl", {
     alloy_config = templatefile("res/config.alloy.tftpl", {
-      name                = "femiwiki-orchestratorless"
+      name                = "femiwiki"
       prometheus_endpoint = "https://prometheus-prod-49-prod-ap-northeast-0.grafana.net/api/prom/push"
       prometheus_username = "1835631"
       prometheus_password = var.prometheus_password
@@ -70,6 +70,7 @@ resource "aws_instance" "femiwiki" {
       loki_username       = "1017101"
       loki_password       = var.loki_password
     })
+    docker_compose_yml = file("res/docker-compose.yml")
   })
 
   vpc_security_group_ids = [
@@ -116,7 +117,7 @@ resource "aws_instance" "test_femiwiki" {
   monitoring                  = false
   user_data_replace_on_change = false
 
-  user_data = templatefile("res/user-data-orchestratorless.tftpl", {
+  user_data = templatefile("res/user-data.tftpl", {
     alloy_config = templatefile("res/config.alloy.tftpl", {
       name                = "test.femiwiki"
       prometheus_endpoint = "https://prometheus-prod-49-prod-ap-northeast-0.grafana.net/api/prom/push"
