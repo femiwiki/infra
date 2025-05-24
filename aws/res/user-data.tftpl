@@ -131,7 +131,7 @@ curl -sL https://github.com/femiwiki/nomad/raw/main/php/php-fpm.conf -o /usr/loc
 mkdir -p /srv/femiwiki.com/sitemap
 mkdir -p /tmp/cache
 chown -R 33:33 /tmp/cache
-
+echo '${db_user_password}' > /a/db_user_password.txt
 cat <<EOF > /a/Hotfix.php
 <?php
 /**
