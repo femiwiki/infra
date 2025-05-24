@@ -60,7 +60,7 @@ dnf install -y alloy
 cat <<'EOF' > /etc/alloy/config.alloy
 ${alloy_config}
 EOF
-systemctl restart alloy
+systemctl enable --now alloy
 
 #
 # sudo 로 /usr/local/{bin,sbin} 안에 있는 커맨드를 실행할 수 있도록 설정
