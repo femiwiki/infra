@@ -66,8 +66,14 @@ resource "aws_cloudwatch_metric_alarm" "complaint_rate" {
   treat_missing_data  = "ignore"
 }
 
-resource "aws_cloudwatch_metric_alarm" "femiwiki_main_page" {
+moved {
+  from = aws_cloudwatch_metric_alarm.femiwiki_main_page
+  to   = aws_cloudwatch_metric_alarm.femiwiki_pages["페미위키:대문"]
+}
+resource "aws_cloudwatch_metric_alarm" "femiwiki_pages" {
   provider = aws.us
+
+  for_each = aws_route53_health_check.femiwiki_pages
 
   alarm_name  = "Main Page awsroute53 Low-HealthCheckStatus"
   namespace   = "AWS/Route53"
@@ -75,7 +81,7 @@ resource "aws_cloudwatch_metric_alarm" "femiwiki_main_page" {
   period      = 60
   statistic   = "Minimum"
   dimensions = {
-    HealthCheckId = aws_route53_health_check.femiwiki_main_page.id
+    HealthCheckId = each.value.id
   }
   threshold           = 1
   comparison_operator = "LessThanThreshold"
