@@ -83,6 +83,10 @@ cat << EOF >> /etc/docker/daemon.json
   "log-driver": "journald"
 }
 EOF
+curl -L https://github.com/docker/compose/releases/latest/download/docker-compose-linux-"$(uname -m)" -o /root/docker-compose
+install /root/docker-compose /usr/bin/docker-compose
+rm /root/docker-compose
+
 
 # Add hostname to /etc/hosts
 # https://github.com/hashicorp/nomad/blob/v1.8.4/terraform/shared/scripts/server.sh
