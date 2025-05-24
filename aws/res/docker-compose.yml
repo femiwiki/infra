@@ -5,9 +5,15 @@ services:
     image: ghcr.io/femiwiki/femiwiki:2025-05-24t14-45-a0d78cdd
     command: caddy run
     volumes:
-      - /srv/femiwiki.com/Caddyfile:/srv/femiwiki.com/Caddyfile
-      - /srv/femiwiki.com/robots.txt:/srv/femiwiki.com/robots.txt
-      - /srv/femiwiki.com/sitemap:/srv/femiwiki.com/sitemap
+      - type: bind
+        source: /srv/femiwiki.com
+        target: /srv/femiwiki.com
+      - type: bind
+        source: /srv/femiwiki.com/robots.txt
+        target: /srv/femiwiki.com/robots.txt
+      - type: bind
+        source: /srv/femiwiki.com/sitemap
+        target: /srv/femiwiki.com/sitemap
     environment:
       FASTCGI_ADDR: 127.0.0.1:9000
       AWS_REGION: ap-northeast-1
@@ -27,12 +33,24 @@ services:
   fastcgi:
     image: ghcr.io/femiwiki/femiwiki:2025-05-24t14-45-a0d78cdd
     volumes:
-      - /a/secrets.php:/a/secrets.php
-      - /a/Hotfix.php:/a/Hotfix.php
-      - /a/analytics-credentials-file.json:/a/analytics-credentials-file.json
-      - /usr/local/etc/php/conf.d/opcache-recommended.ini:/usr/local/etc/php/conf.d/opcache-recommended.ini
-      - /usr/local/etc/php/php.ini:/usr/local/etc/php/php.ini
-      - /usr/local/etc/php-fpm.conf:/usr/local/etc/php-fpm.conf
+      - type: bind
+        source: /a/secrets.php
+        target: /a/secrets.php
+      - type: bind
+        source: /a/Hotfix.php
+        target: /a/Hotfix.php
+      - type: bind
+        source: /a/analytics-credentials-file.json
+        target: /a/analytics-credentials-file.json
+      - type: bind
+        source: /usr/local/etc/php/conf.d/opcache-recommended.ini
+        target: /usr/local/etc/php/conf.d/opcache-recommended.ini
+      - type: bind
+        source: /usr/local/etc/php/php.ini
+        target: /usr/local/etc/php/php.ini
+      - type: bind
+        source: /usr/local/etc/php-fpm.conf
+        target: /usr/local/etc/php-fpm.conf
       - /tmp/cache:/tmp/cache
     environment:
       MEDIAWIKI_SKIP_IMPORT_SITES: '1'
