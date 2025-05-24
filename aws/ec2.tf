@@ -49,13 +49,6 @@ resource "aws_ebs_volume" "persistent_data_caddycerts" {
   }
 }
 
-moved {
-  from = aws_instance.femiwiki_blue
-  to   = aws_instance.femiwiki
-}
-#
-# Femiwiki Blue Cluster
-#
 resource "aws_instance" "femiwiki" {
   ami                         = data.aws_ami.amazon_linux_2_arm64.image_id
   availability_zone           = data.aws_availability_zone.femiwiki.name
@@ -67,9 +60,9 @@ resource "aws_instance" "femiwiki" {
   monitoring                  = false
   user_data_replace_on_change = false
 
-  user_data = templatefile("res/user-data-orchestratorless.tftpl", {
+  user_data = templatefile("res/user-data.tftpl", {
     alloy_config = templatefile("res/config.alloy.tftpl", {
-      name                = "femiwiki-orchestratorless"
+      name                = "femiwiki"
       prometheus_endpoint = "https://prometheus-prod-49-prod-ap-northeast-0.grafana.net/api/prom/push"
       prometheus_username = "1835631"
       prometheus_password = var.prometheus_password
@@ -77,6 +70,7 @@ resource "aws_instance" "femiwiki" {
       loki_username       = "1017101"
       loki_password       = var.loki_password
     })
+    docker_compose_yml = file("res/docker-compose.yml")
   })
 
   vpc_security_group_ids = [
@@ -101,7 +95,64 @@ resource "aws_instance" "femiwiki" {
   }
 
   tags = {
-    Name = "Femiwiki Server orchestratorless"
+    Name = "femiwiki.com"
+  }
+
+  lifecycle {
+    ignore_changes = [
+      ami,
+      user_data,
+    ]
+  }
+}
+
+resource "aws_instance" "test_femiwiki" {
+  ami                         = data.aws_ami.amazon_linux_2_arm64.image_id
+  availability_zone           = data.aws_availability_zone.femiwiki.name
+  disable_api_termination     = false
+  ebs_optimized               = true
+  iam_instance_profile        = aws_iam_instance_profile.femiwiki.name
+  instance_type               = "t4g.small"
+  key_name                    = aws_key_pair.femiwiki.key_name
+  monitoring                  = false
+  user_data_replace_on_change = false
+
+  user_data = templatefile("res/user-data.tftpl", {
+    alloy_config = templatefile("res/config.alloy.tftpl", {
+      name                = "test.femiwiki"
+      prometheus_endpoint = "https://prometheus-prod-49-prod-ap-northeast-0.grafana.net/api/prom/push"
+      prometheus_username = "1835631"
+      prometheus_password = var.prometheus_password
+      loki_endpoint       = "https://logs-prod-030.grafana.net/loki/api/v1/push"
+      loki_username       = "1017101"
+      loki_password       = var.loki_password
+    })
+    docker_compose_yml = file("res/docker-compose.yml")
+  })
+
+  vpc_security_group_ids = [
+    aws_default_security_group.default.id,
+    aws_security_group.femiwiki.id,
+  ]
+
+  root_block_device {
+    delete_on_termination = true
+    volume_size           = 16
+    volume_type           = "gp3"
+  }
+
+  # TODO Mount MySQL dir EBS
+
+  credit_specification {
+    cpu_credits = "unlimited"
+  }
+
+  metadata_options {
+    instance_metadata_tags = "enabled"
+  }
+
+  tags = {
+    Name = "test.femiwiki.com"
   }
 
   lifecycle {

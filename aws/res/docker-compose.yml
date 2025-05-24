@@ -1,0 +1,72 @@
+version: '3'
+services:
+  http:
+    image: ghcr.io/femiwiki/femiwiki:2025-05-20t16-56-0159a394
+    command: caddy run
+    volumes:
+      - /srv/femiwiki.com/Caddyfile:/srv/femiwiki.com/Caddyfile
+      - /srv/femiwiki.com/robots.txt:/srv/femiwiki.com/robots.txt
+      - /srv/femiwiki.com/sitemap:/srv/femiwiki.com/sitemap
+    environment:
+      FASTCGI_ADDR: 127.0.0.1:9000
+      AWS_REGION: ap-northeast-1
+      S3_USE_IAM_PROVIDER: true
+      S3_HOST: s3.ap-northeast-1.amazonaws.com
+      S3_BUCKET: femiwiki-secrets
+      S3_PREFIX: caddycerts
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+    network_mode: host
+    restart: always
+
+  fastcgi:
+    image: ghcr.io/femiwiki/femiwiki:2025-05-20t16-56-0159a394
+    volumes:
+      - /a/secrets.php:/a/secrets.php
+      - /a/Hotfix.php:/a/Hotfix.php
+      - /a/analytics-credentials-file.json:/a/analytics-credentials-file.json
+      - /usr/local/etc/php/conf.d/opcache-recommended.ini:/usr/local/etc/php/conf.d/opcache-recommended.ini
+      - /usr/local/etc/php/php.ini:/usr/local/etc/php/php.ini
+      - /usr/local/etc/php-fpm.conf:/usr/local/etc/php-fpm.conf
+      - /tmp/cache:/tmp/cache
+    environment:
+      MEDIAWIKI_SKIP_IMPORT_SITES: '1'
+      MEDIAWIKI_SKIP_INSTALL: '1'
+      MEDIAWIKI_SKIP_UPDATE: '1'
+      WG_CDN_SERVERS: 127.0.0.1:80
+      WG_DB_SERVER: '127.0.0.1:3306'
+      WG_DB_USER: mediawiki
+      DB_PASSWORD_FILE: /a/db_user_password.txt
+      WG_INTERNAL_SERVER: http://127.0.0.1:80
+      WG_MEMCACHED_SERVERS: 127.0.0.1:11211
+    secrets:
+      - db_user_password
+    depends_on:
+      - mysql
+      - memcached
+    network_mode: host
+    restart: always
+
+  mysql:
+    image: mysql/mysql-server:8.0.32
+    volumes:
+      - /srv/mysql:/srv/mysql
+      - /etc/mysql:/etc/mysql
+    environment:
+      MYSQL_RANDOM_ROOT_PASSWORD: 'yes'
+    network_mode: host
+    restart: always
+
+  memcached:
+    image: memcached:1.6.23-alpine
+    network_mode: host
+    restart: always
+
+secrets:
+  db_user_password:
+    file: /a/db_user_password.txt
+    

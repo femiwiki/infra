@@ -108,26 +108,11 @@ sudo -u ec2-user tee /home/ec2-user/README <<'EOF' >/dev/null
 https://github.com/femiwiki/infra
 EOF
 
-# Launch Memcached
-docker run \
-  --name memcached \
-  -detach \
-  --network=host \
-  memcached:1.6.23-alpine memcached
-
-# Launch MySQL
+# MySQL
 mkdir -p /srv/
 mount /dev/nvme1n1 /srv/mysql
 mkdir -p /etc/mysql/
 curl -sL https://github.com/femiwiki/nomad/raw/main/mysql/my.cnf -o /etc/mysql/my.cnf
-docker run \
-  --name mysql \
-  --detach \
-  -v /srv/mysql/:/srv/mysql/ \
-  -v /etc/mysql/:/etc/mysql/ \
-  -e MYSQL_RANDOM_ROOT_PASSWORD=yes \
-  --network=host \
-  mysql/mysql-server:8.0.32
 
 # Launch Fastcgi
 mkdir /a/
@@ -189,50 +174,9 @@ foreach ( [
 // \$wgEnableUploads = false;
 EOF
 
-DOCKER_IMAGE=ghcr.io/femiwiki/femiwiki:2025-05-20t16-56-0159a394
-MYSQL_PWD="$(docker run --rm -v /a/:/a/ php -r 'require "/a/secrets.php"; echo $wgDBpassword;')"
-docker pull $DOCKER_IMAGE
-docker rm -f fastcgi
-docker run \
-  --name fastcgi \
-  --detach \
-  -v /a/secrets.php:/a/secrets.php \
-  -v /a/Hotfix.php:/a/Hotfix.php \
-  -v /a/analytics-credentials-file.json:/a/analytics-credentials-file.json \
-  -v /usr/local/etc/php/conf.d/opcache-recommended.ini:/usr/local/etc/php/conf.d/opcache-recommended.ini \
-  -v /usr/local/etc/php/php.ini:/usr/local/etc/php/php.ini \
-  -v /usr/local/etc/php-fpm.conf:/usr/local/etc/php-fpm.conf \
-  -v /tmp/cache:/tmp/cache \
-  -e MEDIAWIKI_SKIP_INSTALL=1 \
-  -e MEDIAWIKI_SKIP_IMPORT_SITES=1 \
-  -e MEDIAWIKI_SKIP_UPDATE=1 \
-  -e WG_DB_SERVER=127.0.0.1:3306 \
-  -e WG_DB_USER=root \
-  -e WG_DB_PASSWORD="$MYSQL_PWD" \
-  -e NOMAD_UPSTREAM_ADDR_memcached=127.0.0.1:11211 \
-  --network=host \
-  $DOCKER_IMAGE
-
-# Launch Caddy
-mkdir -p /srv/femiwiki.com/sitemap
-curl -sL https://github.com/femiwiki/nomad/raw/main/caddy/Caddyfile -o /srv/femiwiki.com/Caddyfile
-curl -sL https://github.com/femiwiki/nomad/raw/main/res/robots.txt -o /srv/femiwiki.com/robots.txt
-docker run \
-  --name http \
-  --detach \
-  -v /srv/femiwiki.com/Caddyfile:/srv/femiwiki.com/Caddyfile \
-  -v /srv/femiwiki.com/robots.txt:/srv/femiwiki.com/robots.txt \
-  -v /srv/femiwiki.com/sitemap:/srv/femiwiki.com/sitemap \
-  -e FASTCGI_ADDR=127.0.0.1:9000 \
-  -e AWS_REGION=ap-northeast-1 \
-  -e S3_USE_IAM_PROVIDER=true \
-  -e S3_HOST=s3.ap-northeast-1.amazonaws.com \
-  -e S3_BUCKET=femiwiki-secrets \
-  -e S3_PREFIX=caddycerts \
-  --network=host \
-  --entrypoint caddy \
-  ghcr.io/femiwiki/femiwiki:2025-04-23T15-03-0bb0acf0 \
-  run
+cat <<'EOF' > /root/docker-compose.yml
+${docker_compose_yml}
+EOF
 
 # Setup backupbot
 dnf install -y cronie
