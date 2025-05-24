@@ -159,9 +159,10 @@ mkdir -p /srv/femiwiki.com/sitemap
 curl -sL https://github.com/femiwiki/nomad/raw/main/caddy/Caddyfile -o /srv/femiwiki.com/Caddyfile
 curl -sL https://github.com/femiwiki/nomad/raw/main/res/robots.txt -o /srv/femiwiki.com/robots.txt
 
-cat <<'EOF' > /root/docker-compose.yml
+cat <<'EOF' > /home/ec2-user/docker-compose.yml
 ${docker_compose_yml}
 EOF
+chown ec2-user:ec2-user /home/ec2-user/docker-compose.yml
 
 # Setup backupbot
 dnf install -y cronie
