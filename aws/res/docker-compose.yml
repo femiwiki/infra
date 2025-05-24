@@ -1,4 +1,5 @@
-version: '3'
+name: femiwiki
+
 services:
   http:
     image: ghcr.io/femiwiki/femiwiki:2025-05-24t14-45-a0d78cdd
