@@ -111,13 +111,13 @@ resource "aws_instance" "femiwiki_blue" {
 # Femiwiki Green Cluster
 #
 resource "aws_instance" "femiwiki_green" {
-  count                       = 3
+  count                       = 1
   ami                         = data.aws_ami.amazon_linux_2_arm64.image_id
   availability_zone           = data.aws_availability_zone.femiwiki.name
-  disable_api_termination     = true
+  disable_api_termination     = false
   ebs_optimized               = true
   iam_instance_profile        = aws_iam_instance_profile.femiwiki.name
-  instance_type               = "t4g.small"
+  instance_type               = "t4g.nano"
   key_name                    = aws_key_pair.femiwiki.key_name
   monitoring                  = false
   user_data_replace_on_change = true
