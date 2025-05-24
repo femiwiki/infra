@@ -83,6 +83,9 @@ cat << EOF >> /etc/docker/daemon.json
   "log-driver": "journald"
 }
 EOF
+curl -L https://github.com/docker/compose/releases/latest/download/docker-compose-linux-"$(uname -m)" -o /root/docker-compose
+install /root/docker-compose /usr/bin/docker-compose
+rm /root/docker-compose
 
 # Add hostname to /etc/hosts
 # https://github.com/hashicorp/nomad/blob/v1.8.4/terraform/shared/scripts/server.sh
@@ -116,7 +119,7 @@ fi
 mkdir -p /etc/mysql/
 curl -sL https://github.com/femiwiki/nomad/raw/main/mysql/my.cnf -o /etc/mysql/my.cnf
 
-# Launch Fastcgi
+# Fastcgi
 mkdir /a/
 chown ec2-user:ec2-user /a/
 aws s3 cp s3://femiwiki-secrets/secrets.php /a/
@@ -150,6 +153,11 @@ cat <<EOF > /a/Hotfix.php
 // 업로드를 막고싶을때엔 아래 라인 주석 해제하면 됨
 // \$wgEnableUploads = false;
 EOF
+
+# http
+mkdir -p /srv/femiwiki.com/sitemap
+curl -sL https://github.com/femiwiki/nomad/raw/main/caddy/Caddyfile -o /srv/femiwiki.com/Caddyfile
+curl -sL https://github.com/femiwiki/nomad/raw/main/res/robots.txt -o /srv/femiwiki.com/robots.txt
 
 cat <<'EOF' > /root/docker-compose.yml
 ${docker_compose_yml}
