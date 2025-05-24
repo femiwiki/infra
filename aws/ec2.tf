@@ -12,12 +12,12 @@ resource "aws_key_pair" "femiwiki_green" {
 }
 
 resource "aws_eip" "femiwiki" {
-  instance = aws_instance.femiwiki_green[0].id
+  instance = aws_instance.femiwiki_blue.id
   domain   = "vpc"
 }
 
 resource "aws_eip" "test_femiwiki" {
-  instance = aws_instance.femiwiki_green[1].id
+  instance = aws_instance.femiwiki_blue.id
   domain   = "vpc"
 }
 
@@ -56,7 +56,7 @@ resource "aws_instance" "femiwiki_blue" {
   disable_api_termination     = true
   ebs_optimized               = true
   iam_instance_profile        = aws_iam_instance_profile.femiwiki.name
-  instance_type               = "t4g.nano"
+  instance_type               = "t4g.medium"
   key_name                    = aws_key_pair.femiwiki.key_name
   monitoring                  = false
   user_data_replace_on_change = false
@@ -85,6 +85,8 @@ resource "aws_instance" "femiwiki_blue" {
     volume_type           = "gp3"
   }
 
+  # TODO Mount MySQL dir EBS
+
   credit_specification {
     cpu_credits = "unlimited"
   }
@@ -109,13 +111,13 @@ resource "aws_instance" "femiwiki_blue" {
 # Femiwiki Green Cluster
 #
 resource "aws_instance" "femiwiki_green" {
-  count                       = 3
+  count                       = 1
   ami                         = data.aws_ami.amazon_linux_2_arm64.image_id
   availability_zone           = data.aws_availability_zone.femiwiki.name
-  disable_api_termination     = true
+  disable_api_termination     = false
   ebs_optimized               = true
   iam_instance_profile        = aws_iam_instance_profile.femiwiki.name
-  instance_type               = "t4g.small"
+  instance_type               = "t4g.nano"
   key_name                    = aws_key_pair.femiwiki.key_name
   monitoring                  = false
   user_data_replace_on_change = true
