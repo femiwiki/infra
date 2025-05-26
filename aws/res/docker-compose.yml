@@ -64,13 +64,32 @@ services:
       DB_PASSWORD_FILE: /run/secrets/db_user_password
       WG_INTERNAL_SERVER: http://127.0.0.1:80
       WG_MEMCACHED_SERVERS: 127.0.0.1:11211
+      # Used by fcgi-probe.php
+      FCGI_URL: 127.0.0.1:9000
     secrets:
       - db_user_password
+    healthcheck:
+      test: >
+        if [ ! -d /srv/fcgi-check ]; then
+          mkdir -p /srv/fcgi-check/
+        fi &&
+        if [ ! -z /srv/fcgi-check/AdoyFastCgiClient.php ]; then
+          curl -L https://github.com/wikimedia/operations-docker-images-production-images/raw/ad68c7cb62e4e01436ab3a34fb961fe8034c2cce/images/php/common/fpm/live-test/AdoyFastCgiClient.php -o /srv/fcgi-check/AdoyFastCgiClient.php
+        fi &&
+        if [ ! -z /srv/fcgi-check/fcgi-probe.php ]; then
+          curl -L https://github.com/wikimedia/operations-docker-images-production-images/raw/ad68c7cb62e4e01436ab3a34fb961fe8034c2cce/images/php/common/fpm/live-test/fcgi-probe.php -o /srv/fcgi-check/fcgi-probe.php
+        fi &&
+        /usr/local/bin/php /srv/fcgi-check/fcgi-probe.php || exit 1
+      interval: 5s
+      timeout: 1s
+      retries: 0
     depends_on:
       - mysql
       - memcached
     network_mode: host
     restart: always
+    labels:
+      autoheal: true
 
   mysql:
     image: mysql/mysql-server:8.0.32
@@ -81,11 +100,27 @@ services:
       MYSQL_RANDOM_ROOT_PASSWORD: 'yes'
     network_mode: host
     restart: always
+    labels:
+      autoheal: true
 
   memcached:
     image: memcached:1.6.23-alpine
     network_mode: host
     restart: always
+    labels:
+      autoheal: true
+
+  autoheal:
+    deploy:
+      replicas: 1
+    environment:
+      AUTOHEAL_CONTAINER_LABEL: autoheal
+    image: willfarrell/autoheal:1.1.0
+    network_mode: none
+    restart: always
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /var/run/docker.sock:/var/run/docker.sock
 
 secrets:
   db_user_password:
