@@ -6,8 +6,8 @@ services:
     command: caddy run
     volumes:
       - type: bind
-        source: /srv/femiwiki.com
-        target: /srv/femiwiki.com
+        source: /srv/femiwiki.com/Caddyfile
+        target: /srv/femiwiki.com/Caddyfile
       - type: bind
         source: /srv/femiwiki.com/robots.txt
         target: /srv/femiwiki.com/robots.txt
