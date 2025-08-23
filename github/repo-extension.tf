@@ -53,22 +53,9 @@ module "unified_extension_for_femiwiki" {
   collaborator = local.extension.collaborator
 }
 
-import {
-  id = "mediawiki-extensions-FemiwikiCrawlingBlocker:main"
-  to = module.femiwiki_crawling_blocker.github_branch.main_branch
-}
-import {
-  id = "mediawiki-extensions-FemiwikiCrawlingBlocker"
-  to = module.femiwiki_crawling_blocker.github_branch_default.branch_default
-}
-import {
-  id = "mediawiki-extensions-FemiwikiCrawlingBlocker"
-  to = module.femiwiki_crawling_blocker.github_repository.repository
-}
-
 module "femiwiki_crawling_blocker" {
   source                        = "./modules/github-repository"
-  name                          = "mediawiki-extensions-FemiwikiCrawlingBlocker"
+  name                          = "FemiwikiCrawlingBlocker"
   description                   = "MediaWiki special page crawler blocking extension"
   homepage_url                  = "https://www.mediawiki.org/wiki/Special:MyLanguage/Extension:FemiwikiCrawlingBlocker"
   topics                        = ["mediawiki-extension"]
