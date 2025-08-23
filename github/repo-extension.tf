@@ -52,3 +52,34 @@ module "unified_extension_for_femiwiki" {
   patterns     = ["main"]
   collaborator = local.extension.collaborator
 }
+
+import {
+  id = "mediawiki-extensions-FemiwikiCrawlingBlocker:main"
+  to = module.femiwiki_crawling_blocker.github_branch.main_branch
+}
+import {
+  id = "mediawiki-extensions-FemiwikiCrawlingBlocker"
+  to = module.femiwiki_crawling_blocker.github_branch_default.branch_default
+}
+import {
+  id = "mediawiki-extensions-FemiwikiCrawlingBlocker"
+  to = module.femiwiki_crawling_blocker.github_repository.repository
+}
+
+module "femiwiki_crawling_blocker" {
+  source                        = "./modules/github-repository"
+  name                          = "mediawiki-extensions-FemiwikiCrawlingBlocker"
+  description                   = "MediaWiki special page crawler blocking extension"
+  homepage_url                  = "https://www.mediawiki.org/wiki/Special:MyLanguage/Extension:FemiwikiCrawlingBlocker"
+  topics                        = ["mediawiki-extension"]
+  enforce_admins                = local.extension.enforce_admins
+  required_pull_request_reviews = local.extension.required_pull_request_reviews
+  required_status_checks_contexts = [[
+    "test (REL1_43, composer-test)",
+    "test (REL1_43, npm-test)",
+    "test (REL1_43, phan)",
+    "test (REL1_43, selenium)",
+  ]]
+  patterns     = ["main"]
+  collaborator = local.extension.collaborator
+}
