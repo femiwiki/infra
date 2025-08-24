@@ -102,7 +102,7 @@ resource "aws_instance" "femiwiki_blue" {
   disable_api_termination     = true
   ebs_optimized               = true
   iam_instance_profile        = aws_iam_instance_profile.femiwiki.name
-  instance_type               = "t4g.nano"
+  instance_type               = "t4g.micro"
   key_name                    = aws_key_pair.femiwiki_blue.key_name
   monitoring                  = false
   user_data_replace_on_change = false
