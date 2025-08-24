@@ -34,6 +34,7 @@ jobs:
           aws-role-to-assume: arn:aws:iam::302617221463:role/digger
           aws-region: ap-northeast-1
           cache-dependencies: true
+          setup-terraform: true
         env:
           GITHUB_CONTEXT: ${{ toJson(github) }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
