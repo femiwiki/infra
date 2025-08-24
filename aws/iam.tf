@@ -30,7 +30,7 @@ resource "aws_iam_user_policy" "terraform_cloud" {
   depends_on = [aws_iam_user.programmatic_users["terraform-cloud"]]
   name       = "TerraformCloud"
   user       = "terraform-cloud"
-  policy     = data.aws_iam_policy_document.terraform_cloud.json
+  policy     = data.aws_iam_policy_document.iac.json
 }
 
 resource "aws_iam_user_policy" "github_lambda" {

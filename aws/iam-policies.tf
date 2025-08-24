@@ -258,7 +258,7 @@ data "aws_iam_policy_document" "github_lambda" {
   }
 }
 
-data "aws_iam_policy_document" "terraform_cloud" {
+data "aws_iam_policy_document" "iac" {
   statement {
     actions = [
       "autoscaling:*",
