@@ -40,14 +40,14 @@ resource "local_file" "identity_file" {
   filename        = "identity_file.pem"
 }
 
-resource "null_resource" "wait_for_docker" {
-  provisioner "local-exec" {
-    command = <<-EOT
-      until ssh ${join(" ", local.docker_ssh_opts)} ${local.docker_host} docker info; do
-        echo "Waiting for Docker daemon to be available..."
-        sleep 5
-      done
-      echo "Docker daemon is ready!"
-    EOT
-  }
-}
+# resource "null_resource" "wait_for_docker" {
+#   provisioner "local-exec" {
+#     command = <<-EOT
+#       until ssh ${join(" ", local.docker_ssh_opts)} ${local.docker_host} docker info; do
+#         echo "Waiting for Docker daemon to be available..."
+#         sleep 5
+#       done
+#       echo "Docker daemon is ready!"
+#     EOT
+#   }
+# }
