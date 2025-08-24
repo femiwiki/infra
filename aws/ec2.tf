@@ -27,28 +27,6 @@ data "aws_availability_zone" "femiwiki" {
   name = "ap-northeast-1a"
 }
 
-#
-# EBS volumes
-#
-
-resource "aws_ebs_volume" "persistent_data_mysql" {
-  availability_zone = data.aws_availability_zone.femiwiki.name
-  type              = "gp3"
-  size              = 8
-  tags = {
-    Name = "Mysql data directory for Main Server"
-  }
-}
-
-resource "aws_ebs_volume" "persistent_data_caddycerts" {
-  availability_zone = data.aws_availability_zone.femiwiki.name
-  type              = "gp3"
-  size              = 1
-  tags = {
-    Name = "Caddycerts"
-  }
-}
-
 resource "aws_instance" "femiwiki" {
   ami                         = data.aws_ami.amazon_linux_2_arm64.image_id
   availability_zone           = data.aws_availability_zone.femiwiki.name
