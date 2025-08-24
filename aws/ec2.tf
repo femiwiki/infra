@@ -72,7 +72,7 @@ resource "aws_instance" "femiwiki" {
       loki_username       = "1017101"
       loki_password       = var.loki_password
     })
-    docker_compose_yml = file("res/docker-compose.yml")
+    compose_yml = file("res/compose.yml")
   })
 
   vpc_security_group_ids = [
