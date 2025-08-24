@@ -1,0 +1,3 @@
+bucket = "femiwiki-digger-state"
+key    = "docker"
+region = "ap-northeast-1"

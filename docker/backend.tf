@@ -1,12 +1,6 @@
 terraform {
 
-  backend "remote" {
-    organization = "femiwiki"
-
-    workspaces {
-      name = "docker"
-    }
-  }
+  backend "s3" {}
 
   required_providers {
     docker = {
@@ -29,7 +23,7 @@ data "terraform_remote_state" "aws" {
 locals {
   docker_host = "ssh://ec2-user@${data.terraform_remote_state.aws.outputs.blue_ip}:22"
   docker_ssh_opts = [
-    "-i", "${path.cwd}/identity_file.pem",
+    "-i", local_file.identity_file.filename,
     "-o", "StrictHostKeyChecking=no",
     "-o", "UserKnownHostsFile=/dev/null"
   ]
@@ -43,7 +37,7 @@ provider "docker" {
 resource "local_file" "identity_file" {
   file_permission = "0600"
   content         = data.terraform_remote_state.aws.outputs.blue_private_key_pem
-  filename        = "${path.cwd}/identity_file.pem"
+  filename        = "identity_file.pem"
 }
 
 resource "null_resource" "wait_for_docker" {
