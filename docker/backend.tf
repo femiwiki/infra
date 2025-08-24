@@ -36,8 +36,8 @@ provider "docker" {
 
 resource "local_file" "identity_file" {
   file_permission = "0600"
-  content         = data.terraform_remote_state.aws.outputs.blue_private_key_pem
-  filename        = "identity_file.pem"
+  content         = sensitive(data.terraform_remote_state.aws.outputs.blue_private_key_pem)
+  filename        = "${path.module}/identity_file.pem"
 }
 
 # resource "null_resource" "wait_for_docker" {
