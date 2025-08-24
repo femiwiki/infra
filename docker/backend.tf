@@ -31,23 +31,28 @@ locals {
 
 provider "docker" {
   host     = local.docker_host
-  ssh_opts = local.docker_ssh_opts
+  ssh_opts = [
+    "-i", local_file.identity_file.filename,
+    "-o", "StrictHostKeyChecking=no",
+    "-o", "UserKnownHostsFile=/dev/null"
+  ]
+  disable_docker_daemon_check = false
 }
 
 resource "local_file" "identity_file" {
   file_permission = "0600"
   content         = sensitive(data.terraform_remote_state.aws.outputs.blue_private_key_pem)
-  filename        = "${path.module}/identity_file.pem"
+  filename        = "${path.cwd}/identity_file.pem"
 }
 
-# resource "null_resource" "wait_for_docker" {
-#   provisioner "local-exec" {
-#     command = <<-EOT
-#       until ssh ${join(" ", local.docker_ssh_opts)} ${local.docker_host} docker info; do
-#         echo "Waiting for Docker daemon to be available..."
-#         sleep 5
-#       done
-#       echo "Docker daemon is ready!"
-#     EOT
-#   }
-# }
+resource "null_resource" "wait_for_docker" {
+  provisioner "local-exec" {
+    command = <<-EOT
+      until ssh ${join(" ", local.docker_ssh_opts)} ${local.docker_host} docker info; do
+        echo "Waiting for Docker daemon to be available..."
+        sleep 5
+      done
+      echo "Docker daemon is ready!"
+    EOT
+  }
+}
