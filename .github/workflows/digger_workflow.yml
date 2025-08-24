@@ -29,7 +29,6 @@ jobs:
       - name: digger run
         uses: diggerhq/digger@vLatest
         with:
-          no-backend: true
           digger-spec: ${{ inputs.spec }}
           setup-aws: true
           aws-role-to-assume: arn:aws:iam::302617221463:role/digger
