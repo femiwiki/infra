@@ -1,3 +1,16 @@
+resource "aws_s3_bucket" "digger" {
+  bucket = "femiwiki-digger-state"
+}
+
+resource "aws_s3_bucket_public_access_block" "digger" {
+  bucket = aws_s3_bucket.digger.id
+
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
 #
 # Secrets for MediaWiki run
 #
