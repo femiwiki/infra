@@ -92,7 +92,7 @@ resource "tls_private_key" "blue" {
 
 resource "aws_key_pair" "femiwiki_blue" {
   key_name   = "blue"
-  public_key = tls_private_key.blue.public_key_pem
+  public_key = tls_private_key.blue.public_key_openssh
 }
 
 resource "aws_instance" "femiwiki_blue" {
