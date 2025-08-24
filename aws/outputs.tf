@@ -1,5 +1,5 @@
-output "blue_identity_private_openssh" {
-  value     = tls_private_key.blue.private_key_openssh
+output "blue_private_key_pem" {
+  value     = tls_private_key.blue.private_key_pem
   sensitive = true
 }
 
