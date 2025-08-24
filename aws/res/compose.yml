@@ -33,7 +33,7 @@ services:
       - fastcgi
 
   fastcgi:
-    image: ghcr.io/femiwiki/femiwiki:2025-05-24t17-47-df7f1357
+    image: ghcr.io/femiwiki/femiwiki:2025-08-24t05-34-3a83d349
     volumes:
       - type: bind
         source: /a/secrets.php
