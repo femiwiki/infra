@@ -155,7 +155,7 @@ resource "aws_iam_role" "digger" {
           }
           StringLike = {
             "${aws_iam_openid_connect_provider.github_actions.url}:sub" = [
-              "repo:femiwiki/infra"
+              "repo:femiwiki/infra:*"
             ]
           }
         }
