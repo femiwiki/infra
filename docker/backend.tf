@@ -37,7 +37,7 @@ provider "docker" {
 
 resource "local_file" "identity_file" {
   file_permission = "0600"
-  content         = data.terraform_remote_state.aws.outputs.blue_identity_private_key
+  content         = data.terraform_remote_state.aws.outputs.private_key_openssh
   filename        = "identity_file.pem"
 }
 
