@@ -87,8 +87,8 @@ resource "aws_instance" "femiwiki" {
 }
 
 resource "tls_private_key" "blue" {
-  algorithm   = "ECDSA"
-  ecdsa_curve = "P224"
+  algorithm = "RSA"
+  rsa_bits  = 2048
 }
 
 resource "aws_key_pair" "femiwiki_blue" {
