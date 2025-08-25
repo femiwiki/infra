@@ -70,19 +70,37 @@ Defaults secure_path=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bi
 EOF
 
 #
-# 도커 설치
-# Reference: https://docs.aws.amazon.com/AmazonECS/latest/developerguide/docker-basics.html#install_docker
+# 도커 설치 및 TLS 설정
 #
 dnf install -y docker
 systemctl enable docker
 systemctl start docker
 usermod -a -G docker ec2-user
 usermod -a -G docker alloy
-cat << EOF >> /etc/docker/daemon.json
+
+# Create Docker TLS directory
+mkdir -p /etc/docker/tls
+
+# Write TLS certificates and key
+echo "${ca_cert_pem}" | tee /etc/docker/tls/ca.pem > /dev/null
+echo "${server_cert_pem}" | tee /etc/docker/tls/server-cert.pem > /dev/null
+echo "${server_key_pem}" | tee /etc/docker/tls/server-key.pem > /dev/null
+
+# Configure Docker daemon for TLS
+cat <<EOF > /etc/docker/daemon.json
 {
-  "log-driver": "journald"
+  "log-driver": "journald",
+  "tlsverify": true,
+  "tlscacert": "/etc/docker/tls/ca.pem",
+  "tlscert": "/etc/docker/tls/server-cert.pem",
+  "tlskey": "/etc/docker/tls/server-key.pem",
+  "hosts": ["tcp://0.0.0.0:2376", "unix:///var/run/docker.sock"]
 }
 EOF
+
+# Restart Docker service
+systemctl daemon-reload
+systemctl restart docker
 
 # Add hostname to /etc/hosts
 # https://github.com/hashicorp/nomad/blob/v1.8.4/terraform/shared/scripts/server.sh

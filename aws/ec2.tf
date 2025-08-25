@@ -17,6 +17,12 @@ resource "aws_eip" "femiwiki" {
   tags     = { Name = "femiwiki.com" }
 }
 
+resource "aws_eip" "femiwiki_blue_eip" {
+  instance = aws_instance.femiwiki_blue.id
+  domain   = "vpc"
+  tags     = { Name = "femiwiki blue" }
+}
+
 resource "aws_eip" "test_femiwiki" {
   instance = aws_eip.femiwiki.instance == aws_instance.femiwiki.id ? null : aws_instance.femiwiki.id
   domain   = "vpc"
@@ -106,6 +112,7 @@ resource "aws_instance" "femiwiki_blue" {
   key_name                    = aws_key_pair.femiwiki_blue.key_name
   monitoring                  = false
   user_data_replace_on_change = false
+  associate_public_ip_address = true # Ensure public IP is assigned for EIP association
 
   user_data = templatefile("res/user-data-docker-provider.tftpl", {
     alloy_config = templatefile("res/config.alloy.tftpl", {
@@ -117,6 +124,9 @@ resource "aws_instance" "femiwiki_blue" {
       loki_username       = "1017101"
       loki_password       = var.loki_password
     })
+    ca_cert_pem     = tls_self_signed_cert.ca_cert.cert_pem
+    server_cert_pem = tls_locally_signed_cert.server_cert.cert_pem
+    server_key_pem  = tls_private_key.server_key.private_key_pem
   })
 
   vpc_security_group_ids = [
@@ -150,4 +160,9 @@ resource "aws_instance" "femiwiki_blue" {
       user_data,
     ]
   }
+}
+
+resource "aws_eip_association" "femiwiki_blue_eip_assoc" {
+  instance_id   = aws_instance.femiwiki_blue.id
+  allocation_id = aws_eip.femiwiki_blue_eip.id
 }
