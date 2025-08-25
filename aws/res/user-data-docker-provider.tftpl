@@ -98,7 +98,7 @@ cat <<EOF > /etc/docker/daemon.json
 EOF
 
 # Append
-sed -i -E 's?^(OPTIONS=.+)"$?\1 -H tcp://0.0.0.0:2375"?' /etc/sysconfig/docker
+sed -i -E 's?^(OPTIONS=.+)"$?\1 -H tcp://0.0.0.0:2376"?' /etc/sysconfig/docker
 # TODO Create OPTIONS if there is no OPTIONS
 
 # Restart Docker service
