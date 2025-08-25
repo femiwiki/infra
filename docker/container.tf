@@ -138,7 +138,6 @@ resource "docker_container" "mysql" {
 }
 
 resource "docker_container" "memcached" {
-  depends_on   = [null_resource.wait_for_docker]
   name         = "memcached"
   image        = "memcached:1.6.23-alpine"
   network_mode = "host"
@@ -157,7 +156,6 @@ resource "docker_container" "memcached" {
 }
 
 resource "docker_container" "autoheal" {
-  depends_on   = [null_resource.wait_for_docker]
   name         = "autoheal"
   image        = "willfarrell/autoheal:1.1.0"
   network_mode = "none"

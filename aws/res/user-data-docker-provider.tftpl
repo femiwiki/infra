@@ -93,10 +93,13 @@ cat <<EOF > /etc/docker/daemon.json
   "tlsverify": true,
   "tlscacert": "/etc/docker/tls/ca.pem",
   "tlscert": "/etc/docker/tls/server-cert.pem",
-  "tlskey": "/etc/docker/tls/server-key.pem",
-  "hosts": ["tcp://0.0.0.0:2376", "unix:///var/run/docker.sock"]
+  "tlskey": "/etc/docker/tls/server-key.pem"
 }
 EOF
+
+# Append
+sed -i -E 's?^(OPTIONS=.+)"$?\1 -H tcp://0.0.0.0:2375"?' /etc/sysconfig/docker
+# TODO Create OPTIONS if there is no OPTIONS
 
 # Restart Docker service
 systemctl daemon-reload
