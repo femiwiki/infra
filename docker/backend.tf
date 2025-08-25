@@ -26,34 +26,9 @@ data "terraform_remote_state" "aws" {
   }
 }
 
-locals {
-  docker_host = "ssh://ec2-user@${data.terraform_remote_state.aws.outputs.blue_ip}:22"
-  docker_ssh_opts = [
-    "-i", "${path.cwd}/identity_file.pem",
-    "-o", "StrictHostKeyChecking=no",
-    "-o", "UserKnownHostsFile=/dev/null"
-  ]
-}
-
 provider "docker" {
-  host     = local.docker_host
-  ssh_opts = local.docker_ssh_opts
-}
-
-resource "local_file" "identity_file" {
-  file_permission = "0600"
-  content         = data.terraform_remote_state.aws.outputs.blue_private_key_pem
-  filename        = "${path.cwd}/identity_file.pem"
-}
-
-resource "null_resource" "wait_for_docker" {
-  provisioner "local-exec" {
-    command = <<-EOT
-      until ssh ${join(" ", local.docker_ssh_opts)} ${local.docker_host} docker info; do
-        echo "Waiting for Docker daemon to be available..."
-        sleep 5
-      done
-      echo "Docker daemon is ready!"
-    EOT
-  }
+  host          = "tcp://${data.terraform_remote_state.aws.outputs.blue_public_ip}:2376"
+  ca_material   = data.terraform_remote_state.aws.outputs.client_ca_cert_pem
+  cert_material = data.terraform_remote_state.aws.outputs.client_cert_pem
+  key_material  = data.terraform_remote_state.aws.outputs.client_key_pem
 }

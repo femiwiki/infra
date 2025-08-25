@@ -1,8 +1,16 @@
-output "blue_private_key_pem" {
-  value     = tls_private_key.blue.private_key_pem
-  sensitive = true
+output "blue_public_ip" {
+  value = aws_eip.femiwiki_blue_eip.public_ip
 }
 
-output "blue_ip" {
-  value = aws_instance.femiwiki_blue.public_ip
+output "client_ca_cert_pem" {
+  value = tls_self_signed_cert.ca_cert.cert_pem
+}
+
+output "client_cert_pem" {
+  value = tls_locally_signed_cert.client_cert.cert_pem
+}
+
+output "client_key_pem" {
+  value     = tls_private_key.client_key.private_key_pem
+  sensitive = true
 }
