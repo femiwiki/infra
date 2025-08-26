@@ -1,6 +1,6 @@
 resource "docker_container" "http" {
   name            = "http"
-  image           = "ghcr.io/femiwiki/femiwiki:2025-08-26t12-50-ae86683b"
+  image           = "ghcr.io/femiwiki/femiwiki:2025-08-26t14-51-21a9d0dc"
   command         = ["caddy", "run"]
   restart         = "on-failure"
   max_retry_count = 3
@@ -17,18 +17,6 @@ resource "docker_container" "http" {
 
   mounts {
     type   = "bind"
-    source = "/srv/femiwiki.com/Caddyfile"
-    target = "/srv/femiwiki.com/Caddyfile"
-  }
-
-  mounts {
-    type   = "bind"
-    source = "/srv/femiwiki.com/robots.txt"
-    target = "/srv/femiwiki.com/robots.txt"
-  }
-
-  mounts {
-    type   = "bind"
     source = "/srv/femiwiki.com/sitemap"
     target = "/srv/femiwiki.com/sitemap"
   }
@@ -42,7 +30,7 @@ resource "docker_container" "http" {
 
 resource "docker_container" "fastcgi" {
   name         = "fastcgi"
-  image        = "ghcr.io/femiwiki/femiwiki:2025-08-26t12-50-ae86683b"
+  image        = "ghcr.io/femiwiki/femiwiki:2025-08-26t14-51-21a9d0dc"
   network_mode = "host"
   restart      = "always"
   env = [
