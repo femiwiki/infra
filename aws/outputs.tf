@@ -16,6 +16,10 @@ output "test_femiwiki_eip" {
   value = aws_eip.test_femiwiki.public_ip
 }
 
+output "mysql_private_ip" {
+  value = aws_instance.femiwiki.private_ip
+}
+
 output "client_ca_cert_pem" {
   value = trimspace(tls_self_signed_cert.ca_cert.cert_pem)
 }
