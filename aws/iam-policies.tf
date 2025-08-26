@@ -271,11 +271,12 @@ data "aws_iam_policy_document" "iac" {
       "logs:*",
       "route53:*",
       "route53domains:*",
+      "s3:*",
       "ses:*",
       "sns:*",
       "sqs:*",
-      "s3:*",
-      "tag:GetResources"
+      "ssm:*",
+      "tag:GetResources",
     ]
     resources = ["*"]
   }
