@@ -56,7 +56,7 @@ resource "docker_container" "fastcgi" {
       WG_INTERNAL_SERVER             = "http://127.0.0.1:80"
       WG_MEMCACHED_SERVERS           = "127.0.0.1:11211"
 
-      WG_DB_SERVER             = "127.0.0.1:3306"
+      WG_DB_SERVER             = "${data.terraform_remote_state.aws.outputs.mysql_private_ip}:3306"
       WG_DB_USER               = local.ssm_parameters_mysql["/mysql/users/mediawiki/username"]
       WG_DB_PASSWORD           = local.ssm_parameters_mysql["/mysql/users/mediawiki/password"]
       WG_O_AUTH_2_PRIVATE_KEY  = local.ssm_parameters_mediawiki["/mediawiki/o_auth_2_private_key"]
