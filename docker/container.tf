@@ -16,9 +16,10 @@ resource "docker_container" "http" {
   ]
 
   mounts {
-    type   = "bind"
-    source = "/srv/femiwiki.com/sitemap"
-    target = "/srv/femiwiki.com/sitemap"
+    type      = "volume"
+    source    = docker_volume.sitemap.id
+    target    = "/srv/femiwiki.com/sitemap"
+    read_only = true
   }
 
   ulimit {
@@ -80,8 +81,16 @@ resource "docker_container" "fastcgi" {
   }
 
   mounts {
-    type   = "volume"
-    target = "/a"
+    type      = "volume"
+    source    = docker_volume.sitemap.id
+    target    = "/srv/femiwiki.com/sitemap"
+    read_only = false
+  }
+
+  mounts {
+    type      = "volume"
+    target    = "/tmp/cache"
+    read_only = false
   }
 
   ulimit {
