@@ -44,6 +44,8 @@ resource "docker_container" "fastcgi" {
       WG_CDN_SERVERS                 = "127.0.0.1:80"
       WG_INTERNAL_SERVER             = "http://127.0.0.1:80"
       WG_MEMCACHED_SERVERS           = "127.0.0.1:11211"
+      # Used by fcgi-probe.php
+      FCGI_URL = "127.0.0.1:9000"
 
       WG_DB_SERVER             = "${data.terraform_remote_state.aws.outputs.mysql_private_ip}:3306"
       WG_DB_USER               = local.ssm_parameters_mysql["/mysql/users/mediawiki/username"]
@@ -56,8 +58,6 @@ resource "docker_container" "fastcgi" {
       WG_SMTP_PASSWORD         = local.ssm_parameters_mediawiki["/mediawiki/smtp/password"]
       WG_SMTP_USERNAME         = local.ssm_parameters_mediawiki["/mediawiki/smtp/username"]
       WG_UPGRADE_KEY           = local.ssm_parameters_mediawiki["/mediawiki/upgrade_key"]
-      # Used by fcgi-probe.php
-      FCGI_URL = "127.0.0.1:9000"
     } : "${k}=${v}"
   ]
 
