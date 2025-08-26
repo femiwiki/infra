@@ -8,8 +8,12 @@ output "ssm_parameters_mediawiki" {
   sensitive = true
 }
 
-output "blue_public_ip" {
-  value = aws_eip.femiwiki_blue_eip.public_ip
+output "femiwiki_eip" {
+  value = aws_eip.femiwiki.public_ip
+}
+
+output "test_femiwiki_eip" {
+  value = aws_eip.test_femiwiki.public_ip
 }
 
 output "client_ca_cert_pem" {

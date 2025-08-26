@@ -31,7 +31,7 @@ resource "tls_cert_request" "server_csr" {
     common_name  = "Docker Server"
     organization = "Femiwiki"
   }
-  ip_addresses = [aws_eip.femiwiki_blue_eip.public_ip]
+  ip_addresses = [aws_eip.test_femiwiki.public_ip]
 }
 
 resource "tls_locally_signed_cert" "server_cert" {

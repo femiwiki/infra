@@ -11,23 +11,6 @@ resource "aws_key_pair" "femiwiki_green" {
   public_key = file("res/femiwiki_rsa_green.pub")
 }
 
-resource "aws_eip" "femiwiki" {
-  instance = aws_instance.femiwiki.id
-  domain   = "vpc"
-  tags     = { Name = "femiwiki.com" }
-}
-
-resource "aws_eip" "femiwiki_blue_eip" {
-  domain = "vpc"
-  tags   = { Name = "femiwiki blue" }
-}
-
-resource "aws_eip" "test_femiwiki" {
-  instance = aws_eip.femiwiki.instance == aws_instance.femiwiki.id ? null : aws_instance.femiwiki.id
-  domain   = "vpc"
-  tags     = { Name = "test.femiwiki.com" }
-}
-
 data "aws_availability_zone" "femiwiki" {
   name = "ap-northeast-1a"
 }
@@ -91,16 +74,6 @@ resource "aws_instance" "femiwiki" {
   }
 }
 
-resource "tls_private_key" "blue" {
-  algorithm = "RSA"
-  rsa_bits  = 2048
-}
-
-resource "aws_key_pair" "femiwiki_blue" {
-  key_name   = "blue"
-  public_key = tls_private_key.blue.public_key_openssh
-}
-
 resource "aws_instance" "femiwiki_blue" {
   ami                         = data.aws_ami.amazon_linux_2_arm64.image_id
   availability_zone           = data.aws_availability_zone.femiwiki.name
@@ -108,7 +81,6 @@ resource "aws_instance" "femiwiki_blue" {
   ebs_optimized               = true
   iam_instance_profile        = aws_iam_instance_profile.femiwiki.name
   instance_type               = "t4g.micro"
-  key_name                    = aws_key_pair.femiwiki_blue.key_name
   monitoring                  = false
   user_data_replace_on_change = false
   associate_public_ip_address = true # Ensure public IP is assigned for EIP association
@@ -159,9 +131,4 @@ resource "aws_instance" "femiwiki_blue" {
       user_data,
     ]
   }
-}
-
-resource "aws_eip_association" "femiwiki_blue_eip_assoc" {
-  instance_id   = aws_instance.femiwiki_blue.id
-  allocation_id = aws_eip.femiwiki_blue_eip.id
 }
