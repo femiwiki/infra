@@ -114,8 +114,6 @@ resource "docker_container" "mysql" {
   image = "mysql/mysql-server:8.0.32"
   env = [
     "MYSQL_RANDOM_ROOT_PASSWORD=yes",
-    # "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
-    # "MYSQL_UNIX_PORT=/var/lib/mysql/mysql.sock"
   ]
   network_mode = "host"
   restart      = "always"
