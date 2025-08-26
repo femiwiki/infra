@@ -1,6 +1,6 @@
 resource "docker_container" "http" {
   name            = "http"
-  image           = "ghcr.io/femiwiki/femiwiki:2025-08-26t15-29-1d2a7788"
+  image           = "ghcr.io/femiwiki/femiwiki:2025-08-27t14-17-ddc8e385"
   command         = ["caddy", "run"]
   restart         = "on-failure"
   max_retry_count = 3
@@ -31,11 +31,25 @@ resource "docker_container" "http" {
 
 resource "docker_container" "fastcgi" {
   name         = "fastcgi"
-  image        = "ghcr.io/femiwiki/femiwiki:2025-08-26t15-29-1d2a7788"
+  image        = "ghcr.io/femiwiki/femiwiki:2025-08-27t14-17-ddc8e385"
   network_mode = "host"
   restart      = "always"
   env = [
     for k, v in {
+      PHP_FPM_EMERGENCY_RESTART_THRESHOLD = "5"
+      PHP_FPM_EMERGENCY_RESTART_INTERVAL  = "1m"
+      PHP_FPM_PROCESS_CONTROL_TIMEOUT     = "10s"
+      PHP_FPM_REQUEST_TERMINATE_TIMEOUT   = "30"
+
+      PHP_FPM_PM_MAX_CHILDREN      = "20"
+      PHP_FPM_PM_START_SERVERS     = "2"
+      PHP_FPM_PM_MIN_SPARE_SERVERS = "1"
+      PHP_FPM_PM_MAX_SPARE_SERVERS = "3"
+      PHP_FPM_PM_MAX_REQUESTS      = "200"
+
+      PHP_POST_MAX_SIZE       = "10M"
+      PHP_UPLOAD_MAX_FILESIZE = "10M"
+
       MEDIAWIKI_SKIP_IMPORT_SITES = "1"
       MEDIAWIKI_SKIP_INSTALL      = "1"
       MEDIAWIKI_SKIP_UPDATE       = "1"
