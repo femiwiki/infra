@@ -1,7 +1,7 @@
 resource "docker_container" "http" {
   count           = 0
   name            = "http"
-  image           = "ghcr.io/femiwiki/femiwiki:2025-05-24t17-47-df7f1357"
+  image           = "ghcr.io/femiwiki/femiwiki:2025-08-26t12-50-ae86683b"
   command         = ["caddy", "run"]
   restart         = "on-failure"
   max_retry_count = 3
@@ -42,23 +42,35 @@ resource "docker_container" "http" {
 }
 
 resource "docker_container" "fastcgi" {
-  count        = 0
   name         = "fastcgi"
-  image        = "ghcr.io/femiwiki/femiwiki:2025-08-24t05-34-3a83d349"
+  image        = "ghcr.io/femiwiki/femiwiki:2025-08-26t12-50-ae86683b"
   network_mode = "host"
   restart      = "always"
   env = [
-    "MEDIAWIKI_SKIP_IMPORT_SITES=1",
-    "MEDIAWIKI_SKIP_INSTALL=1",
-    "MEDIAWIKI_SKIP_UPDATE=1",
-    "WG_CDN_SERVERS=127.0.0.1:80",
-    "WG_DB_SERVER=127.0.0.1:3306",
-    "WG_DB_USER=mediawiki",
-    "DB_PASSWORD_FILE=/run/secrets/db_user_password",
-    "WG_INTERNAL_SERVER=http://127.0.0.1:80",
-    "WG_MEMCACHED_SERVERS=127.0.0.1:11211",
-    # Used by fcgi-probe.php
-    "FCGI_URL=127.0.0.1:9000",
+    for k, v in {
+      MEDIAWIKI_SKIP_IMPORT_SITES = "1"
+      MEDIAWIKI_SKIP_INSTALL      = "1"
+      MEDIAWIKI_SKIP_UPDATE       = "1"
+
+      WG_BOUNCE_HANDLER_INTERNAL_IPS = "172.31.0.0/16"
+      WG_CDN_SERVERS                 = "127.0.0.1:80"
+      WG_INTERNAL_SERVER             = "http://127.0.0.1:80"
+      WG_MEMCACHED_SERVERS           = "127.0.0.1:11211"
+
+      WG_DB_SERVER             = "127.0.0.1:3306"
+      WG_DB_USER               = local.ssm_parameters_mysql["/mysql/users/mediawiki/username"]
+      WG_DB_PASSWORD           = local.ssm_parameters_mysql["/mysql/users/mediawiki/password"]
+      WG_O_AUTH_2_PRIVATE_KEY  = local.ssm_parameters_mediawiki["/mediawiki/o_auth_2_private_key"]
+      WG_RC_FEEDS_DISCORD_URL  = local.ssm_parameters_mediawiki["/mediawiki/rc_feeds_discord_url"]
+      WG_RE_CAPTCHA_SECRET_KEY = local.ssm_parameters_mediawiki["/mediawiki/re_captcha/secret_key"]
+      WG_RE_CAPTCHA_SITE_KEY   = local.ssm_parameters_mediawiki["/mediawiki/re_captcha/site_key"]
+      WG_SECRET_KEY            = local.ssm_parameters_mediawiki["/mediawiki/site_key"]
+      WG_SMTP_PASSWORD         = local.ssm_parameters_mediawiki["/mediawiki/smtp/password"]
+      WG_SMTP_USERNAME         = local.ssm_parameters_mediawiki["/mediawiki/smtp/username"]
+      WG_UPGRADE_KEY           = local.ssm_parameters_mediawiki["/mediawiki/upgrade_key"]
+      # Used by fcgi-probe.php
+      FCGI_URL = "127.0.0.1:9000"
+    } : "${k}=${v}"
   ]
 
   healthcheck {
