@@ -1,5 +1,4 @@
 resource "docker_container" "http" {
-  count           = 0
   name            = "http"
   image           = "ghcr.io/femiwiki/femiwiki:2025-08-26t12-50-ae86683b"
   command         = ["caddy", "run"]
