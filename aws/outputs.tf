@@ -1,3 +1,13 @@
+output "ssm_parameters_mysql" {
+  value     = data.aws_ssm_parameters_by_path.mysql
+  sensitive = true
+}
+
+output "ssm_parameters_mediawiki" {
+  value     = data.aws_ssm_parameters_by_path.mediawiki
+  sensitive = true
+}
+
 output "blue_public_ip" {
   value = aws_eip.femiwiki_blue_eip.public_ip
 }
