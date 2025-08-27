@@ -1,6 +1,6 @@
 resource "docker_container" "http" {
   name            = "http"
-  image           = "ghcr.io/femiwiki/femiwiki:2025-08-26t15-29-1d2a7788"
+  image           = "ghcr.io/femiwiki/femiwiki:2025-08-27t14-17-ddc8e385"
   command         = ["caddy", "run"]
   restart         = "on-failure"
   max_retry_count = 3
@@ -31,11 +31,25 @@ resource "docker_container" "http" {
 
 resource "docker_container" "fastcgi" {
   name         = "fastcgi"
-  image        = "ghcr.io/femiwiki/femiwiki:2025-08-26t15-29-1d2a7788"
+  image        = "ghcr.io/femiwiki/femiwiki:2025-08-27t14-17-ddc8e385"
   network_mode = "host"
   restart      = "always"
   env = [
     for k, v in {
+      PHP_FPM_EMERGENCY_RESTART_THRESHOLD = "5"
+      PHP_FPM_EMERGENCY_RESTART_INTERVAL  = "1m"
+      PHP_FPM_PROCESS_CONTROL_TIMEOUT     = "10s"
+      PHP_FPM_REQUEST_TERMINATE_TIMEOUT   = "30"
+
+      PHP_FPM_PM_MAX_CHILDREN      = "20"
+      PHP_FPM_PM_START_SERVERS     = "2"
+      PHP_FPM_PM_MIN_SPARE_SERVERS = "1"
+      PHP_FPM_PM_MAX_SPARE_SERVERS = "3"
+      PHP_FPM_PM_MAX_REQUESTS      = "200"
+
+      PHP_POST_MAX_SIZE       = "10M"
+      PHP_UPLOAD_MAX_FILESIZE = "10M"
+
       MEDIAWIKI_SKIP_IMPORT_SITES = "1"
       MEDIAWIKI_SKIP_INSTALL      = "1"
       MEDIAWIKI_SKIP_UPDATE       = "1"
@@ -44,6 +58,8 @@ resource "docker_container" "fastcgi" {
       WG_CDN_SERVERS                 = "127.0.0.1:80"
       WG_INTERNAL_SERVER             = "http://127.0.0.1:80"
       WG_MEMCACHED_SERVERS           = "127.0.0.1:11211"
+      # Used by fcgi-probe.php
+      FCGI_URL = "127.0.0.1:9000"
 
       WG_DB_SERVER             = "${data.terraform_remote_state.aws.outputs.mysql_private_ip}:3306"
       WG_DB_USER               = local.ssm_parameters_mysql["/mysql/users/mediawiki/username"]
@@ -56,8 +72,6 @@ resource "docker_container" "fastcgi" {
       WG_SMTP_PASSWORD         = local.ssm_parameters_mediawiki["/mediawiki/smtp/password"]
       WG_SMTP_USERNAME         = local.ssm_parameters_mediawiki["/mediawiki/smtp/username"]
       WG_UPGRADE_KEY           = local.ssm_parameters_mediawiki["/mediawiki/upgrade_key"]
-      # Used by fcgi-probe.php
-      FCGI_URL = "127.0.0.1:9000"
     } : "${k}=${v}"
   ]
 
