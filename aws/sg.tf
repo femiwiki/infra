@@ -75,18 +75,6 @@ resource "aws_security_group_rule" "femiwiki_ingress_docker_tls" {
   cidr_blocks       = ["0.0.0.0/0"]
 }
 
-# TODO Remove this rule after https://github.com/femiwiki/femiwiki/issues/245 is solved
-resource "aws_security_group_rule" "femiwiki_ingress_internal_mysql" {
-  security_group_id = aws_security_group.femiwiki.id
-  description       = "MySQL from Mediawiki"
-
-  type                     = "ingress"
-  protocol                 = "tcp"
-  from_port                = 3306
-  to_port                  = 3306
-  source_security_group_id = aws_security_group.femiwiki.id
-}
-
 resource "aws_security_group_rule" "femiwiki_egress" {
   security_group_id = aws_security_group.femiwiki.id
 
@@ -96,4 +84,40 @@ resource "aws_security_group_rule" "femiwiki_egress" {
   to_port          = 0
   cidr_blocks      = ["0.0.0.0/0"]
   ipv6_cidr_blocks = ["::/0"]
+}
+
+#
+# MySQL
+#
+resource "aws_security_group" "mysql" {
+  name        = "mysql"
+  description = "MySQL"
+  vpc_id      = aws_default_vpc.default.id
+
+  tags = {
+    Name = "MySQL"
+  }
+}
+
+resource "aws_security_group_rule" "mysql_ingress_mediawiki" {
+  security_group_id        = aws_security_group.mysql.id
+  description              = "MySQL from Mediawiki"
+  type                     = "ingress"
+  protocol                 = "tcp"
+  from_port                = 3306
+  to_port                  = 3306
+  source_security_group_id = aws_security_group.mediawiki.id
+}
+
+#
+# MediaWiki
+#
+resource "aws_security_group" "mediawiki" {
+  name        = "mediawiki"
+  description = "MediaWiki"
+  vpc_id      = aws_default_vpc.default.id
+
+  tags = {
+    Name = "MediaWiki"
+  }
 }
