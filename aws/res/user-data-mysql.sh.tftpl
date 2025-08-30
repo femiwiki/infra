@@ -104,10 +104,12 @@ if [ -n "${mysql_data_dir}" ]; then
   if ! file -s ${ebs_device_name} | grep -q "filesystem data"; then
     mkfs.xfs ${ebs_device_name}
   fi
-  mount ${ebs_device_name} /var/lib/mysql
+  mkdir -p /var/lib/mysql/data
+  mount ${ebs_device_name} /var/lib/mysql/data
 fi
 cat <<'EOF' > /etc/mysql/my.cnf
 [mysqld]
+data_dir=/var/lib/mysql/data
 performance_schema=OFF
 max_connections=60 # default to 151
 log_error = journald
