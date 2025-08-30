@@ -98,11 +98,6 @@ data "aws_iam_policy_document" "instance_assume_role" {
   }
 }
 
-resource "aws_iam_instance_profile" "femiwiki" {
-  name = "Femiwiki"
-  role = aws_iam_role.femiwiki.name
-}
-
 resource "aws_iam_role_policy_attachment" "femiwiki_amazon_s3_access" {
   role       = aws_iam_role.femiwiki.name
   policy_arn = aws_iam_policy.amazon_s3_access.arn
