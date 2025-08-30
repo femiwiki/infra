@@ -9,7 +9,7 @@ set -x
 # Reference: https://docs.aws.amazon.com/systems-manager/latest/userguide/agent-install-al2.html
 #
 dnf install -y ec2-instance-connect
-dnf install -y "https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_$${PROCESSOR}/amazon-ssm-agent.rpm"
+dnf install -y "https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_$(uname -m | sed 's/x86_64/amd64/; s/aarch64/arm64/')/amazon-ssm-agent.rpm"
 
 #
 # 기본 유틸리티들 설치
@@ -80,17 +80,8 @@ EOF
 
 # Install MySQL
 mkdir -p /home/ec2-user/mysql-rpms && cd /home/ec2-user/mysql-rpms
-case $(uname -p) in
-  "x86_64")
-    PROCESSOR="amd64"
-    wget https://dev.mysql.com/get/Downloads/MySQL-8.0/mysql-8.0.43-1.el9.x86_64.rpm-bundle.tar
-    tar -xvf "mysql-8.0.43-1.el9.x86_64.rpm-bundle.tar"
-    ;;
-  "aarch64")
-    wget https://dev.mysql.com/get/Downloads/MySQL-8.0/mysql-8.0.43-1.el9.aarch64.rpm-bundle.tar
-    tar -xvf "mysql-8.0.43-1.el9.aarch64.rpm-bundle.tar"
-    ;;
-esac
+wget "https://dev.mysql.com/get/Downloads/MySQL-8.0/mysql-8.0.43-1.el9.$(uname -m).rpm-bundle.tar"
+tar -xvf "mysql-8.0.43-1.el9.$(uname -m).rpm-bundle.tar"
 dnf install -y \
   ./mysql-community-client-plugins-8.0.43-1.el9.*.rpm \
   ./mysql-community-common-8.0.43-1.el9.*.rpm \
