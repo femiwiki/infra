@@ -139,7 +139,7 @@ resource "aws_iam_role" "database" {
 }
 
 resource "aws_iam_role_policy_attachment" "database_upload_backup" {
-  role       = aws_iam_role.femiwiki.name
+  role       = aws_iam_role.database.name
   policy_arn = aws_iam_policy.upload_backup.arn
 }
 
@@ -148,7 +148,7 @@ resource "aws_iam_role_policy_attachment" "database_managed_policies" {
     "AmazonSSMManagedInstanceCore",
     "CloudWatchAgentServerPolicy",
   ])
-  role       = aws_iam_role.femiwiki.name
+  role       = aws_iam_role.database.name
   policy_arn = "arn:aws:iam::aws:policy/${each.key}"
 }
 
