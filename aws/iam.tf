@@ -132,6 +132,26 @@ resource "aws_iam_role_policy_attachment" "femiwiki_managed_policies" {
   policy_arn = "arn:aws:iam::aws:policy/${each.key}"
 }
 
+resource "aws_iam_role" "database" {
+  name               = "database"
+  description        = "EC2 instance(s) running database"
+  assume_role_policy = data.aws_iam_policy_document.instance_assume_role.json
+}
+
+resource "aws_iam_role_policy_attachment" "database_upload_backup" {
+  role       = aws_iam_role.femiwiki.name
+  policy_arn = aws_iam_policy.upload_backup.arn
+}
+
+resource "aws_iam_role_policy_attachment" "database_managed_policies" {
+  for_each = toset([
+    "AmazonSSMManagedInstanceCore",
+    "CloudWatchAgentServerPolicy",
+  ])
+  role       = aws_iam_role.femiwiki.name
+  policy_arn = "arn:aws:iam::aws:policy/${each.key}"
+}
+
 resource "aws_iam_role" "digger" {
   name        = "digger"
   description = "Digger"
