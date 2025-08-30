@@ -109,6 +109,17 @@ resource "aws_security_group_rule" "mysql_ingress_mediawiki" {
   source_security_group_id = aws_security_group.mediawiki.id
 }
 
+resource "aws_security_group_rule" "mysql_egress" {
+  security_group_id = aws_security_group.mysql.id
+
+  type             = "egress"
+  protocol         = "-1"
+  from_port        = 0
+  to_port          = 0
+  cidr_blocks      = ["0.0.0.0/0"]
+  ipv6_cidr_blocks = ["::/0"]
+}
+
 #
 # MediaWiki
 #

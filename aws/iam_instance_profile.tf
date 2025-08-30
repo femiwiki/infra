@@ -5,5 +5,5 @@ resource "aws_iam_instance_profile" "femiwiki" {
 
 resource "aws_iam_instance_profile" "database" {
   name = "database"
-  role = aws_iam_role.femiwiki.name
+  role = aws_iam_role.database.name
 }

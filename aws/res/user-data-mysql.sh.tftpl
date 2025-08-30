@@ -1,0 +1,153 @@
+#!/bin/bash
+set -euo pipefail; IFS=$'\n\t'
+
+# Enable verbose mode
+set -x
+
+#
+# Install ec2-instance-connect and SSMAgent
+# Reference: https://docs.aws.amazon.com/systems-manager/latest/userguide/agent-install-al2.html
+#
+dnf install -y ec2-instance-connect
+dnf install -y "https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_$${PROCESSOR}/amazon-ssm-agent.rpm"
+
+#
+# 기본 유틸리티들 설치
+#
+dnf autoremove -y postfix
+# - ripgrep: Disabled temporarily (https://github.com/femiwiki/femiwiki/issues/247)
+dnf install -y \
+  bash-completion \
+  vim-enhanced \
+  htop \
+  tmux \
+  git \
+  jq \
+  unzip \
+  nc \
+  bind-utils \
+  xfsprogs \
+;
+
+#
+# Install atop and sysstat
+# Reference: https://repost.aws/knowledge-center/ec2-linux-configure-monitoring-tools
+#
+dnf -y install sysstat atop
+sed -i 's/^LOGINTERVAL=600.*/LOGINTERVAL=60/' /etc/sysconfig/atop
+mkdir -v /etc/systemd/system/sysstat-collect.timer.d/
+bash -c "sed -e 's|every 10 minutes|every 1 minute|g' -e '/^OnCalendar=/ s|/10$|/1|' /usr/lib/systemd/system/sysstat-collect.timer > /etc/systemd/system/sysstat-collect.timer.d/override.conf"
+sed -i 's|^SADC_OPTIONS=.*|SADC_OPTIONS=" -S XALL"|' /etc/sysconfig/sysstat
+systemctl enable atop.service sysstat-collect.timer sysstat.service
+systemctl restart atop.service sysstat-collect.timer sysstat.service
+
+#
+# Install and configure Grafana Alloy
+#
+curl -sLo gpg.key https://rpm.grafana.com/gpg.key
+rpm --import gpg.key && rm gpg.key
+echo -e '[grafana]\nname=grafana\nbaseurl=https://rpm.grafana.com\nrepo_gpgcheck=1\nenabled=1\ngpgcheck=1\ngpgkey=https://rpm.grafana.com/gpg.key\nsslverify=1
+sslcacert=/etc/pki/tls/certs/ca-bundle.crt' | tee /etc/yum.repos.d/grafana.repo
+dnf install -y alloy
+cat <<'EOF' > /etc/alloy/config.alloy
+${alloy_config}
+EOF
+systemctl enable --now alloy
+
+#
+# sudo 로 /usr/local/{bin,sbin} 안에 있는 커맨드를 실행할 수 있도록 설정
+#
+cat <<'EOF' > /etc/sudoers.d/10-sudo-path
+Defaults secure_path=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin
+EOF
+
+# Add hostname to /etc/hosts
+# https://github.com/hashicorp/nomad/blob/v1.8.4/terraform/shared/scripts/server.sh
+echo "127.0.0.1 $(hostname)" | tee --append /etc/hosts
+
+#
+# htoprc 생성
+#
+sudo -u ec2-user mkdir -p /home/ec2-user/.config/htop
+sudo -u ec2-user tee /home/ec2-user/.config/htop/htoprc <<'EOF' >/dev/null
+header_margin=1
+hide_kernel_threads=1
+hide_userland_threads=1
+highlight_base_name=1
+highlight_megabytes=1
+tree_view=1
+EOF
+
+# Install MySQL
+mkdir -p /home/ec2-user/mysql-rpms && cd /home/ec2-user/mysql-rpms
+case $(uname -p) in
+  "x86_64")
+    PROCESSOR="amd64"
+    wget https://dev.mysql.com/get/Downloads/MySQL-8.0/mysql-8.0.43-1.el9.x86_64.rpm-bundle.tar
+    tar -xvf "mysql-8.0.43-1.el9.x86_64.rpm-bundle.tar"
+    ;;
+  "aarch64")
+    wget https://dev.mysql.com/get/Downloads/MySQL-8.0/mysql-8.0.43-1.el9.aarch64.rpm-bundle.tar
+    tar -xvf "mysql-8.0.43-1.el9.aarch64.rpm-bundle.tar"
+    ;;
+esac
+dnf install -y \
+  ./mysql-community-client-plugins-8.0.43-1.el9.*.rpm \
+  ./mysql-community-common-8.0.43-1.el9.*.rpm \
+  ./mysql-community-libs-8.0.43-1.el9.*.rpm \
+  ./mysql-community-client-8.0.43-1.el9.*.rpm \
+  ./mysql-community-icu-data-files-8.0.43-1.el9.*.rpm \
+  ./mysql-community-server-8.0.43-1.el9.*.rpm \
+;
+cd -
+if [ -n "${mysql_data_dir}" ]; then
+  if ! file -s ${ebs_device_name} | grep -q "filesystem data"; then
+    mkfs.xfs ${ebs_device_name}
+  fi
+  mount ${ebs_device_name} /var/lib/mysql
+fi
+cat <<'EOF' > /etc/mysql/my.cnf
+[mysqld]
+performance_schema=OFF
+max_connections=60 # default to 151
+log_error = journald
+
+server_id=${mysql_server_id}
+log_bin=mysql-bin
+gtid_mode=ON
+enforce_gtid_consistency=ON
+
+# sorted alphabetically
+innodb_dedicated_server=ON
+join_buffer_size=1M # default to 256K
+max_heap_table_size=32M # default to 16M
+parser_max_mem_size=256M # default to 16 exbibytes
+temptable_max_mmap=64M # default to 1G
+temptable_max_ram=64M # default to 1G
+tmp_table_size=32M # defaults to 16M
+EOF
+systemctl enable --now mysqld
+
+TIMEOUT=300
+CHECK_INTERVAL=5
+while true; do
+  TEMP_PASSWORD="$(journalctl -u mysqld.service --since='now - 30 sec' 2>/dev/null | grep 'temporary password' | awk '{print $NF}')"
+  if [ -n "$TEMP_PASSWORD" ]; then
+    echo "Temporary password found: $TEMP_PASSWORD"
+    # TODO Save it to the ssm paramater store
+    break
+  fi
+  CURRENT_TIME=$(date +%s)
+  if (( CURRENT_TIME - START_TIME > TIMEOUT )); then
+    echo "Error: Timed out while waiting for temporary password."
+    exit 1
+  fi
+  sleep $CHECK_INTERVAL
+done
+
+#
+# README 생성
+#
+sudo -u ec2-user tee /home/ec2-user/README <<'EOF' >/dev/null
+https://github.com/femiwiki/infra
+EOF
