@@ -1,5 +1,5 @@
 locals {
-  mysql_volume_device_name = "/dev/nvme1n1"
+  mysql_volume_device_name = "/dev/sdf"
 }
 
 resource "aws_ebs_volume" "persistent_data_mysql" {

@@ -179,7 +179,7 @@ resource "aws_instance" "database" {
   }
 
   tags = {
-    Name = "femiwiki.com"
+    Name = "database"
   }
 
   lifecycle {
