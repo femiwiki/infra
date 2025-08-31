@@ -151,35 +151,3 @@ resource "aws_iam_role_policy_attachment" "database_managed_policies" {
   role       = aws_iam_role.database.name
   policy_arn = "arn:aws:iam::aws:policy/${each.key}"
 }
-
-resource "aws_iam_role" "digger" {
-  name        = "digger"
-  description = "Digger"
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Principal = {
-          Federated = aws_iam_openid_connect_provider.github_actions.arn
-        }
-        Action = "sts:AssumeRoleWithWebIdentity"
-        Condition = {
-          StringEquals = {
-            "${aws_iam_openid_connect_provider.github_actions.url}:aud" = "sts.amazonaws.com"
-          }
-          StringLike = {
-            "${aws_iam_openid_connect_provider.github_actions.url}:sub" = [
-              "repo:femiwiki/infra:*"
-            ]
-          }
-        }
-      },
-    ]
-  })
-}
-
-resource "aws_iam_role_policy" "digger" {
-  role   = aws_iam_role.digger.name
-  policy = data.aws_iam_policy_document.iac.json
-}

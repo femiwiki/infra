@@ -5,7 +5,7 @@ resource "aws_cloudwatch_metric_alarm" "femiwiki_volume_idle_time_cloud_watch_al
   period      = 300
   statistic   = "Minimum"
   dimensions = {
-    VolumeId = aws_instance.femiwiki.root_block_device[0].volume_id
+    VolumeId = aws_instance.docker.root_block_device[0].volume_id
   }
   threshold           = 20
   comparison_operator = "LessThanThreshold"
@@ -23,7 +23,7 @@ resource "aws_cloudwatch_metric_alarm" "femiwiki_disk_used_cloud_watch_alarm" {
   dimensions = {
     "device" = "nvme0n1p1"
     "fstype" = "xfs"
-    "host"   = aws_instance.femiwiki.private_dns
+    "host"   = aws_instance.docker.private_dns
     "path"   = "/"
   }
   threshold           = 90
