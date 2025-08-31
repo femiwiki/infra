@@ -17,7 +17,7 @@ output "test_femiwiki_eip" {
 }
 
 output "mysql_private_ip" {
-  value = aws_instance.femiwiki.private_ip
+  value = aws_instance.database.private_ip
 }
 
 output "client_ca_cert_pem" {
