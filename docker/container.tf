@@ -119,44 +119,6 @@ resource "docker_container" "fastcgi" {
   }
 }
 
-resource "docker_container" "mysql" {
-  count = 0
-  name  = "mysql"
-  image = "mysql/mysql-server:8.0.32"
-  env = [
-    "MYSQL_RANDOM_ROOT_PASSWORD=yes",
-  ]
-  network_mode = "host"
-  restart      = "always"
-
-  mounts {
-    type   = "bind"
-    source = "/srv/mysql"
-    target = "/srv/mysql"
-  }
-
-  mounts {
-    type   = "bind"
-    source = "/etc/mysql"
-    target = "/etc/mysql"
-  }
-
-  ulimit {
-    hard = 65536
-    name = "nofile"
-    soft = 32768
-  }
-
-  labels {
-    label = "autoheal"
-    value = "true"
-  }
-
-  lifecycle {
-    ignore_changes = [env]
-  }
-}
-
 resource "docker_container" "memcached" {
   name         = "memcached"
   image        = "memcached:1.6.23-alpine"
