@@ -44,6 +44,8 @@ resource "aws_instance" "femiwiki" {
   vpc_security_group_ids = [
     aws_default_security_group.default.id,
     aws_security_group.femiwiki.id,
+    aws_security_group.mediawiki.id,
+    aws_security_group.mysql.id,
   ]
 
   root_block_device {

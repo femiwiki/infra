@@ -136,6 +136,8 @@ if ! file -s /dev/nvme1n1 | grep -q "filesystem data"; then
     fi
     sleep $CHECK_INTERVAL
   done
+  mysql --connect-expired-password -uroot -p"$TEMP_PASSWORD" \
+    -e "ALTER USER 'root'@'localhost' IDENTIFIED BY '$TEMP_PASSWORD' PASSWORD EXPIRE NEVER;"
 else
   mkdir -p /var/lib/mysql/data
   chown mysql:mysql /var/lib/mysql/data
