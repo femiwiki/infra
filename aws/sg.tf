@@ -99,6 +99,16 @@ resource "aws_security_group" "mysql" {
   }
 }
 
+resource "aws_security_group_rule" "mysql_ingress_self" {
+  security_group_id = aws_security_group.mysql.id
+  description       = "replication"
+  type              = "ingress"
+  protocol          = "tcp"
+  from_port         = 3306
+  to_port           = 3306
+  self              = true
+}
+
 resource "aws_security_group_rule" "mysql_ingress_mediawiki" {
   security_group_id        = aws_security_group.mysql.id
   description              = "MySQL from Mediawiki"
