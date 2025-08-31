@@ -165,3 +165,27 @@ resource "docker_container" "autoheal" {
     soft = 32768
   }
 }
+
+resource "docker_container" "backupbot" {
+  name    = "backupbot"
+  image   = "ghcr.io/femiwiki/backupbot:2025-08-31t08-33-6932e7ed"
+  restart = "always"
+  env = [
+    for k, v in {
+      DB_SERVER   = "${data.terraform_remote_state.aws.outputs.mysql_private_ip}:3306"
+      DB_USERNAME = local.ssm_parameters_mysql["/mysql/users/mediawiki/username"]
+      DB_PASSWORD = local.ssm_parameters_mysql["/mysql/users/mediawiki/password"]
+    } : "${k}=${v}"
+  ]
+
+  ulimit {
+    hard = 65536
+    name = "nofile"
+    soft = 32768
+  }
+
+  labels {
+    label = "autoheal"
+    value = "true"
+  }
+}
