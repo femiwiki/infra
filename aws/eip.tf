@@ -1,7 +1,6 @@
 resource "aws_eip" "femiwiki" {
-  instance = aws_instance.femiwiki.id
-  domain   = "vpc"
-  tags     = { Name = "femiwiki.com" }
+  domain = "vpc"
+  tags   = { Name = "femiwiki.com" }
 }
 
 resource "aws_eip_association" "femiwiki" {
