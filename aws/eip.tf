@@ -1,7 +1,6 @@
 resource "aws_eip" "femiwiki" {
-  instance = aws_instance.femiwiki.id
-  domain   = "vpc"
-  tags     = { Name = "femiwiki.com" }
+  domain = "vpc"
+  tags   = { Name = "femiwiki.com" }
 }
 
 resource "aws_eip_association" "femiwiki" {
@@ -15,9 +14,8 @@ resource "aws_eip" "test_femiwiki" {
 }
 
 resource "aws_eip_association" "test_femiwiki" {
-  count         = 0
   allocation_id = aws_eip.test_femiwiki.id
-  instance_id   = aws_instance.femiwiki_blue.id
+  instance_id   = aws_instance.docker.id
 }
 
 
