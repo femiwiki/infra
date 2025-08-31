@@ -16,6 +16,10 @@ output "test_femiwiki_eip" {
   value = aws_eip.test_femiwiki.public_ip
 }
 
+output "docker_host_eip" {
+  value = aws_eip.test_femiwiki.public_ip
+}
+
 output "mysql_private_ip" {
   value = aws_instance.database.private_ip
 }

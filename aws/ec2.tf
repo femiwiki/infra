@@ -85,7 +85,6 @@ resource "aws_instance" "femiwiki_blue" {
   instance_type               = "t4g.micro"
   monitoring                  = false
   user_data_replace_on_change = false
-  associate_public_ip_address = true # Ensure public IP is assigned for EIP association
 
   user_data = templatefile("res/user-data-docker-provider.tftpl", {
     alloy_config = templatefile("res/config.alloy.tftpl", {
@@ -105,6 +104,7 @@ resource "aws_instance" "femiwiki_blue" {
   vpc_security_group_ids = [
     aws_default_security_group.default.id,
     aws_security_group.femiwiki.id,
+    aws_security_group.mediawiki.id,
   ]
 
   root_block_device {
