@@ -91,13 +91,6 @@ dnf install -y \
   ./mysql-community-server-8.0.43-1.el9.*.rpm \
 ;
 cd -
-rm -rf /home/ec2-user/mysql-rpms
-if ! file -s /dev/nvme1n1 | grep -q "filesystem data"; then
-  mkfs.xfs /dev/nvme1n1
-fi
-mkdir -p /var/lib/mysql/data
-chown mysql:mysql /var/lib/mysql/data
-mount /dev/nvme1n1 /var/lib/mysql/data
 cat <<'EOF' > /etc/my.cnf
 [mysqld]
 datadir=/var/lib/mysql/data
@@ -119,25 +112,36 @@ temptable_max_mmap=64M # default to 1G
 temptable_max_ram=64M # default to 1G
 tmp_table_size=32M # defaults to 16M
 EOF
-systemctl enable --now mysqld
-
-TIMEOUT=300
-CHECK_INTERVAL=5
-START_TIME=$(date +%s)
-while true; do
-  TEMP_PASSWORD="$(journalctl -u mysqld.service --since='30 seconds ago' 2>/dev/null | grep 'temporary password' | awk '{print $NF}')"
-  if [ -n "$TEMP_PASSWORD" ]; then
-    echo "Temporary password found: $TEMP_PASSWORD"
-    # TODO Save it to the ssm paramater store
-    break
-  fi
-  CURRENT_TIME=$(date +%s)
-  if (( CURRENT_TIME - START_TIME > TIMEOUT )); then
-    echo "Error: Timed out while waiting for temporary password."
-    exit 1
-  fi
-  sleep $CHECK_INTERVAL
-done
+rm -rf /home/ec2-user/mysql-rpms
+if ! file -s /dev/nvme1n1 | grep -q "filesystem data"; then
+  mkfs.xfs /dev/nvme1n1
+  mkdir -p /var/lib/mysql/data
+  chown mysql:mysql /var/lib/mysql/data
+  mount /dev/nvme1n1 /var/lib/mysql/data
+  systemctl enable --now mysqld
+  TIMEOUT=300
+  CHECK_INTERVAL=5
+  START_TIME=$(date +%s)
+  while true; do
+    TEMP_PASSWORD="$(journalctl -u mysqld.service --since='30 seconds ago' 2>/dev/null | grep 'temporary password' | awk '{print $NF}')"
+    if [ -n "$TEMP_PASSWORD" ]; then
+      echo "Temporary password found: $TEMP_PASSWORD"
+      # TODO Save it to the ssm paramater store
+      break
+    fi
+    CURRENT_TIME=$(date +%s)
+    if (( CURRENT_TIME - START_TIME > TIMEOUT )); then
+      echo "Error: Timed out while waiting for temporary password."
+      exit 1
+    fi
+    sleep $CHECK_INTERVAL
+  done
+else
+  mkdir -p /var/lib/mysql/data
+  chown mysql:mysql /var/lib/mysql/data
+  mount /dev/nvme1n1 /var/lib/mysql/data
+  systemctl enable --now mysqld
+fi
 
 #
 # README 생성
