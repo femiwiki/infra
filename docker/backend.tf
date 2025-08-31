@@ -27,7 +27,7 @@ data "terraform_remote_state" "aws" {
 }
 
 provider "docker" {
-  host          = "tcp://${data.terraform_remote_state.aws.outputs.test_femiwiki_eip}:2376"
+  host          = "tcp://${data.terraform_remote_state.aws.outputs.docker_host_eip}:2376"
   ca_material   = data.terraform_remote_state.aws.outputs.client_ca_cert_pem
   cert_material = data.terraform_remote_state.aws.outputs.client_cert_pem
   key_material  = data.terraform_remote_state.aws.outputs.client_key_pem
