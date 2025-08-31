@@ -9,6 +9,10 @@ $wgAutoConfirmAge = 3600;
 $wgUnifiedExtensionForFemiwikiBlockByEmail = false;
 $wgUnifiedExtensionForFemiwikiRelatedArticlesUseLinks = false;
 
+// FemiwikiCrawlingBlocker
+wfLoadExtension( 'FemiwikiCrawlingBlocker' );
+$wgFemiwikiCrawlingBlockerEnabled = false;
+
 foreach ( [
 	NS_TALK,
 	NS_USER_TALK,
