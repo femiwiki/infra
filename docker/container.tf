@@ -1,6 +1,6 @@
 resource "docker_container" "http" {
   name            = "http"
-  image           = "ghcr.io/femiwiki/femiwiki:2025-08-27t14-17-ddc8e385"
+  image           = "ghcr.io/femiwiki/femiwiki:2025-08-31t06-12-af54d72a"
   command         = ["caddy", "run"]
   restart         = "on-failure"
   max_retry_count = 3
@@ -31,7 +31,7 @@ resource "docker_container" "http" {
 
 resource "docker_container" "fastcgi" {
   name         = "fastcgi"
-  image        = "ghcr.io/femiwiki/femiwiki:2025-08-27t14-17-ddc8e385"
+  image        = "ghcr.io/femiwiki/femiwiki:2025-08-31t06-12-af54d72a"
   network_mode = "host"
   restart      = "always"
   env = [
@@ -53,6 +53,7 @@ resource "docker_container" "fastcgi" {
       MEDIAWIKI_SKIP_IMPORT_SITES = "1"
       MEDIAWIKI_SKIP_INSTALL      = "1"
       MEDIAWIKI_SKIP_UPDATE       = "1"
+      MEDIAWIKI_HOTFIX_SNIPPET    = file("res/Hotfix.php")
 
       WG_BOUNCE_HANDLER_INTERNAL_IPS = "172.31.0.0/16"
       WG_CDN_SERVERS                 = "127.0.0.1:80"
