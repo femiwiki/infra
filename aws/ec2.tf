@@ -111,8 +111,6 @@ resource "aws_instance" "femiwiki_blue" {
     volume_type           = "gp3"
   }
 
-  # TODO Mount MySQL dir EBS
-
   credit_specification {
     cpu_credits = "unlimited"
   }
@@ -144,7 +142,6 @@ resource "aws_instance" "database" {
   user_data_replace_on_change = false
 
   user_data = templatefile("res/user-data-mysql.sh.tftpl", {
-    ebs_device_name = local.mysql_volume_device_name
     mysql_data_dir  = "/var/lib/mysql" # Default
     mysql_server_id = "2"
 

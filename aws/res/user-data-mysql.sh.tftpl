@@ -80,7 +80,7 @@ EOF
 
 # Install MySQL
 mkdir -p /home/ec2-user/mysql-rpms && cd /home/ec2-user/mysql-rpms
-wget "https://dev.mysql.com/get/Downloads/MySQL-8.0/mysql-8.0.43-1.el9.$(uname -m).rpm-bundle.tar"
+curl -sLO "https://dev.mysql.com/get/Downloads/MySQL-8.0/mysql-8.0.43-1.el9.$(uname -m).rpm-bundle.tar"
 tar -xvf "mysql-8.0.43-1.el9.$(uname -m).rpm-bundle.tar"
 dnf install -y \
   ./mysql-community-client-plugins-8.0.43-1.el9.*.rpm \
@@ -91,19 +91,19 @@ dnf install -y \
   ./mysql-community-server-8.0.43-1.el9.*.rpm \
 ;
 cd -
-if [ -n "${mysql_data_dir}" ]; then
-  if ! file -s ${ebs_device_name} | grep -q "filesystem data"; then
-    mkfs.xfs ${ebs_device_name}
-  fi
-  mkdir -p /var/lib/mysql/data
-  mount ${ebs_device_name} /var/lib/mysql/data
+rm -rf /home/ec2-user/mysql-rpms
+if ! file -s /dev/nvme1n1 | grep -q "filesystem data"; then
+  mkfs.xfs /dev/nvme1n1
 fi
-cat <<'EOF' > /etc/mysql/my.cnf
+mkdir -p /var/lib/mysql/data
+chown mysql:mysql /var/lib/mysql/data
+mount /dev/nvme1n1 /var/lib/mysql/data
+cat <<'EOF' > /etc/my.cnf
 [mysqld]
-data_dir=/var/lib/mysql/data
+datadir=/var/lib/mysql/data
 performance_schema=OFF
 max_connections=60 # default to 151
-log_error = journald
+log_error_services = 'log_sink_syseventlog'
 
 server_id=${mysql_server_id}
 log_bin=mysql-bin
@@ -123,8 +123,9 @@ systemctl enable --now mysqld
 
 TIMEOUT=300
 CHECK_INTERVAL=5
+START_TIME=$(date +%s)
 while true; do
-  TEMP_PASSWORD="$(journalctl -u mysqld.service --since='now - 30 sec' 2>/dev/null | grep 'temporary password' | awk '{print $NF}')"
+  TEMP_PASSWORD="$(journalctl -u mysqld.service --since='30 seconds ago' 2>/dev/null | grep 'temporary password' | awk '{print $NF}')"
   if [ -n "$TEMP_PASSWORD" ]; then
     echo "Temporary password found: $TEMP_PASSWORD"
     # TODO Save it to the ssm paramater store

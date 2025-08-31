@@ -1,7 +1,3 @@
-locals {
-  mysql_volume_device_name = "/dev/sdf"
-}
-
 resource "aws_ebs_volume" "persistent_data_mysql" {
   availability_zone = data.aws_availability_zone.femiwiki.name
   type              = "gp3"
@@ -21,7 +17,7 @@ resource "aws_ebs_volume" "persistent_data_mysql_2" {
 }
 
 resource "aws_volume_attachment" "persistent_data_mysql_2" {
-  device_name = local.mysql_volume_device_name
+  device_name = "/dev/sdf"
   volume_id   = aws_ebs_volume.persistent_data_mysql_2.id
   instance_id = aws_instance.database.id
 }
