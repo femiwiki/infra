@@ -183,9 +183,4 @@ resource "docker_container" "backupbot" {
     name = "nofile"
     soft = 32768
   }
-
-  labels {
-    label = "autoheal"
-    value = "true"
-  }
 }
