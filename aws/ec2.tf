@@ -67,7 +67,7 @@ resource "aws_instance" "docker" {
   disable_api_stop            = true
   ebs_optimized               = true
   iam_instance_profile        = aws_iam_instance_profile.femiwiki.name
-  instance_type               = "t4g.micro"
+  instance_type               = "t4g.small"
   monitoring                  = false
   user_data_replace_on_change = false
 
