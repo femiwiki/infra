@@ -11,7 +11,7 @@ $wgUnifiedExtensionForFemiwikiRelatedArticlesUseLinks = false;
 
 // FemiwikiCrawlingBlocker
 wfLoadExtension( 'FemiwikiCrawlingBlocker' );
-$wgFemiwikiCrawlingBlockerEnabled = true;
+$wgFemiwikiCrawlingBlockerEnabled = false;
 
 foreach ( [
 	NS_TALK,
