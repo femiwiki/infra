@@ -1,18 +1,25 @@
 resource "docker_container" "http" {
   name            = "http"
-  image           = "ghcr.io/femiwiki/femiwiki:2025-09-03T12-42-95d3b463"
+  image           = "ghcr.io/femiwiki/femiwiki:2025-09-16T12-39-445f8e38"
   command         = ["caddy", "run"]
   restart         = "on-failure"
   max_retry_count = 3
   network_mode    = "host"
 
   env = [
-    "FASTCGI_ADDR=127.0.0.1:9000",
-    "AWS_REGION=ap-northeast-1",
-    "S3_USE_IAM_PROVIDER=true",
-    "S3_HOST=s3.ap-northeast-1.amazonaws.com",
-    "S3_BUCKET=femiwiki-secrets",
-    "S3_PREFIX=caddycerts",
+    for k, v in {
+      FASTCGI_ADDR        = "127.0.0.1:9000",
+      AWS_REGION          = "ap-northeast-1",
+      S3_USE_IAM_PROVIDER = "true",
+      S3_HOST             = "s3.ap-northeast-1.amazonaws.com",
+      S3_BUCKET           = "femiwiki-secrets",
+      S3_PREFIX           = "caddycerts",
+
+      BLOCKED_CIDR = join(" ", [
+        # Alibaba Cloud LLC
+        "47.74.0.0/15", "47.76.0.0/14", "47.80.0.0/13",
+      ]),
+    } : "${k}=${v}"
   ]
 
   mounts {
@@ -31,7 +38,7 @@ resource "docker_container" "http" {
 
 resource "docker_container" "fastcgi" {
   name         = "fastcgi"
-  image        = "ghcr.io/femiwiki/femiwiki:2025-09-03T12-42-95d3b463"
+  image        = "ghcr.io/femiwiki/femiwiki:2025-09-16T12-39-445f8e38"
   network_mode = "host"
   restart      = "always"
   env = [
