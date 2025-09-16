@@ -76,24 +76,24 @@ resource "docker_container" "fastcgi" {
     } : "${k}=${v}"
   ]
 
-  # healthcheck {
-  #   test = ["CMD-SHELL", <<-EOF
-  #     if [ ! -d /srv/fcgi-check ]; then
-  #       mkdir -p /srv/fcgi-check/
-  #     fi &&
-  #     if [ ! -z /srv/fcgi-check/AdoyFastCgiClient.php ]; then
-  #       curl -L https://github.com/wikimedia/operations-docker-images-production-images/raw/ad68c7cb62e4e01436ab3a34fb961fe8034c2cce/images/php/common/fpm/live-test/AdoyFastCgiClient.php -o /srv/fcgi-check/AdoyFastCgiClient.php
-  #     fi &&
-  #     if [ ! -z /srv/fcgi-check/fcgi-probe.php ]; then
-  #       curl -L https://github.com/wikimedia/operations-docker-images-production-images/raw/ad68c7cb62e4e01436ab3a34fb961fe8034c2cce/images/php/common/fpm/live-test/fcgi-probe.php -o /srv/fcgi-check/fcgi-probe.php
-  #     fi &&
-  #     /usr/local/bin/php /srv/fcgi-check/fcgi-probe.php || exit 1
-  #     EOF
-  #   ]
-  #   interval = "5s"
-  #   timeout  = "1s"
-  #   retries  = 0
-  # }
+  healthcheck {
+    test = ["CMD-SHELL", <<-EOF
+      if [ ! -d /srv/fcgi-check ]; then
+        mkdir -p /srv/fcgi-check/
+      fi &&
+      if [ ! -z /srv/fcgi-check/AdoyFastCgiClient.php ]; then
+        curl -L https://github.com/wikimedia/operations-docker-images-production-images/raw/ad68c7cb62e4e01436ab3a34fb961fe8034c2cce/images/php/common/fpm/live-test/AdoyFastCgiClient.php -o /srv/fcgi-check/AdoyFastCgiClient.php
+      fi &&
+      if [ ! -z /srv/fcgi-check/fcgi-probe.php ]; then
+        curl -L https://github.com/wikimedia/operations-docker-images-production-images/raw/ad68c7cb62e4e01436ab3a34fb961fe8034c2cce/images/php/common/fpm/live-test/fcgi-probe.php -o /srv/fcgi-check/fcgi-probe.php
+      fi &&
+      /usr/local/bin/php /srv/fcgi-check/fcgi-probe.php || exit 1
+      EOF
+    ]
+    interval = "5s"
+    timeout  = "1s"
+    retries  = 0
+  }
 
   mounts {
     type      = "volume"
@@ -114,10 +114,10 @@ resource "docker_container" "fastcgi" {
     soft = 32768
   }
 
-  # labels {
-  #   label = "autoheal"
-  #   value = "true"
-  # }
+  labels {
+    label = "autoheal"
+    value = "true"
+  }
 }
 
 resource "docker_container" "memcached" {
