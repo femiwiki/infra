@@ -1,6 +1,6 @@
 resource "docker_container" "http" {
   name            = "http"
-  image           = "ghcr.io/femiwiki/femiwiki:2025-09-16T12-39-445f8e38"
+  image           = "ghcr.io/femiwiki/femiwiki:2025-11-07T15-24-f1c4e6a0"
   command         = ["caddy", "run"]
   restart         = "on-failure"
   max_retry_count = 3
@@ -19,8 +19,14 @@ resource "docker_container" "http" {
         # Alibaba Cloud LLC
         "47.74.0.0/15", "47.76.0.0/14", "47.80.0.0/13",
         # ColoCrossing
-        "192.3.0.0/16", "23.94.0.0/15", "172.245.0.0/16", "107.172.0.0/14",
-        "198.46.128.0/17", "198.144.176.0/20", "192.227.128.0/17",
+        "104.168.0.0/17",
+        "107.172.0.0/14",
+        "172.245.0.0/16",
+        "192.227.128.0/17",
+        "192.3.0.0/16",
+        "198.144.176.0/20",
+        "198.46.128.0/17",
+        "23.94.0.0/15",
       ]),
     } : "${k}=${v}"
   ]
