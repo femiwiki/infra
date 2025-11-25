@@ -11,8 +11,8 @@ $wgUnifiedExtensionForFemiwikiRelatedArticlesUseLinks = false;
 
 # Extension:Lockdown
 $wgActionLockdown = [
-	'diff' => [ 'user' ],
 	'history' => [ 'user' ],
+	'info' => [ 'user' ],
 ];
 $wgSpecialPageLockdown = [
 	'AbuseFilter' => [ 'user' ],
