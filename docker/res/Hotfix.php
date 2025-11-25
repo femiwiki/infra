@@ -11,15 +11,16 @@ $wgUnifiedExtensionForFemiwikiRelatedArticlesUseLinks = false;
 
 # Extension:Lockdown
 $wgActionLockdown = [
-	'diff' => [ 'user' ],
 	'history' => [ 'user' ],
+	'info' => [ 'user' ],
+	'raw' => [ 'user' ],
 ];
 $wgSpecialPageLockdown = [
 	'AbuseFilter' => [ 'user' ],
-	'RecentChangesLinked' => [ 'user' ],
+	'Recentchangeslinked' => [ 'user' ],
 	'Contributions' => [ 'user' ],
-	'WhatLinksHere' => [ 'user' ],
-	'Logs' => [ 'user' ],
+	'Whatlinkshere' => [ 'user' ],
+	'Log' => [ 'user' ],
 ];
 
 // FemiwikiCrawlingBlocker
