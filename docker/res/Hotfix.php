@@ -13,6 +13,7 @@ $wgUnifiedExtensionForFemiwikiRelatedArticlesUseLinks = false;
 $wgActionLockdown = [
 	'history' => [ 'user' ],
 	'info' => [ 'user' ],
+	'raw' => [ 'user' ],
 ];
 $wgSpecialPageLockdown = [
 	'AbuseFilter' => [ 'user' ],
