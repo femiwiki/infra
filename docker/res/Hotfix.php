@@ -17,10 +17,10 @@ $wgActionLockdown = [
 ];
 $wgSpecialPageLockdown = [
 	'AbuseFilter' => [ 'user' ],
-	'RecentChangesLinked' => [ 'user' ],
+	'Recentchangeslinked' => [ 'user' ],
 	'Contributions' => [ 'user' ],
-	'WhatLinksHere' => [ 'user' ],
-	'Logs' => [ 'user' ],
+	'Whatlinkshere' => [ 'user' ],
+	'Log' => [ 'user' ],
 ];
 
 // FemiwikiCrawlingBlocker
