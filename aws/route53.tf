@@ -170,6 +170,14 @@ resource "aws_route53_record" "atproto_femiwiki_com" {
   zone_id = aws_route53_zone.femiwiki_com.zone_id
 }
 
+resource "aws_route53_record" "atproto_quote_femiwiki_com" {
+  name    = "_atproto.quote.femiwiki.com"
+  type    = "TXT"
+  records = ["did=did:plc:wfjpbsidqanmqow7cgqbiwjz"]
+  ttl     = 3600
+  zone_id = aws_route53_zone.femiwiki_com.zone_id
+}
+
 resource "aws_route53_health_check" "femiwiki_pages" {
   for_each = toset([
     "페미위키:대문",
