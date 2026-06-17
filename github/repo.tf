@@ -171,6 +171,8 @@ module "quibble_action" {
     "mediawiki",
     "github-actions",
   ]
+
+  required_pull_request_reviews = []
 }
 
 import {
