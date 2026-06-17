@@ -127,7 +127,7 @@ if ! file -s /dev/nvme1n1 | grep -q "filesystem data"; then
     TEMP_PASSWORD="$(journalctl -u mysqld.service --since='30 seconds ago' 2>/dev/null | grep 'temporary password' | awk '{print $NF}')"
     if [ -n "$TEMP_PASSWORD" ]; then
       echo "Temporary password found: $TEMP_PASSWORD"
-      # TODO Save it to the ssm paramater store
+      # TODO Save it to the ssm parameter store
       break
     fi
     CURRENT_TIME=$(date +%s)
