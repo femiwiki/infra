@@ -186,18 +186,6 @@ module "quibble_action" {
   ]
 }
 
-import {
-  to = module.lambda.github_branch.main_branch
-  id = "femiwiki/lambda/main"
-}
-import {
-  to = module.lambda.github_branch_default.branch_default
-  id = "femiwiki/lambda"
-}
-import {
-  to = module.lambda.github_repository.repository
-  id = "femiwiki/lambda"
-}
 module "lambda" {
   source      = "./modules/github-repository"
   name        = "lambda"
@@ -209,10 +197,6 @@ module "lambda" {
   ]
 }
 
-import {
-  to = module.terraform-provider-mediawiki.github_branch_default.branch_default
-  id = "femiwiki/terraform-provider-mediawiki"
-}
 module "terraform-provider-mediawiki" {
   source      = "./modules/github-repository"
   name        = "terraform-provider-mediawiki"
