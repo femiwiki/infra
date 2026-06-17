@@ -105,7 +105,7 @@ module "tweetbot" {
 module "remote_gadgets" {
   source      = "./modules/github-repository"
   name        = "remote-gadgets"
-  description = "📽️ External repository for Javascript/CSS on FemiWiki"
+  description = "📽️ External repository for JavaScript/CSS on Femiwiki"
   topics = [
     "bot",
   ]
