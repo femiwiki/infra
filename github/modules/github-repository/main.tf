@@ -55,9 +55,7 @@ resource "github_branch_protection" "branch_protection" {
 resource "github_team_repository" "team_repository" {
   repository = github_repository.repository.name
   team_id    = "3688706"
-  # Write access so the Reviewer team can be used as a code owner in CODEOWNERS.
-  # Without an explicit permission the provider defaults to "pull" (read), which
-  # makes GitHub reject the team in CODEOWNERS ("does not have write access").
+  # "pull" (defaults) makes GitHub reject the team in CODEOWNERS
   permission = "push"
 }
 
