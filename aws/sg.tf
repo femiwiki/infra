@@ -1,5 +1,5 @@
 #
-# 기본 SG
+# Default SG
 #
 resource "aws_default_security_group" "default" {
   vpc_id = aws_default_vpc.default.id
@@ -12,8 +12,8 @@ resource "aws_default_security_group" "default" {
     ipv6_cidr_blocks = ["::/0"]
   }
 
-  # NOTE: 기본 SG의 인그레스 규칙은 테라폼으로 관리하지 말고 수동으로 관리하자.
-  # 이유는 비밀
+  # NOTE: Do not manage the default SG's ingress rules with Terraform; manage them manually.
+  # The reason is a secret.
   lifecycle {
     ignore_changes = [ingress]
   }
@@ -31,7 +31,7 @@ resource "aws_security_group_rule" "default_instance_connect_browser_based_clien
 }
 
 #
-# 페미위키 서버용 SG
+# SG for the Femiwiki server
 #
 resource "aws_security_group" "femiwiki" {
   name        = "internal-server"

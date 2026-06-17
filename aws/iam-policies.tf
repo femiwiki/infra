@@ -26,33 +26,33 @@ data "aws_iam_policy_document" "force_mfa" {
   statement {
     sid = "AllowIndividualUserToSeeAndManageOnlyTheirOwnAccountInformation"
     actions = [
-      // 본인 패스워드 관리 허용
+      // Allow managing own password
       "iam:ListUsers",
       "iam:GetUser",
       "iam:ChangePassword",
-      // 본인 액세스키 관리 허용
+      // Allow managing own access keys
       "iam:CreateAccessKey",
       "iam:DeleteAccessKey",
       "iam:ListAccessKeys",
       "iam:UpdateAccessKey",
-      // 본인 Signing Certificates 허용
+      // Allow managing own signing certificates
       "iam:ListSigningCertificates",
       "iam:DeleteSigningCertificate",
       "iam:UpdateSigningCertificate",
       "iam:UploadSigningCertificate",
-      // 본인 SSH 공개키 관리 허용
+      // Allow managing own SSH public keys
       "iam:ListSSHPublicKeys",
       "iam:GetSSHPublicKey",
       "iam:DeleteSSHPublicKey",
       "iam:UpdateSSHPublicKey",
       "iam:UploadSSHPublicKey",
-      // 본인 Service Specific Credential 관리 허용
+      // Allow managing own service-specific credentials
       "iam:CreateServiceSpecificCredential",
       "iam:DeleteServiceSpecificCredential",
       "iam:ListServiceSpecificCredentials",
       "iam:ResetServiceSpecificCredential",
       "iam:UpdateServiceSpecificCredential",
-      // 본인 MFA 관리 허용
+      // Allow managing own MFA devices
       "iam:EnableMFADevice",
       "iam:ListMFADevices",
       "iam:ResyncMFADevice",
@@ -61,7 +61,7 @@ data "aws_iam_policy_document" "force_mfa" {
     resources = ["arn:aws:iam::*:user/$${aws:username}"]
   }
 
-  // 본인 VirtualMFA 관리 허용
+  // Allow managing own virtual MFA device
   statement {
     sid = "AllowManageOwnVirtualMFADevice"
     actions = [
@@ -71,22 +71,22 @@ data "aws_iam_policy_document" "force_mfa" {
     resources = ["arn:aws:iam::*:mfa/$${aws:username}"]
   }
 
-  // MFA가 없는경우, 아래의 동작만 수행 가능
+  // Without MFA, only the actions below are allowed
   statement {
     sid    = "DenyAllExceptListedIfNoMFA"
     effect = "Deny"
     not_actions = [
-      // 비밀번호 변경 가능
+      // Allow changing password
       "iam:ListUsers",
       "iam:GetUser",
       "iam:ChangePassword",
       "iam:GetAccountPasswordPolicy",
       "sts:GetSessionToken",
-      // VirtualMFA 관리 가능
+      // Allow managing virtual MFA devices
       "iam:ListVirtualMFADevices",
       "iam:CreateVirtualMFADevice",
       "iam:DeleteVirtualMFADevice",
-      // MFA 관리 가능
+      // Allow managing MFA devices
       "iam:ListMFADevices",
       "iam:EnableMFADevice",
       "iam:ResyncMFADevice",
