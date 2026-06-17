@@ -55,6 +55,8 @@ resource "github_branch_protection" "branch_protection" {
 resource "github_team_repository" "team_repository" {
   repository = github_repository.repository.name
   team_id    = "3688706"
+  # "pull" (defaults) makes GitHub reject the team in CODEOWNERS
+  permission = "push"
 }
 
 # Give push access to @translatewiki https://github.com/femiwiki/femiwiki/issues/91
