@@ -173,6 +173,17 @@ module "quibble_action" {
   ]
 
   required_pull_request_reviews = []
+  required_status_checks_contexts = [
+    [
+      "zizmor",
+      "semantic-pull-request",
+      "yamllint",
+      "ruff",
+      "actionlint",
+      "biome",
+      "rumdl",
+    ]
+  ]
 }
 
 import {
