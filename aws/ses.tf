@@ -13,7 +13,7 @@ resource "aws_ses_email_identity" "admin" {
   email    = "admin@femiwiki.com"
 }
 
-# ref femiwiki/femiwiki#365 ("AWS SES Return-Path 도메인 설정")
+# ref femiwiki/femiwiki#365 ("AWS SES Return-Path domain configuration")
 resource "aws_ses_domain_mail_from" "femiwiki_com" {
   provider         = aws.us
   domain           = aws_ses_domain_identity.femiwiki_com.domain

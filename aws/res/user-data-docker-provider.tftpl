@@ -21,7 +21,7 @@ dnf install -y ec2-instance-connect
 dnf install -y "https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_$${PROCESSOR}/amazon-ssm-agent.rpm"
 
 #
-# 기본 유틸리티들 설치
+# Install basic utilities
 #
 dnf autoremove -y postfix
 # - ripgrep: Disabled temporarily (https://github.com/femiwiki/femiwiki/issues/247)
@@ -64,14 +64,14 @@ EOF
 systemctl enable --now alloy
 
 #
-# sudo 로 /usr/local/{bin,sbin} 안에 있는 커맨드를 실행할 수 있도록 설정
+# Configure sudo to allow running commands in /usr/local/{bin,sbin}
 #
 cat <<'EOF' > /etc/sudoers.d/10-sudo-path
 Defaults secure_path=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin
 EOF
 
 #
-# 도커 설치 및 TLS 설정
+# Install Docker and configure TLS
 #
 dnf install -y docker
 systemctl enable docker
@@ -111,7 +111,7 @@ systemctl restart docker
 echo "127.0.0.1 $(hostname)" | tee --append /etc/hosts
 
 #
-# htoprc 생성
+# Create htoprc
 #
 sudo -u ec2-user mkdir -p /home/ec2-user/.config/htop
 sudo -u ec2-user tee /home/ec2-user/.config/htop/htoprc <<'EOF' >/dev/null
@@ -124,7 +124,7 @@ tree_view=1
 EOF
 
 #
-# README 생성
+# Create README
 #
 sudo -u ec2-user tee /home/ec2-user/README <<'EOF' >/dev/null
 https://github.com/femiwiki/infra

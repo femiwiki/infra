@@ -1,5 +1,5 @@
-# NOTE: email에 대한 AWS SNS topic subscription은 테라폼으로 적용할 수 없습니다.
-# 수동으로 설정해 주세요.
+# NOTE: AWS SNS topic subscriptions for email cannot be applied with Terraform.
+# Please configure it manually.
 #
 # Reference:
 #   https://www.terraform.io/docs/providers/aws/r/sns_topic_subscription.html#email

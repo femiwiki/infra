@@ -157,8 +157,8 @@ resource "aws_s3_bucket_lifecycle_configuration" "backups" {
       prefix = "mysql/"
     }
 
-    # NOTE: STANDARD_IA 를 사용할 경우, S3 IA로 가는순간 30일치 요금이 무조건
-    # 계산된다는 점을 주의해주세요.
+    # NOTE: When using STANDARD_IA, be aware that a minimum of 30 days of
+    # storage charges is always billed the moment an object transitions to S3 IA.
 
     transition {
       days          = 14
