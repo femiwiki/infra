@@ -37,7 +37,7 @@ resource "github_branch_protection" "branch_protection" {
   dynamic "required_status_checks" {
     for_each = var.required_status_checks_contexts
     content {
-      strict   = true
+      strict   = false
       contexts = required_status_checks.value
     }
   }
