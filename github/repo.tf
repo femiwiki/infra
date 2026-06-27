@@ -42,6 +42,9 @@ module "femiwiki" {
   name         = "femiwiki"
   description  = ":earth_asia: 문서화된 페미위키 기술 정보 및 이슈 트래킹 정보 제공"
   homepage_url = "https://femiwiki.com"
+  # Documentation-only repo; the module default of one required review is
+  # overkill and just blocks doc PRs. Disable it like the other repos.
+  required_pull_request_reviews = local.default_repo.required_pull_request_reviews
   topics = [
     "feminism",
     "wiki",
