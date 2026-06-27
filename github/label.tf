@@ -346,7 +346,6 @@ locals {
       ]
     )
 
-    nomad       = concat(local.base_label_suite, ["cd", "disruption", "consul", "restbase"])
     ".github"   = concat(local.base_label_suite, ["ci"])
     sns-discord = local.base_label_suite
 
