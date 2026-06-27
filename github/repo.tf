@@ -25,18 +25,6 @@ module "infra" {
   ]
 }
 
-module "nomad" {
-  source                          = "./modules/github-repository"
-  name                            = "nomad"
-  description                     = ":whale: Femiwiki nomad"
-  enforce_admins                  = local.with_cd.enforce_admins
-  required_pull_request_reviews   = local.with_cd.required_pull_request_reviews
-  required_status_checks_contexts = [["before-cd-test"]]
-  topics = [
-    "nomad",
-  ]
-}
-
 module "femiwiki" {
   source       = "./modules/github-repository"
   name         = "femiwiki"
