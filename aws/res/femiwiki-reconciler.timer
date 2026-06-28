@@ -1,0 +1,11 @@
+[Unit]
+Description=Run the Femiwiki edge reconciler every 20s
+
+[Timer]
+OnBootSec=30s
+OnUnitActiveSec=20s
+AccuracySec=1s
+Unit=femiwiki-reconciler.service
+
+[Install]
+WantedBy=timers.target

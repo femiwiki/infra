@@ -1,0 +1,42 @@
+#!/bin/bash
+set -euo pipefail
+# Idempotent install/refresh of the Femiwiki edge reconciler (run by SSM, on a schedule).
+
+# AWS CLI v2 (arm64) if missing (the edge has none baked).
+if ! command -v aws >/dev/null 2>&1; then
+  curl -fsSLo /tmp/awscliv2.zip "https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip"
+  unzip -q -o /tmp/awscliv2.zip -d /tmp && /tmp/aws/install --update && hash -r
+fi
+
+install -d /etc/femiwiki /var/lib/femiwiki-reconciler /var/lib/node_exporter/textfile
+chmod 0755 /var/lib/node_exporter/textfile
+
+cat > /etc/femiwiki/reconciler.env <<'R_ENV'
+${reconciler_env}
+R_ENV
+
+cat > /usr/local/sbin/femiwiki-reconciler.sh <<'R_SH'
+${reconciler_sh}
+R_SH
+chmod 0755 /usr/local/sbin/femiwiki-reconciler.sh
+
+cat > /etc/systemd/system/femiwiki-reconciler.service <<'R_SVC'
+${unit_service}
+R_SVC
+
+cat > /etc/systemd/system/femiwiki-reconciler.timer <<'R_TMR'
+${unit_timer}
+R_TMR
+
+cat > /etc/systemd/system/femiwiki-reconciler-caddywatch.service <<'R_CW'
+${unit_caddywatch}
+R_CW
+
+systemctl daemon-reload
+systemctl enable --now femiwiki-reconciler.timer femiwiki-reconciler-caddywatch.service
+
+# Smoke test (non-fatal): the baked Caddyfile path must adapt, and one reconcile pass must
+# publish an upstream set. Closes the CADDY_CONFIG_PATH gap.
+docker exec http caddy adapt --config /srv/femiwiki.com/Caddyfile --adapter caddyfile >/dev/null 2>&1 \
+  && echo "smoke: caddy adapt OK" || echo "smoke: caddy adapt FAILED (check CADDY_CONFIG_PATH)"
+systemctl start femiwiki-reconciler.service || true
