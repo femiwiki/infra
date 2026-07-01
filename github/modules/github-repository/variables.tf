@@ -51,9 +51,15 @@ variable "required_pull_request_reviews" {
 }
 
 variable "required_status_checks_contexts" {
-  description = ""
-  type        = list(list(string))
+  description = "Repo-specific required status checks (org-wide ones are added automatically)"
+  type        = list(string)
   default     = []
+}
+
+variable "default_status_checks" {
+  description = "Status checks required on every repo unless overridden"
+  type        = list(string)
+  default     = ["zizmor"]
 }
 
 variable "collaborator" {

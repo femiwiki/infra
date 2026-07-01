@@ -26,10 +26,10 @@ module "infra" {
 }
 
 module "femiwiki" {
-  source       = "./modules/github-repository"
-  name         = "femiwiki"
-  description  = ":earth_asia: 문서화된 페미위키 기술 정보 및 이슈 트래킹 정보 제공"
-  homepage_url = "https://femiwiki.com"
+  source                        = "./modules/github-repository"
+  name                          = "femiwiki"
+  description                   = ":earth_asia: 문서화된 페미위키 기술 정보 및 이슈 트래킹 정보 제공"
+  homepage_url                  = "https://femiwiki.com"
   required_pull_request_reviews = local.default_repo.required_pull_request_reviews
   topics = [
     "feminism",
@@ -44,7 +44,7 @@ module "docker_mediawiki" {
   delete_branch_on_merge          = true
   enforce_admins                  = local.docker.enforce_admins
   required_pull_request_reviews   = local.docker.required_pull_request_reviews
-  required_status_checks_contexts = [["php-lint", "caddy-fmt", "etc-lint"]]
+  required_status_checks_contexts = ["php-lint", "caddy-fmt", "etc-lint"]
   topics = [
     "docker-compose",
     "docker-image",
@@ -71,6 +71,7 @@ module "backupbot" {
   description                   = ":robot: 페미위키 MySQL 백업봇"
   enforce_admins                = local.bot.enforce_admins
   required_pull_request_reviews = local.bot.required_pull_request_reviews
+  default_status_checks         = []
   topics = [
     "bot",
     "docker-image",
@@ -92,34 +93,38 @@ module "tweetbot" {
 }
 
 module "remote_gadgets" {
-  source      = "./modules/github-repository"
-  name        = "remote-gadgets"
-  description = "📽️ External repository for JavaScript/CSS on Femiwiki"
+  source                = "./modules/github-repository"
+  name                  = "remote-gadgets"
+  description           = "📽️ External repository for JavaScript/CSS on Femiwiki"
+  default_status_checks = []
   topics = [
     "bot",
   ]
 }
 
 module "dot_github" {
-  source      = "./modules/github-repository"
-  name        = ".github"
-  description = "Community health files"
+  source                = "./modules/github-repository"
+  name                  = ".github"
+  description           = "Community health files"
+  default_status_checks = []
 }
 
 module "legunto" {
-  source      = "./modules/github-repository"
-  name        = "legunto"
-  description = "Fetch MediaWiki Scribunto modules from wikis"
+  source                = "./modules/github-repository"
+  name                  = "legunto"
+  description           = "Fetch MediaWiki Scribunto modules from wikis"
+  default_status_checks = []
   topics = [
     "scribunto",
   ]
 }
 
 module "maintenance" {
-  source       = "./modules/github-repository"
-  name         = "maintenance"
-  description  = ":wrench: 페미위키 점검 페이지"
-  homepage_url = "https://femiwiki.github.io/maintenance"
+  source                = "./modules/github-repository"
+  name                  = "maintenance"
+  description           = ":wrench: 페미위키 점검 페이지"
+  homepage_url          = "https://femiwiki.github.io/maintenance"
+  default_status_checks = []
   topics = [
     "website",
   ]
@@ -141,9 +146,10 @@ module "caddy_mwcache" {
 }
 
 module "ooui_femiwiki_theme" {
-  source      = "./modules/github-repository"
-  name        = "OOUIFemiwikiTheme"
-  description = ":jack_o_lantern: OOUI Femiwiki Theme"
+  source                = "./modules/github-repository"
+  name                  = "OOUIFemiwikiTheme"
+  description           = ":jack_o_lantern: OOUI Femiwiki Theme"
+  default_status_checks = []
   topics = [
     "ooui-theme",
     "ooui",
@@ -163,22 +169,20 @@ module "quibble_action" {
 
   required_pull_request_reviews = []
   required_status_checks_contexts = [
-    [
-      "zizmor",
-      "semantic-pull-request",
-      "yamllint",
-      "ruff",
-      "actionlint",
-      "biome",
-      "rumdl",
-    ]
+    "semantic-pull-request",
+    "yamllint",
+    "ruff",
+    "actionlint",
+    "biome",
+    "rumdl",
   ]
 }
 
 module "lambda" {
-  source      = "./modules/github-repository"
-  name        = "lambda"
-  description = "A simple lambda function which subscribes AWS SNS to ping Femiwiki's Discord webhook."
+  source                = "./modules/github-repository"
+  name                  = "lambda"
+  description           = "A simple lambda function which subscribes AWS SNS to ping Femiwiki's Discord webhook."
+  default_status_checks = []
   topics = [
     "lambda",
     "aws",
@@ -187,9 +191,10 @@ module "lambda" {
 }
 
 module "terraform-provider-mediawiki" {
-  source      = "./modules/github-repository"
-  name        = "terraform-provider-mediawiki"
-  description = "💜"
+  source                = "./modules/github-repository"
+  name                  = "terraform-provider-mediawiki"
+  description           = "💜"
+  default_status_checks = []
   topics = [
     "mediawiki",
     "terraform-provider",

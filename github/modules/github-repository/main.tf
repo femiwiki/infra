@@ -27,6 +27,14 @@ resource "github_branch_default" "branch_default" {
   branch     = github_branch.main_branch.branch
 }
 
+locals {
+  # Repo-specific checks plus the org-wide defaults (deduped).
+  status_check_contexts = distinct(concat(
+    var.required_status_checks_contexts,
+    var.default_status_checks,
+  ))
+}
+
 resource "github_branch_protection" "branch_protection" {
   count                   = length(var.patterns)
   repository_id           = github_repository.repository.node_id
@@ -35,7 +43,7 @@ resource "github_branch_protection" "branch_protection" {
   required_linear_history = true
 
   dynamic "required_status_checks" {
-    for_each = var.required_status_checks_contexts
+    for_each = length(local.status_check_contexts) > 0 ? [local.status_check_contexts] : []
     content {
       strict   = false
       contexts = required_status_checks.value

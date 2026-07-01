@@ -24,13 +24,13 @@ module "femiwiki_skin" {
   ]
   enforce_admins                = local.extension.enforce_admins
   required_pull_request_reviews = local.extension.required_pull_request_reviews
-  required_status_checks_contexts = [[
+  required_status_checks_contexts = [
     "test (REL1_43, composer-test)",
     "test (REL1_43, npm-test)",
     "test (REL1_43, phan)",
     # "test (REL1_43, selenium)",
     "semantic-pull-request",
-  ]]
+  ]
   patterns     = ["main"]
   collaborator = local.extension.collaborator
 }
@@ -43,12 +43,12 @@ module "unified_extension_for_femiwiki" {
   topics                        = ["mediawiki-extension"]
   enforce_admins                = local.extension.enforce_admins
   required_pull_request_reviews = local.extension.required_pull_request_reviews
-  required_status_checks_contexts = [[
+  required_status_checks_contexts = [
     "test (REL1_43, composer-test)",
     "test (REL1_43, npm-test)",
     "test (REL1_43, phan)",
     "test (REL1_43, selenium)",
-  ]]
+  ]
   patterns     = ["main"]
   collaborator = local.extension.collaborator
 }
@@ -61,12 +61,12 @@ module "femiwiki_crawling_blocker" {
   topics                        = ["mediawiki-extension"]
   enforce_admins                = local.extension.enforce_admins
   required_pull_request_reviews = local.extension.required_pull_request_reviews
-  required_status_checks_contexts = [[
+  required_status_checks_contexts = [
     "test (REL1_43, composer-test)",
     "test (REL1_43, npm-test)",
     "test (REL1_43, phan)",
     "test (REL1_43, selenium)",
-  ]]
+  ]
   patterns     = ["main"]
   collaborator = local.extension.collaborator
 }
