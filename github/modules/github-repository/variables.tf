@@ -47,13 +47,7 @@ variable "required_pull_request_reviews" {
     require_code_owner_reviews      = bool,
     required_approving_review_count = number,
   }))
-  default = [
-    {
-      dismiss_stale_reviews           = false,
-      require_code_owner_reviews      = false,
-      required_approving_review_count = 1,
-    }
-  ]
+  default = []
 }
 
 variable "required_status_checks_contexts" {
