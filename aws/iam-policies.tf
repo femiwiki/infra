@@ -270,8 +270,8 @@ data "aws_iam_policy_document" "discord_noti" {
       "logs:PutLogEvents",
     ]
     resources = [
-      "arn:aws:logs:ap-northeast-1:302617221463:log-group:/aws/lambda/DiscordNoti:*",
-      "arn:aws:logs:us-east-1:302617221463:log-group:/aws/lambda/DiscordNoti:*",
+      aws_cloudwatch_log_group.discord_noti.arn,
+      aws_cloudwatch_log_group.discord_noti_us.arn,
     ]
   }
 

@@ -1,3 +1,13 @@
+resource "aws_cloudwatch_log_group" "discord_noti" {
+  name = "/aws/lambda/DiscordNoti"
+}
+
+resource "aws_cloudwatch_log_group" "discord_noti_us" {
+  provider = aws.us
+
+  name = "/aws/lambda/DiscordNoti"
+}
+
 resource "aws_cloudwatch_metric_alarm" "femiwiki_volume_idle_time_cloud_watch_alarm" {
   alarm_name  = "Femiwiki VolumeIdleTime"
   namespace   = "AWS/EBS"
