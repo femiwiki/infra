@@ -262,6 +262,26 @@ data "aws_iam_policy_document" "github_lambda" {
   }
 }
 
+data "aws_iam_policy_document" "discord_noti" {
+  statement {
+    actions = [
+      "logs:CreateLogGroup",
+      "logs:CreateLogStream",
+      "logs:PutLogEvents",
+    ]
+    resources = [
+      "arn:aws:logs:ap-northeast-1:302617221463:log-group:/aws/lambda/DiscordNoti:*",
+      "arn:aws:logs:us-east-1:302617221463:log-group:/aws/lambda/DiscordNoti:*",
+    ]
+  }
+
+  statement {
+    # GetMetricWidgetImage does not support resource-level permissions.
+    actions   = ["cloudwatch:GetMetricWidgetImage"]
+    resources = ["*"]
+  }
+}
+
 data "aws_iam_policy_document" "iac" {
   statement {
     actions = [
