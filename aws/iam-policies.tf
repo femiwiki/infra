@@ -264,14 +264,21 @@ data "aws_iam_policy_document" "github_lambda" {
 
 data "aws_iam_policy_document" "discord_noti" {
   statement {
+    actions = ["logs:CreateLogGroup"]
+    resources = [
+      aws_cloudwatch_log_group.discord_noti.arn,
+      aws_cloudwatch_log_group.discord_noti_us.arn,
+    ]
+  }
+
+  statement {
     actions = [
-      "logs:CreateLogGroup",
       "logs:CreateLogStream",
       "logs:PutLogEvents",
     ]
     resources = [
-      aws_cloudwatch_log_group.discord_noti.arn,
-      aws_cloudwatch_log_group.discord_noti_us.arn,
+      "${aws_cloudwatch_log_group.discord_noti.arn}:*",
+      "${aws_cloudwatch_log_group.discord_noti_us.arn}:*",
     ]
   }
 
