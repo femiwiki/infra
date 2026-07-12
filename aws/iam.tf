@@ -81,6 +81,41 @@ resource "aws_iam_group_policy_attachment" "readonly_mfa" {
 #
 # IAM Roles
 #
+resource "aws_iam_role" "github_lambda" {
+  name               = "github-lambda"
+  description        = "Allows GitHub Actions workflows of femiwiki/lambda to deploy the DiscordNoti function."
+  assume_role_policy = data.aws_iam_policy_document.github_lambda_assume_role.json
+}
+
+data "aws_iam_policy_document" "github_lambda_assume_role" {
+  statement {
+    actions = ["sts:AssumeRoleWithWebIdentity"]
+
+    principals {
+      type        = "Federated"
+      identifiers = [aws_iam_openid_connect_provider.github_actions.arn]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "token.actions.githubusercontent.com:aud"
+      values   = ["sts.amazonaws.com"]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "token.actions.githubusercontent.com:sub"
+      values   = ["repo:femiwiki/lambda:ref:refs/heads/main"]
+    }
+  }
+}
+
+resource "aws_iam_role_policy" "github_lambda" {
+  name   = "GithubLambda"
+  role   = aws_iam_role.github_lambda.name
+  policy = data.aws_iam_policy_document.github_lambda.json
+}
+
 resource "aws_iam_role" "femiwiki" {
   name               = "Femiwiki"
   description        = "Allows EC2 instances to call AWS services on your behalf."
