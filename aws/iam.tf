@@ -116,6 +116,29 @@ resource "aws_iam_role_policy" "github_lambda" {
   policy = data.aws_iam_policy_document.github_lambda.json
 }
 
+resource "aws_iam_role" "discord_noti" {
+  name               = "DiscordNoti"
+  description        = "Execution role for the DiscordNoti Lambda function."
+  assume_role_policy = data.aws_iam_policy_document.discord_noti_assume_role.json
+}
+
+data "aws_iam_policy_document" "discord_noti_assume_role" {
+  statement {
+    actions = ["sts:AssumeRole"]
+
+    principals {
+      type        = "Service"
+      identifiers = ["lambda.amazonaws.com"]
+    }
+  }
+}
+
+resource "aws_iam_role_policy" "discord_noti" {
+  name   = "DiscordNoti"
+  role   = aws_iam_role.discord_noti.name
+  policy = data.aws_iam_policy_document.discord_noti.json
+}
+
 resource "aws_iam_role" "femiwiki" {
   name               = "Femiwiki"
   description        = "Allows EC2 instances to call AWS services on your behalf."
