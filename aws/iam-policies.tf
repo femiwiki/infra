@@ -272,9 +272,6 @@ data "aws_iam_policy_document" "discord_noti" {
   }
 
   statement {
-    # CreateLogStream/PutLogEvents act on log streams, a sub-resource of the
-    # group, so the ARN needs the trailing :* that aws_cloudwatch_log_group's
-    # own arn attribute omits.
     actions = [
       "logs:CreateLogStream",
       "logs:PutLogEvents",
