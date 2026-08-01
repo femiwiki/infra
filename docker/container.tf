@@ -1,6 +1,18 @@
+locals {
+  # Classic femiwiki image used by BOTH the edge Caddy (`http`) and the cron singleton.
+  #
+  # MUST be a REBUILT image that ships the NEW reverse_proxy Caddyfile
+  # (dockers/femiwiki/Caddyfile, section 5). Build + push that image and confirm its
+  # Caddyfile adapts (validation section 8) BEFORE applying this workspace: removing
+  # FASTCGI_ADDR while the OLD php_fastcgi Caddyfile is still baked makes `php_fastcgi`
+  # expand with no upstream -> adapt error -> Caddy fails to start -> edge DOWN.
+  # Pin by @sha256: digest in production.
+  femiwiki_image = "ghcr.io/femiwiki/femiwiki:2026-06-28T17-00-NEWCADDY"
+}
+
 resource "docker_container" "http" {
   name            = "http"
-  image           = "ghcr.io/femiwiki/femiwiki:2026-06-03T08-52-20f42e47"
+  image           = local.femiwiki_image
   command         = ["caddy", "run"]
   restart         = "on-failure"
   max_retry_count = 3
@@ -8,7 +20,11 @@ resource "docker_container" "http" {
 
   env = [
     for k, v in {
-      FASTCGI_ADDR        = "127.0.0.1:9000",
+      # No local php-fpm anymore: the Caddyfile uses reverse_proxy. This is only the
+      # bootstrap SEED for the @id=backend_upstreams handler; the edge reconciler owns the
+      # live set via the admin API. Points at a dead local port on purpose (handle_errors
+      # in the Caddyfile serves a maintenance page until the first reconcile PATCH lands).
+      BACKEND_UPSTREAMS   = "127.0.0.1:8080",
       AWS_REGION          = "ap-northeast-1",
       S3_USE_IAM_PROVIDER = "true",
       S3_HOST             = "s3.ap-northeast-1.amazonaws.com",
@@ -46,38 +62,49 @@ resource "docker_container" "http" {
   }
 }
 
-resource "docker_container" "fastcgi" {
-  name         = "fastcgi"
-  image        = "ghcr.io/femiwiki/femiwiki:2026-06-03T08-52-20f42e47"
+#
+# Cron SINGLETON (edge). The ONLY job runner in the whole system: ASG nodes serve only
+# ($wgJobRunRate=0, FrankenPHP image forbids cron). Runs run-jobs / generate-sitemap /
+# update-special-pages against the shared MySQL + edge memcached. NEVER serves HTTP.
+#
+resource "docker_container" "cron" {
+  name         = "cron"
+  image        = local.femiwiki_image
   network_mode = "host"
   restart      = "always"
+
+  # Mirrors dockers/femiwiki/run (LocalSettings + Hotfix), then runs cron in the foreground.
+  # The image installs the schedule as ROOT'S USER CRONTAB at build time
+  # (mediawiki/Dockerfile: `RUN crontab /tmp/crontab`), so `crontab -l` lists the 3 jobs.
+  # CRITICAL env->cron bridge: each job loads LocalSettings.php which reads ALL config via
+  # getenv() (WG_DB_*/WG_SECRET_KEY/...), but cron SCRUBS the environment. `export -p`
+  # serializes the container env (multiline/PEM-safe) into BASH_ENV; SHELL=/bin/bash is
+  # required (default /bin/sh=dash ignores BASH_ENV). Guarded so a missing user crontab
+  # cannot crash-loop the container, and asserted afterward.
+  command = ["/bin/bash", "-c", <<-EOT
+    set -euo pipefail
+    cp -f /a/LocalSettings.php /srv/femiwiki.com/LocalSettings.php
+    printf '%s' "$MEDIAWIKI_HOTFIX_SNIPPET" > /a/Hotfix.php
+    mkdir -p /run/femiwiki
+    export -p > /run/femiwiki/cron.env
+    existing="$(crontab -l 2>/dev/null || true)"
+    { printf 'SHELL=/bin/bash\nBASH_ENV=/run/femiwiki/cron.env\n'; printf '%s\n' "$existing"; } | crontab -
+    crontab -l | grep -q run-jobs || { echo 'FATAL: run-jobs missing from crontab' >&2; exit 1; }
+    exec cron -f
+  EOT
+  ]
+
   env = [
     for k, v in {
-      PHP_FPM_EMERGENCY_RESTART_THRESHOLD = "5"
-      PHP_FPM_EMERGENCY_RESTART_INTERVAL  = "1m"
-      PHP_FPM_PROCESS_CONTROL_TIMEOUT     = "10s"
-      PHP_FPM_REQUEST_TERMINATE_TIMEOUT   = "30"
-
-      PHP_FPM_PM_MAX_CHILDREN      = "30"
-      PHP_FPM_PM_START_SERVERS     = "2"
-      PHP_FPM_PM_MIN_SPARE_SERVERS = "1"
-      PHP_FPM_PM_MAX_SPARE_SERVERS = "3"
-      PHP_FPM_PM_MAX_REQUESTS      = "200"
-
-      PHP_POST_MAX_SIZE       = "10M"
-      PHP_UPLOAD_MAX_FILESIZE = "10M"
-
       MEDIAWIKI_SKIP_IMPORT_SITES = "1"
       MEDIAWIKI_SKIP_INSTALL      = "1"
-      MEDIAWIKI_SKIP_UPDATE       = "1"
+      MEDIAWIKI_SKIP_UPDATE       = "1" # mandatory: cron must never run update.php (no DDL drift)
       MEDIAWIKI_HOTFIX_SNIPPET    = file("res/Hotfix.php")
 
       WG_BOUNCE_HANDLER_INTERNAL_IPS = "172.31.0.0/16"
-      WG_CDN_SERVERS                 = "127.0.0.1:80"
+      WG_CDN_SERVERS                 = "127.0.0.1:80" # edge Caddy (host net)
       WG_INTERNAL_SERVER             = "http://127.0.0.1:80"
-      WG_MEMCACHED_SERVERS           = "127.0.0.1:11211"
-      # Used by fcgi-probe.php
-      FCGI_URL = "127.0.0.1:9000"
+      WG_MEMCACHED_SERVERS           = "127.0.0.1:11211" # edge memcached (host net)
 
       WG_DB_SERVER             = "${data.terraform_remote_state.aws.outputs.mysql_private_ip}:3306"
       WG_DB_USER               = local.ssm_parameters_mysql["/mysql/users/mediawiki/username"]
@@ -93,25 +120,8 @@ resource "docker_container" "fastcgi" {
     } : "${k}=${v}"
   ]
 
-  healthcheck {
-    test = ["CMD-SHELL", <<-EOF
-      if [ ! -d /srv/fcgi-check ]; then
-        mkdir -p /srv/fcgi-check/
-      fi &&
-      if [ ! -z /srv/fcgi-check/AdoyFastCgiClient.php ]; then
-        curl -L https://github.com/wikimedia/operations-docker-images-production-images/raw/ad68c7cb62e4e01436ab3a34fb961fe8034c2cce/images/php/common/fpm/live-test/AdoyFastCgiClient.php -o /srv/fcgi-check/AdoyFastCgiClient.php
-      fi &&
-      if [ ! -z /srv/fcgi-check/fcgi-probe.php ]; then
-        curl -L https://github.com/wikimedia/operations-docker-images-production-images/raw/ad68c7cb62e4e01436ab3a34fb961fe8034c2cce/images/php/common/fpm/live-test/fcgi-probe.php -o /srv/fcgi-check/fcgi-probe.php
-      fi &&
-      /usr/local/bin/php /srv/fcgi-check/fcgi-probe.php || exit 1
-      EOF
-    ]
-    interval = "5s"
-    timeout  = "1s"
-    retries  = 0
-  }
-
+  # Owns the sitemap volume RW (takes over from the deleted fastcgi). generate-sitemap
+  # writes `--fspath sitemap` into /srv/femiwiki.com/sitemap; the edge `http` serves it RO.
   mounts {
     type      = "volume"
     source    = docker_volume.sitemap.id

@@ -1,0 +1,15 @@
+# Re-apply on Caddy (re)start: admin-API PATCHes are NOT persisted to the Caddyfile, so a
+# Caddy reload resets upstreams to the {$BACKEND_UPSTREAMS} seed. This kicks a reconcile
+# within ~1s of the `http` container starting; bootstrap_id then re-seeds last-good.
+[Unit]
+Description=Kick the reconciler whenever the Caddy (http) container starts
+After=docker.service
+Requires=docker.service
+
+[Service]
+Restart=always
+RestartSec=5
+ExecStart=/bin/sh -c 'docker events --filter container=http --filter event=start --format "{{.Actor.Attributes.name}}" | while read -r _; do systemctl start --no-block femiwiki-reconciler.service; done'
+
+[Install]
+WantedBy=multi-user.target

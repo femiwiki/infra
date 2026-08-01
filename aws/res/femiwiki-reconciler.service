@@ -1,0 +1,14 @@
+[Unit]
+Description=Femiwiki edge upstream reconciler (ASG -> Caddy admin API)
+After=docker.service network-online.target
+Wants=network-online.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=oneshot
+EnvironmentFile=/etc/femiwiki/reconciler.env
+ExecStart=/usr/local/sbin/femiwiki-reconciler.sh
+TimeoutStartSec=60
+Nice=5
+ProtectSystem=full
+NoNewPrivileges=true

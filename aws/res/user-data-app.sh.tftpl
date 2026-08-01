@@ -1,0 +1,193 @@
+#!/bin/bash
+# Femiwiki backend ASG node bootstrap (AL2023 host runs the FrankenPHP container).
+# Rendered by templatefile(): TF vars are ${region} etc; bash vars use no braces.
+# A literal curl percent-brace token is written escaped (double-percent) below.
+set -euo pipefail
+set -x
+export PATH=/usr/local/bin:/usr/bin:/bin:/sbin:/usr/sbin
+
+REGION="${region}"
+IMAGE="${image}"
+LAUNCH_HOOK="${launch_hook_name}"
+
+# --- 0. IMDSv2: this instance's id + its ASG name (exposed via instance_metadata_tags) ---
+imds() {
+  local t
+  t=$(curl -sf -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 300")
+  curl -sf -H "X-aws-ec2-metadata-token: $t" "http://169.254.169.254/latest/meta-data/$1"
+}
+IID=$(imds instance-id)
+ASG=$(imds "tags/instance/aws:autoscaling:groupName")
+
+# Fail-safe: any unhandled error before we gate -> ABANDON the launch (ASG terminates
+# the node, instance_refresh auto_rollback reverts). Cleared once we send a result.
+abandon() {
+  aws autoscaling complete-lifecycle-action --region "$REGION" \
+    --lifecycle-action-result ABANDON --lifecycle-hook-name "$LAUNCH_HOOK" \
+    --auto-scaling-group-name "$ASG" --instance-id "$IID" >/dev/null 2>&1 || true
+}
+trap abandon ERR
+
+# --- 1. packages: docker + jq + AWS CLI v2 (arm64) ---
+dnf install -y docker jq unzip
+systemctl enable --now docker
+curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip" -o /tmp/awscliv2.zip
+unzip -q -o /tmp/awscliv2.zip -d /tmp
+/tmp/aws/install --update
+hash -r
+
+# --- 2. Grafana Alloy (metrics/logs), creds substituted from SSM below ---
+curl -sLo /tmp/grafana.gpg https://rpm.grafana.com/gpg.key
+rpm --import /tmp/grafana.gpg
+{
+  echo '[grafana]'
+  echo 'name=grafana'
+  echo 'baseurl=https://rpm.grafana.com'
+  echo 'repo_gpgcheck=1'
+  echo 'enabled=1'
+  echo 'gpgcheck=1'
+  echo 'gpgkey=https://rpm.grafana.com/gpg.key'
+  echo 'sslverify=1'
+} > /etc/yum.repos.d/grafana.repo
+dnf install -y alloy
+
+# --- 3. fetch secrets from SSM (runtime GetParameter; AppNode IAM policy) ---
+get_ssm() {
+  aws ssm get-parameter --region "$REGION" --name "$1" --with-decryption \
+    --query 'Parameter.Value' --output text
+}
+DB_USER=$(get_ssm /mysql/users/mediawiki/username)
+DB_PASSWORD=$(get_ssm /mysql/users/mediawiki/password)
+WG_SECRET_KEY=$(get_ssm /mediawiki/site_key)
+WG_O_AUTH_2_PRIVATE_KEY=$(get_ssm /mediawiki/o_auth_2_private_key)
+WG_RC_FEEDS_DISCORD_URL=$(get_ssm /mediawiki/rc_feeds_discord_url)
+WG_RE_CAPTCHA_SECRET_KEY=$(get_ssm /mediawiki/re_captcha/secret_key)
+WG_RE_CAPTCHA_SITE_KEY=$(get_ssm /mediawiki/re_captcha/site_key)
+WG_SMTP_PASSWORD=$(get_ssm /mediawiki/smtp/password)
+WG_SMTP_USERNAME=$(get_ssm /mediawiki/smtp/username)
+WG_UPGRADE_KEY=$(get_ssm /mediawiki/upgrade_key)
+PROM_PW=$(get_ssm /alloy/prometheus_password)
+LOKI_PW=$(get_ssm /alloy/loki_password)
+
+# --- 4. write alloy config (template has @@..@@ sentinels), substitute creds, start ---
+mkdir -p /etc/alloy
+cat > /etc/alloy/config.alloy <<'ALLOY_EOF'
+${alloy_config}
+ALLOY_EOF
+esc() { printf '%s' "$1" | sed -e 's/[\/&|]/\\&/g'; }
+sed -i "s|@@PROMETHEUS_PASSWORD@@|$(esc "$PROM_PW")|; s|@@LOKI_PASSWORD@@|$(esc "$LOKI_PW")|" /etc/alloy/config.alloy
+chmod 600 /etc/alloy/config.alloy
+systemctl enable --now alloy
+
+# --- 5. MediaWiki env: non-secret (Terraform-rendered) then secrets (literal) ---
+install -d -m 0700 /etc/femiwiki
+cat > /etc/femiwiki/app.env <<'ENV_EOF'
+FRANKENPHP_NUM_THREADS=${frankenphp_num_threads}
+SERVER_NAME=:8080
+MEDIAWIKI_SERVER=${mediawiki_server}
+MEDIAWIKI_SKIP_INSTALL=1
+MEDIAWIKI_SKIP_UPDATE=1
+MEDIAWIKI_SKIP_IMPORT_SITES=1
+AWS_REGION=${region}
+S3_USE_IAM_PROVIDER=true
+WG_DB_SERVER=${mysql_endpoint}
+WG_MEMCACHED_SERVERS=${edge_private_ip}:11211
+WG_CDN_SERVERS=${edge_private_ip}:80
+WG_CDN_SERVERS_NO_PURGE=${edge_private_ip}/32,127.0.0.1
+WG_INTERNAL_SERVER=http://${edge_private_ip}
+WG_BOUNCE_HANDLER_INTERNAL_IPS=172.31.0.0/16
+EDGE_CIDR=${edge_private_ip}/32
+ENV_EOF
+{
+  printf 'WG_DB_USER=%s\n'               "$DB_USER"
+  printf 'WG_DB_PASSWORD=%s\n'           "$DB_PASSWORD"
+  printf 'WG_SECRET_KEY=%s\n'            "$WG_SECRET_KEY"
+  printf 'WG_O_AUTH_2_PRIVATE_KEY=%s\n'  "$WG_O_AUTH_2_PRIVATE_KEY"
+  printf 'WG_RC_FEEDS_DISCORD_URL=%s\n'  "$WG_RC_FEEDS_DISCORD_URL"
+  printf 'WG_RE_CAPTCHA_SECRET_KEY=%s\n' "$WG_RE_CAPTCHA_SECRET_KEY"
+  printf 'WG_RE_CAPTCHA_SITE_KEY=%s\n'   "$WG_RE_CAPTCHA_SITE_KEY"
+  printf 'WG_SMTP_PASSWORD=%s\n'         "$WG_SMTP_PASSWORD"
+  printf 'WG_SMTP_USERNAME=%s\n'         "$WG_SMTP_USERNAME"
+  printf 'WG_UPGRADE_KEY=%s\n'           "$WG_UPGRADE_KEY"
+} >> /etc/femiwiki/app.env
+chmod 600 /etc/femiwiki/app.env
+
+# Operator Hotfix snippet (multi-line PHP, must start with <?php). Passed via --env
+# (not --env-file, which cannot hold newlines); entrypoint require_once's it last.
+cat > /etc/femiwiki/user-hotfix.php <<'HOTFIX_EOF_8f3a'
+${hotfix_snippet}
+HOTFIX_EOF_8f3a
+
+# --- 6. run the container under Docker's Restart=always ---
+docker pull "$IMAGE"
+docker rm -f femiwiki-app >/dev/null 2>&1 || true
+docker run -d --name femiwiki-app \
+  --restart always \
+  --network host \
+  --env-file /etc/femiwiki/app.env \
+  --env "MEDIAWIKI_HOTFIX_SNIPPET=$(cat /etc/femiwiki/user-hotfix.php)" \
+  --ulimit nofile=32768:65536 \
+  "$IMAGE"
+
+# --- 7. self health gate: poll the REAL readiness, then complete the LAUNCHING hook ---
+RESULT=ABANDON
+for _ in $(seq 1 100); do
+  code=$(curl -fsS -o /dev/null -w '%%{http_code}' --max-time 5 "http://localhost:8080/healthz-ready" || true)
+  if [ "$code" = "200" ]; then RESULT=CONTINUE; break; fi
+  # extend the hook so a slow image pull / boot does not hit DefaultResult=ABANDON
+  aws autoscaling record-lifecycle-action-heartbeat --region "$REGION" \
+    --lifecycle-hook-name "$LAUNCH_HOOK" --auto-scaling-group-name "$ASG" \
+    --instance-id "$IID" || true
+  sleep 5
+done
+aws autoscaling complete-lifecycle-action --region "$REGION" \
+  --lifecycle-action-result "$RESULT" --lifecycle-hook-name "$LAUNCH_HOOK" \
+  --auto-scaling-group-name "$ASG" --instance-id "$IID"
+trap - ERR
+
+# --- 8. watchdog: if the container dies or goes unready, mark the node Unhealthy
+#        so the ASG (EC2 health) replaces it. (No TF interpolation below.) ---
+cat > /usr/local/bin/femiwiki-watchdog.sh <<'WD_EOF'
+#!/bin/bash
+set -u
+REGION="ap-northeast-1"
+fails=0
+imds() {
+  local t
+  t=$(curl -sf -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 60")
+  curl -sf -H "X-aws-ec2-metadata-token: $t" "http://169.254.169.254/latest/meta-data/$1"
+}
+while true; do
+  running=$(docker inspect -f '{{.State.Running}}' femiwiki-app 2>/dev/null || echo false)
+  if [ "$running" = "true" ] && curl -fsS -o /dev/null --max-time 3 "http://localhost:8080/healthz-live"; then
+    fails=0
+  else
+    fails=$((fails + 1))
+    if [ "$fails" -ge 3 ]; then
+      iid=$(imds instance-id)
+      aws autoscaling set-instance-health --region "$REGION" \
+        --instance-id "$iid" --health-status Unhealthy --no-should-respect-grace-period || true
+      fails=0
+    fi
+  fi
+  sleep 15
+done
+WD_EOF
+chmod 0755 /usr/local/bin/femiwiki-watchdog.sh
+
+cat > /etc/systemd/system/femiwiki-watchdog.service <<'UNIT_EOF'
+[Unit]
+Description=Femiwiki backend container watchdog
+After=docker.service
+Requires=docker.service
+
+[Service]
+ExecStart=/usr/local/bin/femiwiki-watchdog.sh
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+UNIT_EOF
+systemctl daemon-reload
+systemctl enable --now femiwiki-watchdog.service

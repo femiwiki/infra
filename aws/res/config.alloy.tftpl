@@ -83,6 +83,12 @@ prometheus.exporter.unix "integrations_node_exporter" {
   netdev {
     device_exclude = "^(veth.*|cali.*|[a-f0-9]{15})$"
   }
+  # Surface the edge reconciler's Prometheus textfile (femiwiki_reconciler_*). Convenience
+  # only; the load-bearing alarm path is CloudWatch (app-reconciler.tf). On app nodes the
+  # directory is simply empty.
+  textfile {
+    directory = "/var/lib/node_exporter/textfile"
+  }
 }
 prometheus.scrape "integrations_node_exporter" {
   targets    = discovery.relabel.integrations_node_exporter.output
