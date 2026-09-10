@@ -53,6 +53,26 @@ module "docker_mediawiki" {
   ]
 }
 
+module "docker_poolcounter" {
+  source                        = "./modules/github-repository"
+  name                          = "docker-poolcounter"
+  description                   = ":whale: Dockerized PoolCounter for MediaWiki"
+  delete_branch_on_merge        = true
+  enforce_admins                = local.docker.enforce_admins
+  required_pull_request_reviews = local.docker.required_pull_request_reviews
+  topics = [
+    "docker-image",
+    "mediawiki",
+    "poolcounter",
+  ]
+
+  required_status_checks_contexts = [
+    "hadolint",
+    "rumdl",
+    "actionlint",
+  ]
+}
+
 module "rankingbot" {
   source                        = "./modules/github-repository"
   name                          = "rankingbot"
