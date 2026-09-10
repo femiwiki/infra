@@ -65,16 +65,6 @@ resource "aws_security_group_rule" "femiwiki_ingress_https" {
   ipv6_cidr_blocks  = ["::/0"]
 }
 
-resource "aws_security_group_rule" "femiwiki_ingress_docker_tls" {
-  security_group_id = aws_security_group.femiwiki.id
-  description       = "Docker TLS"
-  type              = "ingress"
-  protocol          = "tcp"
-  from_port         = 2376
-  to_port           = 2376
-  cidr_blocks       = ["0.0.0.0/0"]
-}
-
 resource "aws_security_group_rule" "femiwiki_egress" {
   security_group_id = aws_security_group.femiwiki.id
 
