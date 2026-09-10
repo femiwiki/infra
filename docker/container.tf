@@ -58,7 +58,7 @@ resource "docker_container" "fastcgi" {
       PHP_FPM_PROCESS_CONTROL_TIMEOUT     = "10s"
       PHP_FPM_REQUEST_TERMINATE_TIMEOUT   = "30"
 
-      PHP_FPM_PM_MAX_CHILDREN      = "30"
+      PHP_FPM_PM_MAX_CHILDREN      = "10"
       PHP_FPM_PM_START_SERVERS     = "2"
       PHP_FPM_PM_MIN_SPARE_SERVERS = "1"
       PHP_FPM_PM_MAX_SPARE_SERVERS = "3"
