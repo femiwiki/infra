@@ -39,6 +39,8 @@ resource "docker_container" "http" {
     read_only = true
   }
 
+  memory = 256
+
   ulimit {
     hard = 65536
     name = "nofile"
@@ -125,6 +127,8 @@ resource "docker_container" "fastcgi" {
     read_only = false
   }
 
+  memory = 1024
+
   ulimit {
     hard = 65536
     name = "nofile"
@@ -147,6 +151,8 @@ resource "docker_container" "memcached" {
     label = "autoheal"
     value = "true"
   }
+
+  memory = 128
 
   ulimit {
     hard = 65536
@@ -176,6 +182,8 @@ resource "docker_container" "autoheal" {
     read_only = false
   }
 
+  memory = 64
+
   ulimit {
     hard = 65536
     name = "nofile"
@@ -194,6 +202,8 @@ resource "docker_container" "backupbot" {
       DB_PASSWORD = local.ssm_parameters_mysql["/mysql/users/mediawiki/password"]
     } : "${k}=${v}"
   ]
+
+  memory = 256
 
   ulimit {
     hard = 65536
