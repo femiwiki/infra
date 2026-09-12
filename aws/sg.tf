@@ -132,3 +132,64 @@ resource "aws_security_group" "mediawiki" {
     Name = "MediaWiki"
   }
 }
+
+#
+# Backend (app tier)
+#
+# The ASG instances (femiwiki/femiwiki#476). Nothing is attached to this group
+# until the app tier exists, so adding it changes nothing on its own.
+#
+resource "aws_security_group" "backend" {
+  name        = "backend"
+  description = "MediaWiki app tier"
+  vpc_id      = aws_default_vpc.default.id
+
+  tags = {
+    Name = "Backend"
+  }
+}
+
+resource "aws_security_group_rule" "backend_ingress_http" {
+  security_group_id        = aws_security_group.backend.id
+  description              = "HTTP from the edge"
+  type                     = "ingress"
+  protocol                 = "tcp"
+  from_port                = 8080
+  to_port                  = 8080
+  source_security_group_id = aws_security_group.femiwiki.id
+}
+
+resource "aws_security_group_rule" "backend_egress" {
+  security_group_id = aws_security_group.backend.id
+
+  type             = "egress"
+  protocol         = "-1"
+  from_port        = 0
+  to_port          = 0
+  cidr_blocks      = ["0.0.0.0/0"]
+  ipv6_cidr_blocks = ["::/0"]
+}
+
+# The shared services the backend reaches on the edge box
+# (femiwiki/femiwiki#509). Neither daemon authenticates anyone, so the source
+# group is the whole of the access control.
+
+resource "aws_security_group_rule" "femiwiki_ingress_memcached" {
+  security_group_id        = aws_security_group.femiwiki.id
+  description              = "memcached from the app tier"
+  type                     = "ingress"
+  protocol                 = "tcp"
+  from_port                = 11211
+  to_port                  = 11211
+  source_security_group_id = aws_security_group.backend.id
+}
+
+resource "aws_security_group_rule" "femiwiki_ingress_poolcounter" {
+  security_group_id        = aws_security_group.femiwiki.id
+  description              = "PoolCounter from the app tier"
+  type                     = "ingress"
+  protocol                 = "tcp"
+  from_port                = 7531
+  to_port                  = 7531
+  source_security_group_id = aws_security_group.backend.id
+}
