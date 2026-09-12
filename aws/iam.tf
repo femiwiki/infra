@@ -176,6 +176,11 @@ resource "aws_iam_role_policy_attachment" "femiwiki_access_caddycerts" {
   policy_arn = aws_iam_policy.access_caddycerts.arn
 }
 
+resource "aws_iam_role_policy_attachment" "femiwiki_read_secret_parameters" {
+  role       = aws_iam_role.femiwiki.name
+  policy_arn = aws_iam_policy.read_secret_parameters.arn
+}
+
 resource "aws_iam_role_policy_attachment" "femiwiki_upload_backup" {
   role       = aws_iam_role.femiwiki.name
   policy_arn = aws_iam_policy.upload_backup.arn

@@ -222,6 +222,45 @@ data "aws_iam_policy_document" "access_caddycerts" {
   }
 }
 
+data "aws_caller_identity" "current" {}
+
+data "aws_region" "current" {}
+
+resource "aws_iam_policy" "read_secret_parameters" {
+  name        = "ReadSecretParameters"
+  description = "Allows instances to read their own secrets from Parameter Store at boot"
+
+  policy = data.aws_iam_policy_document.read_secret_parameters.json
+}
+
+data "aws_iam_policy_document" "read_secret_parameters" {
+  statement {
+    actions = [
+      "ssm:GetParameter",
+      "ssm:GetParameters",
+      "ssm:GetParametersByPath",
+    ]
+    resources = [
+      "arn:aws:ssm:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:parameter/mediawiki/*",
+      "arn:aws:ssm:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:parameter/mysql/*",
+    ]
+  }
+
+  # SecureString parameters are decrypted by KMS on the way out. Scoped by
+  # ViaService rather than by key, so it covers the AWS-managed aws/ssm key
+  # without naming an ID, and grants nothing outside Parameter Store.
+  statement {
+    actions   = ["kms:Decrypt"]
+    resources = ["*"]
+
+    condition {
+      test     = "StringEquals"
+      variable = "kms:ViaService"
+      values   = ["ssm.${data.aws_region.current.name}.amazonaws.com"]
+    }
+  }
+}
+
 resource "aws_iam_policy" "upload_backup" {
   name        = "UploadBackup"
   description = "Allows to upload to the backup bucket"
