@@ -23,6 +23,14 @@ terraform init
 terraform plan
 ```
 
+### 보안 점검
+
+```bash
+# 인터넷 전체에 열린 인그레스가 80, 443 외에 있으면 실패합니다.
+# 테라폼 소스가 아니라 실제 계정을 읽으므로, 손으로 추가된 규칙도 잡힙니다.
+aws/audit-ingress.sh [리전 ...]
+```
+
 [github checks status]: https://badgen.net/github/checks/femiwiki/infra
 [github checks link]: https://github.com/femiwiki/infra/actions
 [Terraform Badge]: https://badgen.net/badge/icon/terraform?label&icon=https://unpkg.com/badgen-icons@0.12.0/icons/terraform.svg
