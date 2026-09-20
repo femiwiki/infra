@@ -122,6 +122,18 @@ module "remote_gadgets" {
   ]
 }
 
+module "femiwiki_github_io" {
+  source           = "./modules/github-repository"
+  name             = "femiwiki.github.io"
+  description      = "Static pages published by the Femiwiki team"
+  homepage_url     = "https://femiwiki.github.io/"
+  pages_build_type = "workflow"
+  topics = [
+    "static-site",
+    "wikven",
+  ]
+}
+
 module "dot_github" {
   source                = "./modules/github-repository"
   name                  = ".github"
