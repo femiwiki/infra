@@ -42,4 +42,22 @@ data "aws_iam_policy_document" "sns_default_policy" {
 
     resources = ["arn:aws:sns:*"]
   }
+
+  statement {
+    sid     = "AllowBudgetsPublish"
+    actions = ["SNS:Publish"]
+
+    principals {
+      type        = "Service"
+      identifiers = ["budgets.amazonaws.com"]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "aws:SourceAccount"
+      values   = ["302617221463"]
+    }
+
+    resources = ["arn:aws:sns:*"]
+  }
 }
