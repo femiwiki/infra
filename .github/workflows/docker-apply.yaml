@@ -70,6 +70,16 @@ jobs:
           path: docker
           auto_approve: ${{ github.event_name == 'workflow_dispatch' }}
 
+      - name: Post the `## 업데이트` lines of the applied pull requests to the wiki
+        if: github.event_name == 'issue_comment'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          WIKI_BOT_USER: ${{ secrets.WIKI_BOT_USER }}
+          WIKI_BOT_PASSWORD: ${{ secrets.WIKI_BOT_PASSWORD }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.issue.number }}
+        run: .github/scripts/post-update.php "$REPO" "$PR"
+
       - uses: sarisia/actions-status-discord@eb045afee445dc055c18d3d90bd0f244fd062708  # v1.16.0
         if: always()
         with:
