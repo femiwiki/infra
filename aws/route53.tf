@@ -19,14 +19,6 @@ resource "aws_route53_record" "www_femiwiki_com" {
   ttl     = 300
 }
 
-resource "aws_route53_record" "test_femiwiki_com" {
-  name    = "test.femiwiki.com"
-  type    = "A"
-  zone_id = aws_route53_zone.femiwiki_com.zone_id
-  records = [aws_eip.test_femiwiki.public_ip]
-  ttl     = 300
-}
-
 resource "aws_route53_record" "maintenance_femiwiki_com" {
   name    = "maintenance.femiwiki.com"
   type    = "CNAME"

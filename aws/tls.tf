@@ -33,7 +33,6 @@ resource "tls_cert_request" "server_csr" {
   }
   ip_addresses = [
     aws_eip.femiwiki.public_ip,
-    aws_eip.test_femiwiki.public_ip,
   ]
 }
 
