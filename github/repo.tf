@@ -128,6 +128,15 @@ module "femiwiki_github_io" {
   description      = "Static pages published by the Femiwiki team"
   homepage_url     = "https://femiwiki.github.io/"
   pages_build_type = "workflow"
+  required_status_checks_contexts = [
+    "actionlint",
+    "biome",
+    "luacheck",
+    "rumdl",
+    "shellcheck",
+    "stylua",
+    "yamllint",
+  ]
   topics = [
     "static-site",
     "wikven",
