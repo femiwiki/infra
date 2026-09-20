@@ -301,6 +301,41 @@ data "aws_iam_policy_document" "femiwiki_github_io" {
   }
 }
 
+data "aws_iam_policy_document" "infra_docker" {
+  statement {
+    sid       = "State"
+    actions   = ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"]
+    resources = ["${aws_s3_bucket.tfstate.arn}/docker/terraform.tfstate*"]
+  }
+
+  statement {
+    sid       = "StateBucket"
+    actions   = ["s3:ListBucket"]
+    resources = [aws_s3_bucket.tfstate.arn]
+  }
+
+  statement {
+    sid       = "FindInstances"
+    actions   = ["ec2:DescribeInstances"]
+    resources = ["*"]
+  }
+
+  statement {
+    sid     = "DockerPortForward"
+    actions = ["ssm:StartSession"]
+    resources = [
+      aws_instance.docker.arn,
+      "arn:aws:ssm:${data.aws_region.current.region}::document/AWS-StartPortForwardingSession",
+    ]
+  }
+
+  statement {
+    sid       = "OwnSessions"
+    actions   = ["ssm:TerminateSession", "ssm:ResumeSession"]
+    resources = ["arn:aws:ssm:*:*:session/$${aws:userid}-*"]
+  }
+}
+
 data "aws_iam_policy_document" "discord_noti" {
   statement {
     actions = ["logs:CreateLogGroup"]
