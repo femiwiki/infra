@@ -168,8 +168,8 @@ data "aws_iam_policy_document" "infra_docker_assume_role" {
       test     = "StringEquals"
       variable = "token.actions.githubusercontent.com:sub"
       values = [
-        "repo:femiwiki@21275875/infra@188597503:ref:refs/heads/main",
         "repo:femiwiki@21275875/infra@188597503:pull_request",
+        "repo:femiwiki@21275875/infra@188597503:environment:docker",
       ]
     }
   }
@@ -305,8 +305,8 @@ data "aws_iam_policy_document" "infra_grafana_assume_role" {
       test     = "StringEquals"
       variable = "token.actions.githubusercontent.com:sub"
       values = [
-        "repo:femiwiki/infra:pull_request",
-        "repo:femiwiki/infra:environment:grafana",
+        "repo:femiwiki@21275875/infra@188597503:pull_request",
+        "repo:femiwiki@21275875/infra@188597503:environment:grafana",
       ]
     }
   }
