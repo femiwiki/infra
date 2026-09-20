@@ -24,7 +24,7 @@ provider "aws" {
 }
 
 provider "docker" {
-  host = "tcp://127.0.0.1:2376"
+  host = var.docker_host
 }
 
 data "aws_instance" "database" {

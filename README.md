@@ -25,7 +25,9 @@ terraform plan
 
 ### `docker/` 적용하기
 
-`docker/`는 Terraform Cloud를 쓰지 않습니다. 상태는 S3에 있고, 도커 데몬은 엣지 박스의 루프백에만 열려 있어서 SSM 터널로 붙습니다. AWS CLI와 [Session Manager 플러그인]이 필요합니다.
+`docker/`는 Terraform Cloud를 쓰지 않습니다. 상태는 S3에 있고, 도커 데몬은 엣지 박스의 루프백에만 열려 있어서 SSM 터널로 붙습니다. PR을 열면 `docker plan`이 plan을 코멘트로 달고, 권한 있는 사람이 그 PR에 `terraform apply`라고 코멘트하면 `docker apply`가 그 plan을 적용합니다. 이미지 bump PR도 같은 흐름입니다.
+
+손으로 돌려야 할 때는 AWS CLI와 [Session Manager 플러그인]이 필요합니다.
 
 ```bash
 # 터미널 1: 터널
@@ -41,8 +43,6 @@ terraform -chdir=docker init
 terraform -chdir=docker plan
 terraform -chdir=docker apply
 ```
-
-`data.terraform_remote_state.aws`는 아직 Terraform Cloud를 읽으므로 위의 토큰 설정은 여전히 필요합니다.
 
 [github checks status]: https://badgen.net/github/checks/femiwiki/infra
 [github checks link]: https://github.com/femiwiki/infra/actions
