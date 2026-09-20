@@ -23,10 +23,6 @@ $wgSpecialPageLockdown = [
 	'Log' => [ 'user' ],
 ];
 
-// FemiwikiCrawlingBlocker
-wfLoadExtension( 'FemiwikiCrawlingBlocker' );
-$wgFemiwikiCrawlingBlockerEnabled = false;
-
 foreach ( [
 	NS_TALK,
 	NS_USER_TALK,
