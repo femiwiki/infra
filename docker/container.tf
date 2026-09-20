@@ -46,10 +46,6 @@ resource "docker_container" "http" {
   }
 }
 
-locals {
-  fastcgi_port = 9000 + local.fastcgi_generation % 2
-}
-
 resource "docker_container" "fastcgi" {
   name         = "fastcgi-${local.fastcgi_generation}"
   image        = "ghcr.io/femiwiki/femiwiki:2026-09-20T08-51-1c692359"
@@ -66,7 +62,7 @@ resource "docker_container" "fastcgi" {
 
   env = [
     for k, v in {
-      PHP_FPM_LISTEN = local.fastcgi_port
+      PHP_FPM_LISTEN = 9000 + local.fastcgi_generation % 2
 
       PHP_FPM_EMERGENCY_RESTART_THRESHOLD = "5"
       PHP_FPM_EMERGENCY_RESTART_INTERVAL  = "1m"
