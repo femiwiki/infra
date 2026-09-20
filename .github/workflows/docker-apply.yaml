@@ -39,6 +39,15 @@ jobs:
           ref: ${{ github.event_name == 'issue_comment' && format('refs/pull/{0}/merge', github.event.issue.number) || github.ref }}
           persist-credentials: false
 
+      - uses: sarisia/actions-status-discord@eb045afee445dc055c18d3d90bd0f244fd062708  # v1.16.0
+        with:
+          webhook: ${{ secrets.DOCKER_DISCORD_WEBHOOK }}
+          title: Applying
+          color: 0x3498db
+          nodetail: true
+          url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          description: ${{ github.event.issue.html_url || github.ref_name }} by ${{ github.actor }}
+
       - uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd  # v6.3.0
         with:
           role-to-assume: arn:aws:iam::302617221463:role/infra-docker
@@ -60,3 +69,13 @@ jobs:
         with:
           path: docker
           auto_approve: ${{ github.event_name == 'workflow_dispatch' }}
+
+      - uses: sarisia/actions-status-discord@eb045afee445dc055c18d3d90bd0f244fd062708  # v1.16.0
+        if: always()
+        with:
+          webhook: ${{ secrets.DOCKER_DISCORD_WEBHOOK }}
+          status: ${{ job.status }}
+          title: ${{ case(job.status == 'success', 'Applied', job.status == 'cancelled', 'Cancelled', 'Errored') }}
+          nodetail: true
+          url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          description: ${{ github.event.issue.html_url || github.ref_name }} by ${{ github.actor }}
