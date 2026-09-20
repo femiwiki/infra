@@ -295,6 +295,7 @@ data "aws_iam_policy_document" "femiwiki_github_io" {
       "billing:GetCreditAllocationHistory",
       "billing:GetCredits",
       "cloudwatch:GetMetricData",
+      "ec2:DescribeInstances",
       "invoicing:GetInvoicePDF",
       "invoicing:ListInvoiceSummaries",
       "route53:ListHealthChecks",
