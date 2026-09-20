@@ -241,3 +241,41 @@ resource "aws_iam_role_policy_attachment" "database_managed_policies" {
   role       = aws_iam_role.database.name
   policy_arn = "arn:aws:iam::aws:policy/${each.key}"
 }
+
+resource "aws_iam_role" "infra_grafana" {
+  name               = "infra-grafana"
+  description        = "Allows GitHub Actions workflows of femiwiki/infra to keep the grafana workspace's state in S3."
+  assume_role_policy = data.aws_iam_policy_document.infra_grafana_assume_role.json
+}
+
+data "aws_iam_policy_document" "infra_grafana_assume_role" {
+  statement {
+    actions = ["sts:AssumeRoleWithWebIdentity"]
+
+    principals {
+      type        = "Federated"
+      identifiers = [aws_iam_openid_connect_provider.github_actions.arn]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "token.actions.githubusercontent.com:aud"
+      values   = ["sts.amazonaws.com"]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "token.actions.githubusercontent.com:sub"
+      values = [
+        "repo:femiwiki/infra:pull_request",
+        "repo:femiwiki/infra:environment:grafana",
+      ]
+    }
+  }
+}
+
+resource "aws_iam_role_policy" "infra_grafana" {
+  name   = "InfraGrafana"
+  role   = aws_iam_role.infra_grafana.name
+  policy = data.aws_iam_policy_document.infra_grafana.json
+}
