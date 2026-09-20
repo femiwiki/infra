@@ -222,6 +222,27 @@ data "aws_iam_policy_document" "access_caddycerts" {
   }
 }
 
+resource "aws_iam_policy" "read_secret_parameters" {
+  name        = "ReadSecretParameters"
+  description = "Allows instances to read their own secrets from Parameter Store at boot"
+
+  policy = data.aws_iam_policy_document.read_secret_parameters.json
+}
+
+data "aws_iam_policy_document" "read_secret_parameters" {
+  statement {
+    actions = [
+      "ssm:GetParameter",
+      "ssm:GetParameters",
+      "ssm:GetParametersByPath",
+    ]
+    resources = [
+      "arn:aws:ssm:${data.aws_region.current.region}:${data.aws_caller_identity.current.account_id}:parameter/mediawiki/*",
+      "arn:aws:ssm:${data.aws_region.current.region}:${data.aws_caller_identity.current.account_id}:parameter/mysql/*",
+    ]
+  }
+}
+
 resource "aws_iam_policy" "upload_backup" {
   name        = "UploadBackup"
   description = "Allows to upload to the backup bucket"
