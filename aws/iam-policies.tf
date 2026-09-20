@@ -287,6 +287,7 @@ data "aws_iam_policy_document" "femiwiki_github_io" {
   statement {
     actions = [
       "ce:GetCostAndUsage",
+      "billing:GetCreditAllocationHistory",
       "billing:GetCredits",
       "invoicing:ListInvoiceSummaries",
     ]
