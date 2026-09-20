@@ -2,7 +2,6 @@ locals {
   programmatic_users = [
     "femiwiki-email",
     "terraform-cloud",
-    "github-lambda",
   ]
 }
 
@@ -36,13 +35,6 @@ resource "aws_iam_user_policy" "terraform_cloud" {
   name       = "TerraformCloud"
   user       = "terraform-cloud"
   policy     = data.aws_iam_policy_document.iac.json
-}
-
-resource "aws_iam_user_policy" "github_lambda" {
-  depends_on = [aws_iam_user.programmatic_users["github-lambda"]]
-  name       = "GithubLambda"
-  user       = "github-lambda"
-  policy     = data.aws_iam_policy_document.github_lambda.json
 }
 
 
