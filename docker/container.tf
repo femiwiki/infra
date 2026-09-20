@@ -69,7 +69,7 @@ resource "docker_container" "fastcgi" {
   restart      = "always"
 
   wait                  = true
-  wait_timeout          = 120
+  wait_timeout          = 300
   stop_signal           = "SIGTERM"
   destroy_grace_seconds = 45
 
