@@ -1,10 +1,26 @@
 resource "docker_container" "http" {
-  name            = "http"
+  name            = "http-${local.fastcgi_generation}"
   image           = "ghcr.io/femiwiki/femiwiki:2026-09-20T10-46-6c61d082"
   command         = ["caddy", "run"]
   restart         = "on-failure"
   max_retry_count = 3
   network_mode    = "host"
+
+  wait                  = true
+  wait_timeout          = 60
+  stop_signal           = "SIGTERM"
+  destroy_grace_seconds = 30
+
+  lifecycle {
+    create_before_destroy = true
+  }
+
+  healthcheck {
+    test     = ["CMD", "curl", "-sf", "http://127.0.0.1/health-check"]
+    interval = "5s"
+    timeout  = "3s"
+    retries  = 3
+  }
 
   env = [
     for k, v in {
