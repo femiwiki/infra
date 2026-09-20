@@ -11,11 +11,29 @@ outputs:
 runs:
   using: composite
   steps:
+    - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v6.1.0
+      id: plugin
+      with:
+        path: ~/.cache/session-manager-plugin.deb
+        key: session-manager-plugin-${{ env.SESSION_MANAGER_PLUGIN_VERSION }}-ubuntu_64bit
+      env:
+        SESSION_MANAGER_PLUGIN_VERSION: 1.2.835.0
+
+    - name: Download the Session Manager plugin
+      if: steps.plugin.outputs.cache-hit != 'true'
+      shell: bash
+      env:
+        SESSION_MANAGER_PLUGIN_VERSION: 1.2.835.0
+        SESSION_MANAGER_PLUGIN_SHA256: 7c6dcad12518571cc7959a713e6a8ae1bdf6ed66fd9bee37dc189e39ca58ae03
+      run: |
+        mkdir -p ~/.cache
+        curl -sSfLo ~/.cache/session-manager-plugin.deb "https://s3.amazonaws.com/session-manager-downloads/plugin/${SESSION_MANAGER_PLUGIN_VERSION}/ubuntu_64bit/session-manager-plugin.deb"
+        echo "${SESSION_MANAGER_PLUGIN_SHA256}  $HOME/.cache/session-manager-plugin.deb" | sha256sum -c -
+
     - name: Install the Session Manager plugin and socat
       shell: bash
       run: |
-        curl -sSfLo /tmp/session-manager-plugin.deb https://s3.amazonaws.com/session-manager-downloads/plugin/latest/ubuntu_64bit/session-manager-plugin.deb
-        sudo dpkg -i /tmp/session-manager-plugin.deb > /dev/null
+        sudo dpkg -i ~/.cache/session-manager-plugin.deb > /dev/null
         command -v socat > /dev/null || sudo apt-get install -y -q socat > /dev/null
 
     - name: Forward the daemon's port
