@@ -210,3 +210,49 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "tfstate" {
     }
   }
 }
+
+resource "aws_s3_bucket" "cost_exports" {
+  bucket           = "cost-exports-${data.aws_caller_identity.current.account_id}-${data.aws_region.current.region}-an"
+  bucket_namespace = "account-regional"
+}
+
+resource "aws_s3_bucket_public_access_block" "cost_exports" {
+  bucket = aws_s3_bucket.cost_exports.id
+
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
+data "aws_iam_policy_document" "cost_exports_bucket" {
+  statement {
+    actions   = ["s3:GetBucketPolicy", "s3:PutObject"]
+    resources = [aws_s3_bucket.cost_exports.arn, "${aws_s3_bucket.cost_exports.arn}/*"]
+
+    principals {
+      type        = "Service"
+      identifiers = ["bcm-data-exports.amazonaws.com", "billingreports.amazonaws.com"]
+    }
+
+    condition {
+      test     = "StringLike"
+      variable = "aws:SourceAccount"
+      values   = [data.aws_caller_identity.current.account_id]
+    }
+
+    condition {
+      test     = "StringLike"
+      variable = "aws:SourceArn"
+      values = [
+        "arn:aws:cur:us-east-1:${data.aws_caller_identity.current.account_id}:definition/*",
+        "arn:aws:bcm-data-exports:us-east-1:${data.aws_caller_identity.current.account_id}:export/*",
+      ]
+    }
+  }
+}
+
+resource "aws_s3_bucket_policy" "cost_exports" {
+  bucket = aws_s3_bucket.cost_exports.id
+  policy = data.aws_iam_policy_document.cost_exports_bucket.json
+}
