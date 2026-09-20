@@ -19,4 +19,8 @@ terraform {
 provider "grafana" {
   url  = "https://femiwiki.grafana.net"
   auth = var.grafana_auth
+
+  retries            = 5
+  retry_wait         = 3
+  retry_status_codes = ["403", "429", "5xx"]
 }
