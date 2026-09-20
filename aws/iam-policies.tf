@@ -293,6 +293,7 @@ data "aws_iam_policy_document" "iac" {
   statement {
     actions = [
       "autoscaling:*",
+      "budgets:*",
       "cloudwatch:*",
       "ec2:*",
       "elasticloadbalancing:*",
