@@ -1,6 +1,6 @@
 resource "docker_container" "http" {
   name            = "http"
-  image           = "ghcr.io/femiwiki/femiwiki:2026-06-03T08-52-20f42e47"
+  image           = "ghcr.io/femiwiki/femiwiki:2026-09-20T03-21-b3738999"
   command         = ["caddy", "run"]
   restart         = "on-failure"
   max_retry_count = 3
@@ -48,7 +48,7 @@ resource "docker_container" "http" {
 
 resource "docker_container" "fastcgi" {
   name         = "fastcgi"
-  image        = "ghcr.io/femiwiki/femiwiki:2026-06-03T08-52-20f42e47"
+  image        = "ghcr.io/femiwiki/femiwiki:2026-09-20T03-21-b3738999"
   network_mode = "host"
   restart      = "always"
   env = [
@@ -94,22 +94,10 @@ resource "docker_container" "fastcgi" {
   ]
 
   healthcheck {
-    test = ["CMD-SHELL", <<-EOF
-      if [ ! -d /srv/fcgi-check ]; then
-        mkdir -p /srv/fcgi-check/
-      fi &&
-      if [ ! -z /srv/fcgi-check/AdoyFastCgiClient.php ]; then
-        curl -L https://github.com/wikimedia/operations-docker-images-production-images/raw/ad68c7cb62e4e01436ab3a34fb961fe8034c2cce/images/php/common/fpm/live-test/AdoyFastCgiClient.php -o /srv/fcgi-check/AdoyFastCgiClient.php
-      fi &&
-      if [ ! -z /srv/fcgi-check/fcgi-probe.php ]; then
-        curl -L https://github.com/wikimedia/operations-docker-images-production-images/raw/ad68c7cb62e4e01436ab3a34fb961fe8034c2cce/images/php/common/fpm/live-test/fcgi-probe.php -o /srv/fcgi-check/fcgi-probe.php
-      fi &&
-      /usr/local/bin/php /srv/fcgi-check/fcgi-probe.php || exit 1
-      EOF
-    ]
-    interval = "5s"
-    timeout  = "1s"
-    retries  = 0
+    test     = ["CMD-SHELL", "/usr/local/bin/php /srv/fcgi-check/fcgi-probe.php || exit 1"]
+    interval = "30s"
+    timeout  = "5s"
+    retries  = 3
   }
 
   mounts {
