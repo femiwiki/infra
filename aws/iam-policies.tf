@@ -316,7 +316,7 @@ data "aws_iam_policy_document" "infra_docker" {
 
   statement {
     sid       = "FindInstances"
-    actions   = ["ec2:DescribeInstances"]
+    actions   = ["ec2:DescribeInstances", "ec2:DescribeInstanceTypes"]
     resources = ["*"]
   }
 
