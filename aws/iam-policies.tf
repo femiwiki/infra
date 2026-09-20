@@ -374,6 +374,7 @@ data "aws_iam_policy_document" "iac" {
   statement {
     actions = [
       "autoscaling:*",
+      "bcm-data-exports:*",
       "budgets:*",
       "cloudwatch:*",
       "ec2:*",
