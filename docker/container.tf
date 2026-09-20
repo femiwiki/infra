@@ -46,13 +46,28 @@ resource "docker_container" "http" {
   }
 }
 
+locals {
+  fastcgi_port = 9000 + local.fastcgi_generation % 2
+}
+
 resource "docker_container" "fastcgi" {
-  name         = "fastcgi"
+  name         = "fastcgi-${local.fastcgi_generation}"
   image        = "ghcr.io/femiwiki/femiwiki:2026-09-20T08-51-1c692359"
   network_mode = "host"
   restart      = "always"
+
+  wait                  = true
+  wait_timeout          = 120
+  destroy_grace_seconds = 45
+
+  lifecycle {
+    create_before_destroy = true
+  }
+
   env = [
     for k, v in {
+      PHP_FPM_LISTEN = local.fastcgi_port
+
       PHP_FPM_EMERGENCY_RESTART_THRESHOLD = "5"
       PHP_FPM_EMERGENCY_RESTART_INTERVAL  = "1m"
       PHP_FPM_PROCESS_CONTROL_TIMEOUT     = "10s"
@@ -77,7 +92,7 @@ resource "docker_container" "fastcgi" {
       WG_INTERNAL_SERVER             = "http://127.0.0.1:80"
       WG_MEMCACHED_SERVERS           = "127.0.0.1:11211"
       # Used by fcgi-probe.php
-      FCGI_URL = "127.0.0.1:9000"
+      FCGI_URL = "127.0.0.1:${local.fastcgi_port}"
 
       WG_DB_SERVER             = "${data.terraform_remote_state.aws.outputs.mysql_private_ip}:3306"
       WG_DB_USER               = local.ssm_parameters_mysql["/mysql/users/mediawiki/username"]
