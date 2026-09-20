@@ -1,0 +1,44 @@
+---
+name: Reach the Docker daemon
+description: >-
+  Forwards the docker instance's daemon port over SSM to 127.0.0.1:2376 on the
+  runner, and relays it on the docker bridge gateway so a container action can
+  reach it too.
+outputs:
+  host:
+    description: The docker provider host to use from a container action.
+    value: ${{ steps.relay.outputs.host }}
+runs:
+  using: composite
+  steps:
+    - name: Install the Session Manager plugin and socat
+      shell: bash
+      run: |
+        curl -sSfLo /tmp/session-manager-plugin.deb https://s3.amazonaws.com/session-manager-downloads/plugin/latest/ubuntu_64bit/session-manager-plugin.deb
+        sudo dpkg -i /tmp/session-manager-plugin.deb > /dev/null
+        command -v socat > /dev/null || sudo apt-get install -y -q socat > /dev/null
+
+    - name: Forward the daemon's port
+      shell: bash
+      run: |
+        instance=$(aws ec2 describe-instances \
+          --filters Name=tag:Name,Values=docker Name=instance-state-name,Values=running \
+          --query 'Reservations[].Instances[].InstanceId' --output text)
+        nohup aws ssm start-session --target "$instance" \
+          --document-name AWS-StartPortForwardingSession \
+          --parameters portNumber=2376,localPortNumber=2376 > /tmp/ssm-session.log 2>&1 &
+        for _ in $(seq 30); do
+          curl -sf http://127.0.0.1:2376/_ping > /dev/null && exit 0
+          sleep 1
+        done
+        echo "::error::the port forward did not come up"; cat /tmp/ssm-session.log; exit 1
+
+    - name: Relay it on the bridge gateway for container actions
+      id: relay
+      shell: bash
+      run: |
+        gateway=$(docker network inspect bridge --format '{{(index .IPAM.Config 0).Gateway}}')
+        nohup socat "TCP-LISTEN:2376,bind=$gateway,fork,reuseaddr" TCP:127.0.0.1:2376 > /tmp/socat.log 2>&1 &
+        sleep 1
+        curl -sf "http://$gateway:2376/_ping" > /dev/null
+        echo "host=tcp://$gateway:2376" >> "$GITHUB_OUTPUT"
