@@ -97,6 +97,22 @@ prometheus.relabel "integrations_node_exporter" {
   }
 }
 
+%{ if name == "femiwiki" ~}
+// Caddy, on its admin endpoint
+prometheus.scrape "caddy" {
+  targets    = [{__address__ = "127.0.0.1:2019", instance = "${name}", job = "integrations/caddy"}]
+  forward_to = [prometheus.relabel.caddy.receiver]
+}
+prometheus.relabel "caddy" {
+  forward_to = [prometheus.remote_write.metrics_service.receiver]
+  rule {
+    source_labels = ["__name__"]
+    regex         = "caddy_rate_limit_.+"
+    action        = "drop"
+  }
+}
+
+%{ endif ~}
 // Docker. Alloy's discovery.docker does not support the default type
 // https://github.com/grafana/loki/issues/6165#issuecomment-1969418500
 // 
