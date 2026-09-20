@@ -24,26 +24,6 @@ resource "aws_cloudwatch_metric_alarm" "femiwiki_volume_idle_time_cloud_watch_al
   alarm_actions       = []
 }
 
-resource "aws_cloudwatch_metric_alarm" "femiwiki_disk_used_cloud_watch_alarm" {
-  alarm_name  = "Femiwiki disk used"
-  namespace   = "CWAgent"
-  metric_name = "disk_used_percent"
-  period      = 300
-  statistic   = "Maximum"
-  dimensions = {
-    "device" = "nvme0n1p1"
-    "fstype" = "xfs"
-    "host"   = aws_instance.docker.private_dns
-    "path"   = "/"
-  }
-  threshold           = 90
-  comparison_operator = "GreaterThanThreshold"
-  datapoints_to_alarm = 2
-  evaluation_periods  = 2
-  alarm_actions       = [aws_sns_topic.cloudwatch_alarms_topic.arn]
-  ok_actions          = [aws_sns_topic.cloudwatch_alarms_topic.arn]
-}
-
 resource "aws_cloudwatch_metric_alarm" "bounce_rate" {
   provider = aws.us
 
