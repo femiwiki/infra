@@ -110,7 +110,7 @@ resource "aws_iam_role_policy" "github_lambda" {
 
 resource "aws_iam_role" "femiwiki_github_io" {
   name               = "femiwiki-github-io"
-  description        = "Allows GitHub Actions workflows of femiwiki/femiwiki.github.io to read billing figures."
+  description        = "Allows GitHub Actions workflows of femiwiki/femiwiki.github.io to read what the site publishes."
   assume_role_policy = data.aws_iam_policy_document.femiwiki_github_io_assume_role.json
 }
 
