@@ -241,6 +241,11 @@ data "aws_iam_policy_document" "read_secret_parameters" {
       "arn:aws:ssm:${data.aws_region.current.region}:${data.aws_caller_identity.current.account_id}:parameter/mysql/*",
     ]
   }
+
+  statement {
+    actions   = ["ssm:DescribeParameters"]
+    resources = ["*"]
+  }
 }
 
 resource "aws_iam_policy" "upload_backup" {
