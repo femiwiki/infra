@@ -294,8 +294,10 @@ data "aws_iam_policy_document" "femiwiki_github_io" {
       "ce:GetCostAndUsage",
       "billing:GetCreditAllocationHistory",
       "billing:GetCredits",
+      "cloudwatch:GetMetricData",
       "invoicing:GetInvoicePDF",
       "invoicing:ListInvoiceSummaries",
+      "route53:ListHealthChecks",
     ]
     resources = ["*"]
   }
