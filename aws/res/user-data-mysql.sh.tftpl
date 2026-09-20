@@ -96,7 +96,7 @@ cat <<'EOF' > /etc/my.cnf
 [mysqld]
 datadir=/var/lib/mysql/data
 performance_schema=OFF
-max_connections=60 # default to 151
+max_connections=90 # default to 151
 log_error_services = 'log_sink_syseventlog'
 
 server_id=${mysql_server_id}
@@ -105,7 +105,9 @@ gtid_mode=ON
 enforce_gtid_consistency=ON
 
 # sorted alphabetically
-innodb_dedicated_server=ON
+innodb_buffer_pool_size=768M
+innodb_flush_method=O_DIRECT_NO_FSYNC
+innodb_redo_log_capacity=256M
 join_buffer_size=1M # default to 256K
 max_heap_table_size=32M # default to 16M
 parser_max_mem_size=256M # default to 16 exbibytes
@@ -114,11 +116,18 @@ temptable_max_ram=64M # default to 1G
 tmp_table_size=32M # defaults to 16M
 EOF
 rm -rf /home/ec2-user/mysql-rpms
+mkdir -p /etc/systemd/system/mysqld.service.d
+cat <<'UNIT' > /etc/systemd/system/mysqld.service.d/10-datadir-mount.conf
+[Unit]
+RequiresMountsFor=/var/lib/mysql/data
+UNIT
+systemctl daemon-reload
 if ! file -s /dev/nvme1n1 | grep -q "filesystem data"; then
   mkfs.xfs /dev/nvme1n1
   mkdir -p /var/lib/mysql/data
   chown mysql:mysql /var/lib/mysql/data
-  mount /dev/nvme1n1 /var/lib/mysql/data
+  grep -q " /var/lib/mysql/data " /etc/fstab || echo "UUID=$(blkid -s UUID -o value /dev/nvme1n1)  /var/lib/mysql/data  xfs  defaults,noatime,nofail  0  2" >> /etc/fstab
+  mount /var/lib/mysql/data
   systemctl enable --now mysqld
   TIMEOUT=300
   CHECK_INTERVAL=5
@@ -142,7 +151,8 @@ if ! file -s /dev/nvme1n1 | grep -q "filesystem data"; then
 else
   mkdir -p /var/lib/mysql/data
   chown mysql:mysql /var/lib/mysql/data
-  mount /dev/nvme1n1 /var/lib/mysql/data
+  grep -q " /var/lib/mysql/data " /etc/fstab || echo "UUID=$(blkid -s UUID -o value /dev/nvme1n1)  /var/lib/mysql/data  xfs  defaults,noatime,nofail  0  2" >> /etc/fstab
+  mount /var/lib/mysql/data
   systemctl enable --now mysqld
 fi
 
