@@ -143,6 +143,44 @@ resource "aws_iam_role_policy" "femiwiki_github_io" {
   policy = data.aws_iam_policy_document.femiwiki_github_io.json
 }
 
+resource "aws_iam_role" "infra_docker" {
+  name               = "infra-docker"
+  description        = "Allows GitHub Actions workflows of femiwiki/infra to plan and apply the docker workspace."
+  assume_role_policy = data.aws_iam_policy_document.infra_docker_assume_role.json
+}
+
+data "aws_iam_policy_document" "infra_docker_assume_role" {
+  statement {
+    actions = ["sts:AssumeRoleWithWebIdentity"]
+
+    principals {
+      type        = "Federated"
+      identifiers = [aws_iam_openid_connect_provider.github_actions.arn]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "token.actions.githubusercontent.com:aud"
+      values   = ["sts.amazonaws.com"]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "token.actions.githubusercontent.com:sub"
+      values = [
+        "repo:femiwiki@21275875/infra@188597503:ref:refs/heads/main",
+        "repo:femiwiki@21275875/infra@188597503:pull_request",
+      ]
+    }
+  }
+}
+
+resource "aws_iam_role_policy" "infra_docker" {
+  name   = "InfraDocker"
+  role   = aws_iam_role.infra_docker.name
+  policy = data.aws_iam_policy_document.infra_docker.json
+}
+
 resource "aws_iam_role" "discord_noti" {
   name               = "DiscordNoti"
   description        = "Execution role for the DiscordNoti Lambda function."
