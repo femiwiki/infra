@@ -289,6 +289,7 @@ data "aws_iam_policy_document" "femiwiki_github_io" {
       "ce:GetCostAndUsage",
       "billing:GetCreditAllocationHistory",
       "billing:GetCredits",
+      "invoicing:GetInvoicePDF",
       "invoicing:ListInvoiceSummaries",
     ]
     resources = ["*"]
