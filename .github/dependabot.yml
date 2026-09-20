@@ -10,6 +10,15 @@ updates:
       default-days: 7
 
   - package-ecosystem: "terraform"
+    directory: "/grafana"
+    schedule:
+      interval: monthly
+    reviewers:
+      - 'femiwiki/reviewer'
+    cooldown:
+      default-days: 7
+
+  - package-ecosystem: "terraform"
     directory: "/github"
     schedule:
       interval: monthly
