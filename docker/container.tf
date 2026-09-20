@@ -16,7 +16,7 @@ resource "docker_container" "http" {
   }
 
   healthcheck {
-    test     = ["CMD", "curl", "-sf", "http://127.0.0.1/health-check"]
+    test     = ["CMD-SHELL", "curl -sf http://127.0.0.1:$${CADDY_PROBE_PORT}/health-check"]
     interval = "5s"
     timeout  = "3s"
     retries  = 3
@@ -24,7 +24,7 @@ resource "docker_container" "http" {
 
   env = [
     for k, v in {
-      FASTCGI_ADDR        = "127.0.0.1:9000",
+      CADDY_PROBE_PORT    = 8080 + local.fastcgi_generation % 2,
       AWS_REGION          = "ap-northeast-1",
       S3_USE_IAM_PROVIDER = "true",
       S3_HOST             = "s3.ap-northeast-1.amazonaws.com",
