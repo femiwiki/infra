@@ -108,6 +108,41 @@ resource "aws_iam_role_policy" "github_lambda" {
   policy = data.aws_iam_policy_document.github_lambda.json
 }
 
+resource "aws_iam_role" "femiwiki_github_io" {
+  name               = "femiwiki-github-io"
+  description        = "Allows GitHub Actions workflows of femiwiki/femiwiki.github.io to read billing figures."
+  assume_role_policy = data.aws_iam_policy_document.femiwiki_github_io_assume_role.json
+}
+
+data "aws_iam_policy_document" "femiwiki_github_io_assume_role" {
+  statement {
+    actions = ["sts:AssumeRoleWithWebIdentity"]
+
+    principals {
+      type        = "Federated"
+      identifiers = [aws_iam_openid_connect_provider.github_actions.arn]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "token.actions.githubusercontent.com:aud"
+      values   = ["sts.amazonaws.com"]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "token.actions.githubusercontent.com:sub"
+      values   = ["repo:femiwiki@21275875/femiwiki.github.io@1377892969:ref:refs/heads/main"]
+    }
+  }
+}
+
+resource "aws_iam_role_policy" "femiwiki_github_io" {
+  name   = "FemiwikiGithubIo"
+  role   = aws_iam_role.femiwiki_github_io.name
+  policy = data.aws_iam_policy_document.femiwiki_github_io.json
+}
+
 resource "aws_iam_role" "discord_noti" {
   name               = "DiscordNoti"
   description        = "Execution role for the DiscordNoti Lambda function."
