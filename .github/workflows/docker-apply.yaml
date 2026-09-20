@@ -11,7 +11,7 @@ jobs:
   apply:
     if: >-
       github.event_name == 'workflow_dispatch'
-      || (github.event.issue.pull_request && github.event.comment.body == 'terraform apply')
+      || (github.event.issue.pull_request && github.event.comment.body == 'tofu apply')
     runs-on: ubuntu-latest
     timeout-minutes: 20
     environment: docker
@@ -62,7 +62,7 @@ jobs:
             curl -sf -X POST "http://127.0.0.1:2376/images/create?fromImage=${image%%:*}&tag=${image##*:}" > /dev/null
           done
 
-      - uses: dflook/terraform-apply@82a1042d40c66856406bf648832fc5d6b03ca74c  # v3.1.0
+      - uses: dflook/tofu-apply@e3e5dfc8f935d4b152c767801046f63abf8a77d3  # v3.1.0
         env:
           GITHUB_TOKEN: ${{ github.token }}
           TF_VAR_docker_host: ${{ steps.daemon.outputs.host }}

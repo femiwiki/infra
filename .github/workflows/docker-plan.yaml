@@ -28,7 +28,7 @@ jobs:
       - uses: ./.github/actions/docker-daemon
         id: daemon
 
-      - uses: dflook/terraform-plan@48e90468aecdd1d8ea21617d4cecf0cd7746ff1d  # v3.1.0
+      - uses: dflook/tofu-plan@c7416238983bdd94c5486fb856bb7358f2bcc935  # v3.1.0
         env:
           GITHUB_TOKEN: ${{ github.token }}
           TF_VAR_docker_host: ${{ steps.daemon.outputs.host }}
