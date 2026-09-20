@@ -62,6 +62,12 @@ variable "default_status_checks" {
   default     = ["zizmor"]
 }
 
+variable "pages_build_type" {
+  description = "GitHub Pages build source, e.g. \"workflow\". Null leaves Pages off."
+  type        = string
+  default     = null
+}
+
 variable "collaborator" {
   type    = bool
   default = false

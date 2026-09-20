@@ -15,16 +15,18 @@ resource "github_repository" "repository" {
   allow_merge_commit        = false
   allow_rebase_merge        = false
   squash_merge_commit_title = "PR_TITLE"
-}
 
-resource "github_branch" "main_branch" {
-  repository = github_repository.repository.name
-  branch     = "main"
+  dynamic "pages" {
+    for_each = var.pages_build_type == null ? [] : [var.pages_build_type]
+    content {
+      build_type = pages.value
+    }
+  }
 }
 
 resource "github_branch_default" "branch_default" {
   repository = github_repository.repository.name
-  branch     = github_branch.main_branch.branch
+  branch     = "main"
 }
 
 locals {
