@@ -12,10 +12,6 @@ output "femiwiki_eip" {
   value = aws_eip.femiwiki.public_ip
 }
 
-output "test_femiwiki_eip" {
-  value = aws_eip.test_femiwiki.public_ip
-}
-
 output "docker_host_eip" {
   value = aws_eip.femiwiki.public_ip
 }
