@@ -1,6 +1,6 @@
 resource "docker_container" "http" {
   name            = "http-${local.fastcgi_generation}"
-  image           = "ghcr.io/femiwiki/femiwiki:2026-09-20T12-32-42e59e77"
+  image           = "ghcr.io/femiwiki/femiwiki:2026-09-20T12-51-064d25d1"
   command         = ["caddy", "run"]
   restart         = "on-failure"
   max_retry_count = 3
@@ -16,7 +16,7 @@ resource "docker_container" "http" {
   }
 
   healthcheck {
-    test     = ["CMD", "curl", "-sf", "http://127.0.0.1/health-check"]
+    test     = ["CMD-SHELL", "curl -sf http://127.0.0.1:$${CADDY_PROBE_PORT}/health-check"]
     interval = "5s"
     timeout  = "3s"
     retries  = 3
@@ -24,7 +24,7 @@ resource "docker_container" "http" {
 
   env = [
     for k, v in {
-      FASTCGI_ADDR        = "127.0.0.1:9000",
+      CADDY_PROBE_PORT    = 8080 + local.fastcgi_generation % 2,
       AWS_REGION          = "ap-northeast-1",
       S3_USE_IAM_PROVIDER = "true",
       S3_HOST             = "s3.ap-northeast-1.amazonaws.com",
@@ -64,7 +64,7 @@ resource "docker_container" "http" {
 
 resource "docker_container" "fastcgi" {
   name         = "fastcgi-${local.fastcgi_generation}"
-  image        = "ghcr.io/femiwiki/femiwiki:2026-09-20T12-32-42e59e77"
+  image        = "ghcr.io/femiwiki/femiwiki:2026-09-20T12-51-064d25d1"
   network_mode = "host"
   restart      = "always"
 
