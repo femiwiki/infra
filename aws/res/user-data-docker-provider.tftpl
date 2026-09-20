@@ -87,19 +87,16 @@ echo "${ca_cert_pem}" | tee /etc/docker/tls/ca.pem > /dev/null
 echo "${server_cert_pem}" | tee /etc/docker/tls/server-cert.pem > /dev/null
 echo "${server_key_pem}" | tee /etc/docker/tls/server-key.pem > /dev/null
 
-# Configure Docker daemon for TLS
+# Configure Docker daemon
 cat <<EOF > /etc/docker/daemon.json
 {
   "log-driver": "journald",
-  "tlsverify": true,
-  "tlscacert": "/etc/docker/tls/ca.pem",
-  "tlscert": "/etc/docker/tls/server-cert.pem",
-  "tlskey": "/etc/docker/tls/server-key.pem"
+  "live-restore": true
 }
 EOF
 
 # Append
-sed -i -E 's?^(OPTIONS=.+)"$?\1 -H tcp://0.0.0.0:2376"?' /etc/sysconfig/docker
+sed -i -E 's?^(OPTIONS=.+)"$?\1 -H tcp://127.0.0.1:2376"?' /etc/sysconfig/docker
 # TODO Create OPTIONS if there is no OPTIONS
 
 # Restart Docker service
