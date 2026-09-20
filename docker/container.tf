@@ -107,7 +107,7 @@ resource "docker_container" "fastcgi" {
       # Used by fcgi-probe.php
       FCGI_URL = "127.0.0.1:${9000 + local.fastcgi_generation % 2}"
 
-      WG_DB_SERVER           = "${data.aws_instance.database.private_ip}:3306"
+      WG_DB_SERVER           = "${data.aws_instances.database.private_ips[0]}:3306"
       WG_DB_USER             = "mediawiki"
       WG_RE_CAPTCHA_SITE_KEY = "6LfiSLArAAAAAKFLIhAJC2wlNY1Nnbm_gNcXRIDh"
 
@@ -200,7 +200,7 @@ resource "docker_container" "backupbot" {
   restart = "always"
   env = [
     for k, v in {
-      DB_SERVER   = "${data.aws_instance.database.private_ip}:3306"
+      DB_SERVER   = "${data.aws_instances.database.private_ips[0]}:3306"
       SSM_SECRETS = "1"
       AWS_REGION  = "ap-northeast-1"
     } : "${k}=${v}"

@@ -27,13 +27,7 @@ provider "docker" {
   host = var.docker_host
 }
 
-data "aws_instance" "database" {
-  filter {
-    name   = "tag:Name"
-    values = ["database"]
-  }
-  filter {
-    name   = "instance-state-name"
-    values = ["running"]
-  }
+data "aws_instances" "database" {
+  instance_tags        = { Name = "database" }
+  instance_state_names = ["running"]
 }
