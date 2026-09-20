@@ -81,9 +81,6 @@ resource "aws_instance" "docker" {
       loki_username       = "1017101"
       loki_password       = var.loki_password
     })
-    ca_cert_pem     = tls_self_signed_cert.ca_cert.cert_pem
-    server_cert_pem = tls_locally_signed_cert.server_cert.cert_pem
-    server_key_pem  = tls_private_key.server_key.private_key_pem
   })
 
   vpc_security_group_ids = [

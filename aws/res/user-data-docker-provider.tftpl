@@ -71,21 +71,13 @@ Defaults secure_path=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bi
 EOF
 
 #
-# Install Docker and configure TLS
+# Install Docker
 #
 dnf install -y docker
 systemctl enable docker
 systemctl start docker
 usermod -a -G docker ec2-user
 usermod -a -G docker alloy
-
-# Create Docker TLS directory
-mkdir -p /etc/docker/tls
-
-# Write TLS certificates and key
-echo "${ca_cert_pem}" | tee /etc/docker/tls/ca.pem > /dev/null
-echo "${server_cert_pem}" | tee /etc/docker/tls/server-cert.pem > /dev/null
-echo "${server_key_pem}" | tee /etc/docker/tls/server-key.pem > /dev/null
 
 # Configure Docker daemon
 cat <<EOF > /etc/docker/daemon.json
