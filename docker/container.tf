@@ -88,7 +88,7 @@ resource "docker_container" "fastcgi" {
       WG_INTERNAL_SERVER             = "http://127.0.0.1:80"
       WG_MEMCACHED_SERVERS           = "127.0.0.1:11211"
       # Used by fcgi-probe.php
-      FCGI_URL = "127.0.0.1:${local.fastcgi_port}"
+      FCGI_URL = "127.0.0.1:${9000 + local.fastcgi_generation % 2}"
 
       WG_DB_SERVER             = "${data.terraform_remote_state.aws.outputs.mysql_private_ip}:3306"
       WG_DB_USER               = local.ssm_parameters_mysql["/mysql/users/mediawiki/username"]
