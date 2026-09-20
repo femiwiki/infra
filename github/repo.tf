@@ -20,6 +20,7 @@ module "infra" {
   description                   = ":evergreen_tree: Terraforming Femiwiki Infrastructure"
   enforce_admins                = local.with_cd.enforce_admins
   required_pull_request_reviews = local.with_cd.required_pull_request_reviews
+  required_status_checks_strict = true
   topics = [
     "terraform",
   ]

@@ -50,6 +50,12 @@ variable "required_pull_request_reviews" {
   default = []
 }
 
+variable "required_status_checks_strict" {
+  description = "Require the branch to be up to date with its base before merging"
+  type        = bool
+  default     = false
+}
+
 variable "required_status_checks_contexts" {
   description = "Repo-specific required status checks (org-wide ones are added automatically)"
   type        = list(string)
