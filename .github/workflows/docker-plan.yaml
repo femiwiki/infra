@@ -25,7 +25,7 @@ jobs:
           role-to-assume: arn:aws:iam::302617221463:role/infra-docker
           aws-region: ap-northeast-1
 
-      - uses: $/.github/actions/docker-daemon
+      - uses: ./.github/actions/docker-daemon
         id: daemon
 
       - uses: dflook/terraform-plan@48e90468aecdd1d8ea21617d4cecf0cd7746ff1d  # v3.1.0
