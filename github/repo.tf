@@ -123,11 +123,11 @@ module "remote_gadgets" {
 }
 
 module "femiwiki_github_io" {
-  source           = "./modules/github-repository"
-  name             = "femiwiki.github.io"
-  description      = "Static pages published by the Femiwiki team"
-  homepage_url     = "https://femiwiki.github.io/"
-  pages_build_type = "workflow"
+  source       = "./modules/github-repository"
+  name         = "femiwiki.github.io"
+  description  = "Static pages published by the Femiwiki team"
+  homepage_url = "https://femiwiki.github.io/"
+  pages_branch = "gh-pages"
   topics = [
     "static-site",
     "wikven",

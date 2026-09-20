@@ -17,9 +17,13 @@ resource "github_repository" "repository" {
   squash_merge_commit_title = "PR_TITLE"
 
   dynamic "pages" {
-    for_each = var.pages_build_type == null ? [] : [var.pages_build_type]
+    for_each = var.pages_branch == null ? [] : [var.pages_branch]
     content {
-      build_type = pages.value
+      build_type = "legacy"
+      source {
+        branch = pages.value
+        path   = "/"
+      }
     }
   }
 }
