@@ -54,6 +54,7 @@ resource "docker_container" "fastcgi" {
 
   wait                  = true
   wait_timeout          = 120
+  stop_signal           = "SIGTERM"
   destroy_grace_seconds = 45
 
   lifecycle {
