@@ -107,17 +107,12 @@ resource "docker_container" "fastcgi" {
       # Used by fcgi-probe.php
       FCGI_URL = "127.0.0.1:${9000 + local.fastcgi_generation % 2}"
 
-      WG_DB_SERVER             = "${data.terraform_remote_state.aws.outputs.mysql_private_ip}:3306"
-      WG_DB_USER               = local.ssm_parameters_mysql["/mysql/users/mediawiki/username"]
-      WG_DB_PASSWORD           = local.ssm_parameters_mysql["/mysql/users/mediawiki/password"]
-      WG_O_AUTH_2_PRIVATE_KEY  = local.ssm_parameters_mediawiki["/mediawiki/o_auth_2_private_key"]
-      WG_RC_FEEDS_DISCORD_URL  = local.ssm_parameters_mediawiki["/mediawiki/rc_feeds_discord_url"]
-      WG_RE_CAPTCHA_SECRET_KEY = local.ssm_parameters_mediawiki["/mediawiki/re_captcha/secret_key"]
-      WG_RE_CAPTCHA_SITE_KEY   = local.ssm_parameters_mediawiki["/mediawiki/re_captcha/site_key"]
-      WG_SECRET_KEY            = local.ssm_parameters_mediawiki["/mediawiki/site_key"]
-      WG_SMTP_PASSWORD         = local.ssm_parameters_mediawiki["/mediawiki/smtp/password"]
-      WG_SMTP_USERNAME         = local.ssm_parameters_mediawiki["/mediawiki/smtp/username"]
-      WG_UPGRADE_KEY           = local.ssm_parameters_mediawiki["/mediawiki/upgrade_key"]
+      WG_DB_SERVER           = "${data.terraform_remote_state.aws.outputs.mysql_private_ip}:3306"
+      WG_DB_USER             = "mediawiki"
+      WG_RE_CAPTCHA_SITE_KEY = "6LfiSLArAAAAAKFLIhAJC2wlNY1Nnbm_gNcXRIDh"
+
+      SSM_SECRETS = "1"
+      AWS_REGION  = "ap-northeast-1"
     } : "${k}=${v}"
   ]
 
@@ -201,13 +196,13 @@ resource "docker_container" "autoheal" {
 
 resource "docker_container" "backupbot" {
   name    = "backupbot"
-  image   = "ghcr.io/femiwiki/backupbot:2025-08-31T08-55-d756cc34"
+  image   = "ghcr.io/femiwiki/backupbot:2026-09-20T13-29-131f03fe"
   restart = "always"
   env = [
     for k, v in {
       DB_SERVER   = "${data.terraform_remote_state.aws.outputs.mysql_private_ip}:3306"
-      DB_USERNAME = local.ssm_parameters_mysql["/mysql/users/mediawiki/username"]
-      DB_PASSWORD = local.ssm_parameters_mysql["/mysql/users/mediawiki/password"]
+      SSM_SECRETS = "1"
+      AWS_REGION  = "ap-northeast-1"
     } : "${k}=${v}"
   ]
 
