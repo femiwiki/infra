@@ -377,6 +377,7 @@ data "aws_iam_policy_document" "iac" {
       "bcm-data-exports:*",
       "budgets:*",
       "cloudwatch:*",
+      "cur:*",
       "ec2:*",
       "elasticloadbalancing:*",
       "events:*",
