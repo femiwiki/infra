@@ -8,6 +8,10 @@ terraform {
   }
 
   required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 6.7"
+    }
     docker = {
       source  = "kreuzwerker/docker"
       version = "~> 3.0"
@@ -15,16 +19,21 @@ terraform {
   }
 }
 
-data "terraform_remote_state" "aws" {
-  backend = "remote"
-  config = {
-    organization = "femiwiki"
-    workspaces = {
-      name = "aws"
-    }
-  }
+provider "aws" {
+  region = "ap-northeast-1"
 }
 
 provider "docker" {
   host = "tcp://127.0.0.1:2376"
+}
+
+data "aws_instance" "database" {
+  filter {
+    name   = "tag:Name"
+    values = ["database"]
+  }
+  filter {
+    name   = "instance-state-name"
+    values = ["running"]
+  }
 }
