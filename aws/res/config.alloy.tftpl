@@ -120,7 +120,22 @@ loki.relabel "journal" {
   }
 }
 loki.source.journal "read"  {
-  forward_to    = [loki.write.grafana_cloud_loki.receiver]
+  forward_to    = [loki.process.fastcgi.receiver]
   relabel_rules = loki.relabel.journal.rules
   labels        = {component = "loki.source.journal"}
+}
+loki.process "fastcgi" {
+  forward_to = [loki.write.grafana_cloud_loki.receiver]
+
+  stage.match {
+    selector = "{docker_container_name=\"fastcgi\"}"
+
+    stage.regex {
+      expression = "^NOTICE: PHP message: (?P<line>\\{.*)$"
+    }
+
+    stage.output {
+      source = "line"
+    }
+  }
 }
