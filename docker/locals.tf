@@ -1,5 +1,5 @@
 locals {
-  fastcgi_generation = 2
+  fastcgi_generation = 3
 
   ssm_parameters_mediawiki = {
     for i, name in data.terraform_remote_state.aws.outputs.ssm_parameters_mediawiki.names :
