@@ -1,6 +1,6 @@
 resource "docker_container" "http" {
   name            = "http-${local.fastcgi_generation}"
-  image           = "ghcr.io/femiwiki/femiwiki:2026-09-20T16-08-e12474a4"
+  image           = "ghcr.io/femiwiki/femiwiki:2026-09-21T14-13-8b5d53b9"
   command         = ["caddy-run"]
   restart         = "on-failure"
   max_retry_count = 3
@@ -64,7 +64,7 @@ resource "docker_container" "http" {
 
 resource "docker_container" "fastcgi" {
   name         = "fastcgi-${local.fastcgi_generation}"
-  image        = "ghcr.io/femiwiki/femiwiki:2026-09-20T16-08-e12474a4"
+  image        = "ghcr.io/femiwiki/femiwiki:2026-09-21T14-13-8b5d53b9"
   network_mode = "host"
   restart      = "always"
 
@@ -86,7 +86,7 @@ resource "docker_container" "fastcgi" {
       PHP_FPM_PROCESS_CONTROL_TIMEOUT     = "10s"
       PHP_FPM_REQUEST_TERMINATE_TIMEOUT   = "30"
 
-      PHP_FPM_PM_MAX_CHILDREN      = "30"
+      PHP_FPM_PM_MAX_CHILDREN      = "10"
       PHP_FPM_PM_START_SERVERS     = "2"
       PHP_FPM_PM_MIN_SPARE_SERVERS = "1"
       PHP_FPM_PM_MAX_SPARE_SERVERS = "3"
