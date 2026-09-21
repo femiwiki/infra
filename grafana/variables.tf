@@ -5,13 +5,13 @@ variable "grafana_auth" {
 }
 
 variable "discord_webhook_url" {
-  description = "Webhook the site-down contact point posts to"
+  description = "Webhook the Discord contact points post to"
   type        = string
   sensitive   = true
 }
 
 variable "discord_mention_role_id" {
-  description = "Discord role the site-down notification mentions"
+  description = "Discord role the notifications mention"
   type        = string
   default     = "678974055365476392"
 }
