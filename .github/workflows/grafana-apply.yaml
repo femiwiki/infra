@@ -8,10 +8,34 @@ permissions: {}
 concurrency:
   group: grafana
 jobs:
-  apply:
+  scope:
     if: >-
       github.event_name == 'workflow_dispatch'
       || (github.event.issue.pull_request && github.event.comment.body == 'tofu apply')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      pull-requests: read
+    outputs:
+      apply: ${{ steps.files.outputs.apply }}
+    steps:
+      - name: Only a pull request that changes this workspace
+        id: files
+        env:
+          EVENT: ${{ github.event_name }}
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.issue.number }}
+        run: |
+          apply=true
+          if [ "$EVENT" = issue_comment ]; then
+            gh api "repos/$REPO/pulls/$PR/files" --paginate --jq '.[].filename' | grep -q '^grafana/' || apply=false
+          fi
+          echo "apply=$apply" >> "$GITHUB_OUTPUT"
+
+  apply:
+    needs: scope
+    if: needs.scope.outputs.apply == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     environment: grafana
