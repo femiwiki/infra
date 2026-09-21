@@ -211,6 +211,31 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "tfstate" {
   }
 }
 
+resource "aws_s3_bucket_lifecycle_configuration" "tfstate" {
+  bucket = aws_s3_bucket.tfstate.id
+
+  dynamic "rule" {
+    for_each = ["docker", "grafana"]
+
+    content {
+      status = "Enabled"
+      id     = "Expire the ${rule.value} state lock's old versions"
+
+      filter {
+        prefix = "${rule.value}/terraform.tfstate.tflock"
+      }
+
+      noncurrent_version_expiration {
+        noncurrent_days = 1
+      }
+
+      expiration {
+        expired_object_delete_marker = true
+      }
+    }
+  }
+}
+
 resource "aws_s3_bucket" "cost_exports" {
   bucket           = "cost-exports-${data.aws_caller_identity.current.account_id}-${data.aws_region.current.region}-an"
   bucket_namespace = "account-regional"
