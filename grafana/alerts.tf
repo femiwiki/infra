@@ -2,12 +2,30 @@ data "grafana_data_source" "prometheus" {
   name = "grafanacloud-femiwiki-prom"
 }
 
+data "grafana_data_source" "loki" {
+  name = "grafanacloud-femiwiki-logs"
+}
+
 resource "grafana_notification_policy" "root" {
   contact_point   = "Discord"
   group_by        = ["alertname", "instance"]
   group_wait      = "30s"
   group_interval  = "5m"
   repeat_interval = "4h"
+
+  policy {
+    matcher {
+      label = "severity"
+      match = "="
+      value = "critical"
+    }
+
+    contact_point   = grafana_contact_point.site_down.name
+    group_by        = ["alertname"]
+    group_wait      = "30s"
+    group_interval  = "5m"
+    repeat_interval = "30m"
+  }
 }
 
 resource "grafana_folder" "hosts" {
@@ -79,5 +97,86 @@ resource "grafana_rule_group" "hosts" {
         })
       }
     }
+  }
+}
+
+data "grafana_folder" "femiwiki" {
+  title = "Femiwiki"
+}
+
+locals {
+  recent_status_url = "https://femiwiki.grafana.net/explore?panes=%7B%22a%22%3A%7B%22datasource%22%3A%22grafanacloud-logs%22%2C%22queries%22%3A%5B%7B%22datasource%22%3A%7B%22uid%22%3A%22grafanacloud-logs%22%7D%2C%22expr%22%3A%22sum+by+%28status%29+%28count_over_time%28%7Bdocker_container_name%3D~%5C%22http.%2A%5C%22%7D+%7C+json+%7C+__error__%3D%5C%22%5C%22+%7C+status+%21%3D+%5C%22%5C%22+%5B5m%5D%29%29%22%2C%22queryType%22%3A%22range%22%2C%22refId%22%3A%22A%22%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22now-3h%22%2C%22to%22%3A%22now%22%7D%7D%7D&schemaVersion=1"
+
+  successful_responses = trimspace(file("${path.module}/queries/site-down.logql"))
+}
+
+resource "grafana_rule_group" "femiwiki_http" {
+  name             = "http"
+  folder_uid       = data.grafana_folder.femiwiki.uid
+  interval_seconds = 60
+
+  rule {
+    name = "Site down"
+    for  = "5m"
+
+    condition      = "B"
+    no_data_state  = "Alerting"
+    exec_err_state = "OK"
+
+    labels = {
+      severity = "critical"
+    }
+
+    annotations = {
+      summary = "최근 5분 동안 정상 응답이 {{ printf \"%.0f\" $values.A.Value }}건입니다."
+      logs    = local.recent_status_url
+    }
+
+    data {
+      ref_id         = "A"
+      datasource_uid = data.grafana_data_source.loki.uid
+      relative_time_range {
+        from = 300
+        to   = 0
+      }
+      model = jsonencode({
+        refId     = "A"
+        expr      = local.successful_responses
+        queryType = "instant"
+        instant   = true
+        range     = false
+      })
+    }
+
+    data {
+      ref_id         = "B"
+      datasource_uid = "__expr__"
+      relative_time_range {
+        from = 0
+        to   = 0
+      }
+      model = jsonencode({
+        refId      = "B"
+        type       = "threshold"
+        expression = "A"
+        conditions = [{ evaluator = { type = "lt", params = [100] } }]
+      })
+    }
+  }
+}
+
+resource "grafana_contact_point" "site_down" {
+  name = "Discord critical"
+
+  discord {
+    url                  = var.discord_webhook_url
+    use_discord_username = false
+
+    title = trimspace(file("${path.module}/templates/site-down-title.gotmpl"))
+    message = trimspace(replace(
+      file("${path.module}/templates/site-down-message.gotmpl"),
+      "__MENTION_ROLE__",
+      var.discord_mention_role_id,
+    ))
   }
 }

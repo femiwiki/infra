@@ -57,6 +57,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
           TF_VAR_grafana_auth: ${{ secrets.GRAFANA_APPLY_TOKEN }}
+          TF_VAR_discord_webhook_url: ${{ secrets.DISCORD_WEBHOOK_URL }}
         with:
           path: grafana
           auto_approve: ${{ github.event_name == 'workflow_dispatch' }}
