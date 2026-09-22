@@ -29,6 +29,18 @@ terraform plan
 
 머지는 그 다음입니다. `docker plan is empty`와 `grafana plan is empty`가 필수 검사라서, plan이 비어 있지 않은 PR은 머지되지 않습니다. apply가 끝나면 그 PR의 plan을 다시 돌려 검사를 갱신하므로, 적용하고 나면 따로 할 일은 없습니다. `grafana/`도 같습니다.
 
+### 워크스페이스 추가하기
+
+plan과 apply의 알맹이는 `.github/workflows/tofu-plan.yaml`과 `tofu-apply.yaml`에 한 벌만 있습니다. `docker-*`와 `grafana-*`는 워크스페이스 이름과 시크릿만 넘기는 호출부입니다. 새 워크스페이스를 만들 때 필요한 것은 이렇습니다.
+
+1. `<이름>/` 디렉터리와 S3 백엔드 키 `<이름>/terraform.tfstate`
+2. `aws/iam.tf`에 상태 버킷을 읽는 `infra-<이름>` 역할. 신뢰 정책의 `sub`는 `pull_request`와 `environment:<이름>` 둘입니다
+3. 같은 이름의 GitHub 환경
+4. `<이름>-plan.yaml`과 `<이름>-apply.yaml` 호출부. `docker-*`를 베끼면 됩니다
+5. 호출부가 머지된 뒤에 `github/repo.tf`의 필수 검사에 `<이름> plan is empty`를 더합니다
+
+5번의 순서는 지켜야 합니다. `enforce_admins`가 켜져 있어서, 아직 존재하지 않는 검사를 필수로 걸면 그것을 되돌리는 PR도 머지되지 않습니다.
+
 손으로 돌려야 할 때는 AWS CLI와 [Session Manager 플러그인]이 필요합니다.
 
 ```bash
