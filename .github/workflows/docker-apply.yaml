@@ -112,6 +112,7 @@ jobs:
         id: apply
         env:
           GITHUB_TOKEN: ${{ github.token }}
+          TF_PLAN_COLLAPSE_LENGTH: "100000"  # never collapse the plan
           TF_VAR_docker_host: ${{ steps.daemon.outputs.host }}
         with:
           path: docker
