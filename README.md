@@ -31,6 +31,14 @@ terraform plan
 
 머지는 그 다음입니다. `docker plan is empty`와 `grafana plan is empty`가 필수 검사라서, plan이 비어 있지 않은 PR은 머지되지 않습니다. apply가 끝나면 그 PR의 plan을 다시 돌려 검사를 갱신하므로, 적용하고 나면 따로 할 일은 없습니다. `grafana/`도 같습니다.
 
+### 호스트 위의 알로이 설정
+
+`aws/res/config.alloy.tftpl`은 `user_data`로만 들어가는데 `user_data`는 `ignore_changes`라, 이 파일을 고쳐도 돌고 있는 호스트는 바뀌지 않습니다. 설정을 실제로 밀어 넣는 것은 SSM State Manager입니다. `aws/`를 적용하면 `install-alloy-config-docker`와 `install-alloy-config-database` association이 곧바로 한 번 돌고 그 뒤로는 30분마다 다시 돕니다. 누가 손으로 고쳐 놓았다면 그때 되돌아옵니다.
+
+두 경로가 같은 스크립트를 씁니다. `aws/res/install-alloy-config.sh`는 파라미터 스토어에서 그라파나 자격 증명을 받아 `/etc/alloy`에 쓰고 설정 파일을 놓은 다음, 내용이 달라졌을 때만 알로이를 reload합니다. 새로 만든 인스턴스는 user-data가 부팅 때 같은 스크립트를 한 번 돌립니다.
+
+설정 파일에는 비밀번호가 없습니다. 알로이가 `local.file`로 `/etc/alloy/prometheus.password`와 `loki.password`를 읽고, 그 두 파일은 스크립트가 `/alloy/` 아래 SecureString 파라미터에서 받아 씁니다.
+
 ### 워크스페이스 추가하기
 
 plan과 apply는 모든 워크스페이스가 `tofu.yaml` 하나를 같이 씁니다. 새 워크스페이스를 만들 때 필요한 것은 이렇습니다.

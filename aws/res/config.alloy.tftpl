@@ -1,3 +1,13 @@
+local.file "prometheus_password" {
+  filename  = "/etc/alloy/prometheus.password"
+  is_secret = true
+}
+
+local.file "loki_password" {
+  filename  = "/etc/alloy/loki.password"
+  is_secret = true
+}
+
 prometheus.exporter.self "alloy_check" { }
 
 discovery.relabel "alloy_check" {
@@ -42,7 +52,7 @@ prometheus.remote_write "metrics_service" {
 
     basic_auth {
       username = "${prometheus_username}"
-      password = "${prometheus_password}"
+      password = local.file.prometheus_password.content
     }
   }
 }
@@ -53,7 +63,7 @@ loki.write "grafana_cloud_loki" {
 
     basic_auth {
       username = "${loki_username}"
-      password = "${loki_password}"
+      password = local.file.loki_password.content
     }
   }
 }

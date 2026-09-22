@@ -280,6 +280,15 @@ resource "aws_iam_role_policy_attachment" "database_managed_policies" {
   policy_arn = "arn:aws:iam::aws:policy/${each.key}"
 }
 
+resource "aws_iam_role_policy_attachment" "read_alloy_parameters" {
+  for_each = {
+    database = aws_iam_role.database.name
+    femiwiki = aws_iam_role.femiwiki.name
+  }
+  role       = each.value
+  policy_arn = aws_iam_policy.read_alloy_parameters.arn
+}
+
 resource "aws_iam_role" "infra_grafana" {
   name               = "infra-grafana"
   description        = "Allows GitHub Actions workflows of femiwiki/infra to keep the grafana workspace's state in S3."
