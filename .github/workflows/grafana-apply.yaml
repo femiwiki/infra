@@ -60,8 +60,29 @@ jobs:
 
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
         id: checkout
+        continue-on-error: true
         with:
           ref: ${{ github.event_name == 'issue_comment' && format('refs/pull/{0}/merge', github.event.issue.number) || github.ref }}
+          persist-credentials: false
+
+      - name: Merging deletes the ref above, so take the branch it merged into
+        id: recover
+        if: steps.checkout.outcome == 'failure'
+        env:
+          EVENT: ${{ github.event_name }}
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.issue.number }}
+        run: |
+          [ "$EVENT" = issue_comment ] || { echo "::error::the checkout failed"; exit 1; }
+          base=$(gh pr view "$PR" --repo "$REPO" --json merged,baseRefName --jq 'select(.merged) | .baseRefName')
+          [ -n "$base" ] || { echo "::error::could not check out #$PR, which has not merged"; exit 1; }
+          echo "base=$base" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+        if: steps.recover.outcome == 'success'
+        with:
+          ref: ${{ steps.recover.outputs.base }}
           persist-credentials: false
 
       - uses: sarisia/actions-status-discord@eb045afee445dc055c18d3d90bd0f244fd062708  # v1.16.0
@@ -93,21 +114,20 @@ jobs:
         if: always()
         env:
           STATUS: ${{ job.status }}
-          CHECKOUT: ${{ steps.checkout.outcome }}
+          RECOVER: ${{ steps.recover.outcome }}
+          BASE: ${{ steps.recover.outputs.base }}
           APPLY: ${{ steps.apply.outcome }}
           PLAN: ${{ steps.apply.outputs.json_plan_path }}
           SUBJECT: ${{ github.event.issue.html_url || github.ref_name }}
           ACTOR: ${{ github.actor }}
         run: |
           title=Errored
-          color=
           note=
+          if [ "$RECOVER" = success ]; then
+            note=" - the pull request merged first, so this ran on $BASE"
+          fi
           if [ "$STATUS" = cancelled ]; then
             title=Cancelled
-          elif [ "$CHECKOUT" = failure ]; then
-            title='Not applied'
-            color=0xe67e22
-            note=' - the pull request merged before this could check it out, so tofu never ran'
           elif [ "$APPLY" = success ]; then
             title=Applied
             if [ -n "$PLAN" ] && [ -f "$PLAN" ] &&
@@ -117,7 +137,6 @@ jobs:
           fi
           {
             echo "title=$title"
-            echo "color=$color"
             echo "description=$SUBJECT by $ACTOR$note"
           } >> "$GITHUB_OUTPUT"
 
@@ -127,7 +146,6 @@ jobs:
           webhook: ${{ secrets.GRAFANA_DISCORD_WEBHOOK }}
           status: ${{ job.status }}
           title: ${{ steps.outcome.outputs.title }}
-          color: ${{ steps.outcome.outputs.color }}
           nodetail: true
           url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           description: ${{ steps.outcome.outputs.description }}
@@ -147,6 +165,10 @@ jobs:
           REPO: ${{ github.repository }}
           PR: ${{ github.event.issue.number }}
         run: |
+          if [ "$(gh pr view "$PR" --repo "$REPO" --json merged --jq .merged)" = true ]; then
+            echo "#$PR merged first, so there is no merge gate left to refresh"
+            exit 0
+          fi
           sha=$(gh pr view "$PR" --repo "$REPO" --json headRefOid --jq .headRefOid)
           run=$(gh api "repos/$REPO/actions/workflows/grafana-plan.yaml/runs?head_sha=$sha" \
             --jq '.workflow_runs[0].id // empty')
