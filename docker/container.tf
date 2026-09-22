@@ -4,6 +4,7 @@ resource "docker_container" "http" {
   command      = ["caddy-run"]
   restart      = "always"
   network_mode = "host"
+  memory       = 384
 
   wait                  = true
   wait_timeout          = 60
@@ -80,6 +81,7 @@ resource "docker_container" "fastcgi" {
   image        = "ghcr.io/femiwiki/femiwiki:2026-09-24T03-00-d3e2eeb4"
   network_mode = "host"
   restart      = "always"
+  memory       = 768
 
   wait                  = true
   wait_timeout          = 300
@@ -167,6 +169,7 @@ resource "docker_container" "memcached" {
   image        = "memcached:1.6.23-alpine"
   network_mode = "host"
   restart      = "always"
+  memory       = 128
 
   labels {
     label = "autoheal"
@@ -185,6 +188,7 @@ resource "docker_container" "autoheal" {
   image        = "willfarrell/autoheal:1.1.0"
   network_mode = "none"
   restart      = "always"
+  memory       = 64
   env          = ["AUTOHEAL_CONTAINER_LABEL=autoheal"]
 
   mounts {
@@ -212,6 +216,7 @@ resource "docker_container" "backupbot" {
   name    = "backupbot"
   image   = "ghcr.io/femiwiki/backupbot:2026-09-22T15-01-939d63be"
   restart = "always"
+  memory  = 256
   env = [
     for k, v in {
       DB_SERVER   = "${data.aws_instances.database.private_ips[0]}:3306"
