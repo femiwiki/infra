@@ -4,91 +4,35 @@ on:
   pull_request:
 permissions: {}
 jobs:
-  scope:
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    permissions:
-      pull-requests: read
-    outputs:
-      plan: ${{ steps.files.outputs.plan }}
-    steps:
-      - name: Only a pull request that changes this workspace
-        id: files
-        env:
-          GH_TOKEN: ${{ github.token }}
-          REPO: ${{ github.repository }}
-          PR: ${{ github.event.number }}
-        run: |
-          plan=true
-          gh api "repos/$REPO/pulls/$PR/files" --paginate --jq '.[].filename' \
-            | grep -qE '^(grafana/|\.github/workflows/grafana-plan\.yaml$)' || plan=false
-          echo "plan=$plan" >> "$GITHUB_OUTPUT"
-
   plan:
-    needs: scope
-    if: needs.scope.outputs.plan == 'true'
-    # Only the plan is worth cancelling. Cancelling the whole run would take
-    # the gate below with it, and a gate that never ran is a required check
-    # that never passes.
-    concurrency:
-      group: grafana-${{ github.event.number }}
-      cancel-in-progress: true
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
+    uses: ./.github/workflows/tofu-plan.yaml
     permissions:
       contents: read
       id-token: write
       pull-requests: write
-    outputs:
-      changes: ${{ steps.plan.outputs.changes }}
+    with:
+      workspace: grafana
+    secrets:
+      grafana_auth: ${{ secrets.GRAFANA_PLAN_TOKEN }}
+      discord_webhook_url: ${{ secrets.DISCORD_WEBHOOK_URL }}
+
+  # The required status check. Its name is written into branch protection, and
+  # a job of a reusable workflow is checked in as "caller / callee", so this
+  # one has to stay here.
+  empty:
+    name: grafana plan is empty
+    needs: plan
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
         with:
           persist-credentials: false
 
-      - uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd  # v6.3.0
+      - uses: ./.github/actions/plan-gate
         with:
-          role-to-assume: arn:aws:iam::302617221463:role/infra-grafana
-          aws-region: ap-northeast-1
-
-      - uses: dflook/tofu-plan@c7416238983bdd94c5486fb856bb7358f2bcc935  # v3.1.0
-        id: plan
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-          TF_PLAN_COLLAPSE_LENGTH: "100000"  # never collapse the plan
-          TF_VAR_grafana_auth: ${{ secrets.GRAFANA_PLAN_TOKEN }}
-          TF_VAR_discord_webhook_url: ${{ secrets.DISCORD_WEBHOOK_URL }}
-        with:
-          path: grafana
-
-  empty:
-    name: grafana plan is empty
-    needs: [scope, plan]
-    if: always()
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - name: Nothing may reach main unapplied
-        env:
-          SCOPE: ${{ needs.scope.result }}
-          WORKSPACE: ${{ needs.scope.outputs.plan }}
-          PLAN: ${{ needs.plan.result }}
-          CHANGES: ${{ needs.plan.outputs.changes }}
-        run: |
-          if [ "$SCOPE" != success ]; then
-            echo "::error::could not tell whether this pull request changes grafana/"
-            exit 1
-          fi
-          if [ "$WORKSPACE" != true ]; then
-            echo "This pull request does not change grafana/."
-            exit 0
-          fi
-          if [ "$PLAN" != success ]; then
-            echo "::error::the plan did not finish: $PLAN"
-            exit 1
-          fi
-          if [ "$CHANGES" = true ]; then
-            echo "::error::the plan still has changes. Comment 'tofu apply', then merge."
-            exit 1
-          fi
-          echo "The plan is empty."
+          workspace: grafana
+          scope: ${{ needs.plan.outputs.scope }}
+          result: ${{ needs.plan.result }}
+          changes: ${{ needs.plan.outputs.changes }}

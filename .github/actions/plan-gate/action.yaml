@@ -1,0 +1,47 @@
+---
+name: Gate the merge on an empty plan
+description: >-
+  Fails unless the shared plan workflow either skipped this workspace or came
+  back with nothing left to apply. The job that runs this is the required
+  status check, so its name has to stay in the calling workflow.
+inputs:
+  workspace:
+    description: The directory holding the workspace.
+    required: true
+  scope:
+    description: The plan workflow's scope output.
+    required: true
+  result:
+    description: The plan workflow's result.
+    required: true
+  changes:
+    description: The plan workflow's changes output.
+    required: true
+runs:
+  using: composite
+  steps:
+    - name: Nothing may reach main unapplied
+      shell: bash
+      env:
+        WORKSPACE: ${{ inputs.workspace }}
+        SCOPE: ${{ inputs.scope }}
+        RESULT: ${{ inputs.result }}
+        CHANGES: ${{ inputs.changes }}
+      run: |
+        if [ -z "$SCOPE" ]; then
+          echo "::error::could not tell whether this pull request changes $WORKSPACE/"
+          exit 1
+        fi
+        if [ "$SCOPE" != true ]; then
+          echo "This pull request does not change $WORKSPACE/."
+          exit 0
+        fi
+        if [ "$RESULT" != success ]; then
+          echo "::error::the plan did not finish: $RESULT"
+          exit 1
+        fi
+        if [ "$CHANGES" = true ]; then
+          echo "::error::the plan still has changes. Comment 'tofu apply', then merge."
+          exit 1
+        fi
+        echo "The plan is empty."
