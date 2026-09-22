@@ -27,6 +27,8 @@ terraform plan
 
 `docker/`는 Terraform Cloud를 쓰지 않습니다. 상태는 S3에 있고, 도커 데몬은 엣지 박스의 루프백에만 열려 있어서 SSM 터널로 붙습니다. PR을 열면 `docker plan`이 plan을 코멘트로 달고, 권한 있는 사람이 그 PR에 `tofu apply`라고 코멘트하면 `docker apply`가 그 plan을 적용합니다. 이미지 bump PR도 같은 흐름입니다.
 
+머지는 그 다음입니다. `docker plan is empty`와 `grafana plan is empty`가 필수 검사라서, plan이 비어 있지 않은 PR은 머지되지 않습니다. apply가 끝나면 그 PR의 plan을 다시 돌려 검사를 갱신하므로, 적용하고 나면 따로 할 일은 없습니다. `grafana/`도 같습니다.
+
 손으로 돌려야 할 때는 AWS CLI와 [Session Manager 플러그인]이 필요합니다.
 
 ```bash
