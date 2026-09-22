@@ -59,6 +59,7 @@ jobs:
           gh api --method POST "repos/$REPO/issues/comments/$COMMENT/reactions" -f content=eyes > /dev/null
 
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+        id: checkout
         with:
           ref: ${{ github.event_name == 'issue_comment' && format('refs/pull/{0}/merge', github.event.issue.number) || github.ref }}
           persist-credentials: false
@@ -87,6 +88,7 @@ jobs:
           done
 
       - uses: dflook/tofu-apply@e3e5dfc8f935d4b152c767801046f63abf8a77d3  # v3.1.0
+        id: apply
         env:
           GITHUB_TOKEN: ${{ github.token }}
           TF_VAR_docker_host: ${{ steps.daemon.outputs.host }}
@@ -94,12 +96,71 @@ jobs:
           path: docker
           auto_approve: ${{ github.event_name == 'workflow_dispatch' }}
 
+      - name: Say what actually happened
+        id: outcome
+        if: always()
+        env:
+          STATUS: ${{ job.status }}
+          CHECKOUT: ${{ steps.checkout.outcome }}
+          APPLY: ${{ steps.apply.outcome }}
+          PLAN: ${{ steps.apply.outputs.json_plan_path }}
+          SUBJECT: ${{ github.event.issue.html_url || github.ref_name }}
+          ACTOR: ${{ github.actor }}
+        run: |
+          title=Errored
+          color=
+          note=
+          if [ "$STATUS" = cancelled ]; then
+            title=Cancelled
+          elif [ "$CHECKOUT" = failure ]; then
+            title='Not applied'
+            color=0xe67e22
+            note=' - the pull request merged before this could check it out, so tofu never ran'
+          elif [ "$APPLY" = success ]; then
+            title=Applied
+            if [ -n "$PLAN" ] && [ -f "$PLAN" ] &&
+              [ "$(jq '[.resource_changes[]? | select(.change.actions != ["no-op"])] | length' "$PLAN")" = 0 ]; then
+              title='No changes'
+            fi
+          fi
+          {
+            echo "title=$title"
+            echo "color=$color"
+            echo "description=$SUBJECT by $ACTOR$note"
+          } >> "$GITHUB_OUTPUT"
+
       - uses: sarisia/actions-status-discord@eb045afee445dc055c18d3d90bd0f244fd062708  # v1.16.0
         if: always()
         with:
           webhook: ${{ secrets.DOCKER_DISCORD_WEBHOOK }}
           status: ${{ job.status }}
-          title: ${{ case(job.status == 'success', 'Applied', job.status == 'cancelled', 'Cancelled', 'Errored') }}
+          title: ${{ steps.outcome.outputs.title }}
+          color: ${{ steps.outcome.outputs.color }}
           nodetail: true
           url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-          description: ${{ github.event.issue.html_url || github.ref_name }} by ${{ github.actor }}
+          description: ${{ steps.outcome.outputs.description }}
+
+  replan:
+    needs: apply
+    if: needs.apply.result == 'success' && github.event_name == 'issue_comment'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      actions: write
+      pull-requests: read
+    steps:
+      - name: Re-run the plan so the merge gate sees what was just applied
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.issue.number }}
+        run: |
+          sha=$(gh pr view "$PR" --repo "$REPO" --json headRefOid --jq .headRefOid)
+          run=$(gh api "repos/$REPO/actions/workflows/docker-plan.yaml/runs?head_sha=$sha" \
+            --jq '.workflow_runs[0].id // empty')
+          if [ -z "$run" ]; then
+            echo "::warning::no docker plan run for $sha to re-run"
+            exit 0
+          fi
+          gh api --method POST "repos/$REPO/actions/runs/$run/rerun" \
+            || echo "::warning::could not re-run docker plan $run"

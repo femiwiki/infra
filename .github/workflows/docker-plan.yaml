@@ -2,19 +2,42 @@
 name: docker plan
 on:
   pull_request:
-    paths: ["docker/**", ".github/workflows/docker-plan.yaml", ".github/actions/docker-daemon/**"]
 permissions: {}
 concurrency:
   group: docker-${{ github.event.number }}
   cancel-in-progress: true
 jobs:
+  scope:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      pull-requests: read
+    outputs:
+      plan: ${{ steps.files.outputs.plan }}
+    steps:
+      - name: Only a pull request that changes this workspace
+        id: files
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.number }}
+        run: |
+          plan=true
+          gh api "repos/$REPO/pulls/$PR/files" --paginate --jq '.[].filename' \
+            | grep -qE '^(docker/|\.github/workflows/docker-plan\.yaml$|\.github/actions/docker-daemon/)' || plan=false
+          echo "plan=$plan" >> "$GITHUB_OUTPUT"
+
   plan:
+    needs: scope
+    if: needs.scope.outputs.plan == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
       contents: read
       id-token: write
       pull-requests: write
+    outputs:
+      changes: ${{ steps.plan.outputs.changes }}
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
         with:
@@ -29,8 +52,41 @@ jobs:
         id: daemon
 
       - uses: dflook/tofu-plan@c7416238983bdd94c5486fb856bb7358f2bcc935  # v3.1.0
+        id: plan
         env:
           GITHUB_TOKEN: ${{ github.token }}
           TF_VAR_docker_host: ${{ steps.daemon.outputs.host }}
         with:
           path: docker
+
+  empty:
+    name: docker plan is empty
+    needs: [scope, plan]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Nothing may reach main unapplied
+        env:
+          SCOPE: ${{ needs.scope.result }}
+          WORKSPACE: ${{ needs.scope.outputs.plan }}
+          PLAN: ${{ needs.plan.result }}
+          CHANGES: ${{ needs.plan.outputs.changes }}
+        run: |
+          if [ "$SCOPE" != success ]; then
+            echo "::error::could not tell whether this pull request changes docker/"
+            exit 1
+          fi
+          if [ "$WORKSPACE" != true ]; then
+            echo "This pull request does not change docker/."
+            exit 0
+          fi
+          if [ "$PLAN" != success ]; then
+            echo "::error::the plan did not finish: $PLAN"
+            exit 1
+          fi
+          if [ "$CHANGES" = true ]; then
+            echo "::error::the plan still has changes. Comment 'tofu apply', then merge."
+            exit 1
+          fi
+          echo "The plan is empty."
