@@ -317,3 +317,41 @@ resource "aws_iam_role_policy" "infra_grafana" {
   role   = aws_iam_role.infra_grafana.name
   policy = data.aws_iam_policy_document.infra_grafana.json
 }
+
+resource "aws_iam_role" "infra_healthchecks" {
+  name               = "infra-healthchecks"
+  description        = "Allows GitHub Actions workflows of femiwiki/infra to keep the healthchecks workspace's state in S3."
+  assume_role_policy = data.aws_iam_policy_document.infra_healthchecks_assume_role.json
+}
+
+data "aws_iam_policy_document" "infra_healthchecks_assume_role" {
+  statement {
+    actions = ["sts:AssumeRoleWithWebIdentity"]
+
+    principals {
+      type        = "Federated"
+      identifiers = [aws_iam_openid_connect_provider.github_actions.arn]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "token.actions.githubusercontent.com:aud"
+      values   = ["sts.amazonaws.com"]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "token.actions.githubusercontent.com:sub"
+      values = [
+        "repo:femiwiki@21275875/infra@188597503:pull_request",
+        "repo:femiwiki@21275875/infra@188597503:environment:healthchecks",
+      ]
+    }
+  }
+}
+
+resource "aws_iam_role_policy" "infra_healthchecks" {
+  name   = "InfraHealthchecks"
+  role   = aws_iam_role.infra_healthchecks.name
+  policy = data.aws_iam_policy_document.infra_healthchecks.json
+}
