@@ -45,6 +45,7 @@ resource "aws_instance" "database" {
 
   metadata_options {
     instance_metadata_tags = "enabled"
+    http_tokens            = "required"
   }
 
   tags = {
@@ -100,7 +101,9 @@ resource "aws_instance" "docker" {
   }
 
   metadata_options {
-    instance_metadata_tags = "enabled"
+    instance_metadata_tags      = "enabled"
+    http_tokens                 = "required"
+    http_put_response_hop_limit = 2
   }
 
   tags = {
