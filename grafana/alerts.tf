@@ -156,6 +156,7 @@ resource "grafana_rule_group" "femiwiki_http" {
     data {
       ref_id         = "A"
       datasource_uid = data.grafana_data_source.loki.uid
+      query_type     = "instant"
       relative_time_range {
         from = 300
         to   = 0
@@ -211,6 +212,7 @@ resource "grafana_rule_group" "femiwiki_backup" {
     data {
       ref_id         = "A"
       datasource_uid = data.grafana_data_source.loki.uid
+      query_type     = "instant"
       relative_time_range {
         from = 93600
         to   = 0
