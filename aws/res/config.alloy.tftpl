@@ -31,7 +31,7 @@ prometheus.relabel "alloy_check" {
 
   rule {
     source_labels = ["__name__"]
-    regex         = "(prometheus_target_sync_length_seconds_sum|prometheus_target_scrapes_.*|prometheus_target_interval.*|prometheus_sd_discovered_targets|alloy_build.*|prometheus_remote_write_wal_samples_appended_total|process_start_time_seconds)"
+    regex         = "(prometheus_target_sync_length_seconds_sum|prometheus_target_scrapes_.*|prometheus_target_interval.*|prometheus_sd_discovered_targets|alloy_build.*|prometheus_remote_write_wal_samples_appended_total|process_start_time_seconds|process_resident_memory_bytes)"
     action        = "keep"
   }
 }
@@ -109,6 +109,49 @@ prometheus.relabel "caddy" {
     source_labels = ["__name__"]
     regex         = "caddy_rate_limit_.+"
     action        = "drop"
+  }
+}
+
+// Per-container memory, read from the Docker daemon's cgroups
+prometheus.exporter.cadvisor "containers" {
+  docker_only               = true
+  disable_root_cgroup_stats = true
+  store_container_labels    = false
+  enabled_metrics           = ["memory"]
+  storage_duration          = "1m"
+}
+discovery.relabel "containers" {
+  targets = prometheus.exporter.cadvisor.containers.targets
+  rule {
+    target_label = "instance"
+    replacement  = "${name}"
+  }
+  rule {
+    target_label = "job"
+    replacement  = "integrations/cadvisor"
+  }
+}
+prometheus.scrape "containers" {
+  targets    = discovery.relabel.containers.output
+  forward_to = [prometheus.relabel.containers.receiver]
+
+  scrape_interval = "60s"
+}
+prometheus.relabel "containers" {
+  forward_to = [prometheus.remote_write.metrics_service.receiver]
+  rule {
+    source_labels = ["__name__"]
+    regex         = "container_memory_(working_set_bytes|max_usage_bytes|usage_bytes|rss)|container_spec_memory_limit_bytes"
+    action        = "keep"
+  }
+  rule {
+    source_labels = ["name"]
+    regex         = ".+"
+    action        = "keep"
+  }
+  rule {
+    regex  = "id|image"
+    action = "labeldrop"
   }
 }
 

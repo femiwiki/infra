@@ -1,0 +1,142 @@
+{
+  "uid": "container-memory",
+  "title": "Container memory",
+  "tags": ["containers"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "editable": true,
+  "refresh": "1m",
+  "time": { "from": "now-6h", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "type": "timeseries",
+      "title": "Memory in use, per container",
+      "description": "Working set is what the kernel counts against a memory limit, and what docker stats shows. A limit line appears once a container has one.",
+      "datasource": { "type": "prometheus", "uid": "__PROM_UID__" },
+      "gridPos": { "h": 9, "w": 24, "x": 0, "y": 0 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "min": 0,
+          "custom": { "fillOpacity": 8, "lineWidth": 1, "showPoints": "never" }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "table", "placement": "right", "calcs": ["lastNotNull", "max"] },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "__PROM_UID__" },
+          "expr": "container_memory_working_set_bytes{job=\"integrations/cadvisor\"}",
+          "legendFormat": "{{name}}"
+        },
+        {
+          "refId": "B",
+          "datasource": { "type": "prometheus", "uid": "__PROM_UID__" },
+          "expr": "container_spec_memory_limit_bytes{job=\"integrations/cadvisor\"} != 0",
+          "legendFormat": "{{name}} limit"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "bargauge",
+      "title": "Peak memory since the container started",
+      "description": "memory.peak from cgroup v2. It never falls while the container lives, so it is the floor for any limit.",
+      "datasource": { "type": "prometheus", "uid": "__PROM_UID__" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 9 },
+      "fieldConfig": {
+        "defaults": { "unit": "bytes", "min": 0, "color": { "mode": "continuous-BlYlRd" } },
+        "overrides": []
+      },
+      "options": {
+        "displayMode": "gradient",
+        "orientation": "horizontal",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "__PROM_UID__" },
+          "expr": "container_memory_max_usage_bytes{job=\"integrations/cadvisor\"}",
+          "instant": true,
+          "legendFormat": "{{name}}"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "How much of the limit is in use",
+      "description": "Only containers that have a limit appear here.",
+      "datasource": { "type": "prometheus", "uid": "__PROM_UID__" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 9 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "custom": { "fillOpacity": 8, "lineWidth": 1, "showPoints": "never", "thresholdsStyle": { "mode": "dashed" } },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "red", "value": 80 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom", "calcs": [] },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "__PROM_UID__" },
+          "expr": "100 * container_memory_working_set_bytes{job=\"integrations/cadvisor\"} / (container_spec_memory_limit_bytes{job=\"integrations/cadvisor\"} != 0)",
+          "legendFormat": "{{name}}"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "timeseries",
+      "title": "What is left on the host, and what Alloy costs",
+      "description": "The containers above have to fit in what the host has left, and Alloy is not free either.",
+      "datasource": { "type": "prometheus", "uid": "__PROM_UID__" },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 17 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "min": 0,
+          "custom": { "fillOpacity": 0, "lineWidth": 1, "showPoints": "never" }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "table", "placement": "right", "calcs": ["lastNotNull", "min"] },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "__PROM_UID__" },
+          "expr": "node_memory_MemAvailable_bytes{job=\"integrations/node_exporter\"}",
+          "legendFormat": "{{instance}} available"
+        },
+        {
+          "refId": "B",
+          "datasource": { "type": "prometheus", "uid": "__PROM_UID__" },
+          "expr": "process_resident_memory_bytes{job=\"integrations/alloy-check\"}",
+          "legendFormat": "{{instance}} alloy"
+        }
+      ]
+    }
+  ]
+}
