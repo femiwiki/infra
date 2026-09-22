@@ -197,7 +197,7 @@ resource "docker_container" "autoheal" {
 
 resource "docker_container" "backupbot" {
   name    = "backupbot"
-  image   = "ghcr.io/femiwiki/backupbot:2026-09-21T16-50-accb1f00"
+  image   = "ghcr.io/femiwiki/backupbot:2026-09-22T12-21-55d00ae7"
   restart = "always"
   env = [
     for k, v in {
