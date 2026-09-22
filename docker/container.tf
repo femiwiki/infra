@@ -1,10 +1,9 @@
 resource "docker_container" "http" {
-  name            = "http-${local.fastcgi_generation}"
-  image           = "ghcr.io/femiwiki/femiwiki:2026-09-22T01-02-4b0a06bb"
-  command         = ["caddy-run"]
-  restart         = "on-failure"
-  max_retry_count = 3
-  network_mode    = "host"
+  name         = "http-${local.fastcgi_generation}"
+  image        = "ghcr.io/femiwiki/femiwiki:2026-09-22T01-02-4b0a06bb"
+  command      = ["caddy-run"]
+  restart      = "always"
+  network_mode = "host"
 
   wait                  = true
   wait_timeout          = 60
@@ -16,10 +15,11 @@ resource "docker_container" "http" {
   }
 
   healthcheck {
-    test     = ["CMD-SHELL", "curl -sf http://127.0.0.1:$${CADDY_PROBE_PORT}/health-check"]
-    interval = "5s"
-    timeout  = "3s"
-    retries  = 3
+    test         = ["CMD-SHELL", "curl -sf http://127.0.0.1:$${CADDY_PROBE_PORT}/health-check"]
+    interval     = "5s"
+    timeout      = "3s"
+    retries      = 7
+    start_period = "1m0s"
   }
 
   env = [
@@ -64,7 +64,7 @@ resource "docker_container" "http" {
 
   labels {
     label = "autoheal"
-    value = "false"
+    value = "true"
   }
 }
 
