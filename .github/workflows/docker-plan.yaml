@@ -3,9 +3,6 @@ name: docker plan
 on:
   pull_request:
 permissions: {}
-concurrency:
-  group: docker-${{ github.event.number }}
-  cancel-in-progress: true
 jobs:
   scope:
     runs-on: ubuntu-latest
@@ -30,6 +27,12 @@ jobs:
   plan:
     needs: scope
     if: needs.scope.outputs.plan == 'true'
+    # Only the plan is worth cancelling. Cancelling the whole run would take
+    # the gate below with it, and a gate that never ran is a required check
+    # that never passes.
+    concurrency:
+      group: docker-${{ github.event.number }}
+      cancel-in-progress: true
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
