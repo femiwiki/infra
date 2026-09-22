@@ -1,0 +1,41 @@
+---
+name: update branches
+on:
+  push:
+    branches: ["main"]
+permissions: {}
+concurrency:
+  group: update-branches
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: The application token is what makes the checks run again
+        id: secret
+        env:
+          APPLICATION_ID: ${{ vars.PAT_APPLICATION_ID }}
+        run: |
+          if [ -z "$APPLICATION_ID" ]; then
+            echo "::warning::no application token, so nothing was updated"
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: peter-murray/workflow-application-token-action@dad2b81e50ce3edeb5f3b7ffbd79f731368bd668  # v5.1.1
+        id: token
+        if: steps.secret.outputs.run == 'true'
+        with:
+          application_id: ${{ vars.PAT_APPLICATION_ID }}
+          application_private_key: ${{ secrets.PAT_APPLICATION_PRIVATE_KEY }}
+
+      - uses: adRise/update-pr-branch@e96e796f4ab23ab388016fdaed7092de99bd71cf  # v0.11.1
+        if: steps.secret.outputs.run == 'true'
+        with:
+          token: ${{ steps.token.outputs.token }}
+          base: main
+          required_approval_count: 0
+          require_auto_merge_enabled: true
+          require_passed_checks: true
+          allow_ongoing_checks: true
