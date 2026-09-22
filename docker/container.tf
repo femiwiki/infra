@@ -5,6 +5,7 @@ resource "docker_container" "http" {
   restart         = "on-failure"
   max_retry_count = 3
   network_mode    = "host"
+  memory          = 256
 
   wait                  = true
   wait_timeout          = 60
@@ -73,6 +74,7 @@ resource "docker_container" "fastcgi" {
   image        = "ghcr.io/femiwiki/femiwiki:2026-09-22T01-02-4b0a06bb"
   network_mode = "host"
   restart      = "always"
+  memory       = 768
 
   wait                  = true
   wait_timeout          = 300
@@ -159,6 +161,7 @@ resource "docker_container" "memcached" {
   image        = "memcached:1.6.23-alpine"
   network_mode = "host"
   restart      = "always"
+  memory       = 128
 
   labels {
     label = "autoheal"
@@ -178,6 +181,7 @@ resource "docker_container" "autoheal" {
   network_mode = "none"
   restart      = "always"
   env          = ["AUTOHEAL_CONTAINER_LABEL=autoheal"]
+  memory       = 64
 
   mounts {
     type      = "bind"
@@ -204,6 +208,7 @@ resource "docker_container" "backupbot" {
   name    = "backupbot"
   image   = "ghcr.io/femiwiki/backupbot:2026-09-22T12-21-55d00ae7"
   restart = "always"
+  memory  = 256
   env = [
     for k, v in {
       DB_SERVER   = "${data.aws_instances.database.private_ips[0]}:3306"
