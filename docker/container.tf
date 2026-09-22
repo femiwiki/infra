@@ -25,6 +25,7 @@ resource "docker_container" "http" {
   env = [
     for k, v in {
       CADDY_PROBE_PORT    = 8080 + local.fastcgi_generation % 2,
+      CADDY_LOG_EXCLUDE   = "http.handlers.mwcache",
       AWS_REGION          = "ap-northeast-1",
       S3_USE_IAM_PROVIDER = "true",
       S3_HOST             = "s3.ap-northeast-1.amazonaws.com",
