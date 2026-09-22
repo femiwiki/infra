@@ -61,6 +61,11 @@ resource "docker_container" "http" {
     name = "nofile"
     soft = 32768
   }
+
+  labels {
+    label = "autoheal"
+    value = "false"
+  }
 }
 
 resource "docker_container" "fastcgi" {
@@ -207,9 +212,18 @@ resource "docker_container" "backupbot" {
     } : "${k}=${v}"
   ]
 
+  healthcheck {
+    test = ["NONE"]
+  }
+
   ulimit {
     hard = 65536
     name = "nofile"
     soft = 32768
+  }
+
+  labels {
+    label = "autoheal"
+    value = "false"
   }
 }
