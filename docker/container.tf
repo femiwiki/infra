@@ -1,6 +1,6 @@
 resource "docker_container" "http" {
   name         = "http-${local.fastcgi_generation}"
-  image        = "ghcr.io/femiwiki/femiwiki:2026-09-22T01-02-4b0a06bb"
+  image        = "ghcr.io/femiwiki/femiwiki:2026-09-23T14-37-bf16c29e"
   command      = ["caddy-run"]
   restart      = "always"
   network_mode = "host"
@@ -70,7 +70,7 @@ resource "docker_container" "http" {
 
 resource "docker_container" "fastcgi" {
   name         = "fastcgi-${local.fastcgi_generation}"
-  image        = "ghcr.io/femiwiki/femiwiki:2026-09-22T01-02-4b0a06bb"
+  image        = "ghcr.io/femiwiki/femiwiki:2026-09-23T14-37-bf16c29e"
   network_mode = "host"
   restart      = "always"
 
