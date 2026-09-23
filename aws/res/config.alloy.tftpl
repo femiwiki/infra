@@ -122,6 +122,24 @@ prometheus.relabel "caddy" {
   }
 }
 
+// php-fpm's pool status and opcache, served by Caddy on a loopback port that
+// alternates with the deploy generation like the probe port
+// (femiwiki/docker-mediawiki#1110). Outside a deploy only one of the two ports
+// answers, so the other's targets are down.
+prometheus.scrape "php_fpm" {
+  targets = [
+%{ for port in [9180, 9181] ~}
+    {__address__ = "127.0.0.1:${port}", __metrics_path__ = "/fpm-status", instance = "${name}", job = "integrations/php-fpm", port = "${port}"},
+    {__address__ = "127.0.0.1:${port}", __metrics_path__ = "/opcache.php", instance = "${name}", job = "integrations/opcache", port = "${port}"},
+%{ endfor ~}
+  ]
+  // php-fpm answers in OpenMetrics only when asked; opcache.php ignores it
+  params     = {"openmetrics" = [""]}
+  forward_to = [prometheus.remote_write.metrics_service.receiver]
+
+  scrape_interval = "60s"
+}
+
 // Per-container memory, read from the Docker daemon's cgroups
 prometheus.exporter.cadvisor "containers" {
   docker_only               = true
