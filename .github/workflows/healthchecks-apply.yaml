@@ -1,0 +1,22 @@
+---
+name: healthchecks apply
+on:
+  issue_comment:
+    types: [created]
+  workflow_dispatch:
+permissions: {}
+concurrency:
+  group: healthchecks
+jobs:
+  apply:
+    uses: ./.github/workflows/tofu-apply.yaml
+    permissions:
+      actions: write
+      contents: read
+      id-token: write
+      pull-requests: write
+    with:
+      workspace: healthchecks
+    secrets:
+      status_webhook: ${{ secrets.HEALTHCHECKS_DISCORD_WEBHOOK }}
+      healthchecksio_api_key: ${{ secrets.HEALTHCHECKSIO_API_KEY }}

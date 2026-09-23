@@ -16,6 +16,8 @@ on:
         required: false
       discord_webhook_url:
         required: false
+      healthchecksio_api_key:
+        required: false
     outputs:
       scope:
         description: Whether this pull request changes the workspace at all.
@@ -84,5 +86,6 @@ jobs:
           TF_VAR_docker_host: ${{ steps.daemon.outputs.host }}
           TF_VAR_grafana_auth: ${{ secrets.grafana_auth }}
           TF_VAR_discord_webhook_url: ${{ secrets.discord_webhook_url }}
+          TF_VAR_healthchecksio_api_key: ${{ secrets.healthchecksio_api_key }}
         with:
           path: ${{ inputs.workspace }}
