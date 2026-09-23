@@ -61,3 +61,12 @@ data "aws_iam_policy_document" "sns_default_policy" {
     resources = ["arn:aws:sns:*"]
   }
 }
+
+resource "aws_sns_topic" "backup_uploads" {
+  name = "backup-uploads"
+}
+
+resource "aws_sns_topic_policy" "backup_uploads" {
+  arn    = aws_sns_topic.backup_uploads.arn
+  policy = data.aws_iam_policy_document.backup_uploads.json
+}
