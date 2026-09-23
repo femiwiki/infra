@@ -1,1 +1,0 @@
-max(last_over_time({docker_container_name="backupbot"} |= `upload: ./` |= `to s3://femiwiki-backups/mysql/` | regexp `Completed [^/]+/(?P<dumpsize>[0-9.]+) (?P<dumpunit>[KMGT]iB)` | dumpunit =~ `[KMGT]iB` | label_format dumptotal="{{ .dumpsize }}{{ .dumpunit }}" | unwrap bytes(dumptotal) | __error__="" [26h])) / 1024 / 1024 or vector(0)
