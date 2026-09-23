@@ -1,1 +1,1 @@
-sum(count_over_time({docker_container_name=~"http.*"} | json | __error__="" | status =~ "2.." [5m])) or vector(0)
+sum(count_over_time({docker_container_name=~"http.*"} | json | __error__="" | status =~ "2.." | fallback != "true" [5m])) or vector(0)
