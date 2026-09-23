@@ -1,0 +1,291 @@
+---
+name: tofu
+on:
+  pull_request:
+  issue_comment:
+    types: [created]
+  workflow_dispatch:
+    inputs:
+      workspace:
+        description: The workspace to apply from this branch, without asking.
+        required: true
+        type: choice
+        options: &workspaces [docker, grafana, healthchecks]
+permissions: {}
+jobs:
+  plan:
+    # The required status check. Branch protection names it, so it has to come
+    # out exactly "<workspace> plan is empty". The job has no concurrency group
+    # on purpose: a cancelled check run does not satisfy a required check.
+    name: ${{ matrix.workspace }} plan is empty
+    if: github.event_name == 'pull_request'
+    strategy:
+      fail-fast: false
+      matrix:
+        workspace: *workspaces
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      id-token: write
+      pull-requests: write
+    steps:
+      - name: Only a pull request that changes this workspace
+        id: scope
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.number }}
+          WORKSPACE: ${{ matrix.workspace }}
+        run: |
+          plan=true
+          gh api "repos/$REPO/pulls/$PR/files" --paginate --jq '.[].filename' \
+            | grep -qE "^($WORKSPACE/|\.github/(workflows/tofu\.yaml$|actions/))" || plan=false
+          echo "plan=$plan" >> "$GITHUB_OUTPUT"
+          [ "$plan" = true ] || echo "This pull request does not change $WORKSPACE/."
+
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+        if: steps.scope.outputs.plan == 'true'
+        with:
+          persist-credentials: false
+
+      - uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd  # v6.3.0
+        if: steps.scope.outputs.plan == 'true'
+        with:
+          role-to-assume: arn:aws:iam::302617221463:role/infra-${{ matrix.workspace }}
+          aws-region: ap-northeast-1
+
+      - uses: ./.github/actions/docker-daemon
+        if: steps.scope.outputs.plan == 'true' && matrix.workspace == 'docker'
+        id: daemon
+
+      - uses: dflook/tofu-plan@c7416238983bdd94c5486fb856bb7358f2bcc935  # v3.1.0
+        if: steps.scope.outputs.plan == 'true'
+        id: plan
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          TF_PLAN_COLLAPSE_LENGTH: "100000"  # never collapse the plan
+          TF_VAR_docker_host: ${{ steps.daemon.outputs.host }}
+          TF_VAR_grafana_auth: ${{ matrix.workspace == 'grafana' && secrets.GRAFANA_PLAN_TOKEN || '' }}
+          TF_VAR_discord_webhook_url: ${{ matrix.workspace == 'grafana' && secrets.DISCORD_WEBHOOK_URL || '' }}
+          TF_VAR_healthchecksio_api_key: ${{ matrix.workspace == 'healthchecks' && secrets.HEALTHCHECKSIO_API_KEY || '' }}
+        with:
+          path: ${{ matrix.workspace }}
+
+      - name: Nothing may reach main unapplied
+        if: steps.scope.outputs.plan == 'true'
+        env:
+          CHANGES: ${{ steps.plan.outputs.changes }}
+        run: |
+          if [ "$CHANGES" = true ]; then
+            echo "::error::the plan still has changes. Comment 'tofu apply', then merge."
+            exit 1
+          fi
+          echo "The plan is empty."
+
+  scope:
+    if: >-
+      github.event_name == 'workflow_dispatch'
+      || (github.event.issue.pull_request && github.event.comment.body == 'tofu apply')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      pull-requests: read
+    outputs:
+      workspaces: ${{ steps.files.outputs.workspaces }}
+    steps:
+      - name: Only a collaborator with write access, only a branch of this repository
+        if: github.event_name == 'issue_comment'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.issue.number }}
+          USER: ${{ github.event.comment.user.login }}
+        run: |
+          permission=$(gh api "repos/$REPO/collaborators/$USER/permission" --jq .permission)
+          case "$permission" in admin|maintain|write) ;; *) echo "::error::$USER has $permission access"; exit 1 ;; esac
+          [ "$(gh pr view "$PR" --repo "$REPO" --json isCrossRepository --jq .isCrossRepository)" = false ] || { echo "::error::PR #$PR is from a fork"; exit 1; }
+
+      - name: Only the workspaces the pull request changes, each of which has an environment
+        id: files
+        env:
+          EVENT: ${{ github.event_name }}
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.issue.number }}
+          WORKSPACE: ${{ inputs.workspace }}
+        run: |
+          if [ "$EVENT" = workflow_dispatch ]; then
+            workspaces=$(jq -nc --arg w "$WORKSPACE" '[$w]')
+          else
+            environments=$(gh api "repos/$REPO/environments" --jq '[.environments[].name]')
+            workspaces=$(gh api "repos/$REPO/pulls/$PR/files" --paginate --jq '.[].filename' \
+              | cut -d/ -f1 | sort -u | jq -Rnc --argjson envs "$environments" '[inputs] | map(select(IN($envs[])))')
+          fi
+          echo "workspaces=$workspaces" >> "$GITHUB_OUTPUT"
+          echo "Applying $workspaces"
+
+  apply:
+    name: ${{ matrix.workspace }} apply
+    needs: scope
+    if: needs.scope.outputs.workspaces != '[]'
+    strategy:
+      fail-fast: false
+      matrix:
+        workspace: ${{ fromJSON(needs.scope.outputs.workspaces) }}
+    concurrency:
+      group: ${{ matrix.workspace }}
+    runs-on: ubuntu-latest
+    timeout-minutes: ${{ matrix.workspace == 'docker' && 20 || 10 }}
+    environment: ${{ matrix.workspace }}
+    permissions:
+      contents: read
+      id-token: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+        id: checkout
+        continue-on-error: true
+        with:
+          ref: ${{ github.event_name == 'issue_comment' && format('refs/pull/{0}/merge', github.event.issue.number) || github.ref }}
+          persist-credentials: false
+
+      - name: Merging deletes the ref above, so take the branch it merged into
+        id: recover
+        if: steps.checkout.outcome == 'failure'
+        env:
+          EVENT: ${{ github.event_name }}
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.issue.number }}
+        run: |
+          [ "$EVENT" = issue_comment ] || { echo "::error::the checkout failed"; exit 1; }
+          base=$(gh pr view "$PR" --repo "$REPO" --json merged,baseRefName --jq 'select(.merged) | .baseRefName')
+          [ -n "$base" ] || { echo "::error::could not check out #$PR, which has not merged"; exit 1; }
+          echo "base=$base" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+        if: steps.recover.outcome == 'success'
+        with:
+          ref: ${{ steps.recover.outputs.base }}
+          persist-credentials: false
+
+      - uses: sarisia/actions-status-discord@eb045afee445dc055c18d3d90bd0f244fd062708  # v1.16.0
+        with:
+          webhook: >-
+            ${{ case(
+              matrix.workspace == 'docker', secrets.DOCKER_DISCORD_WEBHOOK,
+              matrix.workspace == 'grafana', secrets.GRAFANA_DISCORD_WEBHOOK,
+              secrets.HEALTHCHECKS_DISCORD_WEBHOOK
+            ) }}
+          title: Applying
+          color: 0x3498db
+          nodetail: true
+          url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          description: ${{ github.event.issue.html_url || github.ref_name }} by ${{ github.actor }}
+
+      - uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd  # v6.3.0
+        with:
+          role-to-assume: arn:aws:iam::302617221463:role/infra-${{ matrix.workspace }}
+          aws-region: ap-northeast-1
+
+      - uses: ./.github/actions/docker-daemon
+        if: matrix.workspace == 'docker'
+        id: daemon
+
+      - name: Pull the images the plan will start
+        if: matrix.workspace == 'docker'
+        env:
+          WORKSPACE: ${{ matrix.workspace }}
+        run: |
+          grep -ohE 'image\s*=\s*"[^"]+"' "$WORKSPACE"/*.tf | grep -oE '"[^"]+"' | tr -d '"' | sort -u | while read -r image; do
+            curl -sf -X POST "http://127.0.0.1:2376/images/create?fromImage=${image%%:*}&tag=${image##*:}" > /dev/null
+          done
+
+      - uses: dflook/tofu-apply@e3e5dfc8f935d4b152c767801046f63abf8a77d3  # v3.1.0
+        id: apply
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          TF_PLAN_COLLAPSE_LENGTH: "100000"  # never collapse the plan
+          TF_VAR_docker_host: ${{ steps.daemon.outputs.host }}
+          TF_VAR_grafana_auth: ${{ matrix.workspace == 'grafana' && secrets.GRAFANA_APPLY_TOKEN || '' }}
+          TF_VAR_discord_webhook_url: ${{ matrix.workspace == 'grafana' && secrets.DISCORD_WEBHOOK_URL || '' }}
+          TF_VAR_healthchecksio_api_key: ${{ matrix.workspace == 'healthchecks' && secrets.HEALTHCHECKSIO_API_KEY || '' }}
+        with:
+          path: ${{ matrix.workspace }}
+          auto_approve: ${{ github.event_name == 'workflow_dispatch' }}
+
+      - name: Say what actually happened
+        id: outcome
+        if: always()
+        env:
+          STATUS: ${{ job.status }}
+          RECOVER: ${{ steps.recover.outcome }}
+          BASE: ${{ steps.recover.outputs.base }}
+          APPLY: ${{ steps.apply.outcome }}
+          PLAN: ${{ steps.apply.outputs.json_plan_path }}
+          SUBJECT: ${{ github.event.issue.html_url || github.ref_name }}
+          ACTOR: ${{ github.actor }}
+        run: |
+          title=Errored
+          note=
+          if [ "$RECOVER" = success ]; then
+            note=" - the pull request merged first, so this ran on $BASE"
+          fi
+          if [ "$STATUS" = cancelled ]; then
+            title=Cancelled
+          elif [ "$APPLY" = success ]; then
+            title=Applied
+            if [ -n "$PLAN" ] && [ -f "$PLAN" ] &&
+              [ "$(jq '[.resource_changes[]? | select(.change.actions != ["no-op"])] | length' "$PLAN")" = 0 ]; then
+              title='No changes'
+            fi
+          fi
+          {
+            echo "title=$title"
+            echo "description=$SUBJECT by $ACTOR$note"
+          } >> "$GITHUB_OUTPUT"
+
+      - uses: sarisia/actions-status-discord@eb045afee445dc055c18d3d90bd0f244fd062708  # v1.16.0
+        if: always()
+        with:
+          webhook: >-
+            ${{ case(
+              matrix.workspace == 'docker', secrets.DOCKER_DISCORD_WEBHOOK,
+              matrix.workspace == 'grafana', secrets.GRAFANA_DISCORD_WEBHOOK,
+              secrets.HEALTHCHECKS_DISCORD_WEBHOOK
+            ) }}
+          status: ${{ job.status }}
+          title: ${{ steps.outcome.outputs.title }}
+          nodetail: true
+          url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          description: ${{ steps.outcome.outputs.description }}
+
+  replan:
+    needs: apply
+    if: needs.apply.result == 'success' && github.event_name == 'issue_comment'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      actions: write
+      pull-requests: read
+    steps:
+      - name: Re-run the plans the apply emptied so the merge gate sees them
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.issue.number }}
+        run: |
+          if [ "$(gh pr view "$PR" --repo "$REPO" --json merged --jq .merged)" = true ]; then
+            echo "#$PR merged first, so there is no merge gate left to refresh"
+            exit 0
+          fi
+          sha=$(gh pr view "$PR" --repo "$REPO" --json headRefOid --jq .headRefOid)
+          run=$(gh api "repos/$REPO/actions/workflows/tofu.yaml/runs?event=pull_request&head_sha=$sha" \
+            --jq '.workflow_runs[0] | select(.conclusion == "failure") | .id')
+          if [ -z "$run" ]; then
+            echo "No failed plan run for $sha, so nothing to re-run"
+            exit 0
+          fi
+          gh api --method POST "repos/$REPO/actions/runs/$run/rerun-failed-jobs" \
+            || echo "::warning::could not re-run plan $run"
