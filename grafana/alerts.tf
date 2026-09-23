@@ -9,7 +9,6 @@ data "grafana_data_source" "loki" {
 locals {
   discord_contact_points = {
     critical = "site-down-title.gotmpl"
-    warning  = "backup-stale-title.gotmpl"
   }
 
   discord_routes = {
