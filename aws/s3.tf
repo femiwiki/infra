@@ -167,6 +167,18 @@ resource "aws_s3_bucket_lifecycle_configuration" "backups" {
   }
 }
 
+resource "aws_s3_bucket_notification" "backups" {
+  bucket = aws_s3_bucket.backups.id
+
+  topic {
+    topic_arn     = aws_sns_topic.backup_uploads.arn
+    events        = ["s3:ObjectCreated:*"]
+    filter_prefix = "mysql/"
+  }
+
+  depends_on = [aws_sns_topic_policy.backup_uploads]
+}
+
 resource "aws_s3_bucket_public_access_block" "backups" {
   bucket = aws_s3_bucket.backups.id
 

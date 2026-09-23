@@ -76,3 +76,21 @@ resource "aws_cloudwatch_metric_alarm" "femiwiki_pages" {
   alarm_actions       = [aws_sns_topic.cloudwatch_alarms_topic_us.arn]
   ok_actions          = [aws_sns_topic.cloudwatch_alarms_topic_us.arn]
 }
+
+resource "aws_cloudwatch_metric_alarm" "backup_missing" {
+  alarm_name  = "Backup missing"
+  namespace   = "AWS/SNS"
+  metric_name = "NumberOfMessagesPublished"
+  period      = 3600
+  statistic   = "Sum"
+  dimensions = {
+    TopicName = aws_sns_topic.backup_uploads.name
+  }
+  threshold           = 1
+  comparison_operator = "LessThanThreshold"
+  datapoints_to_alarm = 24
+  evaluation_periods  = 24
+  treat_missing_data  = "breaching"
+  alarm_actions       = [aws_sns_topic.cloudwatch_alarms_topic.arn]
+  ok_actions          = [aws_sns_topic.cloudwatch_alarms_topic.arn]
+}

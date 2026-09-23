@@ -459,3 +459,27 @@ data "aws_iam_policy_document" "infra_healthchecks" {
     resources = ["${aws_s3_bucket.tfstate.arn}/healthchecks/*"]
   }
 }
+
+data "aws_iam_policy_document" "backup_uploads" {
+  statement {
+    actions   = ["SNS:Publish"]
+    resources = [aws_sns_topic.backup_uploads.arn]
+
+    principals {
+      type        = "Service"
+      identifiers = ["s3.amazonaws.com"]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "aws:SourceAccount"
+      values   = [data.aws_caller_identity.current.account_id]
+    }
+
+    condition {
+      test     = "ArnLike"
+      variable = "aws:SourceArn"
+      values   = [aws_s3_bucket.backups.arn]
+    }
+  }
+}
