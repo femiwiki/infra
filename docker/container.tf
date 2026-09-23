@@ -45,6 +45,8 @@ resource "docker_container" "http" {
         "198.144.176.0/20",
         "198.46.128.0/17",
         "23.94.0.0/15",
+        # Cloud Innovation, crawling search and diffs from every /24 in turn
+        "154.193.16.0/20", "154.197.16.0/20",
       ]),
     } : "${k}=${v}"
   ]
