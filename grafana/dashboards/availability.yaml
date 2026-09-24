@@ -138,13 +138,51 @@ panels:
       sum(rate(caddy_http_request_duration_seconds_count{job="integrations/caddy"}[$__rate_interval]))
       >= bool 0.99
     legendFormat: 가용성
+- id: 4
+  type: stat
+  title: 가용성
+  description: |-
+    지난 2주 동안 Caddy가 끝낸 응답 가운데 5xx가 아닌 것의 비율입니다. 소수점 아래 넷째 자리까지 적으므로, 자리가 0으로 채워져 있으면 거기까지는 정확하다는 뜻입니다.
+  datasource: *prom
+  gridPos:
+    h: 3
+    w: 6
+    x: 0
+    'y': 5
+  fieldConfig:
+    defaults:
+      unit: percent
+      decimals: 4
+      max: 100
+      color:
+        mode: fixed
+        fixedColor: text
+    overrides: []
+  options:
+    colorMode: none
+    graphMode: none
+    justifyMode: center
+    textMode: value
+    reduceOptions:
+      calcs:
+      - lastNotNull
+      fields: ''
+      values: false
+  targets:
+  - refId: A
+    datasource: *prom
+    instant: true
+    expr: |-
+      100 * sum(increase(caddy_http_request_duration_seconds_count{job="integrations/caddy", code!~"5.."}[$__range]))
+      /
+      sum(increase(caddy_http_request_duration_seconds_count{job="integrations/caddy"}[$__range]))
 - id: 3
   type: text
   title: 사고 보고서
   gridPos:
     h: 3
-    w: 24
-    x: 0
+    w: 18
+    x: 6
     'y': 5
   options:
     mode: markdown
