@@ -480,8 +480,3 @@ resource "grafana_contact_point" "discord" {
     ))
   }
 }
-
-moved {
-  from = grafana_contact_point.site_down
-  to   = grafana_contact_point.discord["critical"]
-}
