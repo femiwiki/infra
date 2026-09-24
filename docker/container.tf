@@ -4,6 +4,8 @@ resource "docker_container" "http" {
   command      = ["caddy-run"]
   restart      = "always"
   network_mode = "host"
+  memory       = 384
+  memory_swap  = 768
 
   wait                  = true
   wait_timeout          = 60
@@ -30,7 +32,7 @@ resource "docker_container" "http" {
       PHP_FPM_LISTEN        = 9000 + local.fastcgi_generation % 2,
       PHP_FPM_STATUS_LISTEN = 9200 + local.fastcgi_generation % 2,
 
-      CADDY_EXPENSIVE_EVENTS = "3000",
+      CADDY_EXPENSIVE_EVENTS = "2000",
 
       CADDY_LOG_EXCLUDE   = "http.handlers.mwcache",
       AWS_REGION          = "ap-northeast-1",
@@ -80,6 +82,8 @@ resource "docker_container" "fastcgi" {
   image        = "ghcr.io/femiwiki/femiwiki:2026-09-24T03-00-d3e2eeb4"
   network_mode = "host"
   restart      = "always"
+  memory       = 768
+  memory_swap  = 1536
 
   wait                  = true
   wait_timeout          = 300
@@ -167,6 +171,8 @@ resource "docker_container" "memcached" {
   image        = "memcached:1.6.23-alpine"
   network_mode = "host"
   restart      = "always"
+  memory       = 128
+  memory_swap  = 128
 
   labels {
     label = "autoheal"
@@ -185,6 +191,8 @@ resource "docker_container" "autoheal" {
   image        = "willfarrell/autoheal:1.1.0"
   network_mode = "none"
   restart      = "always"
+  memory       = 64
+  memory_swap  = 64
   env          = ["AUTOHEAL_CONTAINER_LABEL=autoheal"]
 
   mounts {
@@ -209,9 +217,11 @@ resource "docker_container" "autoheal" {
 }
 
 resource "docker_container" "backupbot" {
-  name    = "backupbot"
-  image   = "ghcr.io/femiwiki/backupbot:2026-09-22T15-01-939d63be"
-  restart = "always"
+  name        = "backupbot"
+  image       = "ghcr.io/femiwiki/backupbot:2026-09-22T15-01-939d63be"
+  restart     = "always"
+  memory      = 256
+  memory_swap = 256
   env = [
     for k, v in {
       DB_SERVER   = "${data.aws_instances.database.private_ips[0]}:3306"
