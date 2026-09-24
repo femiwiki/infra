@@ -31,7 +31,7 @@ terraform plan
 
 머지는 그 다음입니다. `docker plan is empty`와 `grafana plan is empty`가 필수 검사라서, plan이 비어 있지 않은 PR은 머지되지 않습니다. apply가 끝나면 그 PR의 plan을 다시 돌려 검사를 갱신하므로, 적용하고 나면 따로 할 일은 없습니다. `grafana/`도 같습니다.
 
-적용이 끝나면 그 PR의 `## 업데이트` 절(이미지 bump PR이면 "Built from"에 적힌 docker-mediawiki PR들의 절까지)이 [페미위키:업데이트]의 그날 항목으로 올라갑니다. 각 줄은 `추가:`, `변경:`, `수정:` 중 하나로 시작하는 한국어 문장이고, 절이 없는 PR은 아무것도 올리지 않습니다. 봇 계정은 저장소 변수 `WIKI_DEPLOY_BOT_USER`와 시크릿 `WIKI_DEPLOY_BOT_PASSWORD`입니다. 둘 중 하나라도 없으면 올리는 단계를 건너뜁니다. 위키가 응답하지 않아 이 단계가 실패해도 배포는 성공으로 남습니다.
+적용이 끝나면 그 PR의 `## 업데이트` 절(이미지 bump PR이면 "Built from"에 적힌 docker-mediawiki PR들의 절까지)이 [페미위키:업데이트]에 적용을 마친 시각(분 단위)을 제목으로 올라갑니다. 문서에 이미 있는 줄은 다시 올리지 않습니다. 각 줄은 `추가:`, `변경:`, `수정:` 중 하나로 시작하는 한국어 문장이고, 절이 없는 PR은 아무것도 올리지 않습니다. 봇 계정은 저장소 변수 `WIKI_DEPLOY_BOT_USER`와 시크릿 `WIKI_DEPLOY_BOT_PASSWORD`입니다. 둘 중 하나라도 없으면 올리는 단계를 건너뜁니다. 위키가 응답하지 않아 이 단계가 실패해도 배포는 성공으로 남습니다.
 
 [페미위키:업데이트]: https://femiwiki.com/w/페미위키:업데이트
 

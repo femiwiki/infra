@@ -34,10 +34,10 @@ function lines( string $chunk ): array {
 }
 
 /**
- * The day's section rebuilt as heading, lines under no level-3 heading, the 추가/변경/수정 blocks
+ * The deploy's section rebuilt as heading, lines under no level-3 heading, the 추가/변경/수정 blocks
  * with the new lines appended, then any other level-3 headings verbatim.
  */
-function rebuild( string $section, string $day, array $new ): string {
+function rebuild( string $section, string $heading, array $new ): string {
 	$blocks = preg_split( '/^(?====)/mu', $section );
 	$existing = [ '' => lines( array_shift( $blocks ) ) ];
 	$tail = '';
@@ -48,7 +48,7 @@ function rebuild( string $section, string $day, array $new ): string {
 			$tail .= $block;
 		}
 	}
-	$out = "==$day==\n\n";
+	$out = "==$heading==\n\n";
 	if ( $existing[''] ) {
 		$out .= implode( "\n", $existing[''] ) . "\n\n";
 	}
@@ -67,16 +67,16 @@ function rebuild( string $section, string $day, array $new ): string {
 }
 
 /** The page with the day's section rebuilt, or created on top when absent */
-function merge( string $text, string $day, array $new ): string {
+function merge( string $text, string $heading, array $new ): string {
 	$sections = preg_split( '/^(?===[^=])/mu', $text );
 	foreach ( $sections as $i => $section ) {
-		if ( preg_match( '/^==\s*' . preg_quote( $day, '/' ) . '\s*==\s*$/mu', $section ) ) {
-			$sections[$i] = rebuild( $section, $day, $new );
+		if ( preg_match( '/^==\s*' . preg_quote( $heading, '/' ) . '\s*==\s*$/mu', $section ) ) {
+			$sections[$i] = rebuild( $section, $heading, $new );
 			return implode( '', $sections );
 		}
 	}
 	$lead = str_starts_with( $text, '==' ) ? 0 : 1;
-	array_splice( $sections, $lead, 0, rebuild( '', $day, $new ) );
+	array_splice( $sections, $lead, 0, rebuild( '', $heading, $new ) );
 	return implode( '', $sections );
 }
 
@@ -124,13 +124,18 @@ if ( !$dryRun && ( !getenv( 'WIKI_DEPLOY_BOT_USER' ) || !getenv( 'WIKI_DEPLOY_BO
 
 $now = new DateTime( 'now', new DateTimeZone( 'Asia/Seoul' ) );
 $title = '페미위키:업데이트/' . $now->format( 'Y' ) . '년';
-$day = $now->format( 'n' ) . '월 ' . $now->format( 'j' ) . '일';
+$heading = $now->format( 'n월 j일 H:i' );
 $page = wiki( [
 	'action' => 'query', 'prop' => 'revisions', 'rvprop' => 'content|timestamp', 'rvslots' => 'main', 'titles' => $title,
 ] )['query']['pages'][0];
 $revision = $page['revisions'][0] ?? [];
 $text = $revision['slots']['main']['content'] ?? '';
-$merged = merge( $text, $day, $new );
+// A re-run of the apply lands under a later minute, so a line already anywhere on the page is not posted again
+$new = array_filter( array_map(
+	fn ( $lines ) => array_values( array_filter( $lines, fn ( $line ) => !str_contains( $text, $line ) ) ),
+	$new
+) );
+$merged = merge( $text, $heading, $new );
 if ( $merged === $text ) {
 	echo "$title: already posted\n";
 	exit;
