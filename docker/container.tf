@@ -221,6 +221,7 @@ resource "docker_container" "backupbot" {
   name        = "backupbot"
   image       = "ghcr.io/femiwiki/backupbot:2026-09-22T15-01-939d63be"
   restart     = "always"
+  init        = true
   memory      = 256
   memory_swap = 256
   env = [
