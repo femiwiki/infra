@@ -17,6 +17,7 @@ dnf install -y "https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/l
 dnf autoremove -y postfix
 # - ripgrep: Disabled temporarily (https://github.com/femiwiki/femiwiki/issues/247)
 dnf install -y \
+  awscli-2 \
   bash-completion \
   bind-utils \
   git \
@@ -148,6 +149,36 @@ if ! file -s /dev/nvme1n1 | grep -q "filesystem data"; then
   done
   mysql --connect-expired-password -uroot -p"$TEMP_PASSWORD" \
     -e "ALTER USER 'root'@'localhost' IDENTIFIED BY '$TEMP_PASSWORD' PASSWORD EXPIRE NEVER;"
+
+  #
+  # Restore the newest backup, so that replacing this host is the restore.
+  # Only a fresh volume reaches here, so there is nothing to overwrite.
+  #
+  # Tracing is off for this part: it handles the account passwords, and
+  # /var/log/cloud-init-output.log is world readable.
+  #
+  set +x
+  export AWS_DEFAULT_REGION=${region}
+  MEDIAWIKI_USER="$(aws ssm get-parameter --name /mysql/users/mediawiki/username --query Parameter.Value --output text)"
+  MEDIAWIKI_PASSWORD="$(aws ssm get-parameter --name /mysql/users/mediawiki/password --with-decryption --query Parameter.Value --output text)"
+  BACKUP_KEY="$(aws s3api list-objects-v2 --bucket ${backups_bucket} --prefix mysql/ --query 'sort_by(Contents, &LastModified)[-1].Key' --output text)"
+  echo "Restoring from s3://${backups_bucket}/$BACKUP_KEY"
+  aws s3 cp "s3://${backups_bucket}/$BACKUP_KEY" /var/lib/mysql/restore.sql.gz
+  # The dump is mysqldump --single-transaction femiwiki, which carries neither
+  # the schema nor the grants, so both are made here before it is loaded. The
+  # grants copy what the live account holds, RELOAD and PROCESS included: those
+  # are what mysqldump needs, so a restored host can still back itself up.
+  MYSQL_PWD="$TEMP_PASSWORD" mysql -uroot <<SQL
+CREATE DATABASE femiwiki CHARACTER SET binary;
+CREATE USER '$MEDIAWIKI_USER'@'%' IDENTIFIED BY '$MEDIAWIKI_PASSWORD';
+GRANT RELOAD, PROCESS ON *.* TO '$MEDIAWIKI_USER'@'%';
+GRANT ALL PRIVILEGES ON femiwiki.* TO '$MEDIAWIKI_USER'@'%';
+SQL
+  zcat /var/lib/mysql/restore.sql.gz | MYSQL_PWD="$TEMP_PASSWORD" mysql -uroot femiwiki
+  rm -f /var/lib/mysql/restore.sql.gz
+  MYSQL_PWD="$TEMP_PASSWORD" mysql -uroot -N -B \
+    -e "SELECT CONCAT('restored revisions: ', COUNT(*)) FROM femiwiki.revision;"
+  set -x
 else
   mkdir -p /var/lib/mysql/data
   chown mysql:mysql /var/lib/mysql/data

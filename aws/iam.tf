@@ -276,6 +276,11 @@ resource "aws_iam_role_policy_attachment" "database_read_backup" {
   policy_arn = aws_iam_policy.read_backup.arn
 }
 
+resource "aws_iam_role_policy_attachment" "database_read_mysql_user_parameters" {
+  role       = aws_iam_role.database.name
+  policy_arn = aws_iam_policy.read_mysql_user_parameters.arn
+}
+
 resource "aws_iam_role_policy_attachment" "database_managed_policies" {
   for_each = toset([
     "AmazonSSMManagedInstanceCore",
