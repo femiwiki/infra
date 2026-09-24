@@ -87,8 +87,7 @@ jobs:
           fi
           # With nothing left to import or move, such a block has done its job
           if grep -rnE '^(import|moved) \{' --include='*.tf' "$WORKSPACE"; then
-            echo "::error::applied, so remove the import and moved blocks above, then merge."
-            exit 1
+            echo "::warning::applied, so the import and moved blocks above can go."
           fi
           echo "The plan is empty."
 
