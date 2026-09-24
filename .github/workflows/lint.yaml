@@ -1,0 +1,23 @@
+---
+name: lint
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions: {}
+jobs:
+  tflint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+        with:
+          persist-credentials: false
+
+      - uses: terraform-linters/setup-tflint@1cf010d3c7aef302051ccdb68c14c5dc2efa34ef  # v6.3.1
+        with:
+          tflint_version: v0.64.0
+
+      - run: tflint --recursive --config="$PWD/.tflint.hcl" --format=compact
