@@ -493,8 +493,3 @@ resource "grafana_contact_point" "discord_default" {
     message = trimspace(file("${path.module}/templates/alert-message.gotmpl"))
   }
 }
-
-import {
-  to = grafana_contact_point.discord_default
-  id = "Discord"
-}
