@@ -78,7 +78,7 @@ resource "aws_ssm_document" "prune_docker_images" {
 
   content = jsonencode({
     schemaVersion = "2.2"
-    description   = "Remove docker images no container uses, so deploys stop filling the root volume."
+    description   = "Remove the docker images and anonymous volumes no container uses, so deploys stop filling the root volume."
     mainSteps = [{
       action = "aws:runShellScript"
       name   = "pruneDockerImages"
