@@ -10,9 +10,9 @@ resource "aws_sns_topic" "cloudwatch_alarms_topic" {
 }
 
 resource "aws_sns_topic" "cloudwatch_alarms_topic_us" {
-  provider = aws.us
-  name     = "CloudWatch_Alarms_Topic"
-  policy   = data.aws_iam_policy_document.sns_default_policy.json
+  name   = "CloudWatch_Alarms_Topic"
+  policy = data.aws_iam_policy_document.sns_default_policy.json
+  region = "us-east-1"
 }
 
 data "aws_iam_policy_document" "sns_default_policy" {
