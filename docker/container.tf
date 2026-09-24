@@ -1,6 +1,6 @@
 resource "docker_container" "http" {
   name         = "http-${local.fastcgi_generation}"
-  image        = "ghcr.io/femiwiki/femiwiki:2026-09-24T01-39-b098a04c"
+  image        = "ghcr.io/femiwiki/femiwiki:2026-09-24T03-00-d3e2eeb4"
   command      = ["caddy-run"]
   restart      = "always"
   network_mode = "host"
@@ -29,6 +29,8 @@ resource "docker_container" "http" {
 
       PHP_FPM_LISTEN        = 9000 + local.fastcgi_generation % 2,
       PHP_FPM_STATUS_LISTEN = 9200 + local.fastcgi_generation % 2,
+
+      CADDY_EXPENSIVE_EVENTS = "3000",
 
       CADDY_LOG_EXCLUDE   = "http.handlers.mwcache",
       AWS_REGION          = "ap-northeast-1",
@@ -75,7 +77,7 @@ resource "docker_container" "http" {
 
 resource "docker_container" "fastcgi" {
   name         = "fastcgi-${local.fastcgi_generation}"
-  image        = "ghcr.io/femiwiki/femiwiki:2026-09-24T01-39-b098a04c"
+  image        = "ghcr.io/femiwiki/femiwiki:2026-09-24T03-00-d3e2eeb4"
   network_mode = "host"
   restart      = "always"
 
