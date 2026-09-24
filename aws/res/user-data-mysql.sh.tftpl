@@ -175,7 +175,9 @@ SQL
   # and answer with one key per page.
   BACKUP_KEY="mysql/$(aws s3 ls s3://${backups_bucket}/mysql/ | tail -1 | awk '{print $4}')"
   echo "Restoring from s3://${backups_bucket}/$BACKUP_KEY"
-  aws s3 cp "s3://${backups_bucket}/$BACKUP_KEY" /var/lib/mysql/restore.sql.gz
+  # Without --no-progress the transfer meter writes thousands of lines to
+  # cloud-init's log and to the serial console, which is slow and synchronous.
+  aws s3 cp --no-progress "s3://${backups_bucket}/$BACKUP_KEY" /var/lib/mysql/restore.sql.gz
   # The dump is mysqldump --single-transaction femiwiki, which carries neither
   # the schema nor the grants, so both are made here before it is loaded. The
   # grants copy what the live account holds, RELOAD and PROCESS included: those
