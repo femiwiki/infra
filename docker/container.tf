@@ -1,6 +1,6 @@
 resource "docker_container" "http" {
   name         = "http-${local.fastcgi_generation}"
-  image        = "ghcr.io/femiwiki/femiwiki:2026-09-23T23-30-ec57eae2"
+  image        = "ghcr.io/femiwiki/femiwiki:2026-09-24T00-42-0ab2b478"
   command      = ["caddy-run"]
   restart      = "always"
   network_mode = "host"
@@ -70,7 +70,7 @@ resource "docker_container" "http" {
 
 resource "docker_container" "fastcgi" {
   name         = "fastcgi-${local.fastcgi_generation}"
-  image        = "ghcr.io/femiwiki/femiwiki:2026-09-23T23-30-ec57eae2"
+  image        = "ghcr.io/femiwiki/femiwiki:2026-09-24T00-42-0ab2b478"
   network_mode = "host"
   restart      = "always"
 
@@ -85,7 +85,8 @@ resource "docker_container" "fastcgi" {
 
   env = [
     for k, v in {
-      PHP_FPM_LISTEN = 9000 + local.fastcgi_generation % 2
+      PHP_FPM_LISTEN       = 9000 + local.fastcgi_generation % 2
+      PHP_FPM_PROBE_LISTEN = 9100 + local.fastcgi_generation % 2
 
       PHP_FPM_EMERGENCY_RESTART_THRESHOLD = "5"
       PHP_FPM_EMERGENCY_RESTART_INTERVAL  = "1m"
@@ -111,7 +112,7 @@ resource "docker_container" "fastcgi" {
       WG_INTERNAL_SERVER             = "http://127.0.0.1:80"
       WG_MEMCACHED_SERVERS           = "127.0.0.1:11211"
       # Used by fcgi-probe.php
-      FCGI_URL = "127.0.0.1:${9000 + local.fastcgi_generation % 2}"
+      FCGI_URL = "127.0.0.1:${9100 + local.fastcgi_generation % 2}"
 
       WG_DB_SERVER           = "${data.aws_instances.database.private_ips[0]}:3306"
       WG_DB_USER             = "mediawiki"
