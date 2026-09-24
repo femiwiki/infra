@@ -76,9 +76,18 @@ jobs:
         if: steps.scope.outputs.plan == 'true'
         env:
           CHANGES: ${{ steps.plan.outputs.changes }}
+          PLAN: ${{ steps.plan.outputs.json_plan_path }}
+          WORKSPACE: ${{ matrix.workspace }}
         run: |
-          if [ "$CHANGES" = true ]; then
+          # A plan that only moves resources can still count as having no changes
+          pending=$(jq '[.resource_changes[]? | select(.change.importing or .previous_address)] | length' "$PLAN")
+          if [ "$CHANGES" = true ] || [ "$pending" -gt 0 ]; then
             echo "::error::the plan still has changes. Comment 'tofu apply', then merge."
+            exit 1
+          fi
+          # With nothing left to import or move, such a block has done its job
+          if grep -rnE '^(import|moved) \{' --include='*.tf' "$WORKSPACE"; then
+            echo "::error::applied, so remove the import and moved blocks above, then merge."
             exit 1
           fi
           echo "The plan is empty."

@@ -21,28 +21,3 @@ jobs:
           tflint_version: latest
 
       - run: tflint --recursive --config="$PWD/.tflint.hcl" --format=compact
-
-  applied-blocks:
-    name: applied blocks
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
-        with:
-          fetch-depth: 0
-          persist-credentials: false
-
-      - name: No import or moved block that a tofu apply has already carried out
-        run: |
-          status=0
-          while IFS=: read -r file line _; do
-            # Those workspaces are applied before they merge, so a block already on main has been applied
-            target=$(sed -n "$((line + 1))p" "$file" | sed -E 's/^[[:space:]]+//')
-            commit=$(git log --format=%H --reverse -S "$target" origin/main -- "$file" | head -1)
-            [ -n "$commit" ] || continue
-            echo "::error file=${file},line=${line}::Applied before ${commit:0:7} merged, so this block can go."
-            status=1
-          done < <(git grep -nE '^[[:space:]]*(import|moved) \{' -- 'docker/*.tf' 'grafana/*.tf' 'healthchecks/*.tf')
-          exit "$status"
