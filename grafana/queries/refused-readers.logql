@@ -1,0 +1,1 @@
+sum(count_over_time({docker_container_name=~"http.*"} |= "rate limit exceeded" | json | __error__="" | zone = "expensive" [5m])) or vector(0)
