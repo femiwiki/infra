@@ -27,7 +27,7 @@ terraform plan
 
 `docker/`는 Terraform Cloud를 쓰지 않습니다. 상태는 S3에 있고, 도커 데몬은 엣지 박스의 루프백에만 열려 있어서 SSM 터널로 붙습니다. PR을 열면 `.github/workflows/tofu.yaml`이 plan을 코멘트로 달고, 권한 있는 사람이 그 PR에 `tofu apply`라고 코멘트하면 같은 워크플로가 PR이 바꾼 워크스페이스의 plan을 적용합니다. 이미지 bump PR도 같은 흐름입니다.
 
-`tofu apply` 코멘트에 붙는 👍은 [dflook/tofu-apply]가 시작하면서 붙이는 것이고, 결과와는 상관없습니다. 결과는 plan 코멘트 맨 아래 상태 줄에 나옵니다. 🟠는 적용하는 중, ✅는 적용했음, ❌는 적용하지 않았거나 실패했음입니다.
+`tofu apply` 코멘트에 붙는 👍은 [dflook/tofu-apply]가 시작하면서 붙이는 것이고, 결과와는 상관없습니다. 결과는 plan 코멘트 맨 아래 상태 줄에 나옵니다. 🟠는 적용하는 중, ✅는 적용했음, ❌는 적용하지 않았거나 실패했음입니다. 워크플로 실행 로그는 시간이 지나면 지워지므로, 적용이 끝나면 워크스페이스마다 apply 로그를 PR 코멘트로 남깁니다.
 
 머지는 그 다음입니다. `docker plan is empty`와 `grafana plan is empty`가 필수 검사라서, plan이 비어 있지 않은 PR은 머지되지 않습니다. apply가 끝나면 그 PR의 plan을 다시 돌려 검사를 갱신하므로, 적용하고 나면 따로 할 일은 없습니다. `grafana/`도 같습니다.
 
