@@ -18,7 +18,7 @@ panels:
   type: state-timeline
   title: 요청이 답을 받았는지
   description: |-
-    Caddy가 끝낸 응답 가운데 5xx가 아닌 것의 비율이 99퍼센트를 넘으면 초록, 아니면 빨강입니다. 서버가 아예 죽어 아무것도 세지 못한 구간도 빨강입니다. 크롤러를 막은 403과 상한을 넘겨 돌려보낸 429는 실패로 세지 않습니다. 수치는 14일만 보관합니다.
+    Caddy가 끝낸 응답 가운데 5xx가 아닌 것의 비율이 99퍼센트를 넘으면 초록, 아니면 빨강입니다. 비어 있는 구간은 잰 것이 없다는 뜻이고, 그때 서버가 어땠는지는 위의 달별 기록이 말합니다. 크롤러를 막은 403과 상한을 넘겨 돌려보낸 429는 실패로 세지 않습니다. 수치는 14일만 보관합니다.
   datasource: &prom
     type: prometheus
     uid: __PROM_UID__
@@ -70,8 +70,8 @@ panels:
   - refId: A
     datasource: *prom
     expr: |-
-      (sum(rate(caddy_http_request_duration_seconds_count{job="integrations/caddy", code!~"5.."}[$__rate_interval])) or vector(0))
+      sum(rate(caddy_http_request_duration_seconds_count{job="integrations/caddy", code!~"5.."}[$__rate_interval]))
       /
-      (sum(rate(caddy_http_request_duration_seconds_count{job="integrations/caddy"}[$__rate_interval])) or vector(1))
+      sum(rate(caddy_http_request_duration_seconds_count{job="integrations/caddy"}[$__rate_interval]))
       >= bool 0.99
     legendFormat: 가용성
