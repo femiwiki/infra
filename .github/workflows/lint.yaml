@@ -72,12 +72,10 @@ jobs:
         with:
           persist-credentials: false
 
-      - env:
-          VERSION: 1.4.0
-          SHA256: 7f584ddcb39e36ea491b3fbca133abeb623c1a26d90ef44c494379025c233ce5
-        run: |
-          base=https://github.com/php-parallel-lint/PHP-Parallel-Lint/releases/download
-          curl -fsSLo "$RUNNER_TEMP/parallel-lint.phar" "$base/v${VERSION}/parallel-lint.phar"
-          echo "$SHA256  $RUNNER_TEMP/parallel-lint.phar" | sha256sum -c -
+      - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240  # 2.37.2
+        with:
+          php-version: "8.3"
+          tools: parallel-lint:1.4.0
+          coverage: none
 
-      - run: php "$RUNNER_TEMP/parallel-lint.phar" .
+      - run: parallel-lint .
