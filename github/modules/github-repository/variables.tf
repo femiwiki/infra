@@ -74,6 +74,12 @@ variable "pages_build_type" {
   default     = null
 }
 
+variable "pages_cname" {
+  description = "The domain Pages answers on, written to the branch as CNAME. Null leaves the default."
+  type        = string
+  default     = null
+}
+
 variable "collaborator" {
   type    = bool
   default = false
