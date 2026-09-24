@@ -86,7 +86,7 @@ resource "docker_container" "fastcgi" {
   memory_swap  = 1536
 
   wait                  = true
-  wait_timeout          = 300
+  wait_timeout          = 600
   stop_signal           = "SIGTERM"
   destroy_grace_seconds = 45
 
@@ -135,10 +135,11 @@ resource "docker_container" "fastcgi" {
   ]
 
   healthcheck {
-    test     = ["CMD-SHELL", "/usr/local/bin/php /srv/fcgi-check/fcgi-probe.php || exit 1"]
-    interval = "30s"
-    timeout  = "5s"
-    retries  = 3
+    test         = ["CMD-SHELL", "test ! -e /tmp/warming && /usr/local/bin/php /srv/fcgi-check/fcgi-probe.php"]
+    interval     = "10s"
+    timeout      = "10s"
+    retries      = 3
+    start_period = "4m0s"
   }
 
   mounts {
