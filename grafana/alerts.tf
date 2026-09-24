@@ -144,6 +144,15 @@ locals {
   server_errors        = trimspace(file("${path.module}/queries/server-errors.logql"))
   all_responses        = trimspace(file("${path.module}/queries/all-responses.logql"))
   refused_readers      = trimspace(file("${path.module}/queries/refused-readers.logql"))
+
+  fastcgi_rules = {
+    "Requests waiting for a worker" = {
+      expr    = trimspace(file("${path.module}/queries/listen-queue.promql"))
+      above   = 0
+      for     = "5m"
+      summary = "php-fpm 대기열에 요청 {{ printf \"%.0f\" $values.A.Value }}건이 워커를 기다리고 있습니다."
+    }
+  }
 }
 
 resource "grafana_rule_group" "femiwiki_http" {
@@ -320,6 +329,59 @@ resource "grafana_rule_group" "femiwiki_http" {
         expression = "A"
         conditions = [{ evaluator = { type = "gt", params = [0] } }]
       })
+    }
+  }
+}
+
+resource "grafana_rule_group" "femiwiki_fastcgi" {
+  name             = "fastcgi"
+  folder_uid       = data.grafana_folder.femiwiki.uid
+  interval_seconds = 60
+
+  dynamic "rule" {
+    for_each = local.fastcgi_rules
+
+    content {
+      name = rule.key
+      for  = rule.value.for
+
+      condition      = "B"
+      no_data_state  = "OK"
+      exec_err_state = "OK"
+
+      annotations = {
+        summary = rule.value.summary
+      }
+
+      data {
+        ref_id         = "A"
+        datasource_uid = data.grafana_data_source.prometheus.uid
+        relative_time_range {
+          from = 600
+          to   = 0
+        }
+        model = jsonencode({
+          refId   = "A"
+          expr    = rule.value.expr
+          instant = true
+          range   = false
+        })
+      }
+
+      data {
+        ref_id         = "B"
+        datasource_uid = "__expr__"
+        relative_time_range {
+          from = 0
+          to   = 0
+        }
+        model = jsonencode({
+          refId      = "B"
+          type       = "threshold"
+          expression = "A"
+          conditions = [{ evaluator = { type = "gt", params = [rule.value.above] } }]
+        })
+      }
     }
   }
 }
