@@ -196,7 +196,16 @@ SET GLOBAL validate_password.policy = MEDIUM;
 GRANT RELOAD, PROCESS ON *.* TO '$MEDIAWIKI_USER'@'%';
 GRANT ALL PRIVILEGES ON femiwiki.* TO '$MEDIAWIKI_USER'@'%';
 SQL
+  # The configured pool leaves this instance no room to load the dump. The box
+  # runs out of memory, has no swap to fall back on, and spends kswapd at 99 per
+  # cent faulting executables back in from the root volume instead of loading
+  # anything: 30 minutes in, zero bytes written and no progress. 256 MiB for the
+  # load costs nothing measurable, 375 seconds against the 400 a roomier pool
+  # managed before this ran inside cloud-init, and the setting is dynamic.
+  POOL="$(MYSQL_PWD="$TEMP_PASSWORD" mysql -uroot -N -B -e 'SELECT @@innodb_buffer_pool_size;')"
+  MYSQL_PWD="$TEMP_PASSWORD" mysql -uroot -e "SET GLOBAL innodb_buffer_pool_size = 268435456;"
   zcat /var/lib/mysql/restore.sql.gz | MYSQL_PWD="$TEMP_PASSWORD" mysql -uroot femiwiki
+  MYSQL_PWD="$TEMP_PASSWORD" mysql -uroot -e "SET GLOBAL innodb_buffer_pool_size = $POOL;"
   rm -f /var/lib/mysql/restore.sql.gz
   # A restore that leaves no revisions is a failure, not a quiet empty wiki.
   REVISIONS="$(MYSQL_PWD="$TEMP_PASSWORD" mysql -uroot -N -B -e 'SELECT COUNT(*) FROM femiwiki.revision;')"
