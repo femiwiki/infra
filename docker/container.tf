@@ -170,6 +170,7 @@ resource "docker_container" "memcached" {
   network_mode = "host"
   restart      = "always"
   memory       = 128
+  memory_swap  = 128
 
   labels {
     label = "autoheal"
@@ -189,6 +190,7 @@ resource "docker_container" "autoheal" {
   network_mode = "none"
   restart      = "always"
   memory       = 64
+  memory_swap  = 64
   env          = ["AUTOHEAL_CONTAINER_LABEL=autoheal"]
 
   mounts {
@@ -213,10 +215,11 @@ resource "docker_container" "autoheal" {
 }
 
 resource "docker_container" "backupbot" {
-  name    = "backupbot"
-  image   = "ghcr.io/femiwiki/backupbot:2026-09-22T15-01-939d63be"
-  restart = "always"
-  memory  = 256
+  name        = "backupbot"
+  image       = "ghcr.io/femiwiki/backupbot:2026-09-22T15-01-939d63be"
+  restart     = "always"
+  memory      = 256
+  memory_swap = 256
   env = [
     for k, v in {
       DB_SERVER   = "${data.aws_instances.database.private_ips[0]}:3306"

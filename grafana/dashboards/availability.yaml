@@ -1,0 +1,77 @@
+# Grafana takes this as JSON; the Terraform encodes it. A bare y reads as true where
+# OpenTofu decodes this, so the panel coordinate stays quoted.
+uid: availability
+title: 페미위키 가용성
+description: |-
+  요청이 답을 받고 있었는지 하나의 띠로 봅니다. 가용성 문서가 이 보드를 싣습니다.
+tags:
+- public
+timezone: Asia/Seoul
+schemaVersion: 39
+editable: true
+refresh: 5m
+time:
+  from: now-14d
+  to: now
+panels:
+- id: 1
+  type: state-timeline
+  title: 요청이 답을 받았는지
+  description: |-
+    Caddy가 끝낸 응답 가운데 5xx가 아닌 것의 비율이 99퍼센트를 넘으면 초록, 아니면 빨강입니다. 서버가 아예 죽어 아무것도 세지 못한 구간도 빨강입니다. 크롤러를 막은 403과 상한을 넘겨 돌려보낸 429는 실패로 세지 않습니다. 수치는 14일만 보관합니다.
+  datasource: &prom
+    type: prometheus
+    uid: __PROM_UID__
+  gridPos:
+    h: 5
+    w: 24
+    x: 0
+    'y': 0
+  fieldConfig:
+    defaults:
+      color:
+        mode: thresholds
+      thresholds:
+        mode: absolute
+        steps:
+        - color: red
+          value: null
+        - color: green
+          value: 1
+      mappings:
+      - type: value
+        options:
+          '1':
+            text: 정상
+            color: green
+            index: 0
+          '0':
+            text: 장애
+            color: red
+            index: 1
+      custom:
+        fillOpacity: 100
+        lineWidth: 0
+    overrides: []
+  options:
+    mergeValues: true
+    showValue: never
+    alignValue: center
+    rowHeight: 0.9
+    perPage: 20
+    legend:
+      showLegend: false
+      displayMode: list
+      placement: bottom
+    tooltip:
+      mode: single
+      sort: none
+  targets:
+  - refId: A
+    datasource: *prom
+    expr: |-
+      (sum(rate(caddy_http_request_duration_seconds_count{job="integrations/caddy", code!~"5.."}[$__rate_interval])) or vector(0))
+      /
+      (sum(rate(caddy_http_request_duration_seconds_count{job="integrations/caddy"}[$__rate_interval])) or vector(1))
+      >= bool 0.99
+    legendFormat: 가용성
