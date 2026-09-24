@@ -17,7 +17,7 @@ locals {
 }
 
 resource "grafana_notification_policy" "root" {
-  contact_point   = "Discord"
+  contact_point   = grafana_contact_point.discord_default.name
   group_by        = ["alertname", "instance"]
   group_wait      = "30s"
   group_interval  = "5m"
@@ -479,4 +479,21 @@ resource "grafana_contact_point" "discord" {
       var.discord_mention_role_id,
     ))
   }
+}
+
+resource "grafana_contact_point" "discord_default" {
+  name = "Discord"
+
+  discord {
+    url                  = var.discord_webhook_url
+    use_discord_username = false
+
+    title   = trimspace(file("${path.module}/templates/alert-title.gotmpl"))
+    message = trimspace(file("${path.module}/templates/alert-message.gotmpl"))
+  }
+}
+
+import {
+  to = grafana_contact_point.discord_default
+  id = "Discord"
 }
