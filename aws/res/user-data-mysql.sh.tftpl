@@ -171,9 +171,17 @@ if ! file -s /dev/nvme1n1 | grep -q "filesystem data"; then
   # the schema nor the grants, so both are made here before it is loaded. The
   # grants copy what the live account holds, RELOAD and PROCESS included: those
   # are what mysqldump needs, so a restored host can still back itself up.
+  #
+  # The account is older than this server's password policy: a fresh MySQL 8.0
+  # installs validate_password at MEDIUM, which refuses to set that password at
+  # all. LOW keeps the eight character minimum and drops the character class
+  # rules, and MEDIUM goes back on immediately, so the host ends where a fresh
+  # install would.
   MYSQL_PWD="$TEMP_PASSWORD" mysql -uroot <<SQL
 CREATE DATABASE femiwiki CHARACTER SET binary;
+SET GLOBAL validate_password.policy = LOW;
 CREATE USER '$MEDIAWIKI_USER'@'%' IDENTIFIED BY '$MEDIAWIKI_PASSWORD';
+SET GLOBAL validate_password.policy = MEDIUM;
 GRANT RELOAD, PROCESS ON *.* TO '$MEDIAWIKI_USER'@'%';
 GRANT ALL PRIVILEGES ON femiwiki.* TO '$MEDIAWIKI_USER'@'%';
 SQL
