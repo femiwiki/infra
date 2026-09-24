@@ -49,7 +49,7 @@ module "docker_mediawiki" {
   delete_branch_on_merge          = true
   enforce_admins                  = local.docker.enforce_admins
   required_pull_request_reviews   = local.docker.required_pull_request_reviews
-  required_status_checks_contexts = ["php-lint", "caddy-fmt", "etc-lint", "image builds"]
+  required_status_checks_contexts = ["php-lint", "caddy-fmt", "etc-lint", "image builds", "title scope"]
   topics = [
     "docker-compose",
     "docker-image",
@@ -146,6 +146,11 @@ module "femiwiki_github_io" {
     "static-site",
     "wikven",
   ]
+}
+
+import {
+  to = module.femiwiki_github_io.github_repository_pages.pages[0]
+  id = "femiwiki.github.io"
 }
 
 module "dot_github" {
@@ -257,6 +262,11 @@ module "status" {
   topics = [
     "status",
   ]
+}
+
+import {
+  to = module.status.github_repository_pages.pages[0]
+  id = "status"
 }
 
 resource "github_repository_file" "status_index" {
