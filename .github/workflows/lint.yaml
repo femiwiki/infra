@@ -21,3 +21,23 @@ jobs:
           tflint_version: latest
 
       - run: tflint --recursive --config="$PWD/.tflint.hcl" --format=compact
+
+  parallel-lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+        with:
+          persist-credentials: false
+
+      - env:
+          VERSION: 1.4.0
+          SHA256: 7f584ddcb39e36ea491b3fbca133abeb623c1a26d90ef44c494379025c233ce5
+        run: |
+          base=https://github.com/php-parallel-lint/PHP-Parallel-Lint/releases/download
+          curl -fsSLo "$RUNNER_TEMP/parallel-lint.phar" "$base/v${VERSION}/parallel-lint.phar"
+          echo "$SHA256  $RUNNER_TEMP/parallel-lint.phar" | sha256sum -c -
+
+      - run: php "$RUNNER_TEMP/parallel-lint.phar" .
