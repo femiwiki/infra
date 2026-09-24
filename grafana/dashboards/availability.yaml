@@ -142,7 +142,7 @@ panels:
   type: stat
   title: 가용성
   description: |-
-    지난 2주 동안 Caddy가 끝낸 응답 가운데 5xx가 아닌 것의 비율입니다. 소수점 아래 넷째 자리까지 적으므로, 자리가 0으로 채워져 있으면 거기까지는 정확하다는 뜻입니다.
+    지난 2주 동안 Caddy가 끝낸 응답 가운데 5xx가 아닌 것의 비율입니다. 올림하지 않고 소수점 아래 첫째 자리에서 자르므로, 적힌 값보다 낮은 적은 없습니다.
   datasource: *prom
   gridPos:
     h: 3
@@ -152,7 +152,7 @@ panels:
   fieldConfig:
     defaults:
       unit: percent
-      decimals: 4
+      decimals: 1
       max: 100
       color:
         mode: fixed
@@ -173,9 +173,11 @@ panels:
     datasource: *prom
     instant: true
     expr: |-
-      100 * sum(increase(caddy_http_request_duration_seconds_count{job="integrations/caddy", code!~"5.."}[$__range]))
-      /
-      sum(increase(caddy_http_request_duration_seconds_count{job="integrations/caddy"}[$__range]))
+      floor(
+        1000 * sum(increase(caddy_http_request_duration_seconds_count{job="integrations/caddy", code!~"5.."}[$__range]))
+        /
+        sum(increase(caddy_http_request_duration_seconds_count{job="integrations/caddy"}[$__range]))
+      ) / 10
 - id: 3
   type: text
   title: 사고 보고서
