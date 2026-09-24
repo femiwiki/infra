@@ -59,6 +59,45 @@ resource "aws_ssm_parameter" "alloy" {
   value = each.value
 }
 
+locals {
+  swapfile_mib = 1024
+
+  swapfile_install = replace(file("res/install-swapfile.sh"), "__SIZE_MIB__", local.swapfile_mib)
+}
+
+resource "aws_ssm_document" "swapfile" {
+  name            = "install-swapfile"
+  document_type   = "Command"
+  document_format = "JSON"
+
+  content = jsonencode({
+    schemaVersion = "2.2"
+    description   = "Give the docker host a swap file, so a container swap does not end in an OOM kill."
+    mainSteps = [{
+      action = "aws:runShellScript"
+      name   = "installSwapfile"
+      inputs = {
+        runCommand = split("\n", local.swapfile_install)
+      }
+    }]
+  })
+}
+
+resource "aws_ssm_association" "swapfile" {
+  association_name    = "install-swapfile"
+  name                = aws_ssm_document.swapfile.name
+  document_version    = aws_ssm_document.swapfile.latest_version
+  schedule_expression = "rate(30 minutes)"
+  compliance_severity = "HIGH"
+  max_concurrency     = "1"
+  max_errors          = "0"
+
+  targets {
+    key    = "tag:Name"
+    values = ["docker"]
+  }
+}
+
 resource "aws_ssm_document" "alloy_config" {
   for_each = local.alloy_hosts
 
