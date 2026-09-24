@@ -1,0 +1,1 @@
+sum by (status) (count_over_time({docker_container_name=~"http.*"} | json | __error__="" | status != "" [5m]))
