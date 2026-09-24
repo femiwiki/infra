@@ -315,6 +315,31 @@ data "aws_iam_policy_document" "read_mysql_user_parameters" {
   }
 }
 
+resource "aws_iam_policy" "write_mysql_root_password" {
+  name        = "WriteMysqlRootPassword"
+  description = "Allows a database instance to publish the root password it generates at first boot, under its own server id"
+
+  policy = data.aws_iam_policy_document.write_mysql_root_password.json
+}
+
+data "aws_iam_policy_document" "write_mysql_root_password" {
+  statement {
+    actions   = ["ssm:PutParameter"]
+    resources = ["arn:aws:ssm:${data.aws_region.current.region}:${data.aws_caller_identity.current.account_id}:parameter/mysql/servers/*/root/password"]
+  }
+
+  statement {
+    actions   = ["kms:Encrypt", "kms:GenerateDataKey"]
+    resources = ["*"]
+
+    condition {
+      test     = "StringEquals"
+      variable = "kms:ViaService"
+      values   = ["ssm.${data.aws_region.current.region}.amazonaws.com"]
+    }
+  }
+}
+
 
 #
 # Policy documents for inline policies

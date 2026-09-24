@@ -18,21 +18,13 @@ jobs:
     timeout-minutes: 5
     permissions:
       contents: read
-      pull-requests: write
+      pull-requests: read
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
         with:
           persist-credentials: false
 
-      - name: Copy the ```wikitext blocks of the pull requests it was built from
-        env:
-          GH_TOKEN: ${{ github.token }}
-          REPO: ${{ github.repository }}
-          PR: ${{ inputs.pr }}
-        run: .github/scripts/sync-updates.php "$REPO" "$PR"
-
-      - name: Post the ```wikitext blocks to the wiki
-        env:
+      - env:
           GH_TOKEN: ${{ github.token }}
           WIKI_DEPLOY_BOT_USER: ${{ vars.WIKI_DEPLOY_BOT_USER }}
           WIKI_DEPLOY_BOT_PASSWORD: ${{ secrets.WIKI_DEPLOY_BOT_PASSWORD }}
