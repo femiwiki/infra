@@ -215,7 +215,7 @@ jobs:
         continue-on-error: true
         env:
           GH_TOKEN: ${{ github.token }}
-          WIKI_DEPLOY_BOT_USER: ${{ secrets.WIKI_DEPLOY_BOT_USER }}
+          WIKI_DEPLOY_BOT_USER: ${{ vars.WIKI_DEPLOY_BOT_USER }}
           WIKI_DEPLOY_BOT_PASSWORD: ${{ secrets.WIKI_DEPLOY_BOT_PASSWORD }}
           REPO: ${{ github.repository }}
           PR: ${{ github.event.issue.number }}
