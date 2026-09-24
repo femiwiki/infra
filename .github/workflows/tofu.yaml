@@ -289,3 +289,63 @@ jobs:
           fi
           gh api --method POST "repos/$REPO/actions/runs/$run/rerun-failed-jobs" \
             || echo "::warning::could not re-run plan $run"
+
+  log:
+    needs: apply
+    if: always() && github.event_name == 'issue_comment' && needs.apply.result != 'skipped'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      actions: read
+      pull-requests: write
+    steps:
+      - name: Keep each apply's output on the pull request, since run logs expire
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3  # v9.0.0
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const run = `${context.serverUrl}/${owner}/${repo}/actions/runs/${context.runId}`;
+            const jobs = await github.paginate(github.rest.actions.listJobsForWorkflowRunAttempt, {
+              owner, repo, run_id: context.runId, attempt_number: context.runAttempt,
+            });
+            for (const job of jobs.filter(j => j.name.endsWith(' apply'))) {
+              const workspace = job.name.slice(0, -' apply'.length);
+              let log;
+              for (let tries = 5; log === undefined; tries--) {
+                try {
+                  log = String((await github.rest.actions.downloadJobLogsForWorkflowRun({ owner, repo, job_id: job.id })).data);
+                } catch (error) {
+                  if (tries === 1) throw error;
+                  await new Promise(resolve => setTimeout(resolve, 5000));
+                }
+              }
+              // The dflook step's own output, without its collapsed groups
+              let inside = false, group = false;
+              const lines = [];
+              for (let line of log.split('\n')) {
+                line = line.replace(/^\S+Z /, '');
+                if (line.startsWith('##[group]Run ')) {
+                  if (inside) break;
+                  if (line.startsWith('##[group]Run dflook/tofu-apply@')) { inside = group = true; continue; }
+                }
+                if (!inside || line.startsWith('##[command]')) continue;
+                if (line.startsWith('##[group]')) group = true;
+                else if (line.startsWith('##[endgroup]')) group = false;
+                else if (!group) lines.push(line);
+              }
+              if (!lines.length) {
+                core.info(`${workspace}: the apply step left no output`);
+                continue;
+              }
+              let text = lines.join('\n'), note = '';
+              if (text.length > 60000) {
+                text = text.slice(-60000).replace(/^.*\n/, '');
+                note = ', the start cut to fit a comment';
+              }
+              await github.rest.issues.createComment({
+                owner, repo, issue_number: context.issue.number,
+                body: `**${workspace} apply: ${job.conclusion}** in [tofu #${context.runNumber}](${run})${note}\n\n`
+                  + `<details><summary>Apply log</summary>\n\n\`\`\`\`\n${text}\n\`\`\`\`\n\n</details>`,
+              });
+              core.info(`${workspace}: posted the apply log`);
+            }
