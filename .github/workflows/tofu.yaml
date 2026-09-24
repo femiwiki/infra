@@ -59,6 +59,12 @@ jobs:
         if: steps.scope.outputs.plan == 'true' && matrix.workspace == 'docker'
         id: daemon
 
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v6.1.0
+        if: steps.scope.outputs.plan == 'true'
+        with:
+          path: ${{ runner.temp }}/_github_home/.dflook-terraform-github-actions/terraform-bin-dir
+          key: dflook-tofu-bin-${{ runner.os }}
+
       - uses: dflook/tofu-plan@c7416238983bdd94c5486fb856bb7358f2bcc935  # v3.1.0
         if: steps.scope.outputs.plan == 'true'
         id: plan
