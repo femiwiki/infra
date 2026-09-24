@@ -243,8 +243,10 @@ resource "grafana_rule_group" "femiwiki_http" {
     }
 
     annotations = {
-      summary = "최근 5분 동안 정상 응답이 {{ printf \"%.0f\" $values.A.Value }}건입니다."
-      logs    = local.explore_urls.status
+      summary          = "최근 5분 동안 정상 응답이 {{ printf \"%.0f\" $values.A.Value }}건입니다."
+      logs             = local.explore_urls.status
+      __dashboardUid__ = grafana_dashboard.availability.uid
+      __panelId__      = "1"
     }
 
     data {
@@ -289,8 +291,10 @@ resource "grafana_rule_group" "femiwiki_http" {
     exec_err_state = "OK"
 
     annotations = {
-      summary = "최근 5분 동안 응답의 {{ printf \"%.0f\" $values.C.Value }}%가 5xx입니다. 5xx는 {{ printf \"%.0f\" $values.A.Value }}건입니다."
-      logs    = local.explore_urls.status
+      summary          = "최근 5분 동안 응답의 {{ printf \"%.0f\" $values.C.Value }}%가 5xx입니다. 5xx는 {{ printf \"%.0f\" $values.A.Value }}건입니다."
+      logs             = local.explore_urls.status
+      __dashboardUid__ = grafana_dashboard.availability.uid
+      __panelId__      = "1"
     }
 
     data {
