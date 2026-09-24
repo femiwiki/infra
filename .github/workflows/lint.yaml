@@ -18,6 +18,6 @@ jobs:
 
       - uses: terraform-linters/setup-tflint@1cf010d3c7aef302051ccdb68c14c5dc2efa34ef  # v6.3.1
         with:
-          tflint_version: v0.64.0
+          tflint_version: latest
 
       - run: tflint --recursive --config="$PWD/.tflint.hcl" --format=compact
