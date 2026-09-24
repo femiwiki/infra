@@ -190,6 +190,7 @@ module "caddy_mwcache" {
     "cache",
     "mediawiki",
   ]
+  required_status_checks_contexts = ["lint-go"]
 }
 
 module "ooui_femiwiki_theme" {
