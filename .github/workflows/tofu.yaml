@@ -210,6 +210,17 @@ jobs:
           path: ${{ matrix.workspace }}
           auto_approve: ${{ github.event_name == 'workflow_dispatch' }}
 
+      - name: Post the `## 업데이트` lines of the applied pull requests to the wiki
+        if: github.event_name == 'issue_comment'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          WIKI_DEPLOY_BOT_USER: ${{ secrets.WIKI_DEPLOY_BOT_USER }}
+          WIKI_DEPLOY_BOT_PASSWORD: ${{ secrets.WIKI_DEPLOY_BOT_PASSWORD }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.issue.number }}
+        run: .github/scripts/post-update.php "$REPO" "$PR"
+
       - name: Say what actually happened
         id: outcome
         if: always()

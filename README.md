@@ -31,6 +31,10 @@ terraform plan
 
 머지는 그 다음입니다. `docker plan is empty`와 `grafana plan is empty`가 필수 검사라서, plan이 비어 있지 않은 PR은 머지되지 않습니다. apply가 끝나면 그 PR의 plan을 다시 돌려 검사를 갱신하므로, 적용하고 나면 따로 할 일은 없습니다. `grafana/`도 같습니다.
 
+적용이 끝나면 그 PR의 `## 업데이트` 절(이미지 bump PR이면 "Built from"에 적힌 docker-mediawiki PR들의 절까지)이 [페미위키:업데이트]의 그날 항목으로 올라갑니다. 각 줄은 `추가:`, `변경:`, `수정:` 중 하나로 시작하는 한국어 문장이고, 절이 없는 PR은 아무것도 올리지 않습니다. 봇 계정은 `docker` 환경의 `WIKI_DEPLOY_BOT_USER`, `WIKI_DEPLOY_BOT_PASSWORD` 시크릿입니다. 이 둘이 없으면 올리는 단계를 건너뜁니다. 위키가 응답하지 않아 이 단계가 실패해도 배포는 성공으로 남습니다.
+
+[페미위키:업데이트]: https://femiwiki.com/w/페미위키:업데이트
+
 ### 호스트 위의 알로이 설정
 
 `aws/res/config.alloy.tftpl`은 `user_data`로만 들어가는데 `user_data`는 `ignore_changes`라, 이 파일을 고쳐도 돌고 있는 호스트는 바뀌지 않습니다. 설정을 실제로 밀어 넣는 것은 SSM State Manager입니다. `aws/`를 적용하면 `install-alloy-config-docker`와 `install-alloy-config-database` association이 곧바로 한 번 돌고 그 뒤로는 30분마다 다시 돕니다. 누가 손으로 고쳐 놓았다면 그때 되돌아옵니다.
