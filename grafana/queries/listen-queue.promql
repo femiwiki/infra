@@ -1,1 +1,1 @@
-phpfpm_listen_queue{job="integrations/php-fpm"}
+max(phpfpm_listen_queue{job="integrations/php-fpm"})
