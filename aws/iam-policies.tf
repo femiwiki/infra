@@ -276,6 +276,31 @@ data "aws_iam_policy_document" "upload_backup" {
   }
 }
 
+resource "aws_iam_policy" "read_backup" {
+  name        = "ReadBackup"
+  description = "Allows to read the MySQL backups back"
+
+  policy = data.aws_iam_policy_document.read_backup.json
+}
+
+data "aws_iam_policy_document" "read_backup" {
+  statement {
+    actions   = ["s3:GetObject"]
+    resources = ["${local.backups}/mysql/*"]
+  }
+
+  statement {
+    actions   = ["s3:ListBucket"]
+    resources = [local.backups]
+
+    condition {
+      test     = "StringLike"
+      variable = "s3:prefix"
+      values   = ["mysql/*"]
+    }
+  }
+}
+
 
 #
 # Policy documents for inline policies
