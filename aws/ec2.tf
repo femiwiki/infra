@@ -16,6 +16,8 @@ resource "aws_instance" "database" {
   user_data = templatefile("res/user-data-mysql.sh.tftpl", {
     mysql_data_dir  = "/var/lib/mysql" # Default
     mysql_server_id = "2"
+    region          = data.aws_region.current.region
+    backups_bucket  = aws_s3_bucket.backups.bucket
 
     alloy_install = local.alloy_install["database"]
   })
