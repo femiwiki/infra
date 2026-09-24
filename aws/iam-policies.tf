@@ -210,7 +210,7 @@ resource "aws_iam_policy" "access_caddycerts" {
 data "aws_iam_policy_document" "access_caddycerts" {
   statement {
     actions   = ["s3:ListBucket"]
-    resources = ["${local.secrets}"]
+    resources = [local.secrets]
   }
   statement {
     actions = [
