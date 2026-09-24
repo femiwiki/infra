@@ -1,0 +1,271 @@
+# Grafana takes this as JSON; the Terraform encodes it. A bare y reads as true where
+# OpenTofu decodes this, so the panel coordinate stays quoted.
+uid: site
+title: 페미위키 사용량
+description: |-
+  페미위키를 돌리는 두 대의 서버가 지금 무엇을 하고 있는지입니다. Caddy가 받은 요청과 두 호스트의 CPU, 메모리, 디스크, 네트워크를 담습니다.
+tags:
+- public
+timezone: Asia/Seoul
+schemaVersion: 39
+editable: true
+refresh: 1m
+time:
+  from: now-24h
+  to: now
+panels:
+- id: 1
+  type: timeseries
+  title: 요청
+  description: |-
+    Caddy가 응답을 끝낸 요청을 초당 건수로, 상태 코드별로 나눈 것입니다. 캐시에서 나간 것과 PHP가 만든 것을 모두 포함합니다.
+  datasource: &prom
+    type: prometheus
+    uid: __PROM_UID__
+  gridPos:
+    h: 9
+    w: 24
+    x: 0
+    'y': 0
+  fieldConfig:
+    defaults:
+      unit: reqps
+      min: 0
+      custom:
+        fillOpacity: 12
+        lineWidth: 1
+        showPoints: never
+        stacking:
+          mode: normal
+    overrides: []
+  options:
+    legend:
+      displayMode: table
+      placement: right
+      calcs:
+      - lastNotNull
+      - max
+    tooltip:
+      mode: multi
+      sort: desc
+  targets:
+  - refId: A
+    datasource: *prom
+    expr: |-
+      sum by (code) (rate(caddy_http_request_duration_seconds_count{job="integrations/caddy"}[5m]))
+    legendFormat: '{{code}}'
+- id: 2
+  type: timeseries
+  title: 응답 시간
+  description: |-
+    요청을 받아 응답을 끝내기까지 걸린 시간입니다. 중앙값은 절반의 요청이 그보다 빨랐다는 뜻이고, 95퍼센타일은 스무 건 중 한 건이 그보다 느렸다는 뜻입니다.
+  datasource: *prom
+  gridPos:
+    h: 8
+    w: 12
+    x: 0
+    'y': 9
+  fieldConfig:
+    defaults:
+      unit: s
+      min: 0
+      custom:
+        fillOpacity: 0
+        lineWidth: 2
+        showPoints: never
+    overrides: []
+  options:
+    legend:
+      displayMode: list
+      placement: bottom
+      calcs: []
+    tooltip:
+      mode: multi
+      sort: desc
+  targets:
+  - refId: A
+    datasource: *prom
+    expr: |-
+      histogram_quantile(0.5, sum by (le) (rate(caddy_http_request_duration_seconds_bucket{job="integrations/caddy"}[5m])))
+    legendFormat: 중앙값
+  - refId: B
+    datasource: *prom
+    expr: |-
+      histogram_quantile(0.95, sum by (le) (rate(caddy_http_request_duration_seconds_bucket{job="integrations/caddy"}[5m])))
+    legendFormat: 95퍼센타일
+- id: 3
+  type: timeseries
+  title: 돌려보낸 요청
+  description: |-
+    Caddy가 PHP에 넘기지 않고 직접 끊은 요청입니다. 초당 건수를 그렇게 만든 처리기별로 나눴습니다. rate_limit은 로그인하지 않은 요청이 상한을 넘어 429로 거절된 것이고, reverse_proxy는 PHP가 응답하지 못한 것입니다.
+  datasource: *prom
+  gridPos:
+    h: 8
+    w: 12
+    x: 12
+    'y': 9
+  fieldConfig:
+    defaults:
+      unit: reqps
+      min: 0
+      custom:
+        fillOpacity: 12
+        lineWidth: 1
+        showPoints: never
+    overrides: []
+  options:
+    legend:
+      displayMode: list
+      placement: bottom
+      calcs: []
+    tooltip:
+      mode: multi
+      sort: desc
+  targets:
+  - refId: A
+    datasource: *prom
+    expr: |-
+      sum by (handler) (rate(caddy_http_request_errors_total{job="integrations/caddy"}[5m]))
+    legendFormat: '{{handler}}'
+- id: 4
+  type: timeseries
+  title: CPU
+  description: |-
+    각 호스트가 쓴 CPU입니다. 두 대 모두 버스트 성능을 크레딧으로 사는 t4g이라, 오래 높으면 크레딧이 떨어져 느려집니다.
+  datasource: *prom
+  gridPos:
+    h: 8
+    w: 12
+    x: 0
+    'y': 17
+  fieldConfig:
+    defaults:
+      unit: percent
+      min: 0
+      max: 100
+      custom:
+        fillOpacity: 8
+        lineWidth: 1
+        showPoints: never
+    overrides: []
+  options:
+    legend:
+      displayMode: list
+      placement: bottom
+      calcs: []
+    tooltip:
+      mode: multi
+      sort: desc
+  targets:
+  - refId: A
+    datasource: *prom
+    expr: |-
+      100 - (avg by (instance) (rate(node_cpu_seconds_total{job="integrations/node_exporter", mode="idle"}[5m])) * 100)
+    legendFormat: '{{instance}}'
+- id: 5
+  type: timeseries
+  title: 남은 메모리
+  description: |-
+    다른 프로그램이 바로 쓸 수 있는 메모리입니다. 캐시로 잡아둔 것은 비울 수 있으므로 여기 들어갑니다.
+  datasource: *prom
+  gridPos:
+    h: 8
+    w: 12
+    x: 12
+    'y': 17
+  fieldConfig:
+    defaults:
+      unit: bytes
+      min: 0
+      custom:
+        fillOpacity: 8
+        lineWidth: 1
+        showPoints: never
+    overrides: []
+  options:
+    legend:
+      displayMode: list
+      placement: bottom
+      calcs: []
+    tooltip:
+      mode: multi
+      sort: desc
+  targets:
+  - refId: A
+    datasource: *prom
+    expr: |-
+      node_memory_MemAvailable_bytes{job="integrations/node_exporter"}
+    legendFormat: '{{instance}}'
+- id: 6
+  type: timeseries
+  title: 남은 디스크
+  description: |-
+    루트 파일 시스템에 남은 자리입니다. 2026년 9월에는 한쪽이 96퍼센트까지 찼던 적이 있습니다.
+  datasource: *prom
+  gridPos:
+    h: 8
+    w: 12
+    x: 0
+    'y': 25
+  fieldConfig:
+    defaults:
+      unit: bytes
+      min: 0
+      custom:
+        fillOpacity: 8
+        lineWidth: 1
+        showPoints: never
+    overrides: []
+  options:
+    legend:
+      displayMode: list
+      placement: bottom
+      calcs: []
+    tooltip:
+      mode: multi
+      sort: desc
+  targets:
+  - refId: A
+    datasource: *prom
+    expr: |-
+      node_filesystem_avail_bytes{job="integrations/node_exporter", mountpoint="/"}
+    legendFormat: '{{instance}}'
+- id: 7
+  type: timeseries
+  title: 네트워크
+  description: |-
+    호스트가 주고받은 양입니다. 나가는 쪽이 독자에게 보낸 것이고, 요금이 붙는 것도 그쪽입니다.
+  datasource: *prom
+  gridPos:
+    h: 8
+    w: 12
+    x: 12
+    'y': 25
+  fieldConfig:
+    defaults:
+      unit: Bps
+      min: 0
+      custom:
+        fillOpacity: 8
+        lineWidth: 1
+        showPoints: never
+    overrides: []
+  options:
+    legend:
+      displayMode: list
+      placement: bottom
+      calcs: []
+    tooltip:
+      mode: multi
+      sort: desc
+  targets:
+  - refId: A
+    datasource: *prom
+    expr: |-
+      sum by (instance) (rate(node_network_receive_bytes_total{job="integrations/node_exporter", device!~"lo|veth.*|docker.*|br-.*"}[5m]))
+    legendFormat: '{{instance}} 받음'
+  - refId: B
+    datasource: *prom
+    expr: |-
+      sum by (instance) (rate(node_network_transmit_bytes_total{job="integrations/node_exporter", device!~"lo|veth.*|docker.*|br-.*"}[5m]))
+    legendFormat: '{{instance}} 보냄'
