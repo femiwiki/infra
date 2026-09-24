@@ -24,6 +24,7 @@ module "infra" {
   required_status_checks_contexts = [
     "docker plan is empty",
     "grafana plan is empty",
+    "tflint",
   ]
   topics = [
     "terraform",
@@ -148,11 +149,6 @@ module "femiwiki_github_io" {
   ]
 }
 
-import {
-  to = module.femiwiki_github_io.github_repository_pages.pages[0]
-  id = "femiwiki.github.io"
-}
-
 module "dot_github" {
   source                = "./modules/github-repository"
   name                  = ".github"
@@ -262,11 +258,6 @@ module "status" {
   topics = [
     "status",
   ]
-}
-
-import {
-  to = module.status.github_repository_pages.pages[0]
-  id = "status"
 }
 
 resource "github_repository_file" "status_index" {

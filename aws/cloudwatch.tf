@@ -3,9 +3,8 @@ resource "aws_cloudwatch_log_group" "discord_noti" {
 }
 
 resource "aws_cloudwatch_log_group" "discord_noti_us" {
-  provider = aws.us
-
-  name = "/aws/lambda/DiscordNoti"
+  name   = "/aws/lambda/DiscordNoti"
+  region = "us-east-1"
 }
 
 resource "aws_cloudwatch_metric_alarm" "femiwiki_volume_idle_time_cloud_watch_alarm" {
@@ -25,8 +24,6 @@ resource "aws_cloudwatch_metric_alarm" "femiwiki_volume_idle_time_cloud_watch_al
 }
 
 resource "aws_cloudwatch_metric_alarm" "bounce_rate" {
-  provider = aws.us
-
   alarm_name          = "Bounce Rate"
   namespace           = "AWS/SES"
   metric_name         = "Reputation.BounceRate"
@@ -38,11 +35,10 @@ resource "aws_cloudwatch_metric_alarm" "bounce_rate" {
   evaluation_periods  = 1
   alarm_actions       = [aws_sns_topic.cloudwatch_alarms_topic_us.arn]
   treat_missing_data  = "ignore"
+  region              = "us-east-1"
 }
 
 resource "aws_cloudwatch_metric_alarm" "complaint_rate" {
-  provider = aws.us
-
   alarm_name          = "Complaint Rate"
   namespace           = "AWS/SES"
   metric_name         = "Reputation.ComplaintRate"
@@ -54,11 +50,10 @@ resource "aws_cloudwatch_metric_alarm" "complaint_rate" {
   evaluation_periods  = 1
   alarm_actions       = [aws_sns_topic.cloudwatch_alarms_topic_us.arn]
   treat_missing_data  = "ignore"
+  region              = "us-east-1"
 }
 
 resource "aws_cloudwatch_metric_alarm" "femiwiki_pages" {
-  provider = aws.us
-
   for_each = aws_route53_health_check.femiwiki_pages
 
   alarm_name  = "${each.key} awsroute53 Low-HealthCheckStatus"
@@ -75,6 +70,7 @@ resource "aws_cloudwatch_metric_alarm" "femiwiki_pages" {
   evaluation_periods  = 5
   alarm_actions       = [aws_sns_topic.cloudwatch_alarms_topic_us.arn]
   ok_actions          = [aws_sns_topic.cloudwatch_alarms_topic_us.arn]
+  region              = "us-east-1"
 }
 
 resource "aws_cloudwatch_metric_alarm" "backup_missing" {
