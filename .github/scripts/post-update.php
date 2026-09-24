@@ -8,22 +8,7 @@
 
 const WIKI_API = 'https://femiwiki.com/api.php';
 
-function fail( string $message ): never {
-	fwrite( STDERR, "$message\n" );
-	exit( 1 );
-}
-
-function gh( string $path ): array {
-	$json = shell_exec( 'gh api ' . escapeshellarg( $path ) );
-	return json_decode( $json ?? '', true ) ?? fail( "gh api $path failed" );
-}
-
-/** The contents of the ```wikitext fenced blocks of a PR body, the example in a comment aside */
-function blocks( string $body ): array {
-	$body = preg_replace( '/<!--.*?-->/su', '', str_replace( "\r", '', $body ) );
-	preg_match_all( '/^```wikitext\h*\n(.*?)^```\h*$/msu', $body, $found );
-	return array_values( array_filter( array_map( 'trim', $found[1] ), 'strlen' ) );
-}
+require __DIR__ . '/updates.php';
 
 /** The page with a new section above the first one headed no later than it, a day without a time counting as its midnight */
 function insert( string $text, DateTimeInterface $at, array $blocks ): string {
