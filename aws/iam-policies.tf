@@ -248,6 +248,20 @@ data "aws_iam_policy_document" "read_secret_parameters" {
   }
 }
 
+resource "aws_iam_policy" "read_alloy_parameters" {
+  name        = "ReadAlloyParameters"
+  description = "Allows instances to read the Grafana Cloud credentials Alloy writes with"
+
+  policy = data.aws_iam_policy_document.read_alloy_parameters.json
+}
+
+data "aws_iam_policy_document" "read_alloy_parameters" {
+  statement {
+    actions   = ["ssm:GetParameter"]
+    resources = ["arn:aws:ssm:${data.aws_region.current.region}:${data.aws_caller_identity.current.account_id}:parameter/alloy/*"]
+  }
+}
+
 resource "aws_iam_policy" "upload_backup" {
   name        = "UploadBackup"
   description = "Allows to upload to the backup bucket"
