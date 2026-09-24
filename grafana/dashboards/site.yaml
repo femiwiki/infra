@@ -3,7 +3,7 @@
 uid: site
 title: 페미위키 사용량
 description: |-
-  페미위키를 돌리는 두 대의 서버가 지금 무엇을 하고 있는지입니다. Caddy가 받은 요청과 두 호스트의 CPU, 메모리, 디스크, 네트워크를 담습니다.
+  페미위키를 돌리는 서버 두 대가 지금 얼마나 일하고 있는지 봅니다. Caddy가 받은 요청과 두 호스트의 CPU, 메모리, 디스크, 네트워크를 담았습니다.
 tags:
 - public
 timezone: Asia/Seoul
