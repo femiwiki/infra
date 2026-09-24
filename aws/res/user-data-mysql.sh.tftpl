@@ -130,14 +130,19 @@ if ! file -s /dev/nvme1n1 | grep -q "filesystem data"; then
   grep -q " /var/lib/mysql/data " /etc/fstab || echo "UUID=$(blkid -s UUID -o value /dev/nvme1n1)  /var/lib/mysql/data  xfs  defaults,noatime,nofail  0  2" >> /etc/fstab
   mount /var/lib/mysql/data
   systemctl enable --now mysqld
+  #
+  # Tracing is off from here on: this part handles root's password and then the
+  # application account's, and /var/log/cloud-init-output.log is world readable.
+  #
+  set +x
+  export AWS_DEFAULT_REGION=${region}
   TIMEOUT=300
   CHECK_INTERVAL=5
   START_TIME=$(date +%s)
   while true; do
     TEMP_PASSWORD="$(journalctl -u mysqld.service --since='30 seconds ago' 2>/dev/null | grep 'temporary password' | awk '{print $NF}')"
     if [ -n "$TEMP_PASSWORD" ]; then
-      echo "Temporary password found: $TEMP_PASSWORD"
-      # TODO Save it to the ssm parameter store
+      echo "Temporary password found"
       break
     fi
     CURRENT_TIME=$(date +%s)
@@ -147,18 +152,22 @@ if ! file -s /dev/nvme1n1 | grep -q "filesystem data"; then
     fi
     sleep $CHECK_INTERVAL
   done
-  mysql --connect-expired-password -uroot -p"$TEMP_PASSWORD" \
-    -e "ALTER USER 'root'@'localhost' IDENTIFIED BY '$TEMP_PASSWORD' PASSWORD EXPIRE NEVER;"
+  MYSQL_PWD="$TEMP_PASSWORD" mysql --connect-expired-password -uroot <<SQL
+ALTER USER 'root'@'localhost' IDENTIFIED BY '$TEMP_PASSWORD' PASSWORD EXPIRE NEVER;
+SQL
+  # Parameter Store is the only place this password survives. The log line above
+  # used to be it, and it left nobody able to administer the server. See #652.
+  #
+  # The name carries the server id, because every host that boots on an empty
+  # volume generates its own. A single name would mean a replica publishing its
+  # password over the primary's.
+  aws ssm put-parameter --name /mysql/servers/${mysql_server_id}/root/password \
+    --type SecureString --value "$TEMP_PASSWORD" --overwrite > /dev/null
 
   #
   # Restore the newest backup, so that replacing this host is the restore.
   # Only a fresh volume reaches here, so there is nothing to overwrite.
   #
-  # Tracing is off for this part: it handles the account passwords, and
-  # /var/log/cloud-init-output.log is world readable.
-  #
-  set +x
-  export AWS_DEFAULT_REGION=${region}
   MEDIAWIKI_USER="$(aws ssm get-parameter --name /mysql/users/mediawiki/username --query Parameter.Value --output text)"
   MEDIAWIKI_PASSWORD="$(aws ssm get-parameter --name /mysql/users/mediawiki/password --with-decryption --query Parameter.Value --output text)"
   # The names are ISO 8601, so the last key in lexicographic order is the newest
