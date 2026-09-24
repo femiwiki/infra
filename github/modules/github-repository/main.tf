@@ -16,19 +16,22 @@ resource "github_repository" "repository" {
   allow_rebase_merge        = false
   squash_merge_commit_title = "PR_TITLE"
 
-  dynamic "pages" {
-    for_each = var.pages_build_type == null ? [] : [var.pages_build_type]
-    content {
-      build_type = pages.value
-      cname      = var.pages_cname
+  lifecycle {
+    ignore_changes = [pages]
+  }
+}
 
-      dynamic "source" {
-        for_each = pages.value == "legacy" ? [1] : []
-        content {
-          branch = "main"
-          path   = "/"
-        }
-      }
+resource "github_repository_pages" "pages" {
+  count      = var.pages_build_type == null ? 0 : 1
+  repository = github_repository.repository.name
+  build_type = var.pages_build_type
+  cname      = var.pages_cname
+
+  dynamic "source" {
+    for_each = var.pages_build_type == "legacy" ? [1] : []
+    content {
+      branch = "main"
+      path   = "/"
     }
   }
 }
