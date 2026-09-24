@@ -172,13 +172,8 @@ jobs:
 
       - uses: sarisia/actions-status-discord@eb045afee445dc055c18d3d90bd0f244fd062708  # v1.16.0
         with:
-          webhook: >-
-            ${{ case(
-              matrix.workspace == 'docker', secrets.DOCKER_DISCORD_WEBHOOK,
-              matrix.workspace == 'grafana', secrets.GRAFANA_DISCORD_WEBHOOK,
-              secrets.HEALTHCHECKS_DISCORD_WEBHOOK
-            ) }}
-          title: Applying
+          webhook: ${{ secrets.TOFU_DISCORD_WEBHOOK }}
+          title: "${{ matrix.workspace }}: Applying"
           color: 0x3498db
           nodetail: true
           url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
@@ -249,14 +244,9 @@ jobs:
       - uses: sarisia/actions-status-discord@eb045afee445dc055c18d3d90bd0f244fd062708  # v1.16.0
         if: always()
         with:
-          webhook: >-
-            ${{ case(
-              matrix.workspace == 'docker', secrets.DOCKER_DISCORD_WEBHOOK,
-              matrix.workspace == 'grafana', secrets.GRAFANA_DISCORD_WEBHOOK,
-              secrets.HEALTHCHECKS_DISCORD_WEBHOOK
-            ) }}
+          webhook: ${{ secrets.TOFU_DISCORD_WEBHOOK }}
           status: ${{ job.status }}
-          title: ${{ steps.outcome.outputs.title }}
+          title: "${{ matrix.workspace }}: ${{ steps.outcome.outputs.title }}"
           nodetail: true
           url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           description: ${{ steps.outcome.outputs.description }}
