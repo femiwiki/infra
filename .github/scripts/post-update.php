@@ -3,7 +3,8 @@
 // Post the ```wikitext blocks of an applied pull request to 페미위키:업데이트, under the minute of the apply.
 //
 // Usage: post-update.php OWNER/REPO PR_NUMBER [--dry-run]
-// Environment: GH_TOKEN, WIKI_DEPLOY_BOT_USER, WIKI_DEPLOY_BOT_PASSWORD (the last two not needed with --dry-run)
+// Environment: GH_TOKEN, WIKI_DEPLOY_BOT_USER, WIKI_DEPLOY_BOT_PASSWORD (the last two not needed with --dry-run),
+// and APPLIED_AT to head a late post with an earlier time: a time in Asia/Seoul, or empty for when the PR merged
 
 const WIKI_API = 'https://femiwiki.com/api.php';
 
@@ -24,11 +25,18 @@ function blocks( string $body ): array {
 	return array_values( array_filter( array_map( 'trim', $found[1] ), 'strlen' ) );
 }
 
-/** The page with a new section inserted above the first existing one */
-function prepend( string $text, string $heading, array $blocks ): string {
+/** The page with a new section above the first one headed no later than it, a day without a time counting as its midnight */
+function insert( string $text, DateTimeInterface $at, array $blocks ): string {
 	$sections = preg_split( '/^(?===[^=])/mu', $text );
-	$lead = str_starts_with( $text, '==' ) ? 0 : 1;
-	array_splice( $sections, $lead, 0, "==$heading==\n\n" . implode( "\n\n", $blocks ) . "\n\n" );
+	$key = $at->format( 'mdHi' );
+	for ( $i = str_starts_with( $text, '==' ) ? 0 : 1; $i < count( $sections ); $i++ ) {
+		if ( preg_match( '/^==\s*(\d+)월\s*(\d+)일(?:\s+(\d+):(\d+))?\s*==/u', $sections[$i], $m )
+			&& sprintf( '%02d%02d%02d%02d', $m[1], $m[2], $m[3] ?? 0, $m[4] ?? 0 ) <= $key
+		) {
+			break;
+		}
+	}
+	array_splice( $sections, $i, 0, '==' . $at->format( 'n월 j일 H:i' ) . "==\n\n" . implode( "\n\n", $blocks ) . "\n\n" );
 	return implode( '', $sections );
 }
 
@@ -53,7 +61,8 @@ function wiki( array $params ): array {
 $dryRun = in_array( '--dry-run', $argv, true );
 [ $repo, $number ] = array_values( array_diff( array_slice( $argv, 1 ), [ '--dry-run' ] ) );
 
-$blocks = blocks( gh( "repos/$repo/pulls/$number" )['body'] ?? '' );
+$pr = gh( "repos/$repo/pulls/$number" );
+$blocks = blocks( $pr['body'] ?? '' );
 if ( !$blocks ) {
 	echo "$repo#$number: no ```wikitext block, nothing to post\n";
 	exit;
@@ -63,8 +72,12 @@ if ( !$dryRun && ( !getenv( 'WIKI_DEPLOY_BOT_USER' ) || !getenv( 'WIKI_DEPLOY_BO
 	exit;
 }
 
-$now = new DateTime( 'now', new DateTimeZone( 'Asia/Seoul' ) );
-$title = '페미위키:업데이트/' . $now->format( 'Y' ) . '년';
+$appliedAt = getenv( 'APPLIED_AT' );
+if ( $appliedAt === '' ) {
+	$appliedAt = $pr['merged_at'] ?? fail( "$repo#$number has not merged, so give APPLIED_AT" );
+}
+$at = ( new DateTime( $appliedAt ?: 'now', new DateTimeZone( 'Asia/Seoul' ) ) )->setTimezone( new DateTimeZone( 'Asia/Seoul' ) );
+$title = '페미위키:업데이트/' . $at->format( 'Y' ) . '년';
 $page = wiki( [
 	'action' => 'query', 'prop' => 'revisions', 'rvprop' => 'content|timestamp', 'rvslots' => 'main', 'titles' => $title,
 ] )['query']['pages'][0];
@@ -76,7 +89,7 @@ if ( !$blocks ) {
 	echo "$title: already posted\n";
 	exit;
 }
-$merged = prepend( $text, $now->format( 'n월 j일 H:i' ), $blocks );
+$merged = insert( $text, $at, $blocks );
 if ( $dryRun ) {
 	$before = tempnam( sys_get_temp_dir(), 'page' );
 	$after = tempnam( sys_get_temp_dir(), 'page' );
