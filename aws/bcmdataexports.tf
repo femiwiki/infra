@@ -1,6 +1,4 @@
 resource "aws_bcmdataexports_export" "cost_and_usage" {
-  provider = aws.us
-
   export {
     name        = "femiwiki-cost-and-usage"
     description = "Monthly line items for femiwiki.github.io"
