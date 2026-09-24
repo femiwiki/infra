@@ -301,6 +301,20 @@ data "aws_iam_policy_document" "read_backup" {
   }
 }
 
+resource "aws_iam_policy" "read_mysql_user_parameters" {
+  name        = "ReadMysqlUserParameters"
+  description = "Allows the database instance to read the MySQL account parameters at boot"
+
+  policy = data.aws_iam_policy_document.read_mysql_user_parameters.json
+}
+
+data "aws_iam_policy_document" "read_mysql_user_parameters" {
+  statement {
+    actions   = ["ssm:GetParameter"]
+    resources = ["arn:aws:ssm:${data.aws_region.current.region}:${data.aws_caller_identity.current.account_id}:parameter/mysql/users/*"]
+  }
+}
+
 
 #
 # Policy documents for inline policies
