@@ -1,11 +1,10 @@
 #!/usr/bin/env php
 <?php
-// Post the `## 업데이트` lines of an applied pull request to 페미위키:업데이트.
+// Post the ```wikitext blocks of an applied pull request to 페미위키:업데이트, under the minute of the apply.
 //
 // Usage: post-update.php OWNER/REPO PR_NUMBER [--dry-run]
 // Environment: GH_TOKEN, WIKI_DEPLOY_BOT_USER, WIKI_DEPLOY_BOT_PASSWORD (the last two not needed with --dry-run)
 
-const KINDS = [ '추가', '변경', '수정' ];
 const WIKI_API = 'https://femiwiki.com/api.php';
 
 function fail( string $message ): never {
@@ -18,65 +17,17 @@ function gh( string $path ): array {
 	return json_decode( $json ?? '', true ) ?? fail( "gh api $path failed" );
 }
 
-/** [ [kind, sentence], ... ] from the `## 업데이트` section of a PR body */
-function items( string $body ): array {
-	$body = str_replace( "\r", '', $body );
-	if ( !preg_match( '/^##\s*업데이트\s*$(.*?)(?=^##\s|\z)/msu', $body, $section ) ) {
-		return [];
-	}
-	preg_match_all( '/^\h*(?:[-*]\h*)?(추가|변경|수정)\h*:\h*(\S.*?)\h*$/mu', $section[1], $found, PREG_SET_ORDER );
-	return array_map( fn ( $f ) => [ $f[1], $f[2] ], $found );
+/** The contents of the ```wikitext fenced blocks of a PR body */
+function blocks( string $body ): array {
+	preg_match_all( '/^```wikitext\h*\n(.*?)^```\h*$/msu', str_replace( "\r", '', $body ), $found );
+	return array_values( array_filter( array_map( 'trim', $found[1] ), 'strlen' ) );
 }
 
-/** Non-empty lines of a chunk of wikitext, without its first line */
-function lines( string $chunk ): array {
-	return array_values( array_filter( array_slice( explode( "\n", rtrim( $chunk ) ), 1 ), 'strlen' ) );
-}
-
-/**
- * The deploy's section rebuilt as heading, lines under no level-3 heading, the 추가/변경/수정 blocks
- * with the new lines appended, then any other level-3 headings verbatim.
- */
-function rebuild( string $section, string $heading, array $new ): string {
-	$blocks = preg_split( '/^(?====)/mu', $section );
-	$existing = [ '' => lines( array_shift( $blocks ) ) ];
-	$tail = '';
-	foreach ( $blocks as $block ) {
-		if ( $tail === '' && preg_match( '/^===\s*(추가|변경|수정)\s*===/u', $block, $m ) ) {
-			$existing[$m[1]] = lines( $block );
-		} else {
-			$tail .= $block;
-		}
-	}
-	$out = "==$heading==\n\n";
-	if ( $existing[''] ) {
-		$out .= implode( "\n", $existing[''] ) . "\n\n";
-	}
-	foreach ( KINDS as $kind ) {
-		$body = $existing[$kind] ?? [];
-		foreach ( $new[$kind] ?? [] as $line ) {
-			if ( !in_array( $line, $body, true ) ) {
-				$body[] = $line;
-			}
-		}
-		if ( $body ) {
-			$out .= "===$kind===\n\n" . implode( "\n", $body ) . "\n\n";
-		}
-	}
-	return $out . $tail;
-}
-
-/** The page with the day's section rebuilt, or created on top when absent */
-function merge( string $text, string $heading, array $new ): string {
+/** The page with a new section inserted above the first existing one */
+function prepend( string $text, string $heading, array $blocks ): string {
 	$sections = preg_split( '/^(?===[^=])/mu', $text );
-	foreach ( $sections as $i => $section ) {
-		if ( preg_match( '/^==\s*' . preg_quote( $heading, '/' ) . '\s*==\s*$/mu', $section ) ) {
-			$sections[$i] = rebuild( $section, $heading, $new );
-			return implode( '', $sections );
-		}
-	}
 	$lead = str_starts_with( $text, '==' ) ? 0 : 1;
-	array_splice( $sections, $lead, 0, rebuild( '', $heading, $new ) );
+	array_splice( $sections, $lead, 0, "==$heading==\n\n" . implode( "\n\n", $blocks ) . "\n\n" );
 	return implode( '', $sections );
 }
 
@@ -101,20 +52,9 @@ function wiki( array $params ): array {
 $dryRun = in_array( '--dry-run', $argv, true );
 [ $repo, $number ] = array_values( array_diff( array_slice( $argv, 1 ), [ '--dry-run' ] ) );
 
-$pr = gh( "repos/$repo/pulls/$number" );
-$sources = [ $pr ];
-preg_match_all( '/^- ([\w.-]+\/[\w.-]+)#(\d+)\s*$/mu', $pr['body'] ?? '', $refs, PREG_SET_ORDER );
-foreach ( $refs as $ref ) {
-	$sources[] = gh( "repos/$ref[1]/pulls/$ref[2]" );
-}
-$new = [];
-foreach ( $sources as $source ) {
-	foreach ( items( $source['body'] ?? '' ) as [ $kind, $sentence ] ) {
-		$new[$kind][] = "*$sentence [$source[html_url]]";
-	}
-}
-if ( !$new ) {
-	echo "$repo#$number: no `## 업데이트` lines, nothing to post\n";
+$blocks = blocks( gh( "repos/$repo/pulls/$number" )['body'] ?? '' );
+if ( !$blocks ) {
+	echo "$repo#$number: no ```wikitext block, nothing to post\n";
 	exit;
 }
 if ( !$dryRun && ( !getenv( 'WIKI_DEPLOY_BOT_USER' ) || !getenv( 'WIKI_DEPLOY_BOT_PASSWORD' ) ) ) {
@@ -124,22 +64,18 @@ if ( !$dryRun && ( !getenv( 'WIKI_DEPLOY_BOT_USER' ) || !getenv( 'WIKI_DEPLOY_BO
 
 $now = new DateTime( 'now', new DateTimeZone( 'Asia/Seoul' ) );
 $title = '페미위키:업데이트/' . $now->format( 'Y' ) . '년';
-$heading = $now->format( 'n월 j일 H:i' );
 $page = wiki( [
 	'action' => 'query', 'prop' => 'revisions', 'rvprop' => 'content|timestamp', 'rvslots' => 'main', 'titles' => $title,
 ] )['query']['pages'][0];
 $revision = $page['revisions'][0] ?? [];
 $text = $revision['slots']['main']['content'] ?? '';
-// A re-run of the apply lands under a later minute, so a line already anywhere on the page is not posted again
-$new = array_filter( array_map(
-	fn ( $lines ) => array_values( array_filter( $lines, fn ( $line ) => !str_contains( $text, $line ) ) ),
-	$new
-) );
-if ( !$new ) {
+// A re-run of the apply lands under a later minute, so a block already on the page is not posted again
+$blocks = array_values( array_filter( $blocks, fn ( $block ) => !str_contains( $text, $block ) ) );
+if ( !$blocks ) {
 	echo "$title: already posted\n";
 	exit;
 }
-$merged = merge( $text, $heading, $new );
+$merged = prepend( $text, $now->format( 'n월 j일 H:i' ), $blocks );
 if ( $dryRun ) {
 	$before = tempnam( sys_get_temp_dir(), 'page' );
 	$after = tempnam( sys_get_temp_dir(), 'page' );

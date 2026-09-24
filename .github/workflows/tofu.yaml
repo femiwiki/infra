@@ -210,7 +210,7 @@ jobs:
           path: ${{ matrix.workspace }}
           auto_approve: ${{ github.event_name == 'workflow_dispatch' }}
 
-      - name: Post the `## 업데이트` lines of the applied pull requests to the wiki
+      - name: Post the ```wikitext blocks of the applied pull request to the wiki
         if: github.event_name == 'issue_comment'
         continue-on-error: true
         env:
