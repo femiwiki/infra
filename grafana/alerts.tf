@@ -65,6 +65,76 @@ locals {
   }
 }
 
+locals {
+  memory_rules = {
+    "Out of memory" = {
+      expr    = trimspace(file("${path.module}/queries/oom-kills.promql"))
+      above   = 0
+      for     = "0m"
+      summary = "{{ $labels.instance }}에서 커널이 프로세스를 죽였습니다. 최근 10분 동안 {{ printf \"%.0f\" $values.A.Value }}번입니다."
+    }
+    "Container near its memory limit" = {
+      expr    = trimspace(file("${path.module}/queries/container-memory-share.promql"))
+      above   = 90
+      for     = "10m"
+      summary = "{{ $labels.name }}이 제 메모리 상한의 {{ printf \"%.0f\" $values.A.Value }}%를 쓰고 있습니다."
+    }
+  }
+}
+
+resource "grafana_rule_group" "memory" {
+  name             = "memory"
+  folder_uid       = grafana_folder.hosts.uid
+  interval_seconds = 60
+
+  dynamic "rule" {
+    for_each = local.memory_rules
+
+    content {
+      name = rule.key
+      for  = rule.value.for
+
+      condition      = "B"
+      no_data_state  = "OK"
+      exec_err_state = "OK"
+
+      annotations = {
+        summary = rule.value.summary
+      }
+
+      data {
+        ref_id         = "A"
+        datasource_uid = data.grafana_data_source.prometheus.uid
+        relative_time_range {
+          from = 600
+          to   = 0
+        }
+        model = jsonencode({
+          refId   = "A"
+          expr    = rule.value.expr
+          instant = true
+          range   = false
+        })
+      }
+
+      data {
+        ref_id         = "B"
+        datasource_uid = "__expr__"
+        relative_time_range {
+          from = 0
+          to   = 0
+        }
+        model = jsonencode({
+          refId      = "B"
+          type       = "threshold"
+          expression = "A"
+          conditions = [{ evaluator = { type = "gt", params = [rule.value.above] } }]
+        })
+      }
+    }
+  }
+}
+
 resource "grafana_rule_group" "hosts" {
   name             = "hosts"
   folder_uid       = grafana_folder.hosts.uid
