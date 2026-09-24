@@ -142,7 +142,7 @@ panels:
   type: stat
   title: 가용성
   description: |-
-    지난 2주 동안 Caddy가 끝낸 응답 가운데 5xx가 아닌 것의 비율입니다. 소수점 아래 넷째 자리까지 적으므로, 자리가 0으로 채워져 있으면 거기까지는 정확하다는 뜻입니다.
+    지난 2주 동안 Caddy가 끝낸 응답 가운데 5xx가 아닌 것의 비율입니다. 9가 이어지는 동안은 그만큼 적고, 그 밖에는 소수점 첫째 자리에서 자릅니다. 올림하지 않으므로 적힌 값보다 낮았던 적은 없습니다.
   datasource: *prom
   gridPos:
     h: 3
@@ -152,11 +152,30 @@ panels:
   fieldConfig:
     defaults:
       unit: percent
-      decimals: 4
+      decimals: 1
       max: 100
       color:
         mode: fixed
         fixedColor: text
+      mappings:
+      - type: regex
+        options:
+          pattern: '^(99\.9+)\d*$'
+          result:
+            text: $1%
+            index: 0
+      - type: regex
+        options:
+          pattern: '^(\d+\.\d)\d*$'
+          result:
+            text: $1%
+            index: 1
+      - type: regex
+        options:
+          pattern: '^(\d+)$'
+          result:
+            text: $1%
+            index: 2
     overrides: []
   options:
     colorMode: none
