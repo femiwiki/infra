@@ -1,3 +1,3 @@
 locals {
-  fastcgi_generation = 35
+  fastcgi_generation = 36
 }
