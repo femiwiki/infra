@@ -116,6 +116,7 @@ module "tweetbot" {
     "bot",
     "twitter",
   ]
+  required_status_checks_contexts = ["ci"]
 }
 
 module "remote_gadgets" {
