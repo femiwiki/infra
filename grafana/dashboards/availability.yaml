@@ -142,14 +142,11 @@ panels:
   type: text
   title: 사고 보고서
   gridPos:
-    h: 6
+    h: 3
     w: 24
     x: 0
     'y': 5
   options:
     mode: markdown
     content: |-
-      멈춘 적이 있으면 그 달 문서에 무슨 일이었는지 적습니다. 위 띠의 붉은 표시를 눌러도 같은 곳으로 갑니다.
-
-      - [2026년 9월](https://femiwiki.github.io/%EA%B0%80%EC%9A%A9%EC%84%B1/2026%EB%85%84_9%EC%9B%94.html)
-      - [달별 기록과 지난 보고서](https://femiwiki.github.io/%EA%B0%80%EC%9A%A9%EC%84%B1.html)
+      [가용성](https://femiwiki.github.io/%EA%B0%80%EC%9A%A9%EC%84%B1.html)
