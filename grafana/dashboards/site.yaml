@@ -1,5 +1,6 @@
 # Grafana takes this as JSON; the Terraform encodes it. A bare y reads as true where
 # OpenTofu decodes this, so the panel coordinate stays quoted.
+---
 uid: site
 title: 페미위키 사용량
 description: |-
