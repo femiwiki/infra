@@ -482,7 +482,8 @@ resource "grafana_contact_point" "discord" {
 }
 
 resource "grafana_contact_point" "discord_default" {
-  name = "Discord"
+  name               = "Discord"
+  disable_provenance = true
 
   discord {
     url                  = var.discord_webhook_url
