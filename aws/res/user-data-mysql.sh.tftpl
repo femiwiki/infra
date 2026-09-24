@@ -161,23 +161,36 @@ if ! file -s /dev/nvme1n1 | grep -q "filesystem data"; then
   export AWS_DEFAULT_REGION=${region}
   MEDIAWIKI_USER="$(aws ssm get-parameter --name /mysql/users/mediawiki/username --query Parameter.Value --output text)"
   MEDIAWIKI_PASSWORD="$(aws ssm get-parameter --name /mysql/users/mediawiki/password --with-decryption --query Parameter.Value --output text)"
-  BACKUP_KEY="$(aws s3api list-objects-v2 --bucket ${backups_bucket} --prefix mysql/ --query 'sort_by(Contents, &LastModified)[-1].Key' --output text)"
+  # The names are ISO 8601, so the last key in lexicographic order is the newest
+  # backup. Sorting Contents by LastModified instead would run per page of 1000
+  # and answer with one key per page.
+  BACKUP_KEY="mysql/$(aws s3 ls s3://${backups_bucket}/mysql/ | tail -1 | awk '{print $4}')"
   echo "Restoring from s3://${backups_bucket}/$BACKUP_KEY"
   aws s3 cp "s3://${backups_bucket}/$BACKUP_KEY" /var/lib/mysql/restore.sql.gz
   # The dump is mysqldump --single-transaction femiwiki, which carries neither
   # the schema nor the grants, so both are made here before it is loaded. The
   # grants copy what the live account holds, RELOAD and PROCESS included: those
   # are what mysqldump needs, so a restored host can still back itself up.
+  #
+  # The account is older than this server's password policy: a fresh MySQL 8.0
+  # installs validate_password at MEDIUM, which refuses to set that password at
+  # all. LOW keeps the eight character minimum and drops the character class
+  # rules, and MEDIUM goes back on immediately, so the host ends where a fresh
+  # install would.
   MYSQL_PWD="$TEMP_PASSWORD" mysql -uroot <<SQL
 CREATE DATABASE femiwiki CHARACTER SET binary;
+SET GLOBAL validate_password.policy = LOW;
 CREATE USER '$MEDIAWIKI_USER'@'%' IDENTIFIED BY '$MEDIAWIKI_PASSWORD';
+SET GLOBAL validate_password.policy = MEDIUM;
 GRANT RELOAD, PROCESS ON *.* TO '$MEDIAWIKI_USER'@'%';
 GRANT ALL PRIVILEGES ON femiwiki.* TO '$MEDIAWIKI_USER'@'%';
 SQL
   zcat /var/lib/mysql/restore.sql.gz | MYSQL_PWD="$TEMP_PASSWORD" mysql -uroot femiwiki
   rm -f /var/lib/mysql/restore.sql.gz
-  MYSQL_PWD="$TEMP_PASSWORD" mysql -uroot -N -B \
-    -e "SELECT CONCAT('restored revisions: ', COUNT(*)) FROM femiwiki.revision;"
+  # A restore that leaves no revisions is a failure, not a quiet empty wiki.
+  REVISIONS="$(MYSQL_PWD="$TEMP_PASSWORD" mysql -uroot -N -B -e 'SELECT COUNT(*) FROM femiwiki.revision;')"
+  echo "restored revisions: $REVISIONS"
+  [ "$REVISIONS" -gt 0 ]
   set -x
 else
   mkdir -p /var/lib/mysql/data
