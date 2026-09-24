@@ -20,6 +20,15 @@ resource "github_repository" "repository" {
     for_each = var.pages_build_type == null ? [] : [var.pages_build_type]
     content {
       build_type = pages.value
+      cname      = var.pages_cname
+
+      dynamic "source" {
+        for_each = pages.value == "legacy" ? [1] : []
+        content {
+          branch = "main"
+          path   = "/"
+        }
+      }
     }
   }
 }

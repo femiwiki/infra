@@ -246,3 +246,24 @@ module "terraform-provider-mediawiki" {
     "terraform-provider",
   ]
 }
+
+module "status" {
+  source           = "./modules/github-repository"
+  name             = "status"
+  description      = ":green_heart: 페미위키가 지금 이용 가능한지"
+  homepage_url     = "https://status.femiwiki.com"
+  pages_build_type = "legacy"
+  pages_cname      = "status.femiwiki.com"
+  topics = [
+    "status",
+  ]
+}
+
+resource "github_repository_file" "status_index" {
+  repository          = module.status.name
+  branch              = "main"
+  file                = "index.html"
+  content             = file("${path.module}/res/status-index.html")
+  commit_message      = "Send a reader to the board"
+  overwrite_on_create = true
+}

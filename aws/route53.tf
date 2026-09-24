@@ -27,6 +27,14 @@ resource "aws_route53_record" "maintenance_femiwiki_com" {
   records = ["femiwiki.github.io"]
 }
 
+resource "aws_route53_record" "status_femiwiki_com" {
+  name    = "status.femiwiki.com"
+  type    = "CNAME"
+  zone_id = aws_route53_zone.femiwiki_com.zone_id
+  ttl     = 300
+  records = ["femiwiki.github.io"]
+}
+
 resource "aws_route53_record" "femiwiki_com_amazonses_verification_record" {
   name    = "_amazonses.femiwiki.com"
   records = [aws_ses_domain_identity.femiwiki_com.verification_token]
