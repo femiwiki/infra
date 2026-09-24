@@ -119,9 +119,31 @@ data "grafana_folder" "femiwiki" {
 }
 
 locals {
-  recent_status_url = "https://femiwiki.grafana.net/explore?panes=%7B%22a%22%3A%7B%22datasource%22%3A%22grafanacloud-logs%22%2C%22queries%22%3A%5B%7B%22datasource%22%3A%7B%22uid%22%3A%22grafanacloud-logs%22%7D%2C%22expr%22%3A%22sum+by+%28status%29+%28count_over_time%28%7Bdocker_container_name%3D~%5C%22http.%2A%5C%22%7D+%7C+json+%7C+__error__%3D%5C%22%5C%22+%7C+status+%21%3D+%5C%22%5C%22+%5B5m%5D%29%29%22%2C%22queryType%22%3A%22range%22%2C%22refId%22%3A%22A%22%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22now-3h%22%2C%22to%22%3A%22now%22%7D%7D%7D&schemaVersion=1"
+  explore_exprs = {
+    status   = trimspace(file("${path.module}/queries/explore-status.logql"))
+    refusals = trimspace(file("${path.module}/queries/explore-refusals.logql"))
+  }
+
+  explore_urls = {
+    for name, expr in local.explore_exprs :
+    name => "https://femiwiki.grafana.net/explore?panes=${urlencode(jsonencode({
+      a = {
+        datasource = "grafanacloud-logs"
+        queries = [{
+          datasource = { uid = "grafanacloud-logs" }
+          expr       = expr
+          queryType  = "range"
+          refId      = "A"
+        }]
+        range = { from = "now-3h", to = "now" }
+      }
+    }))}&schemaVersion=1"
+  }
 
   successful_responses = trimspace(file("${path.module}/queries/site-down.logql"))
+  server_errors        = trimspace(file("${path.module}/queries/server-errors.logql"))
+  all_responses        = trimspace(file("${path.module}/queries/all-responses.logql"))
+  refused_readers      = trimspace(file("${path.module}/queries/refused-readers.logql"))
 }
 
 resource "grafana_rule_group" "femiwiki_http" {
@@ -143,7 +165,7 @@ resource "grafana_rule_group" "femiwiki_http" {
 
     annotations = {
       summary = "최근 5분 동안 정상 응답이 {{ printf \"%.0f\" $values.A.Value }}건입니다."
-      logs    = local.recent_status_url
+      logs    = local.explore_urls.status
     }
 
     data {
@@ -175,6 +197,128 @@ resource "grafana_rule_group" "femiwiki_http" {
         type       = "threshold"
         expression = "A"
         conditions = [{ evaluator = { type = "lt", params = [100] } }]
+      })
+    }
+  }
+
+  rule {
+    name = "Server errors"
+    for  = "5m"
+
+    condition      = "D"
+    no_data_state  = "OK"
+    exec_err_state = "OK"
+
+    annotations = {
+      summary = "최근 5분 동안 응답의 {{ printf \"%.0f\" $values.C.Value }}%가 5xx입니다. 5xx는 {{ printf \"%.0f\" $values.A.Value }}건입니다."
+      logs    = local.explore_urls.status
+    }
+
+    data {
+      ref_id         = "A"
+      datasource_uid = data.grafana_data_source.loki.uid
+      query_type     = "instant"
+      relative_time_range {
+        from = 300
+        to   = 0
+      }
+      model = jsonencode({
+        refId     = "A"
+        expr      = local.server_errors
+        queryType = "instant"
+        instant   = true
+        range     = false
+      })
+    }
+
+    data {
+      ref_id         = "B"
+      datasource_uid = data.grafana_data_source.loki.uid
+      query_type     = "instant"
+      relative_time_range {
+        from = 300
+        to   = 0
+      }
+      model = jsonencode({
+        refId     = "B"
+        expr      = local.all_responses
+        queryType = "instant"
+        instant   = true
+        range     = false
+      })
+    }
+
+    data {
+      ref_id         = "C"
+      datasource_uid = "__expr__"
+      relative_time_range {
+        from = 0
+        to   = 0
+      }
+      model = jsonencode({
+        refId      = "C"
+        type       = "math"
+        expression = "100 * $A / $B"
+      })
+    }
+
+    data {
+      ref_id         = "D"
+      datasource_uid = "__expr__"
+      relative_time_range {
+        from = 0
+        to   = 0
+      }
+      model = jsonencode({
+        refId      = "D"
+        type       = "math"
+        expression = "($C > 10) && ($A > 50)"
+      })
+    }
+  }
+
+  rule {
+    name = "Readers refused"
+    for  = "30m"
+
+    condition      = "B"
+    no_data_state  = "OK"
+    exec_err_state = "OK"
+
+    annotations = {
+      summary = "최근 5분 동안 로그인하지 않은 독자의 요청 {{ printf \"%.0f\" $values.A.Value }}건이 429로 거절됐습니다."
+      logs    = local.explore_urls.refusals
+    }
+
+    data {
+      ref_id         = "A"
+      datasource_uid = data.grafana_data_source.loki.uid
+      query_type     = "instant"
+      relative_time_range {
+        from = 300
+        to   = 0
+      }
+      model = jsonencode({
+        refId     = "A"
+        expr      = local.refused_readers
+        queryType = "instant"
+        instant   = true
+        range     = false
+      })
+    }
+
+    data {
+      ref_id         = "B"
+      datasource_uid = "__expr__"
+      relative_time_range {
+        from = 0
+        to   = 0
+      }
+      model = jsonencode({
+        refId      = "B"
+        type       = "threshold"
+        expression = "A"
+        conditions = [{ evaluator = { type = "gt", params = [0] } }]
       })
     }
   }
