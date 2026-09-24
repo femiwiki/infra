@@ -65,6 +65,45 @@ locals {
   swapfile_install = replace(file("res/install-swapfile.sh"), "__SIZE_MIB__", local.swapfile_mib)
 }
 
+locals {
+  prune_keep_hours = 72
+
+  prune_images = replace(file("res/prune-docker-images.sh"), "__KEEP_HOURS__", local.prune_keep_hours)
+}
+
+resource "aws_ssm_document" "prune_docker_images" {
+  name            = "prune-docker-images"
+  document_type   = "Command"
+  document_format = "JSON"
+
+  content = jsonencode({
+    schemaVersion = "2.2"
+    description   = "Remove docker images no container uses, so deploys stop filling the root volume."
+    mainSteps = [{
+      action = "aws:runShellScript"
+      name   = "pruneDockerImages"
+      inputs = {
+        runCommand = split("\n", local.prune_images)
+      }
+    }]
+  })
+}
+
+resource "aws_ssm_association" "prune_docker_images" {
+  association_name    = "prune-docker-images"
+  name                = aws_ssm_document.prune_docker_images.name
+  document_version    = aws_ssm_document.prune_docker_images.latest_version
+  schedule_expression = "cron(0 18 ? * * *)"
+  compliance_severity = "MEDIUM"
+  max_concurrency     = "1"
+  max_errors          = "0"
+
+  targets {
+    key    = "tag:Name"
+    values = ["docker"]
+  }
+}
+
 resource "aws_ssm_document" "swapfile" {
   name            = "install-swapfile"
   document_type   = "Command"
