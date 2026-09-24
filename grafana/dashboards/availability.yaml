@@ -1,9 +1,17 @@
 # Grafana takes this as JSON; the Terraform encodes it. A bare y reads as true where
 # OpenTofu decodes this, so the panel coordinate stays quoted.
 uid: availability
-title: 페미위키 가용성
+title: 페미위키 상태
 description: |-
-  요청이 답을 받고 있었는지 하나의 띠로 봅니다. 가용성 문서가 이 보드를 싣습니다.
+  지금 페미위키를 이용할 수 있는지, 지난 2주는 어땠는지 봅니다.
+annotations:
+  list:
+  - builtIn: 1
+    name: 사고
+    type: dashboard
+    iconColor: rgba(255, 96, 96, 1)
+    enable: true
+    hide: false
 tags:
 - public
 timezone: Asia/Seoul
@@ -14,18 +22,70 @@ time:
   from: now-14d
   to: now
 panels:
-- id: 1
-  type: state-timeline
-  title: 요청이 답을 받았는지
+- id: 2
+  type: stat
+  title: 지금
   description: |-
-    Caddy가 끝낸 응답 가운데 5xx가 아닌 것의 비율이 99퍼센트를 넘으면 초록, 아니면 빨강입니다. 비어 있는 구간은 잰 것이 없다는 뜻이고, 그때 서버가 어땠는지는 위의 달별 기록이 말합니다. 크롤러를 막은 403과 상한을 넘겨 돌려보낸 429는 실패로 세지 않습니다. 수치는 14일만 보관합니다.
+    최근 5분 동안 Caddy가 끝낸 응답 가운데 5xx가 아닌 것이 99퍼센트를 넘으면 정상입니다.
   datasource: &prom
     type: prometheus
     uid: __PROM_UID__
   gridPos:
     h: 5
-    w: 24
+    w: 6
     x: 0
+    'y': 0
+  fieldConfig:
+    defaults:
+      noValue: 모름
+      color:
+        mode: thresholds
+      thresholds:
+        mode: absolute
+        steps:
+        - color: red
+          value: null
+        - color: green
+          value: 1
+      mappings:
+      - type: value
+        options:
+          '1':
+            text: 정상
+            index: 0
+          '0':
+            text: 장애
+            index: 1
+    overrides: []
+  options:
+    colorMode: background
+    graphMode: none
+    justifyMode: center
+    textMode: value
+    reduceOptions:
+      calcs:
+      - lastNotNull
+      fields: ''
+      values: false
+  targets:
+  - refId: A
+    datasource: *prom
+    instant: true
+    expr: |-
+      sum(rate(caddy_http_request_duration_seconds_count{job="integrations/caddy", code!~"5.."}[5m]))
+      /
+      sum(rate(caddy_http_request_duration_seconds_count{job="integrations/caddy"}[5m]))
+      >= bool 0.99
+- id: 1
+  type: state-timeline
+  title: 지난 2주
+  description: |-
+    Caddy가 끝낸 응답 가운데 5xx가 아닌 것의 비율이 99퍼센트를 넘으면 초록, 아니면 빨강입니다. 비어 있는 구간은 잰 것이 없다는 뜻이고, 그때 서버가 어땠는지는 위의 달별 기록이 말합니다. 크롤러를 막은 403과 상한을 넘겨 돌려보낸 429는 실패로 세지 않습니다. 수치는 14일만 보관합니다.
+  datasource: *prom
+  gridPos:
+    h: 5
+    w: 18
+    x: 6
     'y': 0
   fieldConfig:
     defaults:
@@ -75,3 +135,18 @@ panels:
       sum(rate(caddy_http_request_duration_seconds_count{job="integrations/caddy"}[$__rate_interval]))
       >= bool 0.99
     legendFormat: 가용성
+- id: 3
+  type: text
+  title: 사고 보고서
+  gridPos:
+    h: 6
+    w: 24
+    x: 0
+    'y': 5
+  options:
+    mode: markdown
+    content: |-
+      멈춘 적이 있으면 그 달 문서에 무슨 일이었는지 적습니다. 위 띠의 붉은 표시를 눌러도 같은 곳으로 갑니다.
+
+      - [2026년 9월](https://femiwiki.github.io/%EA%B0%80%EC%9A%A9%EC%84%B1/2026%EB%85%84_9%EC%9B%94.html)
+      - [달별 기록과 지난 보고서](https://femiwiki.github.io/%EA%B0%80%EC%9A%A9%EC%84%B1.html)
