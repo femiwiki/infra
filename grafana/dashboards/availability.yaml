@@ -9,6 +9,9 @@ annotations:
   - builtIn: 1
     name: 사고
     type: dashboard
+    datasource:
+      type: grafana
+      uid: '-- Grafana --'
     iconColor: rgba(255, 96, 96, 1)
     enable: true
     hide: false
