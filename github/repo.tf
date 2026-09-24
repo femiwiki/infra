@@ -24,6 +24,7 @@ module "infra" {
   required_status_checks_contexts = [
     "docker plan is empty",
     "grafana plan is empty",
+    "tflint",
   ]
   topics = [
     "terraform",
