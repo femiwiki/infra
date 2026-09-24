@@ -135,11 +135,11 @@ $new = array_filter( array_map(
 	fn ( $lines ) => array_values( array_filter( $lines, fn ( $line ) => !str_contains( $text, $line ) ) ),
 	$new
 ) );
-$merged = merge( $text, $heading, $new );
-if ( $merged === $text ) {
+if ( !$new ) {
 	echo "$title: already posted\n";
 	exit;
 }
+$merged = merge( $text, $heading, $new );
 if ( $dryRun ) {
 	$before = tempnam( sys_get_temp_dir(), 'page' );
 	$after = tempnam( sys_get_temp_dir(), 'page' );
