@@ -1,0 +1,26 @@
+---
+name: sync updates
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, edited]
+permissions: {}
+concurrency:
+  group: sync-updates-${{ github.event.pull_request.number }}
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Copy the ```wikitext blocks of the pull requests it was built from
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+        run: .github/scripts/sync-updates.php "$REPO" "$PR"

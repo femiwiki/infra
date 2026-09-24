@@ -210,6 +210,15 @@ jobs:
           path: ${{ matrix.workspace }}
           auto_approve: ${{ github.event_name == 'workflow_dispatch' }}
 
+      - name: Copy the ```wikitext blocks of the pull requests it was built from
+        if: github.event_name == 'issue_comment'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.issue.number }}
+        run: .github/scripts/sync-updates.php "$REPO" "$PR"
+
       - name: Post the ```wikitext blocks of the applied pull request to the wiki
         if: github.event_name == 'issue_comment'
         continue-on-error: true
