@@ -32,7 +32,7 @@ resource "docker_container" "http" {
       PHP_FPM_LISTEN        = 9000 + local.fastcgi_generation % 2,
       PHP_FPM_STATUS_LISTEN = 9200 + local.fastcgi_generation % 2,
 
-      CADDY_EXPENSIVE_EVENTS = "2000",
+      CADDY_EXPENSIVE_EVENTS = "1600",
 
       CADDY_LOG_EXCLUDE   = "http.handlers.mwcache",
       AWS_REGION          = "ap-northeast-1",
