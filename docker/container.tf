@@ -33,7 +33,10 @@ resource "docker_container" "http" {
       PHP_FPM_LISTEN        = 9000 + local.fastcgi_generation % 2,
       PHP_FPM_STATUS_LISTEN = 9200 + local.fastcgi_generation % 2,
 
-      FW_CRAWLER_AGENTS      = "(?i)(bot|spider|crawl|Claude-Web|meta-external)",
+      FW_CRAWLER_AGENTS = "(?i)(bot|spider|crawl|Claude-Web|meta-external)",
+
+      # Exempts loopback and Chrome on iOS from the image's default; see femiwiki#523
+      FW_BOTLIKE             = "!remote_ip('127.0.0.0/8') && ((header_regexp('User-Agent', '(Chrome|Chromium|Edg|CriOS)/') && ((!header_regexp('Sec-Ch-Ua', '.') && !header_regexp('User-Agent', 'CriOS/')) || !header_regexp('Priority', '.') || header_regexp('Accept-Language', 'q=0\\\\.5'))) || !header_regexp('User-Agent', '(Mozilla/5\\\\.0|Opera)'))"
       FW_EXPENSIVE_EVENTS    = "3000",
       FW_EXPENSIVE_IP_EVENTS = "15",
 
