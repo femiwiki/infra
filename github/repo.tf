@@ -25,6 +25,10 @@ module "infra" {
     "docker plan is empty",
     "grafana plan is empty",
     "tflint",
+    "shellcheck",
+    "rumdl",
+    "yamllint",
+    "parallel-lint",
   ]
   topics = [
     "terraform",
@@ -41,6 +45,7 @@ module "femiwiki" {
     "feminism",
     "wiki",
   ]
+  required_status_checks_contexts = ["lint"]
 }
 
 module "docker_mediawiki" {
