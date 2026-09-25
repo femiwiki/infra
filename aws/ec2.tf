@@ -13,14 +13,14 @@ resource "aws_instance" "database" {
   monitoring                  = false
   user_data_replace_on_change = false
 
-  user_data = templatefile("res/user-data-mysql.sh.tftpl", {
+  user_data_base64 = base64gzip(templatefile("res/user-data-mysql.sh.tftpl", {
     mysql_data_dir  = "/var/lib/mysql" # Default
     mysql_server_id = "2"
     region          = data.aws_region.current.region
     backups_bucket  = aws_s3_bucket.backups.bucket
 
     alloy_install = local.alloy_install["database"]
-  })
+  }))
 
   vpc_security_group_ids = [
     aws_default_security_group.default.id,
@@ -51,6 +51,7 @@ resource "aws_instance" "database" {
     ignore_changes = [
       ami,
       user_data,
+      user_data_base64,
     ]
   }
 }
