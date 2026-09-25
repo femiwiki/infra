@@ -211,6 +211,44 @@ loki.source.journal "read"  {
   relabel_rules = loki.relabel.journal.rules
   labels        = {component = "loki.source.journal"}
 }
+
+// Containers whose logs do not go to the journal are read from the daemon
+// instead, and carry the same labels so a query does not have to know which
+// path a container took. The keep rule is the list of those containers: the
+// journal cannot be left to them, and reading both paths would ship a
+// container twice.
+discovery.docker "containers" {
+  host             = "unix:///var/run/docker.sock"
+  refresh_interval = "30s"
+}
+discovery.relabel "container_logs" {
+  targets = discovery.docker.containers.targets
+
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/(backupbot)"
+    action        = "keep"
+  }
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/(.*)"
+    target_label  = "docker_container_name"
+  }
+  rule {
+    source_labels = ["__meta_docker_container_id"]
+    target_label  = "docker_container_id"
+  }
+  rule {
+    target_label = "host"
+    replacement  = constants.hostname
+  }
+}
+loki.source.docker "containers" {
+  host       = "unix:///var/run/docker.sock"
+  targets    = discovery.relabel.container_logs.output
+  forward_to = [loki.process.fastcgi.receiver]
+  labels     = {component = "loki.source.docker"}
+}
 loki.process "fastcgi" {
   forward_to = [loki.write.grafana_cloud_loki.receiver]
 

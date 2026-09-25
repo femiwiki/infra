@@ -223,10 +223,46 @@ locals {
 
   fastcgi_rules = {
     "Requests waiting for a worker" = {
-      expr    = trimspace(file("${path.module}/queries/listen-queue.promql"))
-      above   = 0
-      for     = "5m"
-      summary = "요청이 5분 넘게 php-fpm 앞에 줄 서 있습니다. 워커가 모자라면 `phpfpm_max_children_reached`가 함께 오르고, 메모리가 모자라면 `node_memory_MemAvailable_bytes`가 떨어집니다."
+      expr   = trimspace(file("${path.module}/queries/listen-queue.promql"))
+      above  = 0
+      for    = "5m"
+      labels = {}
+      annotations = {
+        summary = "요청이 5분 넘게 php-fpm 앞에 줄 서 있습니다. 워커가 모자라면 `phpfpm_max_children_reached`가 함께 오르고, 메모리가 모자라면 `node_memory_MemAvailable_bytes`가 떨어집니다."
+        # A resolved notification carries the value it resolved at, which for a
+        # queue is always zero, so the reading goes beside the text rather than in it
+        queue = "{{ printf \"%.0f\" $values.A.Value }}"
+      }
+    }
+
+    "Interned strings buffer almost full" = {
+      expr   = trimspace(file("${path.module}/queries/opcache-interned-strings.promql"))
+      above  = 95
+      for    = "15m"
+      labels = { severity = "warning" }
+      annotations = {
+        summary = "opcache의 interned strings 버퍼가 {{ printf \"%.0f\" $values.A.Value }}% 찼습니다. 다 차면 PHP가 인터닝을 멈춰서 워커마다 클래스와 함수 이름을 따로 들고 갑니다. `PHP_OPCACHE_INTERNED_STRINGS_BUFFER`를 올리면 이미지 빌드 없이 적용됩니다."
+      }
+    }
+
+    "Script cache full" = {
+      expr   = trimspace(file("${path.module}/queries/opcache-cache-full.promql"))
+      above  = 0
+      for    = "0m"
+      labels = { severity = "warning" }
+      annotations = {
+        summary = "opcache가 새 스크립트를 더 담을 수 없습니다. 이대로 두면 다음 배포에서 opcache가 재시작하고, 그 뒤 모든 요청이 컴파일을 다시 합니다. `PHP_OPCACHE_MEMORY_CONSUMPTION`를 올리면 이미지 빌드 없이 적용됩니다."
+      }
+    }
+
+    "Opcache restarted out of memory" = {
+      expr   = trimspace(file("${path.module}/queries/opcache-oom-restarts.promql"))
+      above  = 0
+      for    = "0m"
+      labels = { severity = "warning" }
+      annotations = {
+        summary = "opcache가 메모리가 모자라 최근 10분 동안 {{ printf \"%.0f\" $values.A.Value }}번 재시작했습니다. 재시작 직후에는 모든 요청이 컴파일을 다시 합니다. `PHP_OPCACHE_MEMORY_CONSUMPTION`를 올리면 이미지 빌드 없이 적용됩니다."
+      }
     }
   }
 }
@@ -429,12 +465,8 @@ resource "grafana_rule_group" "femiwiki_fastcgi" {
       no_data_state  = "OK"
       exec_err_state = "OK"
 
-      annotations = {
-        summary = rule.value.summary
-        # A resolved notification carries the value it resolved at, which for a
-        # queue is always zero, so the reading goes beside the text rather than in it
-        queue = "{{ printf \"%.0f\" $values.A.Value }}"
-      }
+      labels      = rule.value.labels
+      annotations = rule.value.annotations
 
       data {
         ref_id         = "A"
