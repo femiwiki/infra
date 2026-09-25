@@ -145,6 +145,7 @@ module "femiwiki_github_io" {
     "rumdl",
     "shellcheck",
     "stylua",
+    "taplo",
     "yamllint",
   ]
   topics = [
@@ -219,6 +220,7 @@ module "quibble_action" {
     "actionlint",
     "biome",
     "rumdl",
+    "taplo",
   ]
 }
 
@@ -244,6 +246,7 @@ module "terraform-provider-mediawiki" {
     "mediawiki",
     "terraform-provider",
   ]
+  required_status_checks_contexts = ["rumdl"]
 }
 
 module "status" {
@@ -256,6 +259,7 @@ module "status" {
   topics = [
     "status",
   ]
+  required_status_checks_contexts = ["rumdl"]
 }
 
 resource "github_repository_file" "status_index" {
