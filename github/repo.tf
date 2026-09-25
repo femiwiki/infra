@@ -82,6 +82,7 @@ module "docker_poolcounter" {
     "rumdl",
     "actionlint",
   ]
+  archived = true
 }
 
 module "rankingbot" {
