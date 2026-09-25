@@ -53,3 +53,46 @@ foreach ( [
 
 // 업로드를 막고싶을때엔 아래 라인 주석 해제하면 됨
 // $wgEnableUploads = false;
+
+// Nothing in core writes ProfilerExcimer's data to a file. ProfilerOutputDump
+// takes ProfilerXhprof only and logs an error for anything else, and
+// ProfilerOutputText prints into the response body. Profiler::logData(), the
+// path that runs without a request asking for it, calls only outputs whose
+// logsToOutput() is false, so a file writer has to be one of those.
+// Belongs in the image; it is here so that turning the profiler on is an apply.
+class FwProfilerOutputFile extends ProfilerOutput {
+	public function canUse() {
+		return (bool)( $this->params['outputDir'] ?? '' );
+	}
+
+	public function log( array $stats ) {
+		$elapsed = microtime( true ) - $_SERVER['REQUEST_TIME_FLOAT'];
+		// By CPU rather than wall time: the surplus credit charge is CPU alone
+		usort( $stats, static function ( $a, $b ) {
+			return $b['cpu'] <=> $a['cpu'];
+		} );
+
+		$out = sprintf( "%s %s\nelapsed %.3fs\n\n%-70s %10s %8s %10s %8s\n",
+			$_SERVER['REQUEST_METHOD'] ?? '-',
+			$_SERVER['REQUEST_URI'] ?? '-',
+			$elapsed,
+			'name', 'cpu ms', 'cpu %', 'real ms', 'real %'
+		);
+		foreach ( $stats as $entry ) {
+			$out .= sprintf( "%-70s %10.1f %7.1f%% %10.1f %7.1f%%\n",
+				$entry['name'], $entry['cpu'], $entry['%cpu'],
+				$entry['real'], $entry['%real']
+			);
+		}
+
+		// Elapsed milliseconds first so that ls puts the worst request last
+		file_put_contents(
+			sprintf( '%s/%06.0f-%s.txt', $this->params['outputDir'], $elapsed * 1000, uniqid() ),
+			$out
+		);
+	}
+}
+
+if ( ( $wgProfiler['class'] ?? null ) === ProfilerExcimer::class ) {
+	$wgProfiler['output'] = [ FwProfilerOutputFile::class ];
+}

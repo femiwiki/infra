@@ -129,6 +129,15 @@ resource "docker_container" "fastcgi" {
       MEDIAWIKI_SKIP_UPDATE       = "1"
       MEDIAWIKI_HOTFIX_SNIPPET    = file("res/Hotfix.php")
 
+      FW_PROFILER = "excimer"
+      # Every request is instrumented, so nothing slow can be missed, but only
+      # the ones past the threshold are written. Excimer samples on a timer, so
+      # the cost is the sampling rate and not the number of requests.
+      FW_PROFILER_SAMPLING = "1"
+      # action=flow takes 5 to 9 seconds (femiwiki#576); a normal page is under
+      # one, so 3 keeps the ordinary traffic out of the directory
+      FW_PROFILER_THRESHOLD = "3"
+
       WG_BOUNCE_HANDLER_INTERNAL_IPS = "172.31.0.0/16"
       WG_CDN_SERVERS                 = "127.0.0.1:80"
       WG_INTERNAL_SERVER             = "http://127.0.0.1:80"
