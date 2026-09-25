@@ -176,11 +176,13 @@ resource "docker_container" "fastcgi" {
 
 resource "docker_container" "memcached" {
   name         = "memcached"
+  log_driver   = "local"
   image        = "memcached:1.6.23-alpine"
+  command      = ["memcached", "-m", "224"]
   network_mode = "host"
   restart      = "always"
-  memory       = 128
-  memory_swap  = 128
+  memory       = 256
+  memory_swap  = 256
 
   labels {
     label = "autoheal"
