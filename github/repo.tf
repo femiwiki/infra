@@ -103,6 +103,7 @@ module "backupbot" {
     "docker-image",
     "mysql",
   ]
+  required_status_checks_contexts = ["hadolint", "rumdl", "yamllint", "actionlint", "shellcheck"]
 }
 
 module "tweetbot" {
