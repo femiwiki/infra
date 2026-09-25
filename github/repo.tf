@@ -172,17 +172,6 @@ module "legunto" {
   required_status_checks_contexts = ["ci", "yamllint", "actionlint", "rumdl", "taplo"]
 }
 
-module "maintenance" {
-  source                = "./modules/github-repository"
-  name                  = "maintenance"
-  description           = ":wrench: 페미위키 점검 페이지"
-  homepage_url          = "https://femiwiki.github.io/maintenance"
-  default_status_checks = []
-  topics = [
-    "website",
-  ]
-}
-
 module "caddy_mwcache" {
   source      = "./modules/github-repository"
   name        = "caddy-mwcache"
