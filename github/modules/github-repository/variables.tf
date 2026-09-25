@@ -84,3 +84,9 @@ variable "collaborator" {
   type    = bool
   default = false
 }
+
+variable "archived" {
+  description = "Archive the repository. To bring it back, unarchive it in GitHub first, then set this back to false."
+  type        = bool
+  default     = false
+}
