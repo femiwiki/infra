@@ -226,7 +226,7 @@ discovery.relabel "container_logs" {
 
   rule {
     source_labels = ["__meta_docker_container_name"]
-    regex         = "/(backupbot|http-[0-9]+|fastcgi-[0-9]+)"
+    regex         = "/(autoheal|backupbot|http-[0-9]+|fastcgi-[0-9]+)"
     action        = "keep"
   }
   rule {
