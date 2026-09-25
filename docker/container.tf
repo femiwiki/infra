@@ -1,6 +1,6 @@
 resource "docker_container" "http" {
   name         = "http-${local.fastcgi_generation}"
-  image        = "ghcr.io/femiwiki/femiwiki:2026-09-24T08-41-fa8d34ef"
+  image        = "ghcr.io/femiwiki/femiwiki:2026-09-25T00-47-14bfb5dc"
   command      = ["caddy-run"]
   restart      = "always"
   network_mode = "host"
@@ -32,7 +32,7 @@ resource "docker_container" "http" {
       PHP_FPM_LISTEN        = 9000 + local.fastcgi_generation % 2,
       PHP_FPM_STATUS_LISTEN = 9200 + local.fastcgi_generation % 2,
 
-      CADDY_EXPENSIVE_EVENTS = "2000",
+      CADDY_EXPENSIVE_EVENTS = "1600",
 
       CADDY_LOG_EXCLUDE   = "http.handlers.mwcache",
       AWS_REGION          = "ap-northeast-1",
@@ -79,14 +79,14 @@ resource "docker_container" "http" {
 
 resource "docker_container" "fastcgi" {
   name         = "fastcgi-${local.fastcgi_generation}"
-  image        = "ghcr.io/femiwiki/femiwiki:2026-09-24T08-41-fa8d34ef"
+  image        = "ghcr.io/femiwiki/femiwiki:2026-09-25T00-47-14bfb5dc"
   network_mode = "host"
   restart      = "always"
   memory       = 768
   memory_swap  = 1536
 
   wait                  = true
-  wait_timeout          = 300
+  wait_timeout          = 600
   stop_signal           = "SIGTERM"
   destroy_grace_seconds = 45
 
@@ -135,10 +135,11 @@ resource "docker_container" "fastcgi" {
   ]
 
   healthcheck {
-    test     = ["CMD-SHELL", "/usr/local/bin/php /srv/fcgi-check/fcgi-probe.php || exit 1"]
-    interval = "30s"
-    timeout  = "5s"
-    retries  = 3
+    test         = ["CMD-SHELL", "test ! -e /tmp/warming && /usr/local/bin/php /srv/fcgi-check/fcgi-probe.php"]
+    interval     = "10s"
+    timeout      = "10s"
+    retries      = 3
+    start_period = "4m0s"
   }
 
   mounts {
@@ -220,6 +221,7 @@ resource "docker_container" "backupbot" {
   name        = "backupbot"
   image       = "ghcr.io/femiwiki/backupbot:2026-09-22T15-01-939d63be"
   restart     = "always"
+  init        = true
   memory      = 256
   memory_swap = 256
   env = [

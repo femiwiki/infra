@@ -1,15 +1,15 @@
-Femiwiki Infra
-========
+# Femiwiki Infra
+
 [![Github checks Status]][github checks link] [![Terraform Badge]][Terraform Cloud Link]
 
 페미위키의 AWS 인프라가 정의되어있는 테라폼 코드입니다.
 
-### Prerequisites
+## Prerequisites
 
 - Terraform (`aws/`, `github/`), [OpenTofu] (`docker/`, `grafana/`)
 - [Terraform Cloud] 계정
 
-### Instructions
+## Instructions
 
 ```bash
 # https://app.terraform.io/app/settings/tokens 에서 본인의 토큰을 확인한 뒤
@@ -23,7 +23,7 @@ terraform init
 terraform plan
 ```
 
-### `docker/` 적용하기
+## `docker/` 적용하기
 
 `docker/`는 Terraform Cloud를 쓰지 않습니다. 상태는 S3에 있고, 도커 데몬은 엣지 박스의 루프백에만 열려 있어서 SSM 터널로 붙습니다. PR을 열면 `.github/workflows/tofu.yaml`이 plan을 코멘트로 달고, 권한 있는 사람이 그 PR에 `tofu apply`라고 코멘트하면 같은 워크플로가 PR이 바꾼 워크스페이스의 plan을 적용합니다. 이미지 bump PR도 같은 흐름입니다.
 
@@ -35,7 +35,7 @@ terraform plan
 
 [페미위키:업데이트]: https://femiwiki.com/w/페미위키:업데이트
 
-### 호스트 위의 알로이 설정
+## 호스트 위의 알로이 설정
 
 `aws/res/config.alloy.tftpl`은 `user_data`로만 들어가는데 `user_data`는 `ignore_changes`라, 이 파일을 고쳐도 돌고 있는 호스트는 바뀌지 않습니다. 설정을 실제로 밀어 넣는 것은 SSM State Manager입니다. `aws/`를 적용하면 `install-alloy-config-docker`와 `install-alloy-config-database` association이 곧바로 한 번 돌고 그 뒤로는 30분마다 다시 돕니다. 누가 손으로 고쳐 놓았다면 그때 되돌아옵니다.
 
@@ -43,7 +43,7 @@ terraform plan
 
 설정 파일에는 비밀번호가 없습니다. 알로이가 `local.file`로 `/etc/alloy/prometheus.password`와 `loki.password`를 읽고, 그 두 파일은 스크립트가 `/alloy/` 아래 SecureString 파라미터에서 받아 씁니다.
 
-### 워크스페이스 추가하기
+## 워크스페이스 추가하기
 
 plan과 apply는 모든 워크스페이스가 `tofu.yaml` 하나를 같이 씁니다. 새 워크스페이스를 만들 때 필요한 것은 이렇습니다.
 

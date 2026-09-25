@@ -103,6 +103,7 @@ module "backupbot" {
     "docker-image",
     "mysql",
   ]
+  required_status_checks_contexts = ["hadolint", "rumdl", "yamllint", "actionlint", "shellcheck"]
 }
 
 module "tweetbot" {
@@ -164,6 +165,7 @@ module "legunto" {
   topics = [
     "scribunto",
   ]
+  required_status_checks_contexts = ["ci", "yamllint", "actionlint", "rumdl"]
 }
 
 module "maintenance" {
@@ -236,6 +238,7 @@ module "lambda" {
     "aws",
     "rust",
   ]
+  required_status_checks_contexts = ["fmt-prettier", "test"]
 }
 
 module "terraform-provider-mediawiki" {
