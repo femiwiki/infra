@@ -1,0 +1,42 @@
+---
+name: wikitext from title
+on:
+  pull_request:
+    types: [opened, reopened, edited]
+    paths: ["docker/**"]
+permissions: {}
+jobs:
+  block:
+    # Only a new title, so a block the author deleted stays deleted
+    if: >-
+      github.event.pull_request.head.repo.full_name == github.repository
+      && (github.event.action != 'edited' || github.event.changes.title)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Add a ```wikitext block made from a feat or fix title, for the apply to post
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          NUMBER: ${{ github.event.pull_request.number }}
+          TITLE: ${{ github.event.pull_request.title }}
+          BODY: ${{ github.event.pull_request.body }}
+        run: |
+          fence=$'\x60\x60\x60'
+          if grep -q "^${fence}wikitext" <<< "$BODY"; then
+            echo 'The body already has a ```wikitext block.'
+            exit 0
+          fi
+          if ! [[ "$TITLE" =~ ^(feat|fix)(\([^\)]+\))?!?:\ (.+)$ ]]; then
+            echo 'Neither feat nor fix, so nothing for the release notes.'
+            exit 0
+          fi
+          {
+            [ -z "$BODY" ] || printf '%s\n\n' "$BODY"
+            printf '%swikitext\n===%s===\n\n*%s [https://github.com/%s/pull/%s]\n\n%s\n' \
+              "$fence" "${BASH_REMATCH[1]}" "${BASH_REMATCH[3]}" "$REPO" "$NUMBER" "$fence"
+          } > "${RUNNER_TEMP}/body.md"
+          cat "${RUNNER_TEMP}/body.md"
+          gh pr edit "$NUMBER" --repo "$REPO" --body-file "${RUNNER_TEMP}/body.md"
