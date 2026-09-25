@@ -118,6 +118,10 @@ resource "docker_container" "fastcgi" {
       PHP_FPM_REQUEST_TERMINATE_TIMEOUT   = "30"
 
       PHP_OPCACHE_MEMORY_CONSUMPTION = "192"
+      # 4000 rounded up to 7963 key slots and 5,170 scripts filled them; 10000 is
+      # PHP's next size, 16229. Memory was never the ceiling. See femiwiki#587.
+      PHP_OPCACHE_MAX_ACCELERATED_FILES   = "10000"
+      PHP_OPCACHE_INTERNED_STRINGS_BUFFER = "48"
 
       PHP_FPM_PM_MAX_CHILDREN      = "16"
       PHP_FPM_PM_START_SERVERS     = "2"
