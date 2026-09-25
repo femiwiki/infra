@@ -351,7 +351,6 @@ locals {
 
     caddy-mwcache     = local.base_label_suite
     legunto           = local.base_label_suite
-    maintenance       = local.base_label_suite
     OOUIFemiwikiTheme = local.ext_label_suite
     remote-gadgets    = concat(local.base_label_suite, ["search", "windows", "mw1_38", "mw1_39", "mw1_40", "mw1_41", "mw1_42"])
 
