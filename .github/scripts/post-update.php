@@ -26,7 +26,7 @@ function blocks( string $body ): array {
 }
 
 /** The page with a new section above the first one headed no later than it, a day without a time counting as its midnight */
-function insert( string $text, DateTimeInterface $at, array $blocks ): string {
+function insert( string $text, DateTimeInterface $at, string $link, array $blocks ): string {
 	$sections = preg_split( '/^(?===[^=])/mu', $text );
 	$key = $at->format( 'mdHi' );
 	for ( $i = str_starts_with( $text, '==' ) ? 0 : 1; $i < count( $sections ); $i++ ) {
@@ -36,8 +36,15 @@ function insert( string $text, DateTimeInterface $at, array $blocks ): string {
 			break;
 		}
 	}
-	array_splice( $sections, $i, 0, '==' . $at->format( 'n월 j일 H:i' ) . "==\n\n" . implode( "\n\n", $blocks ) . "\n\n" );
+	array_splice( $sections, $i, 0, '==' . $at->format( 'n월 j일 H:i' ) . "==\n\n$link\n\n" . implode( "\n\n", $blocks ) . "\n\n" );
 	return implode( '', $sections );
+}
+
+/** The page with the PR linked under the heading of the section a post from before the link put its block in */
+function linkUnder( string $text, string $block, string $link ): string {
+	preg_match_all( '/^==[^=].*==\h*\n\n?/mu', substr( $text, 0, strpos( $text, $block ) ), $headings, PREG_OFFSET_CAPTURE );
+	[ $heading, $offset ] = end( $headings[0] ) ?: fail( 'no section heads the posted block' );
+	return substr_replace( $text, "$link\n\n", $offset + strlen( $heading ), 0 );
 }
 
 function wiki( array $params ): array {
@@ -84,12 +91,16 @@ $page = wiki( [
 $revision = $page['revisions'][0] ?? [];
 $text = $revision['slots']['main']['content'] ?? '';
 // A re-run of the apply lands under a later minute, so a block already on the page is not posted again
-$blocks = array_values( array_filter( $blocks, fn ( $block ) => !str_contains( $text, $block ) ) );
-if ( !$blocks ) {
+$link = "https://github.com/$repo/pull/$number";
+$new = array_values( array_filter( $blocks, fn ( $block ) => !str_contains( $text, $block ) ) );
+if ( $new ) {
+	$merged = insert( $text, $at, $link, $new );
+} elseif ( !preg_match( '/^' . preg_quote( $link, '/' ) . '$/m', $text ) ) {
+	$merged = linkUnder( $text, $blocks[0], $link );
+} else {
 	echo "$title: already posted\n";
 	exit;
 }
-$merged = insert( $text, $at, $blocks );
 if ( $dryRun ) {
 	$before = tempnam( sys_get_temp_dir(), 'page' );
 	$after = tempnam( sys_get_temp_dir(), 'page' );

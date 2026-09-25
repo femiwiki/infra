@@ -104,6 +104,7 @@ module "backupbot" {
     "docker-image",
     "mysql",
   ]
+  required_status_checks_contexts = ["hadolint", "rumdl", "yamllint", "actionlint", "shellcheck"]
 }
 
 module "tweetbot" {
@@ -151,10 +152,11 @@ module "femiwiki_github_io" {
 }
 
 module "dot_github" {
-  source                = "./modules/github-repository"
-  name                  = ".github"
-  description           = "Community health files"
-  default_status_checks = []
+  source                          = "./modules/github-repository"
+  name                            = ".github"
+  description                     = "Community health files"
+  default_status_checks           = []
+  required_status_checks_contexts = ["yarn-test"]
 }
 
 module "legunto" {
@@ -165,6 +167,7 @@ module "legunto" {
   topics = [
     "scribunto",
   ]
+  required_status_checks_contexts = ["ci", "yamllint", "actionlint", "rumdl"]
 }
 
 module "maintenance" {
@@ -191,6 +194,7 @@ module "caddy_mwcache" {
     "cache",
     "mediawiki",
   ]
+  required_status_checks_contexts = ["lint-go", "caddy-fmt", "rumdl", "yamllint", "biome", "parallel-lint"]
 }
 
 module "ooui_femiwiki_theme" {
@@ -236,6 +240,7 @@ module "lambda" {
     "aws",
     "rust",
   ]
+  required_status_checks_contexts = ["fmt-prettier", "test"]
 }
 
 module "terraform-provider-mediawiki" {
