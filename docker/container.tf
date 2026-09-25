@@ -48,6 +48,9 @@ resource "docker_container" "http" {
       BLOCKED_CIDR = join(" ", [
         # Alibaba Cloud LLC
         "47.74.0.0/15", "47.76.0.0/14", "47.80.0.0/13",
+        # ACEVILLE PTE.LTD and TencentCloud, as APNIC registers them
+        "43.128.64.0/18", "43.154.0.0/16", "43.157.0.0/17", "43.160.0.0/12",
+        "49.51.0.0/16", "119.28.0.0/15", "124.156.96.0/19", "124.156.128.0/18",
         # ColoCrossing
         "104.168.0.0/17",
         "107.172.0.0/14",
