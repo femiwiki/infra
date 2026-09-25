@@ -9,8 +9,11 @@ docker image prune --all --force --filter until=__KEEP_HOURS__h
 # fastcgi image is a localisation cache that grew to 1.8 GB. Only anonymous
 # volumes are taken: their names are 64 hex digits, so a named volume that
 # happens to be unattached, such as sitemap between containers, is left alone.
+# grep exits 1 when nothing matches, which under pipefail turns a run with no
+# orphans to remove into a failed association, so the match is allowed to be
+# empty.
 docker volume ls --quiet --filter dangling=true |
-  grep -E '^[0-9a-f]{64}$' |
+  { grep -E '^[0-9a-f]{64}$' || true; } |
   xargs -r docker volume rm
 
 df -h / | tail -1
