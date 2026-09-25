@@ -7,6 +7,7 @@ resource "github_repository" "repository" {
   delete_branch_on_merge    = var.delete_branch_on_merge
   auto_init                 = true
   archive_on_destroy        = true
+  archived                  = var.archived
   topics                    = var.topics
   vulnerability_alerts      = true
   has_discussions           = false
