@@ -151,10 +151,11 @@ module "femiwiki_github_io" {
 }
 
 module "dot_github" {
-  source                = "./modules/github-repository"
-  name                  = ".github"
-  description           = "Community health files"
-  default_status_checks = []
+  source                          = "./modules/github-repository"
+  name                            = ".github"
+  description                     = "Community health files"
+  default_status_checks           = []
+  required_status_checks_contexts = ["yarn-test"]
 }
 
 module "legunto" {
