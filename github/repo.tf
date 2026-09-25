@@ -166,7 +166,7 @@ module "dot_github" {
   name                            = ".github"
   description                     = "Community health files"
   default_status_checks           = []
-  required_status_checks_contexts = ["yarn-test"]
+  required_status_checks_contexts = ["yarn-test", "ruff", "taplo"]
 }
 
 module "legunto" {
@@ -253,7 +253,7 @@ module "terraform-provider-mediawiki" {
     "mediawiki",
     "terraform-provider",
   ]
-  required_status_checks_contexts = ["rumdl"]
+  required_status_checks_contexts = ["rumdl", "actionlint"]
 }
 
 module "status" {
