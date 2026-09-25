@@ -336,6 +336,32 @@ jobs:
           gh api --method POST "repos/$REPO/actions/runs/$run/rerun-failed-jobs" \
             || echo "::warning::could not re-run plan $run"
 
+  merge:
+    needs: replan
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      # An apply runs before the merge, so until the pull request lands the
+      # default branch describes less than what is deployed, and the next apply
+      # from any other branch takes production back to it. Auto-merge rather
+      # than a merge, because replan is still refreshing the checks this has to
+      # wait for.
+      - name: Merge the pull request this apply came from
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.issue.number }}
+        run: |
+          if [ "$(gh pr view "$PR" --repo "$REPO" --json merged --jq .merged)" = true ]; then
+            echo "#$PR is already merged"
+            exit 0
+          fi
+          gh pr merge "$PR" --repo "$REPO" --squash --auto \
+            || echo "::warning::could not turn on auto-merge for #$PR; merge it by hand so the default branch matches what is deployed"
+
   log:
     needs: apply
     if: always() && github.event_name == 'issue_comment' && needs.apply.result != 'skipped'
