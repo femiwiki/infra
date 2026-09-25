@@ -1,0 +1,1 @@
+max(increase(php_opcache_restarts_total{job="integrations/opcache", reason="oom"}[10m]))
