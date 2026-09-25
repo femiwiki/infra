@@ -192,7 +192,7 @@ module "caddy_mwcache" {
     "cache",
     "mediawiki",
   ]
-  required_status_checks_contexts = ["lint-go"]
+  required_status_checks_contexts = ["lint-go", "caddy-fmt", "rumdl", "yamllint", "biome", "parallel-lint"]
 }
 
 module "ooui_femiwiki_theme" {
