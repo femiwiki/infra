@@ -1,0 +1,308 @@
+{
+	# Global options
+	storage s3
+
+	order mwcache before rewrite
+	# NOTE: See @block_cidr and @claudebot for the further details
+	order respond before mwcache
+	order encode before mwcache
+
+	# The idle fastcgi port fails its check every second; keep that out of the
+	# log. FW_LOG_EXCLUDE adds to the list, so a logger that turns out to be
+	# too chatty can be silenced from infra without building an image.
+	log default {
+		exclude http.handlers.reverse_proxy.health_checker.active {$FW_LOG_EXCLUDE}
+	}
+
+	servers {
+		metrics
+	}
+}
+# Headers that contradict the browser the User-Agent claims. Every term is
+# conditioned on a Chromium claim, so Safari and Firefox are never tested, and
+# one variable holds the lot so a term can change by an apply. CEL placeholders
+# cannot go in it: {$VAR:default} eats the first } of a {http.request...}
+# placeholder, which caddy adapt accepts and then silently mismatches. Hence
+# header_regexp(), and !header_regexp(name, '.') for a header not sent at all.
+(botlike) {
+	expression {$FW_BOTLIKE:(header_regexp('User-Agent', '(Chrome|Chromium|Edg|CriOS)/') && (!header_regexp('Sec-Ch-Ua', '.') || !header_regexp('Priority', '.') || header_regexp('Accept-Language', 'q=0\\.5'))) || !header_regexp('User-Agent', '(Mozilla/5\\.0|Opera)')}
+}
+
+(expensive_requests) {
+	match {
+		# api.php is left out: the search box asks it on every keystroke
+		path /index.php*
+		vars_regexp {query} (^|&)(search|diff|oldid)=|(^|&)action=(history|info)(&|$)
+		not header Cookie *femiwikiUserID=*
+	}
+}
+
+femiwiki.com *.femiwiki.com 127.0.0.1:80 localhost:80 {
+	tls {
+		dns route53
+	}
+	root * /srv/femiwiki.com
+	# Requests that reach php-fpm without a session, per /24. Cache hits never
+	# get here, and the login and signup pages set a session cookie on first
+	# view, so a room full of people joining an edit-a-thon counts once each.
+	# Readers peak at a few a minute; crawlers at 30 and more, all day.
+	rate_limit {
+		zone dynamic {
+			match {
+				path /index.php* /api.php*
+				not header Cookie *femiwiki*
+			}
+			key {client_ip}
+			ipv4_prefix 24
+			ipv6_prefix 64
+			events {$FW_DYNAMIC_EVENTS:300}
+			window {$FW_DYNAMIC_WINDOW:10m}
+		}
+		# Search, diffs, old revisions and page history from anyone not logged
+		# in, counted across the whole site. A crawler spread over enough /24s
+		# stays under the zone above in every one of them while together taking
+		# every php-fpm worker, and a session cookie is no exemption here since
+		# any client gets one from the login page. One bucket for everybody
+		# means a reader who is not logged in is refused as soon as crawlers
+		# have spent it, so the cap sits above what those readers ask for on an
+		# ordinary day and only bites when the site is being hammered. Both
+		# zones read their count and window from the environment so infra can
+		# retune them without waiting for an image.
+		zone expensive {
+			import expensive_requests
+			key expensive
+			events {$FW_EXPENSIVE_EVENTS:1500}
+			window {$FW_EXPENSIVE_WINDOW:10m}
+		}
+		# The same requests counted per /24 as well, so one heavy client spends
+		# its own budget before the shared one. The busiest /24 asks for about
+		# fifty in ten minutes, so this only bites a single hard scraper.
+		zone expensive_per_ip {
+			import expensive_requests
+			key {client_ip}
+			ipv4_prefix 24
+			ipv6_prefix 64
+			events {$FW_EXPENSIVE_IP_EVENTS:100}
+			window {$FW_EXPENSIVE_IP_WINDOW:10m}
+		}
+		# Anything that calls itself a crawler, counted per agent string. These
+		# are a quarter of the time php-fpm spends, and nearly all of it is
+		# article reads that robots.txt allows, so a budget is the only thing
+		# that reaches them. A bucket each rather than a shared one, so a
+		# crawler that spends its own does not refuse Googlebot; and a pattern
+		# rather than a list of names, so one nobody has heard of yet is
+		# covered on the day it arrives. A reader never writes any of these
+		# three words in a User-Agent.
+		zone crawlers {
+			match {
+				path /index.php* /api.php* /w/*
+				header_regexp User-Agent {$FW_CRAWLER_AGENTS:(?i)(bot|spider|crawl)}
+			}
+			key {http.request.header.User-Agent}
+			events {$FW_CRAWLER_EVENTS:100}
+			window {$FW_CRAWLER_WINDOW:10m}
+		}
+		# Searches, diffs, old revisions and page history from a faked browser.
+		# One bucket for all of them, so a reader the signature misreads is
+		# refused only while crawlers are spending it, where a 403 refused them
+		# always. A plain article read arrives here rewritten to /index.php
+		# with no query and never counts. See femiwiki#523 and #586.
+		zone botlike_expensive {
+			match {
+				path /index.php*
+				vars_regexp {query} {$FW_EXPENSIVE_QUERY:(^|&)(search|diff|direction|oldid)=|(^|&)action=(history|info)(&|$)}
+				not header Cookie *femiwikiUserID=*
+				import botlike
+			}
+			key botlike_expensive
+			events {$FW_BOTLIKE_EVENTS:150}
+			window {$FW_BOTLIKE_WINDOW:10m}
+		}
+		log_key
+		# The module keeps a histogram per key, one series set per /24 seen
+		disable_metrics
+	}
+	# 429.html and 429.json are built from MediaWiki's own messages by 429.php;
+	# the page is English, the browser fetches its own language from the json
+	handle_errors 429 {
+		rewrite * /429.html
+		file_server {
+			status 429
+		}
+	}
+	# Two ports so a new fastcgi container can start beside the old one
+	php_fastcgi 127.0.0.1:9000 127.0.0.1:9001 {
+		# Take the response off php-fpm at memory speed so a slow reader holds
+		# Caddy rather than a worker. Responses here are 8 KB to 150 KB, and a
+		# larger one streams as before instead of failing. See femiwiki#583.
+		response_buffers {$FW_RESPONSE_BUFFERS:1MB}
+		lb_policy round_robin
+		# One immediate retry reaches the other port; waiting longer only
+		# delays the fallback below
+		lb_retries 1
+		health_uri /healthz.php
+		health_interval 1s
+		health_timeout 10s
+		health_fails 3
+	}
+	# When no port passes /healthz.php, send reads to any php-fpm that answers
+	# instead of a 503. A deploy drains one port only once the other is
+	# healthy, so it never gets here; a drain file left behind, as on
+	# 2026-09-21, does. Anything with a body still gets the 503, because the
+	# proxy above has already read it. Caddy hands this route the original
+	# URI, so the rewrites below are repeated. The fallback field keeps these
+	# out of the Site down alert's count of good responses.
+	handle_errors 503 {
+		@read method GET HEAD
+		handle @read {
+			log_append fallback true
+			rewrite /w/api.php /api.php
+			rewrite /w/* /index.php
+			php_fastcgi 127.0.0.1:9000 127.0.0.1:9001 {
+				response_buffers {$FW_RESPONSE_BUFFERS:1MB}
+				lb_policy round_robin
+				lb_retries 1
+				# Try the other port when one refuses; left alone, only GET is retried
+				lb_retry_match {
+					method GET HEAD
+				}
+			}
+			encode gzip
+		}
+		handle {
+			respond 503
+		}
+	}
+	file_server
+	encode gzip
+	mwcache {
+		# A budget in bytes rather than a count of entries. 64 MiB holds about
+		# 1,400 responses of the size this wiki serves, well above the 595
+		# distinct addresses an ordinary twenty minutes asks for, and leaves
+		# room under this container's limit. num_counters wants to be about ten
+		# times the entries the budget holds. ignore_internal_cost is gone with
+		# the count: ristretto's per entry overhead is memory really used, so a
+		# budget in bytes wants it counted.
+		ristretto {
+			num_counters {$FW_MWCACHE_NUM_COUNTERS:14000}
+			max_cost_bytes {$FW_MWCACHE_MAX_COST_BYTES:67108864}
+			buffer_items 64
+		}
+		purge_acl {
+			10.0.0.0/8
+			127.0.0.1
+		}
+	}
+	header {
+		# HSTS
+		Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+		# Enable XSS filtering for legacy browsers
+		X-XSS-Protection "1; mode=block"
+		# Block content sniffing, and enable Cross-Origin Read Blocking
+		X-Content-Type-Options "nosniff"
+		# Avoid clickjacking
+		X-Frame-Options "DENY"
+	}
+	log {
+		# Two thirds of a line used to be headers that are the same on every
+		# request: the security headers this block sets, Caddy's Via and Alt-Svc,
+		# PHP's X-Powered-By, a Date that ts already carries, and a TLS handshake
+		# that never varies. Only the fields that tell one request from another
+		# are left.
+		format filter {
+			wrap json
+			fields {
+				request>tls delete
+				request>headers>Accept delete
+				request>headers>Accept-Encoding delete
+				resp_headers>Accept-Ch delete
+				resp_headers>Alt-Svc delete
+				resp_headers>Date delete
+				resp_headers>Strict-Transport-Security delete
+				resp_headers>Via delete
+				resp_headers>X-Content-Type-Options delete
+				resp_headers>X-Frame-Options delete
+				resp_headers>X-Powered-By delete
+				resp_headers>X-Xss-Protection delete
+			}
+		}
+	}
+
+	rewrite /w/api.php /api.php
+	rewrite /w/* /index.php
+
+	respond /health-check 200
+
+	# 404 rather than 403: there is no reason to confirm the installer is there
+	respond /mw-config* 404
+
+	# The three api.php calls the skin makes on every article view: the talk
+	# page's topic list, the watcher count and the related-articles links. They
+	# are 94% of api.php's time and 79% of them come from the clients above, so
+	# a crawler's one page read costs a render plus three of these. None of it
+	# is article text, so refusing them takes nothing from a reader of content.
+	# opensearch, which the search box asks on every keystroke, is not in the
+	# pattern. See femiwiki#523.
+	@botlike_api {
+		path /api.php*
+		vars_regexp {query} {$FW_API_QUERY:(^|&)action=flow(&|$)|(^|&)inprop=watchers|(^|&)prop=linkshere}
+		not header Cookie *femiwikiUserID=*
+		import botlike
+	}
+
+	respond @botlike_api 403 {
+		close
+	}
+
+	@block_cidr {
+		remote_ip {$BLOCKED_CIDR}
+	}
+
+	respond @block_cidr 403 {
+		close
+	}
+
+	@claudebot {
+		header User-Agent *ClaudeBot*
+	}
+
+	respond @claudebot 403 {
+		close
+	}
+}
+
+# php-fpm's status page and opcache for Alloy on the host. infra alternates
+# every port here per generation, the way it does the probe port, so the
+# previous container cannot answer for the new one. The status page has a port
+# of its own, so it answers while www is saturated; the opcache report is a
+# script and needs a www worker. /srv/metrics is outside the public site's root.
+http://127.0.0.1:{$FW_METRICS_PORT} {
+	bind 127.0.0.1
+
+	handle /fpm-status {
+		reverse_proxy 127.0.0.1:{$PHP_FPM_STATUS_LISTEN} {
+			transport fastcgi {
+				root /srv/metrics
+				# Leaves /fpm-status whole as SCRIPT_NAME, which is what php-fpm matches
+				split .php
+			}
+		}
+	}
+
+	handle /opcache.php {
+		reverse_proxy 127.0.0.1:{$PHP_FPM_LISTEN} {
+			transport fastcgi {
+				root /srv/metrics
+				split .php
+			}
+		}
+	}
+}
+
+# A port of this container's own, so the healthcheck cannot be answered by the
+# previous Caddy sharing :80 on the host network; infra alternates it per
+# generation like php-fpm's
+http://127.0.0.1:{$FW_PROBE_PORT} {
+	bind 127.0.0.1
+	respond /health-check 200
+}
