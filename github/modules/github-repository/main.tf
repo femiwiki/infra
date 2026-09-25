@@ -9,7 +9,7 @@ resource "github_repository" "repository" {
   archive_on_destroy        = true
   archived                  = var.archived
   topics                    = var.topics
-  vulnerability_alerts      = true
+  vulnerability_alerts      = !var.archived
   has_discussions           = false
   has_projects              = false
   has_wiki                  = false
