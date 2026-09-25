@@ -209,6 +209,7 @@ module "ooui_femiwiki_theme" {
     "ooui",
     "theme",
   ]
+  required_status_checks_contexts = ["parallel-lint", "shellcheck", "prettier"]
 }
 
 module "quibble_action" {
