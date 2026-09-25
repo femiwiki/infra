@@ -194,6 +194,7 @@ resource "docker_container" "memcached" {
 
 resource "docker_container" "autoheal" {
   name         = "autoheal"
+  log_driver   = "local"
   image        = "willfarrell/autoheal:1.1.0"
   network_mode = "none"
   restart      = "always"
