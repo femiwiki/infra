@@ -16,7 +16,7 @@ jobs:
     permissions:
       pull-requests: write
     steps:
-      - name: Add a ```wikitext block made from a feat or fix title, for the apply to post
+      - name: Add a ```wikitext block made from a feat, fix or perf title, for the apply to post
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
@@ -29,8 +29,8 @@ jobs:
             echo 'The body already has a ```wikitext block.'
             exit 0
           fi
-          if ! [[ "$TITLE" =~ ^(feat|fix)(\([^\)]+\))?!?:\ (.+)$ ]]; then
-            echo 'Neither feat nor fix, so nothing for the release notes.'
+          if ! [[ "$TITLE" =~ ^(feat|fix|perf)(\([^\)]+\))?!?:\ (.+)$ ]]; then
+            echo 'Not feat, fix or perf, so nothing for the release notes.'
             exit 0
           fi
           {
