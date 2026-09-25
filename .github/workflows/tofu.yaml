@@ -30,6 +30,21 @@ jobs:
       id-token: write
       pull-requests: write
     steps:
+      - name: The branch has to carry everything on its base
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.number }}
+        run: |
+          base=$(gh pr view "$PR" --repo "$REPO" --json baseRefName --jq .baseRefName)
+          head=$(gh pr view "$PR" --repo "$REPO" --json headRefOid --jq .headRefOid)
+          behind=$(gh api "repos/$REPO/compare/$base...$head" --jq .behind_by)
+          if [ "$behind" -gt 0 ]; then
+            echo "::error::#$PR is $behind commits behind $base, so a plan from it describes a tree that no longer exists and applying it would undo what landed meanwhile. Update the branch, then plan again."
+            exit 1
+          fi
+          echo "Up to date with $base."
+
       - name: Only a pull request that changes this workspace
         id: scope
         env:
@@ -98,10 +113,27 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
+      contents: read
       pull-requests: read
     outputs:
       workspaces: ${{ steps.files.outputs.workspaces }}
     steps:
+      - name: The branch has to carry everything on its base
+        if: github.event_name == 'issue_comment'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.issue.number }}
+        run: |
+          base=$(gh pr view "$PR" --repo "$REPO" --json baseRefName --jq .baseRefName)
+          head=$(gh pr view "$PR" --repo "$REPO" --json headRefOid --jq .headRefOid)
+          behind=$(gh api "repos/$REPO/compare/$base...$head" --jq .behind_by)
+          if [ "$behind" -gt 0 ]; then
+            echo "::error::#$PR is $behind commits behind $base, so a plan from it describes a tree that no longer exists and applying it would undo what landed meanwhile. Update the branch, then plan again."
+            exit 1
+          fi
+          echo "Up to date with $base."
+
       - name: Only a collaborator with write access, only a branch of this repository
         if: github.event_name == 'issue_comment'
         env:

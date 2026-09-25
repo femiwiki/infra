@@ -1,7 +1,7 @@
 resource "docker_container" "http" {
   name         = "http-${local.fastcgi_generation}"
   log_driver   = "local"
-  image        = "ghcr.io/femiwiki/femiwiki:2026-09-25T02-49-0e43d841"
+  image        = "ghcr.io/femiwiki/femiwiki:2026-09-25T07-09-cbe54f20"
   command      = ["caddy-run"]
   restart      = "always"
   network_mode = "host"
@@ -18,7 +18,7 @@ resource "docker_container" "http" {
   }
 
   healthcheck {
-    test         = ["CMD-SHELL", "curl -sf http://127.0.0.1:$${CADDY_PROBE_PORT}/health-check"]
+    test         = ["CMD-SHELL", "curl -sf http://127.0.0.1:$${FW_PROBE_PORT}/health-check"]
     interval     = "5s"
     timeout      = "3s"
     retries      = 7
@@ -27,16 +27,18 @@ resource "docker_container" "http" {
 
   env = [
     for k, v in {
-      CADDY_PROBE_PORT   = 8080 + local.fastcgi_generation % 2,
-      CADDY_METRICS_PORT = 9180 + local.fastcgi_generation % 2,
+      FW_PROBE_PORT   = 8080 + local.fastcgi_generation % 2,
+      FW_METRICS_PORT = 9180 + local.fastcgi_generation % 2,
 
       PHP_FPM_LISTEN        = 9000 + local.fastcgi_generation % 2,
       PHP_FPM_STATUS_LISTEN = 9200 + local.fastcgi_generation % 2,
 
-      CADDY_EXPENSIVE_EVENTS    = "3000",
-      CADDY_EXPENSIVE_IP_EVENTS = "15",
+      FW_CRAWLER_AGENTS      = "(?i)(bot|spider|crawl|Claude-Web|meta-external)",
+      FW_EXPENSIVE_EVENTS    = "3000",
+      FW_EXPENSIVE_IP_EVENTS = "15",
 
-      CADDY_LOG_EXCLUDE   = "http.handlers.mwcache",
+      FW_LOG_EXCLUDE      = "http.handlers.mwcache",
+      FW_ROBOTS_TXT       = file("res/robots.txt"),
       AWS_REGION          = "ap-northeast-1",
       S3_USE_IAM_PROVIDER = "true",
       S3_HOST             = "s3.ap-northeast-1.amazonaws.com",
@@ -46,6 +48,10 @@ resource "docker_container" "http" {
       BLOCKED_CIDR = join(" ", [
         # Alibaba Cloud LLC
         "47.74.0.0/15", "47.76.0.0/14", "47.80.0.0/13",
+        # ACEVILLE PTE.LTD and TencentCloud, as APNIC registers them
+        "43.128.64.0/18", "43.153.0.0/17", "43.154.0.0/16", "43.156.0.0/16",
+        "43.157.0.0/17", "43.160.0.0/12",
+        "49.51.0.0/16", "119.28.0.0/15", "124.156.96.0/19", "124.156.128.0/18",
         # ColoCrossing
         "104.168.0.0/17",
         "107.172.0.0/14",
@@ -82,7 +88,7 @@ resource "docker_container" "http" {
 resource "docker_container" "fastcgi" {
   name         = "fastcgi-${local.fastcgi_generation}"
   log_driver   = "local"
-  image        = "ghcr.io/femiwiki/femiwiki:2026-09-25T02-49-0e43d841"
+  image        = "ghcr.io/femiwiki/femiwiki:2026-09-25T07-09-cbe54f20"
   network_mode = "host"
   restart      = "always"
   memory       = 768
@@ -174,11 +180,13 @@ resource "docker_container" "fastcgi" {
 
 resource "docker_container" "memcached" {
   name         = "memcached"
+  log_driver   = "local"
   image        = "memcached:1.6.23-alpine"
+  command      = ["memcached", "-m", tostring(local.memcached_item_mib)]
   network_mode = "host"
   restart      = "always"
-  memory       = 128
-  memory_swap  = 128
+  memory       = local.memcached_mib
+  memory_swap  = local.memcached_mib
 
   labels {
     label = "autoheal"
@@ -194,6 +202,7 @@ resource "docker_container" "memcached" {
 
 resource "docker_container" "autoheal" {
   name         = "autoheal"
+  log_driver   = "local"
   image        = "willfarrell/autoheal:1.1.0"
   network_mode = "none"
   restart      = "always"
