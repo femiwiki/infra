@@ -190,6 +190,14 @@ resource "aws_route53_health_check" "femiwiki_pages" {
   request_interval  = 30
   resource_path     = "/w/${urlencode(each.key)}"
 
+  # Three is the fewest Route53 accepts, down from the sixteen it uses unset;
+  # 특수:빈문서 cannot be cached, so each region is a full render. See #581.
+  regions = [
+    "ap-northeast-1",
+    "us-west-1",
+    "eu-west-1",
+  ]
+
   tags = {
     "Name" = "Femiwiki ${each.key}"
   }
