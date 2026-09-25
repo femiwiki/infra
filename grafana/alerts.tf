@@ -6,6 +6,10 @@ data "grafana_data_source" "loki" {
   name = "grafanacloud-femiwiki-logs"
 }
 
+data "grafana_data_source" "usage" {
+  name = "grafanacloud-usage"
+}
+
 locals {
   discord_contact_points = {
     critical = { title = "site-down-title.gotmpl", message = "discord-message.gotmpl" }
@@ -40,6 +44,63 @@ resource "grafana_notification_policy" "root" {
       group_wait      = "30s"
       group_interval  = "5m"
       repeat_interval = policy.value
+    }
+  }
+}
+
+locals {
+  log_volume_projection = trimspace(file("${path.module}/queries/log-volume-projection.promql"))
+}
+
+resource "grafana_rule_group" "logs" {
+  name             = "logs"
+  folder_uid       = grafana_folder.hosts.uid
+  interval_seconds = 300
+
+  rule {
+    name = "Logs are arriving faster than the plan allows"
+    for  = "30m"
+
+    condition      = "B"
+    no_data_state  = "OK"
+    exec_err_state = "OK"
+
+    labels = {
+      severity = "warning"
+    }
+
+    annotations = {
+      summary = "최근 6시간 속도가 이어지면 로그가 한 달에 {{ printf \"%.0f\" $values.A.Value }} GB입니다. 무료 플랜 포함량은 50 GB이고, 넘기면 수집이 끊겨 이 쪽 감시가 통째로 조용해집니다. 로그의 92%는 Caddy 접근 로그입니다."
+    }
+
+    data {
+      ref_id         = "A"
+      datasource_uid = data.grafana_data_source.usage.uid
+      relative_time_range {
+        from = 21600
+        to   = 0
+      }
+      model = jsonencode({
+        refId   = "A"
+        expr    = local.log_volume_projection
+        instant = true
+        range   = false
+      })
+    }
+
+    data {
+      ref_id         = "B"
+      datasource_uid = "__expr__"
+      relative_time_range {
+        from = 0
+        to   = 0
+      }
+      model = jsonencode({
+        refId      = "B"
+        type       = "threshold"
+        expression = "A"
+        conditions = [{ evaluator = { type = "gt", params = [100] } }]
+      })
     }
   }
 }
