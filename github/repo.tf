@@ -168,7 +168,7 @@ module "legunto" {
   topics = [
     "scribunto",
   ]
-  required_status_checks_contexts = ["ci", "yamllint", "actionlint", "rumdl"]
+  required_status_checks_contexts = ["ci", "yamllint", "actionlint", "rumdl", "taplo"]
 }
 
 module "maintenance" {
@@ -241,7 +241,7 @@ module "lambda" {
     "aws",
     "rust",
   ]
-  required_status_checks_contexts = ["fmt-prettier", "test"]
+  required_status_checks_contexts = ["fmt-prettier", "test", "taplo"]
 }
 
 module "terraform-provider-mediawiki" {
