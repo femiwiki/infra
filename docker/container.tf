@@ -42,6 +42,7 @@ resource "docker_container" "http" {
       FW_EXPENSIVE_IP_EVENTS = "15",
 
       FW_LOG_EXCLUDE      = "http.handlers.mwcache",
+      FW_CADDYFILE        = file("res/Caddyfile"),
       FW_ROBOTS_TXT       = file("res/robots.txt"),
       AWS_REGION          = "ap-northeast-1",
       S3_USE_IAM_PROVIDER = "true",
