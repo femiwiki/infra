@@ -9,7 +9,6 @@ resource "github_repository" "repository" {
   archive_on_destroy        = true
   archived                  = var.archived
   topics                    = var.topics
-  vulnerability_alerts      = !var.archived
   has_discussions           = false
   has_projects              = false
   has_wiki                  = false
@@ -88,4 +87,9 @@ resource "github_repository_collaborator" "repository_collaborator" {
   repository = github_repository.repository.name
   username   = "translatewiki"
   permission = "push"
+}
+
+resource "github_repository_vulnerability_alerts" "vulnerability_alerts" {
+  count      = var.archived ? 0 : 1
+  repository = github_repository.repository.name
 }
