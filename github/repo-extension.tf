@@ -71,22 +71,10 @@ module "femiwiki_crawling_blocker" {
   collaborator = local.extension.collaborator
 }
 
-import {
-  to = github_repository.discord_rc_feed
-  id = "DiscordRCFeed"
-}
+removed {
+  from = github_repository.discord_rc_feed
 
-resource "github_repository" "discord_rc_feed" {
-  name                   = "DiscordRCFeed"
-  description            = "🎮 Provides MediaWiki's FormattedRCFeed and RCFeedFormatter for Discord"
-  homepage_url           = "https://www.mediawiki.org/wiki/Special:MyLanguage/Extension:DiscordRCFeed"
-  topics                 = ["discord", "mediawiki-extension"]
-  has_issues             = true
-  has_discussions        = false
-  has_projects           = false
-  has_wiki               = false
-  allow_auto_merge       = true
-  delete_branch_on_merge = true
-  archived               = true
-  archive_on_destroy     = true
+  lifecycle {
+    destroy = false
+  }
 }
