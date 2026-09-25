@@ -1,0 +1,4 @@
+100 * max(
+  php_opcache_cached_keys{job="integrations/opcache"}
+  / php_opcache_max_cached_keys{job="integrations/opcache"}
+)

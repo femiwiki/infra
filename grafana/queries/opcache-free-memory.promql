@@ -1,0 +1,1 @@
+max(php_opcache_memory_bytes{job="integrations/opcache", state="free"}) / 1024 / 1024

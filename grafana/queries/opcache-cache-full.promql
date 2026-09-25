@@ -1,1 +1,0 @@
-max(php_opcache_cache_full{job="integrations/opcache"})

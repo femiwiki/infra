@@ -186,13 +186,34 @@ locals {
           }
         },
         {
-          name      = "Script cache full"
-          expr      = trimspace(file("${path.module}/queries/opcache-cache-full.promql"))
+          name      = "Script cache table full"
+          expr      = trimspace(file("${path.module}/queries/opcache-table-share.promql"))
+          threshold = 99
+          for       = "15m"
+          labels    = { severity = "warning" }
+          annotations = {
+            summary = "opcache가 스크립트를 담는 표의 {{ printf \"%.0f\" $values.A.Value }}%를 썼습니다. 다 차면 새 스크립트는 캐시에 들어가지 못해 요청마다 다시 컴파일됩니다. `PHP_OPCACHE_MAX_ACCELERATED_FILES`를 올리면 이미지 빌드 없이 적용됩니다."
+          }
+        },
+        {
+          name      = "Script cache memory almost gone"
+          expr      = trimspace(file("${path.module}/queries/opcache-free-memory.promql"))
+          op        = "lt"
+          threshold = 8
+          for       = "15m"
+          labels    = { severity = "warning" }
+          annotations = {
+            summary = "opcache의 스크립트 메모리가 {{ printf \"%.0f\" $values.A.Value }} MB 남았습니다. 다 쓰면 opcache가 재시작하면서 캐시를 비웁니다. `PHP_OPCACHE_MEMORY_CONSUMPTION`를 올리면 이미지 빌드 없이 적용됩니다."
+          }
+        },
+        {
+          name      = "Opcache restarted out of table slots"
+          expr      = trimspace(file("${path.module}/queries/opcache-hash-restarts.promql"))
           threshold = 0
           for       = "0m"
           labels    = { severity = "warning" }
           annotations = {
-            summary = "opcache가 새 스크립트를 더 담을 수 없습니다. 이대로 두면 다음 배포에서 opcache가 재시작하고, 그 뒤 모든 요청이 컴파일을 다시 합니다. `PHP_OPCACHE_MEMORY_CONSUMPTION`를 올리면 이미지 빌드 없이 적용됩니다."
+            summary = "opcache가 표가 모자라 최근 10분 동안 {{ printf \"%.0f\" $values.A.Value }}번 재시작했습니다. 재시작 직후에는 모든 요청이 컴파일을 다시 합니다. `PHP_OPCACHE_MAX_ACCELERATED_FILES`를 올리면 이미지 빌드 없이 적용됩니다."
           }
         },
       ]
