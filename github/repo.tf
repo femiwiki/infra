@@ -129,6 +129,7 @@ module "remote_gadgets" {
   topics = [
     "bot",
   ]
+  required_status_checks_contexts = ["taplo", "prettier", "ruff"]
 }
 
 module "femiwiki_github_io" {
