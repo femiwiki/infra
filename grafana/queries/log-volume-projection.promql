@@ -1,0 +1,1 @@
+30 * 86400 * max(avg_over_time(grafanacloud_logs_instance_bytes_received_per_second[6h])) / 1e9
