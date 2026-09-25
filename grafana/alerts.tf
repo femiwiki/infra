@@ -286,26 +286,6 @@ resource "grafana_rule_group" "threshold" {
   }
 }
 
-moved {
-  from = grafana_rule_group.memory
-  to   = grafana_rule_group.threshold["memory"]
-}
-
-moved {
-  from = grafana_rule_group.hosts
-  to   = grafana_rule_group.threshold["hosts"]
-}
-
-moved {
-  from = grafana_rule_group.femiwiki_fastcgi
-  to   = grafana_rule_group.threshold["fastcgi"]
-}
-
-moved {
-  from = grafana_rule_group.logs
-  to   = grafana_rule_group.threshold["logs"]
-}
-
 resource "grafana_rule_group" "femiwiki_http" {
   name             = "http"
   folder_uid       = data.grafana_folder.femiwiki.uid
