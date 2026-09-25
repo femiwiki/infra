@@ -8,11 +8,13 @@ data "grafana_data_source" "loki" {
 
 locals {
   discord_contact_points = {
-    critical = "site-down-title.gotmpl"
+    critical = { title = "site-down-title.gotmpl", message = "discord-message.gotmpl" }
+    warning  = { title = "warning-title.gotmpl", message = "alert-message.gotmpl" }
   }
 
   discord_routes = {
     critical = "30m"
+    warning  = "12h"
   }
 }
 
@@ -71,12 +73,14 @@ locals {
       expr    = trimspace(file("${path.module}/queries/oom-kills.promql"))
       above   = 0
       for     = "0m"
+      labels  = {}
       summary = "{{ $labels.instance }}에서 커널이 프로세스를 죽였습니다. 최근 10분 동안 {{ printf \"%.0f\" $values.A.Value }}번입니다."
     }
     "Container near its memory limit" = {
       expr    = trimspace(file("${path.module}/queries/container-memory-share.promql"))
-      above   = 90
-      for     = "10m"
+      above   = 95
+      for     = "30m"
+      labels  = { severity = "warning" }
       summary = "{{ $labels.name }}이 제 메모리 상한의 {{ printf \"%.0f\" $values.A.Value }}%를 쓰고 있습니다."
     }
   }
@@ -97,6 +101,8 @@ resource "grafana_rule_group" "memory" {
       condition      = "B"
       no_data_state  = "OK"
       exec_err_state = "OK"
+
+      labels = rule.value.labels
 
       annotations = {
         summary = rule.value.summary
@@ -472,9 +478,9 @@ resource "grafana_contact_point" "discord" {
     url                  = var.discord_webhook_url
     use_discord_username = false
 
-    title = trimspace(file("${path.module}/templates/${each.value}"))
+    title = trimspace(file("${path.module}/templates/${each.value.title}"))
     message = trimspace(replace(
-      file("${path.module}/templates/discord-message.gotmpl"),
+      file("${path.module}/templates/${each.value.message}"),
       "__MENTION_ROLE__",
       var.discord_mention_role_id,
     ))
