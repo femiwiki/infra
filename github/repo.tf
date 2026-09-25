@@ -165,6 +165,7 @@ module "legunto" {
   topics = [
     "scribunto",
   ]
+  required_status_checks_contexts = ["ci", "yamllint", "actionlint", "rumdl"]
 }
 
 module "maintenance" {
