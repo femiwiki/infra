@@ -27,33 +27,3 @@ resource "grafana_dashboard_public" "this" {
   time_selection_enabled = each.value.time_selection
   annotations_enabled    = each.value.annotations
 }
-
-moved {
-  from = grafana_dashboard.container_memory
-  to   = grafana_dashboard.this["container-memory"]
-}
-
-moved {
-  from = grafana_dashboard.site
-  to   = grafana_dashboard.this["site"]
-}
-
-moved {
-  from = grafana_dashboard.availability
-  to   = grafana_dashboard.this["availability"]
-}
-
-moved {
-  from = grafana_dashboard_public.container_memory
-  to   = grafana_dashboard_public.this["container-memory"]
-}
-
-moved {
-  from = grafana_dashboard_public.site
-  to   = grafana_dashboard_public.this["site"]
-}
-
-moved {
-  from = grafana_dashboard_public.availability
-  to   = grafana_dashboard_public.this["availability"]
-}
