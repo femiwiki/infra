@@ -1,7 +1,7 @@
 resource "docker_container" "http" {
   name         = "http-${local.fastcgi_generation}"
   log_driver   = "local"
-  image        = "ghcr.io/femiwiki/femiwiki:2026-09-25T12-08-0a7128c5"
+  image        = "ghcr.io/femiwiki/femiwiki:2026-09-25T22-19-11e53ae2"
   command      = ["caddy-run"]
   restart      = "always"
   network_mode = "host"
@@ -92,7 +92,7 @@ resource "docker_container" "http" {
 resource "docker_container" "fastcgi" {
   name         = "fastcgi-${local.fastcgi_generation}"
   log_driver   = "local"
-  image        = "ghcr.io/femiwiki/femiwiki:2026-09-25T12-08-0a7128c5"
+  image        = "ghcr.io/femiwiki/femiwiki:2026-09-25T22-19-11e53ae2"
   network_mode = "host"
   restart      = "always"
   memory       = 768
@@ -118,6 +118,10 @@ resource "docker_container" "fastcgi" {
       PHP_FPM_REQUEST_TERMINATE_TIMEOUT   = "30"
 
       PHP_OPCACHE_MEMORY_CONSUMPTION = "192"
+      # 4000 rounded up to 7963 key slots and 5,170 scripts filled them; 10000 is
+      # PHP's next size, 16229. Memory was never the ceiling. See femiwiki#587.
+      PHP_OPCACHE_MAX_ACCELERATED_FILES   = "10000"
+      PHP_OPCACHE_INTERNED_STRINGS_BUFFER = "48"
 
       PHP_FPM_PM_MAX_CHILDREN      = "16"
       PHP_FPM_PM_START_SERVERS     = "2"
