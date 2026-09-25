@@ -6,7 +6,7 @@ Open a pull request with auto-merge already on when every workspace it changes
 has a required `<workspace> plan is empty` check:
 
 ```sh
-gh pr merge <number> --squash --auto --delete-branch
+gh pr merge <number> --squash --auto
 ```
 
 Such a workspace is applied from GitHub Actions by a `tofu apply` comment,
