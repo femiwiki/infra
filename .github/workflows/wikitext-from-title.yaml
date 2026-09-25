@@ -4,13 +4,20 @@ on:
   pull_request:
     types: [opened, reopened, edited]
     paths: ["docker/**"]
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: The pull request to add the block to, closed or merged ones too. Run post update after.
+        required: true
+        type: number
 permissions: {}
 jobs:
   block:
     # Only a new title, so a block the author deleted stays deleted
     if: >-
-      github.event.pull_request.head.repo.full_name == github.repository
-      && (github.event.action != 'edited' || github.event.changes.title)
+      github.event_name == 'workflow_dispatch'
+      || (github.event.pull_request.head.repo.full_name == github.repository
+      && (github.event.action != 'edited' || github.event.changes.title))
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -20,10 +27,14 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
-          NUMBER: ${{ github.event.pull_request.number }}
+          NUMBER: ${{ inputs.pr || github.event.pull_request.number }}
           TITLE: ${{ github.event.pull_request.title }}
           BODY: ${{ github.event.pull_request.body }}
         run: |
+          if [ -z "$TITLE" ]; then
+            TITLE="$(gh pr view "$NUMBER" --repo "$REPO" --json title --jq .title)"
+            BODY="$(gh pr view "$NUMBER" --repo "$REPO" --json body --jq .body)"
+          fi
           fence=$'\x60\x60\x60'
           if grep -q "^${fence}wikitext" <<< "$BODY"; then
             echo 'The body already has a ```wikitext block.'
