@@ -1,11 +1,5 @@
 # Visit https://github.com/wikimedia/operations-mediawiki-config/blob/master/robots.txt for Wikimedia's robots.txt.
 
-User-agent: ClaudeBot
-Disallow: /
-
-User-agent: Claude-Web
-Disallow: /
-
 # Allow the Internet Archiver to index action=raw and thereby store the raw wikitext of pages
 User-agent: ia_archiver
 Allow: /*&action=raw

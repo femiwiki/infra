@@ -33,6 +33,7 @@ resource "docker_container" "http" {
       PHP_FPM_LISTEN        = 9000 + local.fastcgi_generation % 2,
       PHP_FPM_STATUS_LISTEN = 9200 + local.fastcgi_generation % 2,
 
+      FW_CRAWLER_AGENTS      = "(?i)(bot|spider|crawl|Claude-Web|meta-external)",
       FW_EXPENSIVE_EVENTS    = "3000",
       FW_EXPENSIVE_IP_EVENTS = "15",
 
