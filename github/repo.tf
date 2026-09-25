@@ -193,7 +193,7 @@ module "caddy_mwcache" {
     "cache",
     "mediawiki",
   ]
-  required_status_checks_contexts = ["lint-go", "caddy-fmt", "rumdl", "yamllint", "biome", "parallel-lint", "taplo"]
+  required_status_checks_contexts = ["lint-go", "caddy-fmt", "rumdl", "yamllint", "biome", "parallel-lint", "phpcs", "taplo"]
 }
 
 module "ooui_femiwiki_theme" {
@@ -206,7 +206,7 @@ module "ooui_femiwiki_theme" {
     "ooui",
     "theme",
   ]
-  required_status_checks_contexts = ["parallel-lint", "shellcheck", "prettier"]
+  required_status_checks_contexts = ["parallel-lint", "phpcs", "shellcheck", "prettier"]
 }
 
 module "quibble_action" {
