@@ -1,7 +1,7 @@
 resource "docker_container" "http" {
   name         = "http-${local.fastcgi_generation}"
   log_driver   = "local"
-  image        = "ghcr.io/femiwiki/femiwiki:2026-09-25T02-49-0e43d841"
+  image        = "ghcr.io/femiwiki/femiwiki:2026-09-25T07-09-cbe54f20"
   command      = ["caddy-run"]
   restart      = "always"
   network_mode = "host"
@@ -18,7 +18,7 @@ resource "docker_container" "http" {
   }
 
   healthcheck {
-    test         = ["CMD-SHELL", "curl -sf http://127.0.0.1:$${CADDY_PROBE_PORT}/health-check"]
+    test         = ["CMD-SHELL", "curl -sf http://127.0.0.1:$${FW_PROBE_PORT}/health-check"]
     interval     = "5s"
     timeout      = "3s"
     retries      = 7
@@ -27,16 +27,17 @@ resource "docker_container" "http" {
 
   env = [
     for k, v in {
-      CADDY_PROBE_PORT   = 8080 + local.fastcgi_generation % 2,
-      CADDY_METRICS_PORT = 9180 + local.fastcgi_generation % 2,
+      FW_PROBE_PORT   = 8080 + local.fastcgi_generation % 2,
+      FW_METRICS_PORT = 9180 + local.fastcgi_generation % 2,
 
       PHP_FPM_LISTEN        = 9000 + local.fastcgi_generation % 2,
       PHP_FPM_STATUS_LISTEN = 9200 + local.fastcgi_generation % 2,
 
-      CADDY_EXPENSIVE_EVENTS    = "3000",
-      CADDY_EXPENSIVE_IP_EVENTS = "15",
+      FW_EXPENSIVE_EVENTS    = "3000",
+      FW_EXPENSIVE_IP_EVENTS = "15",
 
-      CADDY_LOG_EXCLUDE   = "http.handlers.mwcache",
+      FW_LOG_EXCLUDE      = "http.handlers.mwcache",
+      FW_ROBOTS_TXT       = file("res/robots.txt"),
       AWS_REGION          = "ap-northeast-1",
       S3_USE_IAM_PROVIDER = "true",
       S3_HOST             = "s3.ap-northeast-1.amazonaws.com",
@@ -82,7 +83,7 @@ resource "docker_container" "http" {
 resource "docker_container" "fastcgi" {
   name         = "fastcgi-${local.fastcgi_generation}"
   log_driver   = "local"
-  image        = "ghcr.io/femiwiki/femiwiki:2026-09-25T02-49-0e43d841"
+  image        = "ghcr.io/femiwiki/femiwiki:2026-09-25T07-09-cbe54f20"
   network_mode = "host"
   restart      = "always"
   memory       = 768
