@@ -178,11 +178,11 @@ resource "docker_container" "memcached" {
   name         = "memcached"
   log_driver   = "local"
   image        = "memcached:1.6.23-alpine"
-  command      = ["memcached", "-m", "224"]
+  command      = ["memcached", "-m", tostring(local.memcached_item_mib)]
   network_mode = "host"
   restart      = "always"
-  memory       = 256
-  memory_swap  = 256
+  memory       = local.memcached_mib
+  memory_swap  = local.memcached_mib
 
   labels {
     label = "autoheal"
