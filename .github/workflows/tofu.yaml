@@ -118,14 +118,19 @@ jobs:
     outputs:
       workspaces: ${{ steps.files.outputs.workspaces }}
     steps:
-      - name: The branch has to carry everything on its base
+      - name: The branch has to carry everything on its base, and its base has to be the default branch
         if: github.event_name == 'issue_comment'
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
           PR: ${{ github.event.issue.number }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
         run: |
           base=$(gh pr view "$PR" --repo "$REPO" --json baseRefName --jq .baseRefName)
+          if [ "$base" != "$DEFAULT_BRANCH" ]; then
+            echo "::error::#$PR targets $base rather than $DEFAULT_BRANCH. An apply runs before the merge, so a plan from a stacked branch carries whatever is below it and applying this would apply those too. Merge the branch underneath first, retarget this one at $DEFAULT_BRANCH, then plan again."
+            exit 1
+          fi
           head=$(gh pr view "$PR" --repo "$REPO" --json headRefOid --jq .headRefOid)
           behind=$(gh api "repos/$REPO/compare/$base...$head" --jq .behind_by)
           if [ "$behind" -gt 0 ]; then
