@@ -253,7 +253,9 @@ loki.process "fastcgi" {
   forward_to = [loki.write.grafana_cloud_loki.receiver]
 
   stage.match {
-    selector = "{docker_container_name=\"fastcgi\"}"
+    // The container name carries the generation, so an exact match stopped
+    // finding it when the zero-downtime swap started numbering the names.
+    selector = "{docker_container_name=~\"fastcgi.*\"}"
 
     stage.regex {
       expression = "^NOTICE: PHP message: (?P<line>\\{.*)$"
