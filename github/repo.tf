@@ -56,7 +56,7 @@ module "docker_mediawiki" {
   delete_branch_on_merge          = true
   enforce_admins                  = local.docker.enforce_admins
   required_pull_request_reviews   = local.docker.required_pull_request_reviews
-  required_status_checks_contexts = ["php-lint", "caddy-fmt", "etc-lint", "hadolint", "image builds", "title scope"]
+  required_status_checks_contexts = ["php-lint", "caddy-fmt", "etc-lint", "hadolint", "shellcheck", "image builds", "title scope"]
   topics = [
     "docker-compose",
     "docker-image",
@@ -166,7 +166,7 @@ module "dot_github" {
   name                            = ".github"
   description                     = "Community health files"
   default_status_checks           = []
-  required_status_checks_contexts = ["yarn-test"]
+  required_status_checks_contexts = ["yarn-test", "ruff", "taplo"]
 }
 
 module "legunto" {
@@ -253,7 +253,7 @@ module "terraform-provider-mediawiki" {
     "mediawiki",
     "terraform-provider",
   ]
-  required_status_checks_contexts = ["rumdl"]
+  required_status_checks_contexts = ["rumdl", "actionlint"]
 }
 
 module "status" {
