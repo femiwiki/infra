@@ -29,6 +29,7 @@ module "infra" {
     "rumdl",
     "yamllint",
     "parallel-lint",
+    "taplo",
   ]
   topics = [
     "terraform",
@@ -110,7 +111,7 @@ module "backupbot" {
     "docker-image",
     "mysql",
   ]
-  required_status_checks_contexts = ["hadolint", "rumdl", "yamllint", "actionlint", "shellcheck"]
+  required_status_checks_contexts = ["hadolint", "rumdl", "yamllint", "actionlint", "shellcheck", "taplo"]
 }
 
 module "tweetbot" {
@@ -192,7 +193,7 @@ module "caddy_mwcache" {
     "cache",
     "mediawiki",
   ]
-  required_status_checks_contexts = ["lint-go", "caddy-fmt", "rumdl", "yamllint", "biome", "parallel-lint"]
+  required_status_checks_contexts = ["lint-go", "caddy-fmt", "rumdl", "yamllint", "biome", "parallel-lint", "taplo"]
 }
 
 module "ooui_femiwiki_theme" {
