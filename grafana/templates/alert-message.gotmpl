@@ -1,0 +1,4 @@
+{{ range .Alerts }}{{ .Annotations.summary }}
+{{ range .Annotations.SortedPairs }}{{ if and (ne .Name "summary") (ne .Name "logs") }}{{ .Name }}: {{ .Value }}
+{{ end }}{{ end }}{{ if .Annotations.logs }}[최근 상태 보기]({{ .Annotations.logs }})
+{{ end }}{{ end }}
