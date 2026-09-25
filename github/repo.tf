@@ -236,6 +236,7 @@ module "lambda" {
     "aws",
     "rust",
   ]
+  required_status_checks_contexts = ["fmt-prettier", "test"]
 }
 
 module "terraform-provider-mediawiki" {
