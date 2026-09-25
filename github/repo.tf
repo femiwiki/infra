@@ -89,6 +89,7 @@ module "rankingbot" {
   topics = [
     "bot",
   ]
+  required_status_checks_contexts = ["ci", "ruff", "yamllint", "rumdl", "taplo", "biome"]
 }
 
 module "backupbot" {
