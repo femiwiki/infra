@@ -95,9 +95,6 @@ $link = "https://github.com/$repo/pull/$number";
 $new = array_values( array_filter( $blocks, fn ( $block ) => !str_contains( $text, $block ) ) );
 if ( $new ) {
 	$merged = insert( $text, $at, $link, $new );
-} elseif ( str_contains( $text, $labelled = "[$link " . basename( $repo ) . "#$number]" ) ) {
-	// Sections posted before the link was bare
-	$merged = str_replace( $labelled, $link, $text );
 } elseif ( !preg_match( '/^' . preg_quote( $link, '/' ) . '$/m', $text ) ) {
 	$merged = linkUnder( $text, $blocks[0], $link );
 } else {
