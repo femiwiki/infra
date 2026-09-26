@@ -1,1 +1,1 @@
-max(phpfpm_listen_queue{job="integrations/php-fpm"})
+max by (instance) (phpfpm_listen_queue{job="integrations/php-fpm"})
