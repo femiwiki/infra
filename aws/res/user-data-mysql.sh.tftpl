@@ -40,8 +40,8 @@ sed -i 's/^LOGINTERVAL=600.*/LOGINTERVAL=60/' /etc/sysconfig/atop
 mkdir -v /etc/systemd/system/sysstat-collect.timer.d/
 bash -c "sed -e 's|every 10 minutes|every 1 minute|g' -e '/^OnCalendar=/ s|/10$|/1|' /usr/lib/systemd/system/sysstat-collect.timer > /etc/systemd/system/sysstat-collect.timer.d/override.conf"
 sed -i 's|^SADC_OPTIONS=.*|SADC_OPTIONS=" -S XALL"|' /etc/sysconfig/sysstat
-systemctl enable atop.service sysstat-collect.timer sysstat.service
-systemctl restart atop.service sysstat-collect.timer sysstat.service
+systemctl enable atop.service atop-rotate.timer sysstat-collect.timer sysstat.service
+systemctl restart atop.service atop-rotate.timer sysstat-collect.timer sysstat.service
 
 #
 # Install and configure Grafana Alloy
@@ -247,30 +247,7 @@ CNF
   # lexicographic order, so a name written at another offset would sort before
   # the backups it is newer than.
   cat <<'DUMP' > /usr/local/sbin/mysql-backup
-#!/bin/bash
-set -euo pipefail; IFS=$'\n\t'
-
-export AWS_DEFAULT_REGION=${region}
-
-NAME="$(TZ=Asia/Seoul date --iso-8601=minutes).sql.gz"
-FILE="/var/tmp/$NAME"
-trap 'rm -f "$FILE"' EXIT
-
-# --defaults-file, not ~/.my.cnf: systemd does not promise HOME to a
-# system service, and a dump that cannot log in is a silent one.
-dump() { nice -n 19 mysqldump --defaults-file=/root/.my.cnf femiwiki | nice -n 19 gzip -9 > "$FILE"; }
-upload() { nice -n 19 aws s3 cp --no-progress "$FILE" "s3://${backups_bucket}/mysql/$NAME"; }
-
-retry() {
-  for _ in 1 2 3; do
-    "$@" && return 0
-    sleep 15
-  done
-  return 1
-}
-
-retry dump
-retry upload
+${backup_script}
 DUMP
   chmod 755 /usr/local/sbin/mysql-backup
   cat <<'UNIT' > /etc/systemd/system/mysql-backup.service

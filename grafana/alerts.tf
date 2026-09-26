@@ -89,6 +89,9 @@ locals {
 }
 
 locals {
+  retiring_instance     = "femiwiki"
+  retiring_max_requests = 60
+
   rule_defaults = {
     datasource     = data.grafana_data_source.prometheus.uid
     window         = 600
@@ -218,6 +221,25 @@ locals {
           labels    = { severity = "warning" }
           annotations = {
             summary = "{{ $labels.instance }}의 opcache가 표가 모자라 최근 10분 동안 {{ printf \"%.0f\" $values.A.Value }}번 재시작했습니다. 재시작 직후에는 모든 요청이 컴파일을 다시 합니다. `PHP_OPCACHE_MAX_ACCELERATED_FILES`를 올리면 이미지 빌드 없이 적용됩니다."
+          }
+        },
+      ]
+    }
+
+    retiring = {
+      folder   = grafana_folder.hosts.uid
+      interval = 300
+      rules = [
+        {
+          name      = "Retiring host has drained"
+          expr      = replace(trimspace(file("${path.module}/queries/retiring-host-requests.promql")), "__INSTANCE__", local.retiring_instance)
+          op        = "lt"
+          threshold = local.retiring_max_requests
+          window    = 3600
+          for       = "1h"
+          labels    = { severity = "warning" }
+          annotations = {
+            summary = "{{ $labels.instance }}이 최근 1시간 동안 {{ printf \"%.0f\" $values.A.Value }}건만 받았습니다. 이 주소를 아직 들고 있는 리졸버가 사실상 없다는 뜻이므로 이 상자는 은퇴시켜도 됩니다. 상자가 보고를 멈추면 이 규칙은 울리지 않으니, 조용한 것과 멈춘 것을 혼동하지 않습니다."
           }
         },
       ]

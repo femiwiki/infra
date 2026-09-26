@@ -29,8 +29,9 @@ resource "aws_ssm_parameter" "mysql_backup_healthcheck_url" {
 
 locals {
   alloy_hosts = {
-    database = "mysql"
-    docker   = "femiwiki"
+    "docker"       = { name = "femiwiki", type = "app", region = data.aws_region.current.region }
+    "database-4"   = { name = "mysql-seoul", type = "database", region = local.seoul_region }
+    "docker-seoul" = { name = "femiwiki-seoul", type = "app", region = local.seoul_region }
   }
 
   alloy_grafana = {
@@ -41,11 +42,72 @@ locals {
   }
 
   alloy_install = {
-    for tag, name in local.alloy_hosts : tag => replace(
-      replace(file("res/install-alloy-config.sh"), "__REGION__", data.aws_region.current.region),
+    for tag, host in local.alloy_hosts : tag => replace(
+      replace(file("res/install-alloy-config.sh"), "__REGION__", host.region),
       "__CONFIG__",
-      templatefile("res/config.alloy.tftpl", merge(local.alloy_grafana, { name = name }))
+      templatefile("res/config.alloy.tftpl", merge(local.alloy_grafana, { name = host.name, type = host.type }))
     )
+  }
+}
+
+locals {
+  database_hosts = {
+    "database-4" = { region = local.seoul_region }
+  }
+
+  mysql_backup_script = {
+    for tag, host in local.database_hosts : tag => templatefile("res/mysql-backup.sh.tftpl", {
+      region         = host.region
+      backups_bucket = aws_s3_bucket.backups.bucket
+    })
+  }
+
+  mysql_backup_install = {
+    for tag, host in local.database_hosts : tag => templatefile("res/install-mysql-backup.sh.tftpl", {
+      parameter_region = data.aws_region.current.region
+      backup_script    = local.mysql_backup_script[tag]
+    })
+  }
+}
+
+resource "aws_ssm_document" "mysql_backup" {
+  for_each = local.database_hosts
+
+  region          = each.value.region
+  name            = "install-mysql-backup-${each.key}"
+  document_type   = "Command"
+  document_format = "JSON"
+
+  content = jsonencode({
+    schemaVersion = "2.2"
+    description   = "Install /usr/local/sbin/mysql-backup, the credentials it pings with, and its timer."
+    mainSteps = [{
+      action = "aws:runShellScript"
+      name   = "installMysqlBackup"
+      inputs = {
+        runCommand = split("\n", local.mysql_backup_install[each.key])
+      }
+    }]
+  })
+}
+
+resource "aws_ssm_association" "mysql_backup" {
+  for_each = local.database_hosts
+
+  depends_on = [aws_ssm_parameter.mysql_backup_healthcheck_url]
+
+  region              = each.value.region
+  association_name    = "install-mysql-backup-${each.key}"
+  name                = aws_ssm_document.mysql_backup[each.key].name
+  document_version    = aws_ssm_document.mysql_backup[each.key].latest_version
+  schedule_expression = "rate(30 minutes)"
+  compliance_severity = "HIGH"
+  max_concurrency     = "1"
+  max_errors          = "0"
+
+  targets {
+    key    = "tag:Name"
+    values = [each.key]
   }
 }
 
@@ -141,6 +203,7 @@ resource "aws_ssm_association" "swapfile" {
 resource "aws_ssm_document" "alloy_config" {
   for_each = local.alloy_hosts
 
+  region          = each.value.region
   name            = "install-alloy-config-${each.key}"
   document_type   = "Command"
   document_format = "JSON"
@@ -161,8 +224,12 @@ resource "aws_ssm_document" "alloy_config" {
 resource "aws_ssm_association" "alloy_config" {
   for_each = local.alloy_hosts
 
-  depends_on = [aws_ssm_parameter.alloy]
+  depends_on = [
+    aws_ssm_parameter.alloy,
+    aws_ssm_parameter.alloy_seoul,
+  ]
 
+  region              = each.value.region
   association_name    = "install-alloy-config-${each.key}"
   name                = aws_ssm_document.alloy_config[each.key].name
   document_version    = aws_ssm_document.alloy_config[each.key].latest_version

@@ -18,7 +18,7 @@ locals {
   alloy_install_database_seoul = replace(
     replace(file("res/install-alloy-config.sh"), "__REGION__", local.seoul_region),
     "__CONFIG__",
-    templatefile("res/config.alloy.tftpl", merge(local.alloy_grafana, { name = "mysql-seoul" }))
+    templatefile("res/config.alloy.tftpl", merge(local.alloy_grafana, { name = "mysql-seoul", type = "database" }))
   )
 }
 
@@ -58,6 +58,7 @@ resource "aws_instance" "database_4" {
     backups_bucket  = aws_s3_bucket.backups.bucket
 
     alloy_install = local.alloy_install_database_seoul
+    backup_script = local.mysql_backup_script["database-4"]
   }))
 
   vpc_security_group_ids = [

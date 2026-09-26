@@ -2,60 +2,6 @@ data "aws_availability_zone" "femiwiki" {
   name = "ap-northeast-1a"
 }
 
-resource "aws_instance" "database_3" {
-  ami                         = data.aws_ami.amazon_linux_2_arm64.image_id
-  availability_zone           = data.aws_availability_zone.femiwiki.name
-  disable_api_termination     = true
-  disable_api_stop            = true
-  ebs_optimized               = true
-  iam_instance_profile        = aws_iam_instance_profile.database.name
-  instance_type               = "t4g.small"
-  monitoring                  = false
-  user_data_replace_on_change = false
-
-  user_data_base64 = base64gzip(templatefile("res/user-data-mysql.sh.tftpl", {
-    mysql_data_dir  = "/var/lib/mysql" # Default
-    mysql_server_id = "3"
-    region          = data.aws_region.current.region
-    backups_bucket  = aws_s3_bucket.backups.bucket
-
-    alloy_install = local.alloy_install["database"]
-  }))
-
-  vpc_security_group_ids = [
-    aws_default_security_group.default.id,
-    aws_security_group.mysql.id,
-  ]
-
-  root_block_device {
-    delete_on_termination = true
-    volume_size           = 32
-    volume_type           = "gp3"
-  }
-
-  credit_specification {
-    cpu_credits = "unlimited"
-  }
-
-  metadata_options {
-    instance_metadata_tags = "enabled"
-    http_tokens            = "required"
-  }
-
-  tags = {
-    Name = "database-3"
-  }
-
-  lifecycle {
-    create_before_destroy = true
-    ignore_changes = [
-      ami,
-      user_data,
-      user_data_base64,
-    ]
-  }
-}
-
 resource "aws_instance" "docker" {
   ami                         = data.aws_ami.amazon_linux_2_arm64.image_id
   availability_zone           = data.aws_availability_zone.femiwiki.name

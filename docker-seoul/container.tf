@@ -137,7 +137,6 @@ resource "docker_container" "fastcgi" {
       MEDIAWIKI_SKIP_IMPORT_SITES = "1"
       MEDIAWIKI_SKIP_INSTALL      = "1"
       MEDIAWIKI_SKIP_UPDATE       = "1"
-      MEDIAWIKI_SKIP_CRON         = "1"
       MEDIAWIKI_HOTFIX_SNIPPET    = file("../serving/Hotfix.php")
 
       FW_PROFILER = "excimer"

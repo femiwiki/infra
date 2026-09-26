@@ -109,3 +109,13 @@ resource "aws_vpc_security_group_ingress_rule" "instance_connect_seoul" {
   to_port           = 22
   cidr_ipv4         = "13.209.1.56/29"
 }
+
+resource "aws_vpc_security_group_ingress_rule" "database_seoul_from_tokyo" {
+  region            = local.seoul_region
+  security_group_id = aws_security_group.database_seoul.id
+  description       = "From the Tokyo VPC, for the cutover and the stragglers after it"
+  ip_protocol       = "tcp"
+  from_port         = 3306
+  to_port           = 3306
+  cidr_ipv4         = aws_default_vpc.default.cidr_block
+}
