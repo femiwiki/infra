@@ -96,19 +96,20 @@ $page = wiki( [
 ] )['query']['pages'][0];
 $revision = $page['revisions'][0] ?? [];
 $text = $revision['slots']['main']['content'] ?? '';
-// A re-run of the apply lands under a later minute, so a block already on the page is not posted again
+// A re-run of the apply lands under a later minute, so a PR whose link already heads a section is not posted
+// again: its blocks may since have been translated, so they are not what tells
 $link = "https://github.com/$repo/pull/$number";
 $new = array_values( array_filter( $blocks, fn ( $block ) => !str_contains( $text, $block ) ) );
 // The summary links to the section, since a summary does not link a URL or a repo#number
-if ( $new ) {
-	$merged = insert( $text, $at, $link, $new );
-	$summary = '/* ' . sectionOf( $merged, $new[0] ) . ' */ 배포된 변경 사항 추가';
-} elseif ( !preg_match( '/^' . preg_quote( $link, '/' ) . '$/m', $text ) ) {
-	$merged = linkUnder( $text, $blocks[0], $link );
-	$summary = '/* ' . sectionOf( $merged, $blocks[0] ) . ' */ 배포 풀 리퀘스트 링크 추가';
-} else {
+if ( preg_match( '/^' . preg_quote( $link, '/' ) . '$/m', $text ) ) {
 	echo "$title: already posted\n";
 	exit;
+} elseif ( $new ) {
+	$merged = insert( $text, $at, $link, $new );
+	$summary = '/* ' . sectionOf( $merged, $new[0] ) . ' */ 배포된 변경 사항 추가';
+} else {
+	$merged = linkUnder( $text, $blocks[0], $link );
+	$summary = '/* ' . sectionOf( $merged, $blocks[0] ) . ' */ 배포 풀 리퀘스트 링크 추가';
 }
 if ( $dryRun ) {
 	$before = tempnam( sys_get_temp_dir(), 'page' );
