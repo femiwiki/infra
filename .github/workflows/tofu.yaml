@@ -4,6 +4,10 @@ on:
   pull_request:
   issue_comment:
     types: [created]
+  pull_request_review:
+    types: [submitted]
+  pull_request_review_comment:
+    types: [created]
   workflow_dispatch:
     inputs:
       workspace:
@@ -162,6 +166,8 @@ jobs:
     if: >-
       github.event_name == 'workflow_dispatch'
       || (github.event.issue.pull_request && github.event.comment.body == 'tofu apply')
+      || (github.event_name == 'pull_request_review' && github.event.review.body == 'tofu apply')
+      || (github.event_name == 'pull_request_review_comment' && github.event.comment.body == 'tofu apply')
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -171,11 +177,11 @@ jobs:
       workspaces: ${{ steps.files.outputs.workspaces }}
     steps:
       - name: The branch has to carry everything on its base, and its base has to be the default branch
-        if: github.event_name == 'issue_comment'
+        if: (github.event_name == 'issue_comment' || startsWith(github.event_name, 'pull_request_review'))
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
-          PR: ${{ github.event.issue.number }}
+          PR: ${{ github.event.issue.number || github.event.pull_request.number }}
           DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
         run: |
           base=$(gh pr view "$PR" --repo "$REPO" --json baseRefName --jq .baseRefName)
@@ -192,12 +198,12 @@ jobs:
           echo "Up to date with $base."
 
       - name: Only a collaborator with write access, only a branch of this repository
-        if: github.event_name == 'issue_comment'
+        if: (github.event_name == 'issue_comment' || startsWith(github.event_name, 'pull_request_review'))
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
-          PR: ${{ github.event.issue.number }}
-          USER: ${{ github.event.comment.user.login }}
+          PR: ${{ github.event.issue.number || github.event.pull_request.number }}
+          USER: ${{ github.event.comment.user.login || github.event.review.user.login }}
         run: |
           permission=$(gh api "repos/$REPO/collaborators/$USER/permission" --jq .permission)
           case "$permission" in admin|maintain|write) ;; *) echo "::error::$USER has $permission access"; exit 1 ;; esac
@@ -209,7 +215,7 @@ jobs:
           EVENT: ${{ github.event_name }}
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
-          PR: ${{ github.event.issue.number }}
+          PR: ${{ github.event.issue.number || github.event.pull_request.number }}
           WORKSPACE: ${{ inputs.workspace }}
         run: |
           if [ "$EVENT" = workflow_dispatch ]; then
@@ -244,7 +250,7 @@ jobs:
         id: checkout
         continue-on-error: true
         with:
-          ref: ${{ github.event_name == 'issue_comment' && format('refs/pull/{0}/merge', github.event.issue.number) || github.ref }}
+          ref: ${{ (github.event_name == 'issue_comment' || startsWith(github.event_name, 'pull_request_review')) && format('refs/pull/{0}/merge', github.event.issue.number || github.event.pull_request.number) || github.ref }}
           persist-credentials: false
 
       - name: Merging deletes the ref above, so take the branch it merged into
@@ -254,9 +260,9 @@ jobs:
           EVENT: ${{ github.event_name }}
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
-          PR: ${{ github.event.issue.number }}
+          PR: ${{ github.event.issue.number || github.event.pull_request.number }}
         run: |
-          [ "$EVENT" = issue_comment ] || { echo "::error::the checkout failed"; exit 1; }
+          case "$EVENT" in issue_comment|pull_request_review*) ;; *) echo "::error::the checkout failed"; exit 1 ;; esac
           base=$(gh pr view "$PR" --repo "$REPO" --json merged,baseRefName --jq 'select(.merged) | .baseRefName')
           [ -n "$base" ] || { echo "::error::could not check out #$PR, which has not merged"; exit 1; }
           echo "base=$base" >> "$GITHUB_OUTPUT"
@@ -274,7 +280,7 @@ jobs:
           color: 0x3498db
           nodetail: true
           url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-          description: ${{ github.event.issue.html_url || github.ref_name }} by ${{ github.actor }}
+          description: ${{ github.event.issue.html_url || github.event.pull_request.html_url || github.ref_name }} by ${{ github.actor }}
 
       - uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd  # v6.3.0
         with:
@@ -330,7 +336,7 @@ jobs:
       # A failed post does not fail an apply that has already changed production.
       # The next post carries the note, and the Discord message says it is owed.
       - name: Post the ```wikitext blocks of the applied pull request to the wiki
-        if: github.event_name == 'issue_comment' && matrix.workspace == 'docker'
+        if: (github.event_name == 'issue_comment' || startsWith(github.event_name, 'pull_request_review')) && matrix.workspace == 'docker'
         id: post
         continue-on-error: true
         env:
@@ -338,7 +344,7 @@ jobs:
           WIKI_DEPLOY_BOT_USER: ${{ vars.WIKI_DEPLOY_BOT_USER }}
           WIKI_DEPLOY_BOT_PASSWORD: ${{ secrets.WIKI_DEPLOY_BOT_PASSWORD }}
           REPO: ${{ github.repository }}
-          PR: ${{ github.event.issue.number }}
+          PR: ${{ github.event.issue.number || github.event.pull_request.number }}
         run: .github/scripts/post-update.php "$REPO" "$PR"
 
       # The apply has to leave nothing behind, because the required check that
@@ -346,7 +352,7 @@ jobs:
       # than in a fresh run keeps the tofu binary, the providers and the docker
       # daemon this job already set up.
       - uses: dflook/tofu-plan@c7416238983bdd94c5486fb856bb7358f2bcc935  # v3.1.0
-        if: github.event_name == 'issue_comment' && steps.apply.outcome == 'success'
+        if: (github.event_name == 'issue_comment' || startsWith(github.event_name, 'pull_request_review')) && steps.apply.outcome == 'success'
         id: verify
         env:
           GITHUB_TOKEN: ${{ github.token }}
@@ -362,7 +368,7 @@ jobs:
 
       - name: Nothing may be left for a later apply
         id: clean
-        if: github.event_name == 'issue_comment' && steps.apply.outcome == 'success'
+        if: (github.event_name == 'issue_comment' || startsWith(github.event_name, 'pull_request_review')) && steps.apply.outcome == 'success'
         env:
           CHANGES: ${{ steps.verify.outputs.changes }}
           PLAN: ${{ steps.verify.outputs.json_plan_path }}
@@ -387,7 +393,7 @@ jobs:
           CLEAN: ${{ steps.clean.outcome }}
           POST: ${{ steps.post.outcome }}
           PLAN: ${{ steps.apply.outputs.json_plan_path }}
-          SUBJECT: ${{ github.event.issue.html_url || github.ref_name }}
+          SUBJECT: ${{ github.event.issue.html_url || github.event.pull_request.html_url || github.ref_name }}
           ACTOR: ${{ github.actor }}
         run: |
           title=Errored
@@ -426,7 +432,7 @@ jobs:
 
   replan:
     needs: apply
-    if: needs.apply.result == 'success' && github.event_name == 'issue_comment'
+    if: needs.apply.result == 'success' && (github.event_name == 'issue_comment' || startsWith(github.event_name, 'pull_request_review'))
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -437,7 +443,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
-          PR: ${{ github.event.issue.number }}
+          PR: ${{ github.event.issue.number || github.event.pull_request.number }}
         run: |
           if [ "$(gh pr view "$PR" --repo "$REPO" --json merged --jq .merged)" = true ]; then
             echo "#$PR merged first, so there is no merge gate left to refresh"
@@ -455,7 +461,7 @@ jobs:
 
   merge:
     needs: apply
-    if: needs.apply.result == 'success' && github.event_name == 'issue_comment'
+    if: needs.apply.result == 'success' && (github.event_name == 'issue_comment' || startsWith(github.event_name, 'pull_request_review'))
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -470,7 +476,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
-          PR: ${{ github.event.issue.number }}
+          PR: ${{ github.event.issue.number || github.event.pull_request.number }}
         run: |
           if [ "$(gh pr view "$PR" --repo "$REPO" --json merged --jq .merged)" = true ]; then
             echo "#$PR is already merged"
@@ -484,7 +490,7 @@ jobs:
 
   log:
     needs: apply
-    if: always() && github.event_name == 'issue_comment' && needs.apply.result != 'skipped'
+    if: always() && (github.event_name == 'issue_comment' || startsWith(github.event_name, 'pull_request_review')) && needs.apply.result != 'skipped'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
