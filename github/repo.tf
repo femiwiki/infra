@@ -277,3 +277,11 @@ resource "github_repository_file" "status_index" {
   commit_message      = "Send a reader to the board"
   overwrite_on_create = true
 }
+
+# The workflow takes the environment name from the workspace name, and the three
+# that came before this one were made by hand. This one is declared, so the
+# workspace it gates can be deleted with the region migration that needs it.
+resource "github_repository_environment" "infra_docker_seoul" {
+  repository  = module.infra.name
+  environment = "docker-seoul"
+}

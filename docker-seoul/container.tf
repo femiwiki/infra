@@ -137,6 +137,7 @@ resource "docker_container" "fastcgi" {
       MEDIAWIKI_SKIP_IMPORT_SITES = "1"
       MEDIAWIKI_SKIP_INSTALL      = "1"
       MEDIAWIKI_SKIP_UPDATE       = "1"
+      MEDIAWIKI_SKIP_CRON         = "1"
       MEDIAWIKI_HOTFIX_SNIPPET    = file("../serving/Hotfix.php")
 
       FW_PROFILER = "excimer"
@@ -148,7 +149,7 @@ resource "docker_container" "fastcgi" {
       # one, so 3 keeps the ordinary traffic out of the directory
       FW_PROFILER_THRESHOLD = "3"
 
-      WG_BOUNCE_HANDLER_INTERNAL_IPS = "172.31.0.0/16"
+      WG_BOUNCE_HANDLER_INTERNAL_IPS = "10.20.0.0/16"
       WG_CDN_SERVERS                 = "127.0.0.1:80"
       WG_INTERNAL_SERVER             = "http://127.0.0.1:80"
       WG_MEMCACHED_SERVERS           = "127.0.0.1:11211"
@@ -160,7 +161,7 @@ resource "docker_container" "fastcgi" {
       WG_RE_CAPTCHA_SITE_KEY = "6LfiSLArAAAAAKFLIhAJC2wlNY1Nnbm_gNcXRIDh"
 
       SSM_SECRETS = "1"
-      AWS_REGION  = "ap-northeast-1"
+      AWS_REGION  = "ap-northeast-2"
     } : "${k}=${v}"
   ]
 
@@ -247,37 +248,5 @@ resource "docker_container" "autoheal" {
     hard = 65536
     name = "nofile"
     soft = 32768
-  }
-}
-
-resource "docker_container" "backupbot" {
-  name        = "backupbot"
-  image       = "ghcr.io/femiwiki/backupbot:2026-09-22T15-01-939d63be"
-  restart     = "always"
-  init        = true
-  log_driver  = "local"
-  memory      = 256
-  memory_swap = 256
-  env = [
-    for k, v in {
-      DB_SERVER   = "${data.aws_instances.database.private_ips[0]}:3306"
-      SSM_SECRETS = "1"
-      AWS_REGION  = "ap-northeast-1"
-    } : "${k}=${v}"
-  ]
-
-  healthcheck {
-    test = ["NONE"]
-  }
-
-  ulimit {
-    hard = 65536
-    name = "nofile"
-    soft = 32768
-  }
-
-  labels {
-    label = "autoheal"
-    value = "false"
   }
 }
