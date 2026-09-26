@@ -62,6 +62,12 @@ variable "required_status_checks_contexts" {
   default     = []
 }
 
+variable "push_allowances" {
+  description = "Actors that may push to the protected branches, apps as \"/slug\". Empty leaves pushing unrestricted."
+  type        = list(string)
+  default     = []
+}
+
 variable "default_status_checks" {
   description = "Status checks required on every repo unless overridden"
   type        = list(string)
