@@ -8,14 +8,17 @@ change to Seoul applies to production Tokyo, and because a shared
 `fastcgi_generation` would make a Tokyo deploy replace Seoul's containers. The
 serving configuration is not duplicated: both roots render `../serving`.
 
-It differs from `../docker` in four places, and only these four:
+It differs from `../docker` in two places, and only these two:
 
 | | |
 |---|---|
-| no `backupbot` | a second backup job against one database is an incident |
 | `AWS_REGION` on `fastcgi` | `ap-northeast-2`, the region chamber reads |
 | `WG_BOUNCE_HANDLER_INTERNAL_IPS` | `10.20.0.0/16` |
-| `MEDIAWIKI_SKIP_CRON` | the database it reads is a replica and `super_read_only` |
+
+`MEDIAWIKI_SKIP_CRON` used to be here and is now in `../docker` instead: this
+host runs cron, and the Tokyo one, which serves only the stragglers of the DNS
+tail, does not. Two cron hosts double-run every job. `backupbot` is in neither
+root any more, because the dump runs on the database host from a systemd timer.
 
 `AWS_REGION` and `S3_HOST` in the `http` container still name `ap-northeast-1`.
 They address the bucket holding the ACME account and certificates, which both
