@@ -1,0 +1,6 @@
+sum by (instance) (
+  increase(caddy_http_requests_total{instance="__INSTANCE__"}[1h])
+)
+and on (instance) (
+  up{job="integrations/caddy", instance="__INSTANCE__"} == 1
+)
