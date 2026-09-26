@@ -109,7 +109,7 @@ locals {
           threshold   = 95
           for         = "30m"
           labels      = { severity = "warning" }
-          annotations = { summary = "{{ $labels.name }}이 제 메모리 상한의 {{ printf \"%.0f\" $values.A.Value }}%를 쓰고 있습니다." }
+          annotations = { summary = "{{ $labels.instance }}의 {{ $labels.name }}이 제 메모리 상한의 {{ printf \"%.0f\" $values.A.Value }}%를 쓰고 있습니다." }
         },
         {
           name        = "Out of memory"
@@ -164,7 +164,7 @@ locals {
           for       = "15m"
           labels    = { severity = "warning" }
           annotations = {
-            summary = "opcache의 interned strings 버퍼가 {{ printf \"%.0f\" $values.A.Value }}% 찼습니다. 다 차면 PHP가 인터닝을 멈춰서 워커마다 클래스와 함수 이름을 따로 들고 갑니다. `PHP_OPCACHE_INTERNED_STRINGS_BUFFER`를 올리면 이미지 빌드 없이 적용됩니다."
+            summary = "{{ $labels.instance }}의 opcache에서 interned strings 버퍼가 {{ printf \"%.0f\" $values.A.Value }}% 찼습니다. 다 차면 PHP가 인터닝을 멈춰서 워커마다 클래스와 함수 이름을 따로 들고 갑니다. `PHP_OPCACHE_INTERNED_STRINGS_BUFFER`를 올리면 이미지 빌드 없이 적용됩니다."
           }
         },
         {
@@ -174,7 +174,7 @@ locals {
           for       = "0m"
           labels    = { severity = "warning" }
           annotations = {
-            summary = "opcache가 메모리가 모자라 최근 10분 동안 {{ printf \"%.0f\" $values.A.Value }}번 재시작했습니다. 재시작 직후에는 모든 요청이 컴파일을 다시 합니다. `PHP_OPCACHE_MEMORY_CONSUMPTION`를 올리면 이미지 빌드 없이 적용됩니다."
+            summary = "{{ $labels.instance }}의 opcache가 메모리가 모자라 최근 10분 동안 {{ printf \"%.0f\" $values.A.Value }}번 재시작했습니다. 재시작 직후에는 모든 요청이 컴파일을 다시 합니다. `PHP_OPCACHE_MEMORY_CONSUMPTION`를 올리면 이미지 빌드 없이 적용됩니다."
           }
         },
         {
@@ -183,7 +183,7 @@ locals {
           threshold = 0
           labels    = {}
           annotations = {
-            summary = "요청이 5분 넘게 php-fpm 앞에 줄 서 있습니다. 워커가 모자라면 `phpfpm_max_children_reached`가 함께 오르고, 메모리가 모자라면 `node_memory_MemAvailable_bytes`가 떨어집니다."
+            summary = "{{ $labels.instance }}에서 요청이 5분 넘게 php-fpm 앞에 줄 서 있습니다. 워커가 모자라면 `phpfpm_max_children_reached`가 함께 오르고, 메모리가 모자라면 `node_memory_MemAvailable_bytes`가 떨어집니다."
             # A resolved notification carries the value it resolved at, which for a
             # queue is always zero, so the reading goes beside the text rather than in it
             queue = "{{ printf \"%.0f\" $values.A.Value }}"
@@ -196,7 +196,7 @@ locals {
           for       = "15m"
           labels    = { severity = "warning" }
           annotations = {
-            summary = "opcache가 스크립트를 담는 표의 {{ printf \"%.0f\" $values.A.Value }}%를 썼습니다. 다 차면 새 스크립트는 캐시에 들어가지 못해 요청마다 다시 컴파일됩니다. `PHP_OPCACHE_MAX_ACCELERATED_FILES`를 올리면 이미지 빌드 없이 적용됩니다."
+            summary = "{{ $labels.instance }}의 opcache가 스크립트를 담는 표의 {{ printf \"%.0f\" $values.A.Value }}%를 썼습니다. 다 차면 새 스크립트는 캐시에 들어가지 못해 요청마다 다시 컴파일됩니다. `PHP_OPCACHE_MAX_ACCELERATED_FILES`를 올리면 이미지 빌드 없이 적용됩니다."
           }
         },
         {
@@ -207,7 +207,7 @@ locals {
           for       = "15m"
           labels    = { severity = "warning" }
           annotations = {
-            summary = "opcache의 스크립트 메모리가 {{ printf \"%.0f\" $values.A.Value }} MB 남았습니다. 다 쓰면 opcache가 재시작하면서 캐시를 비웁니다. `PHP_OPCACHE_MEMORY_CONSUMPTION`를 올리면 이미지 빌드 없이 적용됩니다."
+            summary = "{{ $labels.instance }}의 opcache에 스크립트 메모리가 {{ printf \"%.0f\" $values.A.Value }} MB 남았습니다. 다 쓰면 opcache가 재시작하면서 캐시를 비웁니다. `PHP_OPCACHE_MEMORY_CONSUMPTION`를 올리면 이미지 빌드 없이 적용됩니다."
           }
         },
         {
@@ -217,7 +217,7 @@ locals {
           for       = "0m"
           labels    = { severity = "warning" }
           annotations = {
-            summary = "opcache가 표가 모자라 최근 10분 동안 {{ printf \"%.0f\" $values.A.Value }}번 재시작했습니다. 재시작 직후에는 모든 요청이 컴파일을 다시 합니다. `PHP_OPCACHE_MAX_ACCELERATED_FILES`를 올리면 이미지 빌드 없이 적용됩니다."
+            summary = "{{ $labels.instance }}의 opcache가 표가 모자라 최근 10분 동안 {{ printf \"%.0f\" $values.A.Value }}번 재시작했습니다. 재시작 직후에는 모든 요청이 컴파일을 다시 합니다. `PHP_OPCACHE_MAX_ACCELERATED_FILES`를 올리면 이미지 빌드 없이 적용됩니다."
           }
         },
       ]
