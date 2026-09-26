@@ -69,6 +69,7 @@ module "femiwiki_crawling_blocker" {
   ]
   patterns     = ["main"]
   collaborator = local.extension.collaborator
+  archived     = true
 }
 
 removed {
