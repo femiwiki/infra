@@ -125,6 +125,7 @@ locals {
   uploaded_files_temp    = aws_s3_bucket.uploaded_files_temp.arn
   uploaded_files_deleted = aws_s3_bucket.uploaded_files_deleted.arn
   backups                = aws_s3_bucket.backups.arn
+  uploads_seoul          = aws_s3_bucket.uploads_seoul.arn
 }
 
 data "aws_iam_policy_document" "amazon_s3_access" {
@@ -135,6 +136,7 @@ data "aws_iam_policy_document" "amazon_s3_access" {
       "${local.uploaded_files_thumb}/*",
       "${local.uploaded_files_temp}/*",
       "${local.uploaded_files_deleted}/*",
+      "${local.uploads_seoul}/*",
     ]
   }
 
@@ -148,6 +150,7 @@ data "aws_iam_policy_document" "amazon_s3_access" {
       local.uploaded_files_thumb,
       local.uploaded_files_temp,
       local.uploaded_files_deleted,
+      local.uploads_seoul,
     ]
   }
 }
