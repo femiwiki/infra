@@ -1,7 +1,7 @@
 #!/usr/bin/env php
 <?php
-// Post the ```wikitext blocks of an applied pull request to 페미위키:업데이트, under the minute of the apply,
-// after any merged docker pull request whose own post failed, under the minute it merged.
+// Post the ```wikitext blocks of an applied pull request to 페미위키:업데이트, under the minute of the apply within its
+// day, after any merged docker pull request whose own post failed, under the minute it merged.
 //
 // Usage: post-update.php OWNER/REPO PR_NUMBER [--dry-run]
 // Environment: GH_TOKEN, WIKI_DEPLOY_BOT_USER, WIKI_DEPLOY_BOT_PASSWORD (the last two not needed with --dry-run),
@@ -26,24 +26,47 @@ function blocks( string $body ): array {
 	return array_values( array_filter( array_map( 'trim', $found[1] ), 'strlen' ) );
 }
 
-/** The page with a new section above the first one headed no later than it, a day without a time counting as its midnight */
+/** A block one heading level down, since it goes under a time that is itself under a day */
+function demote( string $block ): string {
+	return preg_replace( '/^(=+)([^=].*?)(=+)\h*$/mu', '=$1$2$3=', $block );
+}
+
+/**
+ * The page with the post under its day, a ==day== that the table of contents shows, holding a ===time=== per
+ * apply, newest first. A day without one gets it above the first section of that day or earlier, an older
+ * ==day time== section included
+ */
 function insert( string $text, DateTimeInterface $at, string $link, array $blocks ): string {
+	$day = $at->format( 'n월 j일' );
+	$time = $at->format( 'H:i' );
+	$post = "===$time===\n\n$link\n\n" . implode( "\n\n", $blocks ) . "\n\n";
 	$sections = preg_split( '/^(?===[^=])/mu', $text );
-	$key = $at->format( 'mdHi' );
 	for ( $i = str_starts_with( $text, '==' ) ? 0 : 1; $i < count( $sections ); $i++ ) {
-		if ( preg_match( '/^==\s*(\d+)월\s*(\d+)일(?:\s+(\d+):(\d+))?\s*==/u', $sections[$i], $m )
-			&& sprintf( '%02d%02d%02d%02d', $m[1], $m[2], $m[3] ?? 0, $m[4] ?? 0 ) <= $key
+		if ( !preg_match( '/^==\s*(\d+)월\s*(\d+)일(\s+\d+:\d+)?\s*==/u', $sections[$i], $m )
+			|| sprintf( '%02d%02d', $m[1], $m[2] ) > $at->format( 'md' )
 		) {
-			break;
+			continue;
 		}
+		if ( sprintf( '%02d%02d', $m[1], $m[2] ) === $at->format( 'md' ) && empty( $m[3] ) ) {
+			$posts = preg_split( '/^(?====[^=])/mu', $sections[$i] );
+			for ( $j = 1; $j < count( $posts ); $j++ ) {
+				if ( preg_match( '/^===\s*(\d+):(\d+)\s*===/u', $posts[$j], $t ) && sprintf( '%02d%02d', $t[1], $t[2] ) <= $at->format( 'Hi' ) ) {
+					break;
+				}
+			}
+			array_splice( $posts, $j, 0, $post );
+			$sections[$i] = implode( '', $posts );
+			return implode( '', $sections );
+		}
+		break;
 	}
-	array_splice( $sections, $i, 0, '==' . $at->format( 'n월 j일 H:i' ) . "==\n\n$link\n\n" . implode( "\n\n", $blocks ) . "\n\n" );
+	array_splice( $sections, $i, 0, "==$day==\n\n$post" );
 	return implode( '', $sections );
 }
 
-/** The page with the PR linked under the heading of the section a post from before the link put its block in */
+/** The page with the PR linked under the heading of the post, or of the older section, that a post from before the link put its block in */
 function linkUnder( string $text, string $block, string $link ): string {
-	preg_match_all( '/^==[^=].*==\h*\n\n?/mu', substr( $text, 0, strpos( $text, $block ) ), $headings, PREG_OFFSET_CAPTURE );
+	preg_match_all( '/^(?:==[^=].*==|===\s*\d+:\d+\s*===)\h*\n\n?/mu', substr( $text, 0, strpos( $text, $block ) ), $headings, PREG_OFFSET_CAPTURE );
 	[ $heading, $offset ] = end( $headings[0] ) ?: fail( 'no section heads the posted block' );
 	return substr_replace( $text, "$link\n\n", $offset + strlen( $heading ), 0 );
 }
@@ -140,8 +163,10 @@ function post( string $repo, int $number, DateTime $at, bool $dryRun ): void {
 	// A re-run of the apply lands under a later minute, so a PR whose link already heads a section is not posted
 	// again: its blocks may since have been translated, so they are not what tells
 	$link = "https://github.com/$repo/pull/$number";
-	$new = array_values( array_filter( $blocks, fn ( $block ) => !str_contains( $text, $block ) ) );
-	// The summary links to the section, since a summary does not link a URL or a repo#number
+	// A block is on the page as posted, a level down, or as posted before days grouped the posts
+	$onPage = fn ( $block ) => str_contains( $text, demote( $block ) ) ? demote( $block ) : ( str_contains( $text, $block ) ? $block : null );
+	$new = array_values( array_map( 'demote', array_filter( $blocks, fn ( $block ) => $onPage( $block ) === null ) ) );
+	// The summary links to the day, since a summary does not link a URL or a repo#number and a time repeats daily
 	if ( preg_match( '/^' . preg_quote( $link, '/' ) . '$/m', $text ) ) {
 		echo "$title: $repo#$number already posted\n";
 		return;
@@ -149,8 +174,8 @@ function post( string $repo, int $number, DateTime $at, bool $dryRun ): void {
 		$merged = insert( $text, $at, $link, $new );
 		$summary = '/* ' . sectionOf( $merged, $new[0] ) . ' */ 배포된 변경 사항 추가';
 	} else {
-		$merged = linkUnder( $text, $blocks[0], $link );
-		$summary = '/* ' . sectionOf( $merged, $blocks[0] ) . ' */ 배포 풀 리퀘스트 링크 추가';
+		$merged = linkUnder( $text, $onPage( $blocks[0] ), $link );
+		$summary = '/* ' . sectionOf( $merged, $onPage( $blocks[0] ) ) . ' */ 배포 풀 리퀘스트 링크 추가';
 	}
 	if ( $dryRun ) {
 		$before = tempnam( sys_get_temp_dir(), 'page' );
