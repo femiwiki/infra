@@ -64,13 +64,6 @@ resource "github_branch_protection" "branch_protection" {
     }
   }
 
-  dynamic "restrict_pushes" {
-    for_each = length(var.push_allowances) > 0 ? [var.push_allowances] : []
-    content {
-      push_allowances = restrict_pushes.value
-    }
-  }
-
   dynamic "required_pull_request_reviews" {
     for_each = var.required_pull_request_reviews
     content {
