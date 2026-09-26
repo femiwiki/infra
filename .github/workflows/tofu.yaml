@@ -10,7 +10,7 @@ on:
         description: The workspace to apply from this branch, without asking.
         required: true
         type: choice
-        options: &workspaces [docker, docker-seoul, grafana, healthchecks]
+        options: &workspaces [docker, docker-seoul, github, grafana, healthchecks]
 permissions: {}
 jobs:
   plan:
@@ -82,6 +82,22 @@ jobs:
           instance-tag: ${{ matrix.workspace }}
           region: ${{ matrix.workspace == 'docker-seoul' && 'ap-northeast-2' || 'ap-northeast-1' }}
 
+      - uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1  # v3.2.0
+        if: steps.scope.outputs.plan == 'true' && matrix.workspace == 'github'
+        id: app-token
+        with:
+          app-id: ${{ vars.TOFU_GITHUB_APP_ID }}
+          private-key: ${{ secrets.TOFU_GITHUB_APP_PEM }}
+          # This root manages every repository in the organisation, so the token
+          # is bounded by permission rather than by repository. Listing them here
+          # would be a second copy of github/repo.tf, drifting from the first.
+          owner: femiwiki  # zizmor: ignore[github-app]
+          permission-administration: write
+          permission-environments: write
+          permission-issues: write
+          permission-members: write
+          permission-pages: write
+
       - uses: dflook/tofu-plan@c7416238983bdd94c5486fb856bb7358f2bcc935  # v3.1.0
         if: steps.scope.outputs.plan == 'true'
         id: plan
@@ -89,6 +105,7 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
           TF_PLAN_COLLAPSE_LENGTH: "100000"  # never collapse the plan
           TF_VAR_docker_host: ${{ steps.daemon.outputs.host }}
+          TF_VAR_github_token: ${{ steps.app-token.outputs.token }}
           TF_VAR_grafana_auth: ${{ matrix.workspace == 'grafana' && secrets.GRAFANA_PLAN_TOKEN || '' }}
           TF_VAR_discord_webhook_url: ${{ matrix.workspace == 'grafana' && secrets.DISCORD_WEBHOOK_URL || '' }}
           TF_VAR_healthchecksio_api_key: ${{ matrix.workspace == 'healthchecks' && secrets.HEALTHCHECKSIO_API_KEY || '' }}
@@ -253,12 +270,29 @@ jobs:
             curl -sf -X POST "http://127.0.0.1:2376/images/create?fromImage=${image%%:*}&tag=${image##*:}" > /dev/null
           done
 
+      - uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1  # v3.2.0
+        if: matrix.workspace == 'github'
+        id: app-token
+        with:
+          app-id: ${{ vars.TOFU_GITHUB_APP_ID }}
+          private-key: ${{ secrets.TOFU_GITHUB_APP_PEM }}
+          # This root manages every repository in the organisation, so the token
+          # is bounded by permission rather than by repository. Listing them here
+          # would be a second copy of github/repo.tf, drifting from the first.
+          owner: femiwiki  # zizmor: ignore[github-app]
+          permission-administration: write
+          permission-environments: write
+          permission-issues: write
+          permission-members: write
+          permission-pages: write
+
       - uses: dflook/tofu-apply@e3e5dfc8f935d4b152c767801046f63abf8a77d3  # v3.1.0
         id: apply
         env:
           GITHUB_TOKEN: ${{ github.token }}
           TF_PLAN_COLLAPSE_LENGTH: "100000"  # never collapse the plan
           TF_VAR_docker_host: ${{ steps.daemon.outputs.host }}
+          TF_VAR_github_token: ${{ steps.app-token.outputs.token }}
           TF_VAR_grafana_auth: ${{ matrix.workspace == 'grafana' && secrets.GRAFANA_APPLY_TOKEN || '' }}
           TF_VAR_discord_webhook_url: ${{ matrix.workspace == 'grafana' && secrets.DISCORD_WEBHOOK_URL || '' }}
           TF_VAR_healthchecksio_api_key: ${{ matrix.workspace == 'healthchecks' && secrets.HEALTHCHECKSIO_API_KEY || '' }}
@@ -291,6 +325,7 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
           TF_PLAN_COLLAPSE_LENGTH: "100000"  # never collapse the plan
           TF_VAR_docker_host: ${{ steps.daemon.outputs.host }}
+          TF_VAR_github_token: ${{ steps.app-token.outputs.token }}
           TF_VAR_grafana_auth: ${{ matrix.workspace == 'grafana' && secrets.GRAFANA_PLAN_TOKEN || '' }}
           TF_VAR_discord_webhook_url: ${{ matrix.workspace == 'grafana' && secrets.DISCORD_WEBHOOK_URL || '' }}
           TF_VAR_healthchecksio_api_key: ${{ matrix.workspace == 'healthchecks' && secrets.HEALTHCHECKSIO_API_KEY || '' }}
