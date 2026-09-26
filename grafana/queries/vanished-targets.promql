@@ -1,0 +1,1 @@
+count_over_time(up{job=~"integrations/.+"}[2h]) unless up{job=~"integrations/.+"}

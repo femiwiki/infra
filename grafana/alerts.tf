@@ -142,6 +142,14 @@ locals {
           annotations    = { summary = "{{ $labels.instance }}: {{ printf \"%.0f\" $values.A.Value }}% of / left" }
         },
         {
+          name        = "A target stopped reporting"
+          expr        = trimspace(file("${path.module}/queries/vanished-targets.promql"))
+          threshold   = 0
+          for         = "30m"
+          labels      = { severity = "warning" }
+          annotations = { summary = "{{ $labels.instance }}의 {{ $labels.job }}이 30분 넘게 지표를 보내지 않습니다. 두 시간 안에는 보내고 있었습니다. 호스트를 내린 것이면 두 시간 뒤 스스로 해소되고, 아니면 그 호스트의 Alloy를 봐야 합니다." }
+        },
+        {
           name           = "Memory almost gone"
           expr           = "node_memory_MemAvailable_bytes{job=\"integrations/node_exporter\"} / 1024 / 1024"
           op             = "lt"
