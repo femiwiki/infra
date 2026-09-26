@@ -1,0 +1,1 @@
+sum(count_over_time({docker_container_name=~"fastcgi.*"} |= "generate-sitemap: done" [8h])) or vector(0)
