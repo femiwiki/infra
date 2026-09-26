@@ -11,7 +11,3 @@ output "ssm_parameters_mediawiki" {
 output "femiwiki_eip" {
   value = aws_eip.femiwiki.public_ip
 }
-
-output "mysql_3_private_ip" {
-  value = aws_instance.database_3.private_ip
-}

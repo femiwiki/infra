@@ -12,7 +12,7 @@ locals {
     proxy_port       = local.proxysql_proxy_port
     server_version   = local.proxysql_server_version
     park_ms          = local.proxysql_park_ms
-    writer           = aws_instance.database_3.private_ip
+    writer           = aws_instance.database_4.private_ip
     writer_hostgroup = local.proxysql_writer_hostgroup
     max_connections  = local.proxysql_max_connections
   })

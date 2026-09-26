@@ -29,7 +29,6 @@ resource "aws_ssm_parameter" "mysql_backup_healthcheck_url" {
 
 locals {
   alloy_hosts = {
-    "database-3"   = { name = "mysql", type = "database", region = data.aws_region.current.region }
     "docker"       = { name = "femiwiki", type = "app", region = data.aws_region.current.region }
     "database-4"   = { name = "mysql-seoul", type = "database", region = local.seoul_region }
     "docker-seoul" = { name = "femiwiki-seoul", type = "app", region = local.seoul_region }
