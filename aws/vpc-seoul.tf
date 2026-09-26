@@ -38,7 +38,14 @@ resource "aws_route_table" "seoul" {
     gateway_id = aws_internet_gateway.seoul.id
   }
 
+  route {
+    cidr_block                = aws_default_vpc.default.cidr_block
+    vpc_peering_connection_id = aws_vpc_peering_connection.tokyo_seoul.id
+  }
+
   tags = { Name = "femiwiki-seoul" }
+
+  depends_on = [aws_vpc_peering_connection_accepter.seoul]
 }
 
 resource "aws_route_table_association" "seoul" {
