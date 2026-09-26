@@ -463,7 +463,7 @@ resource "grafana_rule_group" "femiwiki_http" {
   }
 
   rule {
-    name = "Readers refused"
+    name = "Logged-out requests refused"
     for  = "30m"
 
     condition      = "B"
@@ -471,7 +471,7 @@ resource "grafana_rule_group" "femiwiki_http" {
     exec_err_state = "OK"
 
     annotations = {
-      summary = "최근 5분 동안 로그인하지 않은 독자의 요청 {{ printf \"%.0f\" $values.A.Value }}건이 429로 거절됐습니다."
+      summary = "최근 5분 동안 로그인하지 않은 요청 {{ printf \"%.0f\" $values.A.Value }}건이 429로 거절됐습니다. 예산은 모두가 나눠 쓰므로 거절된 쪽이 사람인지 크롤러인지는 이 숫자로 알 수 없습니다."
       logs    = local.explore_urls.refusals
     }
 
