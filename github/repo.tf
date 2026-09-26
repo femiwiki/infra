@@ -166,7 +166,7 @@ module "dot_github" {
   name                            = ".github"
   description                     = "Community health files"
   default_status_checks           = []
-  required_status_checks_contexts = ["yarn-test", "ruff", "taplo"]
+  required_status_checks_contexts = ["prettier", "ruff", "taplo"]
 }
 
 module "legunto" {
