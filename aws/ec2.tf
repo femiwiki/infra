@@ -5,8 +5,8 @@ data "aws_availability_zone" "femiwiki" {
 resource "aws_instance" "database_3" {
   ami                         = data.aws_ami.amazon_linux_2_arm64.image_id
   availability_zone           = data.aws_availability_zone.femiwiki.name
-  disable_api_termination     = true
-  disable_api_stop            = true
+  disable_api_termination     = false
+  disable_api_stop            = false
   ebs_optimized               = true
   iam_instance_profile        = aws_iam_instance_profile.database.name
   instance_type               = "t4g.small"
