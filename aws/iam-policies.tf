@@ -1,3 +1,7 @@
+locals {
+  parameter_store_regions = [data.aws_region.current.region, local.seoul_region]
+}
+
 #
 # IAM Policies
 #
@@ -236,10 +240,12 @@ data "aws_iam_policy_document" "read_secret_parameters" {
       "ssm:GetParameters",
       "ssm:GetParametersByPath",
     ]
-    resources = [
-      "arn:aws:ssm:${data.aws_region.current.region}:${data.aws_caller_identity.current.account_id}:parameter/mediawiki/*",
-      "arn:aws:ssm:${data.aws_region.current.region}:${data.aws_caller_identity.current.account_id}:parameter/mysql/*",
-    ]
+    resources = flatten([
+      for region in local.parameter_store_regions : [
+        "arn:aws:ssm:${region}:${data.aws_caller_identity.current.account_id}:parameter/mediawiki/*",
+        "arn:aws:ssm:${region}:${data.aws_caller_identity.current.account_id}:parameter/mysql/*",
+      ]
+    ])
   }
 
   statement {
@@ -258,7 +264,7 @@ resource "aws_iam_policy" "read_alloy_parameters" {
 data "aws_iam_policy_document" "read_alloy_parameters" {
   statement {
     actions   = ["ssm:GetParameter"]
-    resources = ["arn:aws:ssm:${data.aws_region.current.region}:${data.aws_caller_identity.current.account_id}:parameter/alloy/*"]
+    resources = [for region in local.parameter_store_regions : "arn:aws:ssm:${region}:${data.aws_caller_identity.current.account_id}:parameter/alloy/*"]
   }
 }
 
@@ -311,7 +317,7 @@ resource "aws_iam_policy" "read_mysql_user_parameters" {
 data "aws_iam_policy_document" "read_mysql_user_parameters" {
   statement {
     actions   = ["ssm:GetParameter"]
-    resources = ["arn:aws:ssm:${data.aws_region.current.region}:${data.aws_caller_identity.current.account_id}:parameter/mysql/users/*"]
+    resources = [for region in local.parameter_store_regions : "arn:aws:ssm:${region}:${data.aws_caller_identity.current.account_id}:parameter/mysql/users/*"]
   }
 }
 
@@ -325,7 +331,7 @@ resource "aws_iam_policy" "write_mysql_root_password" {
 data "aws_iam_policy_document" "write_mysql_root_password" {
   statement {
     actions   = ["ssm:PutParameter"]
-    resources = ["arn:aws:ssm:${data.aws_region.current.region}:${data.aws_caller_identity.current.account_id}:parameter/mysql/servers/*/root/password"]
+    resources = [for region in local.parameter_store_regions : "arn:aws:ssm:${region}:${data.aws_caller_identity.current.account_id}:parameter/mysql/servers/*/root/password"]
   }
 
   statement {
