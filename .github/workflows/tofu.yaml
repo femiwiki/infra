@@ -10,7 +10,7 @@ on:
         description: The workspace to apply from this branch, without asking.
         required: true
         type: choice
-        options: &workspaces [docker, grafana, healthchecks]
+        options: &workspaces [docker, docker-seoul, grafana, healthchecks]
 permissions: {}
 jobs:
   plan:
@@ -76,8 +76,11 @@ jobs:
           aws-region: ap-northeast-1
 
       - uses: ./.github/actions/docker-daemon
-        if: steps.scope.outputs.plan == 'true' && matrix.workspace == 'docker'
+        if: steps.scope.outputs.plan == 'true' && startsWith(matrix.workspace, 'docker')
         id: daemon
+        with:
+          instance-tag: ${{ matrix.workspace }}
+          region: ${{ matrix.workspace == 'docker-seoul' && 'ap-northeast-2' || 'ap-northeast-1' }}
 
       - uses: dflook/tofu-plan@c7416238983bdd94c5486fb856bb7358f2bcc935  # v3.1.0
         if: steps.scope.outputs.plan == 'true'
@@ -186,7 +189,7 @@ jobs:
     concurrency:
       group: ${{ matrix.workspace }}
     runs-on: ubuntu-latest
-    timeout-minutes: ${{ matrix.workspace == 'docker' && 20 || 10 }}
+    timeout-minutes: ${{ startsWith(matrix.workspace, 'docker') && 20 || 10 }}
     environment: ${{ matrix.workspace }}
     permissions:
       contents: read
@@ -235,11 +238,14 @@ jobs:
           aws-region: ap-northeast-1
 
       - uses: ./.github/actions/docker-daemon
-        if: matrix.workspace == 'docker'
+        if: startsWith(matrix.workspace, 'docker')
         id: daemon
+        with:
+          instance-tag: ${{ matrix.workspace }}
+          region: ${{ matrix.workspace == 'docker-seoul' && 'ap-northeast-2' || 'ap-northeast-1' }}
 
       - name: Pull the images the plan will start
-        if: matrix.workspace == 'docker'
+        if: startsWith(matrix.workspace, 'docker')
         env:
           WORKSPACE: ${{ matrix.workspace }}
         run: |
