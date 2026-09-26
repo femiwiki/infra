@@ -92,3 +92,72 @@ resource "aws_instance" "database_4" {
     ]
   }
 }
+
+resource "aws_ebs_volume" "persistent_data_mysql_5" {
+  region            = local.seoul_region
+  availability_zone = local.seoul_az
+  type              = "gp3"
+  size              = 32
+
+  tags = { Name = "MariaDB data directory for server_id = 5" }
+}
+
+resource "aws_volume_attachment" "persistent_data_mysql_5" {
+  region      = local.seoul_region
+  device_name = "/dev/sdf"
+  volume_id   = aws_ebs_volume.persistent_data_mysql_5.id
+  instance_id = aws_instance.database_5.id
+}
+
+resource "aws_instance" "database_5" {
+  region                      = local.seoul_region
+  ami                         = data.aws_ami.amazon_linux_2_arm64_seoul.image_id
+  availability_zone           = local.seoul_az
+  subnet_id                   = aws_subnet.seoul.id
+  disable_api_termination     = false
+  disable_api_stop            = false
+  ebs_optimized               = true
+  iam_instance_profile        = aws_iam_instance_profile.database.name
+  instance_type               = "t4g.small"
+  monitoring                  = false
+  user_data_replace_on_change = false
+
+  user_data_base64 = base64gzip(templatefile("res/user-data-mariadb.sh.tftpl", {
+    mysql_server_id = "5"
+    region          = local.seoul_region
+    backups_bucket  = aws_s3_bucket.backups.bucket
+
+    alloy_install = local.alloy_install["database-5"]
+  }))
+
+  vpc_security_group_ids = [
+    aws_security_group.database_seoul.id,
+    aws_security_group.instance_connect_seoul.id,
+  ]
+
+  root_block_device {
+    delete_on_termination = true
+    volume_size           = 32
+    volume_type           = "gp3"
+  }
+
+  credit_specification {
+    cpu_credits = "unlimited"
+  }
+
+  metadata_options {
+    instance_metadata_tags = "enabled"
+    http_tokens            = "required"
+  }
+
+  tags = { Name = "database-5" }
+
+  lifecycle {
+    create_before_destroy = true
+    ignore_changes = [
+      ami,
+      user_data,
+      user_data_base64,
+    ]
+  }
+}
