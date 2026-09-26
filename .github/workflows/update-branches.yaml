@@ -3,8 +3,6 @@ name: update branches
 on:
   push:
     branches: ["main"]
-  pull_request:
-    types: [opened, reopened, synchronize, ready_for_review, auto_merge_enabled]
   schedule:
     - cron: "*/30 * * * *"
   workflow_dispatch:
