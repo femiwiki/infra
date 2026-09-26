@@ -255,8 +255,11 @@ jobs:
           path: ${{ matrix.workspace }}
           auto_approve: ${{ github.event_name == 'workflow_dispatch' }}
 
+      # A failed post does not fail an apply that has already changed production.
+      # The next post carries the note, and the Discord message says it is owed.
       - name: Post the ```wikitext blocks of the applied pull request to the wiki
         if: github.event_name == 'issue_comment' && matrix.workspace == 'docker'
+        id: post
         continue-on-error: true
         env:
           GH_TOKEN: ${{ github.token }}
@@ -309,6 +312,7 @@ jobs:
           BASE: ${{ steps.recover.outputs.base }}
           APPLY: ${{ steps.apply.outcome }}
           CLEAN: ${{ steps.clean.outcome }}
+          POST: ${{ steps.post.outcome }}
           PLAN: ${{ steps.apply.outputs.json_plan_path }}
           SUBJECT: ${{ github.event.issue.html_url || github.ref_name }}
           ACTOR: ${{ github.actor }}
@@ -317,6 +321,9 @@ jobs:
           note=
           if [ "$RECOVER" = success ]; then
             note=" - the pull request merged first, so this ran on $BASE"
+          fi
+          if [ "$POST" = failure ]; then
+            note="$note - the update note was not posted, and the next apply's post carries it"
           fi
           if [ "$STATUS" = cancelled ]; then
             title=Cancelled
