@@ -16,15 +16,31 @@ resource "aws_s3_bucket" "uploads_seoul" {
   bucket_namespace = "account-regional"
 }
 
-# A new bucket comes with all four Block Public Access settings on, so the
-# policy below is refused with BlockPublicPolicy until these two are off. The
-# two about ACLs stay on: the policy is the only thing that makes an object
-# public here, and no ACL should be able to.
+# Extension:AWS puts every object with an ACL, public-read unless the zone
+# carries a .htsecure file, and that is not configurable: see
+# AmazonS3FileBackend.php's putObject. A bucket created today defaults to
+# BucketOwnerEnforced, which refuses an ACL outright with
+# AccessControlListNotSupported, so ownership has to accept them.
+resource "aws_s3_bucket_ownership_controls" "uploads_seoul" {
+  region = local.seoul_region
+  bucket = aws_s3_bucket.uploads_seoul.id
+
+  rule {
+    object_ownership = "BucketOwnerPreferred"
+  }
+}
+
+# block_public_acls has to be off for the same reason: it rejects a PUT that
+# carries a public ACL. ignore_public_acls stays on and is load-bearing rather
+# than decorative, because the extension asks for public-read on deleted/ too;
+# ignoring the ACL leaves the bucket policy as the only thing granting public
+# read, and it does not list deleted/ or temp/. The Tokyo deleted bucket keeps
+# them private the same way.
 resource "aws_s3_bucket_public_access_block" "uploads_seoul" {
   region = local.seoul_region
   bucket = aws_s3_bucket.uploads_seoul.id
 
-  block_public_acls       = true
+  block_public_acls       = false
   ignore_public_acls      = true
   block_public_policy     = false
   restrict_public_buckets = false
@@ -32,6 +48,7 @@ resource "aws_s3_bucket_public_access_block" "uploads_seoul" {
 
 resource "aws_s3_bucket_policy" "uploads_seoul" {
   depends_on = [aws_s3_bucket_public_access_block.uploads_seoul]
+
 
   region = local.seoul_region
   bucket = aws_s3_bucket.uploads_seoul.bucket
