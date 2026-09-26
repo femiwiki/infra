@@ -43,8 +43,8 @@ resource "docker_container" "http" {
       FW_EXPENSIVE_IP_EVENTS = "15",
 
       FW_LOG_EXCLUDE      = "http.handlers.mwcache",
-      FW_CADDYFILE        = file("res/Caddyfile"),
-      FW_ROBOTS_TXT       = file("res/robots.txt"),
+      FW_CADDYFILE        = file("../serving/Caddyfile"),
+      FW_ROBOTS_TXT       = file("../serving/robots.txt"),
       AWS_REGION          = "ap-northeast-1",
       S3_USE_IAM_PROVIDER = "true",
       S3_HOST             = "s3.ap-northeast-1.amazonaws.com",
@@ -137,7 +137,7 @@ resource "docker_container" "fastcgi" {
       MEDIAWIKI_SKIP_IMPORT_SITES = "1"
       MEDIAWIKI_SKIP_INSTALL      = "1"
       MEDIAWIKI_SKIP_UPDATE       = "1"
-      MEDIAWIKI_HOTFIX_SNIPPET    = file("res/Hotfix.php")
+      MEDIAWIKI_HOTFIX_SNIPPET    = file("../serving/Hotfix.php")
 
       FW_PROFILER = "excimer"
       # Every request is instrumented, so nothing slow can be missed, but only
