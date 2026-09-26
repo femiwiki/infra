@@ -54,8 +54,13 @@ jobs:
           WORKSPACE: ${{ matrix.workspace }}
         run: |
           plan=true
+          # serving/ holds the Caddyfile, Hotfix.php and robots.txt that every
+          # docker workspace renders into container environment variables, so a
+          # change there has to reach all of them, not just one region's.
+          shared=
+          case "$WORKSPACE" in docker*) shared="|^serving/" ;; esac
           gh api "repos/$REPO/pulls/$PR/files" --paginate --jq '.[].filename' \
-            | grep -qE "^($WORKSPACE/|\.github/(workflows/tofu\.yaml$|actions/))" || plan=false
+            | grep -qE "^($WORKSPACE/|\.github/(workflows/tofu\.yaml$|actions/)$shared)" || plan=false
           echo "plan=$plan" >> "$GITHUB_OUTPUT"
           [ "$plan" = true ] || echo "This pull request does not change $WORKSPACE/."
 
