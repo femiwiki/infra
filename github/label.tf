@@ -354,7 +354,6 @@ locals {
     OOUIFemiwikiTheme = local.ext_label_suite
     remote-gadgets    = concat(local.base_label_suite, ["search", "windows", "mw1_38", "mw1_39", "mw1_40", "mw1_41", "mw1_42"])
 
-    backupbot  = local.base_label_suite
     tweetbot   = local.base_label_suite
     rankingbot = local.base_label_suite
 
