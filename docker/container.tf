@@ -155,7 +155,7 @@ resource "docker_container" "fastcgi" {
       # Used by fcgi-probe.php
       FCGI_URL = "127.0.0.1:${9100 + local.fastcgi_generation % 2}"
 
-      WG_DB_SERVER           = "${data.aws_instances.database.private_ips[0]}:3306"
+      WG_DB_SERVER           = "127.0.0.1:${local.proxysql_proxy_port}"
       WG_DB_USER             = "mediawiki"
       WG_RE_CAPTCHA_SITE_KEY = "6LfiSLArAAAAAKFLIhAJC2wlNY1Nnbm_gNcXRIDh"
 
