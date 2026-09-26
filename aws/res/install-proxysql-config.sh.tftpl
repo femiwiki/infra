@@ -1,0 +1,63 @@
+#!/bin/bash
+set -euo pipefail
+set +x
+umask 0077
+
+dest=/etc/femiwiki/proxysql.cnf
+mkdir -p /etc/femiwiki
+tmpdir=$(mktemp -d /etc/femiwiki/.install-XXXXXX)
+trap 'rm -rf "$tmpdir"' EXIT
+
+parameter() {
+  aws ssm get-parameter \
+    --region ${region} \
+    --name "$1" \
+    --with-decryption \
+    --query Parameter.Value \
+    --output text
+}
+
+user=$(parameter /mysql/users/mediawiki/username)
+password=$(parameter /mysql/users/mediawiki/password)
+test -n "$user"
+test -n "$password"
+
+cat >"$tmpdir/proxysql.cnf" <<CNF
+datadir="/var/lib/proxysql"
+
+admin_variables=
+{
+  admin_credentials="admin:admin"
+  mysql_ifaces="127.0.0.1:${admin_port}"
+}
+
+mysql_variables=
+{
+  threads=2
+  interfaces="127.0.0.1:${proxy_port}"
+  default_schema="femiwiki"
+  server_version="${server_version}"
+  monitor_username="$user"
+  monitor_password="$password"
+  connect_timeout_server_max=${park_ms}
+  max_transaction_time=${park_ms}
+}
+
+mysql_servers =
+(
+  { address="${writer}", port=3306, hostgroup=${writer_hostgroup}, max_connections=${max_connections} }
+)
+
+mysql_users =
+(
+  { username="$user", password="$password", default_hostgroup=${writer_hostgroup}, transaction_persistent=1 }
+)
+CNF
+
+chmod 0644 "$tmpdir/proxysql.cnf"
+if ! cmp -s "$tmpdir/proxysql.cnf" "$dest"; then
+  mv -f "$tmpdir/proxysql.cnf" "$dest"
+  echo "wrote $dest"
+else
+  echo "$dest is already current"
+fi
