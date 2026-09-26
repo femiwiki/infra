@@ -4,6 +4,15 @@ description: >-
   Forwards the docker instance's daemon port over SSM to 127.0.0.1:2376 on the
   runner, and relays it on the docker bridge gateway so a container action can
   reach it too.
+inputs:
+  instance-tag:
+    description: The Name tag of the instance whose daemon to reach.
+    required: false
+    default: docker
+  region:
+    description: The region that instance is in.
+    required: false
+    default: ap-northeast-1
 outputs:
   host:
     description: The docker provider host to use from a container action.
@@ -38,10 +47,14 @@ runs:
 
     - name: Forward the daemon's port
       shell: bash
+      env:
+        INSTANCE_TAG: ${{ inputs.instance-tag }}
+        AWS_REGION: ${{ inputs.region }}
       run: |
         instance=$(aws ec2 describe-instances \
-          --filters Name=tag:Name,Values=docker Name=instance-state-name,Values=running \
+          --filters "Name=tag:Name,Values=$INSTANCE_TAG" Name=instance-state-name,Values=running \
           --query 'Reservations[].Instances[].InstanceId' --output text)
+        [ -n "$instance" ] || { echo "::error::no running instance tagged $INSTANCE_TAG in $AWS_REGION"; exit 1; }
         nohup aws ssm start-session --target "$instance" \
           --document-name AWS-StartPortForwardingSession \
           --parameters portNumber=2376,localPortNumber=2376 > /tmp/ssm-session.log 2>&1 &
