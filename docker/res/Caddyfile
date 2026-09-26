@@ -102,6 +102,23 @@ femiwiki.com *.femiwiki.com 127.0.0.1:80 localhost:80 {
 			events {$FW_CRAWLER_EVENTS:100}
 			window {$FW_CRAWLER_WINDOW:10m}
 		}
+		# The crawlers that send no readers back. Measured on generation 60, the
+		# declared crawlers were 23% of the time php-fpm spent, and the search
+		# engines among them about 8%: Meta's alone was 9.4% and Googlebot was
+		# one request in twelve minutes. A tighter budget for everything that is
+		# not a search engine takes the larger half without costing a reader who
+		# arrives from a search. Both the list and the count are variables, so
+		# moving an agent from one side to the other is an apply.
+		zone crawlers_lean {
+			match {
+				path /index.php* /api.php* /w/*
+				header_regexp User-Agent {$FW_CRAWLER_AGENTS:(?i)(bot|spider|crawl)}
+				not header_regexp User-Agent {$FW_SEARCH_AGENTS:(?i)(Googlebot|bingbot|Applebot|YandexBot|SeznamBot|DuckDuckBot|Yeti|Daum)}
+			}
+			key {http.request.header.User-Agent}
+			events {$FW_CRAWLER_LEAN_EVENTS:10}
+			window {$FW_CRAWLER_LEAN_WINDOW:10m}
+		}
 		# Searches, diffs, old revisions and page history from a faked browser.
 		# One bucket for all of them, so a reader the signature misreads is
 		# refused only while crawlers are spending it, where a 403 refused them
