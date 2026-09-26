@@ -255,7 +255,7 @@ locals {
     }
   }
 
-  base_label_suite = ["enhancement", "invalid", "wontfix", "help_wanted", "patch_welcome", "upstreamed"]
+  base_label_suite = ["enhancement", "invalid", "wontfix", "help_wanted", "patch_welcome", "upstreamed", "ci"]
   ext_label_suite  = concat(local.base_label_suite, ["deprecation"])
 
 
@@ -268,7 +268,6 @@ locals {
         "disruption",
         "operation",
         "monetary",
-        "ci",
         "cd",
         "note",
         "security",
@@ -316,7 +315,6 @@ locals {
         "monetary",
         "performance",
         "deprecation",
-        "ci",
 
         "ve",
         "restbase",
@@ -346,8 +344,10 @@ locals {
       ]
     )
 
-    ".github"   = concat(local.base_label_suite, ["ci"])
-    sns-discord = local.base_label_suite
+    ".github"            = local.base_label_suite
+    quibble-action       = ["ci"]
+    "femiwiki.github.io" = ["ci"]
+    sns-discord          = local.base_label_suite
 
     caddy-mwcache     = local.base_label_suite
     legunto           = local.base_label_suite
