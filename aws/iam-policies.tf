@@ -321,6 +321,20 @@ data "aws_iam_policy_document" "read_mysql_user_parameters" {
   }
 }
 
+resource "aws_iam_policy" "read_backup_healthcheck_url" {
+  name        = "ReadBackupHealthcheckUrl"
+  description = "Allows the database instance to read the URL it pings after a dump"
+
+  policy = data.aws_iam_policy_document.read_backup_healthcheck_url.json
+}
+
+data "aws_iam_policy_document" "read_backup_healthcheck_url" {
+  statement {
+    actions   = ["ssm:GetParameter"]
+    resources = [for region in local.parameter_store_regions : "arn:aws:ssm:${region}:${data.aws_caller_identity.current.account_id}:parameter/mysql/backup/*"]
+  }
+}
+
 resource "aws_iam_policy" "write_mysql_root_password" {
   name        = "WriteMysqlRootPassword"
   description = "Allows a database instance to publish the root password it generates at first boot, under its own server id"

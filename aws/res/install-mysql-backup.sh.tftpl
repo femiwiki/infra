@@ -1,0 +1,46 @@
+#!/bin/bash
+set -euo pipefail
+set +x
+umask 0077
+
+install -m 0600 /dev/null /root/.healthcheck-url
+aws ssm get-parameter \
+  --region ${parameter_region} \
+  --name /mysql/backup/healthcheck-url \
+  --with-decryption \
+  --query Parameter.Value \
+  --output text > /root/.healthcheck-url
+test -s /root/.healthcheck-url
+
+tmp="$(mktemp)"
+trap 'rm -f "$tmp"' EXIT
+cat >"$tmp" <<'SCRIPT'
+${backup_script}
+SCRIPT
+install -m 0755 "$tmp" /usr/local/sbin/mysql-backup
+
+cat >/etc/systemd/system/mysql-backup.service <<'UNIT'
+[Unit]
+Description=Dump the wiki database to S3
+Requires=mysqld.service
+After=mysqld.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/mysql-backup
+UNIT
+
+cat >/etc/systemd/system/mysql-backup.timer <<'UNIT'
+[Unit]
+Description=Dump the wiki database to S3 every morning
+
+[Timer]
+OnCalendar=*-*-* 21:00:00 UTC
+
+[Install]
+WantedBy=timers.target
+UNIT
+
+systemctl daemon-reload
+systemctl enable --now mysql-backup.timer
+systemctl list-timers mysql-backup.timer --no-pager
