@@ -15,10 +15,12 @@ locals {
 }
 
 module "infra" {
-  source                        = "./modules/github-repository"
-  name                          = "infra"
-  description                   = ":evergreen_tree: Terraforming Femiwiki Infrastructure"
-  enforce_admins                = local.with_cd.enforce_admins
+  source      = "./modules/github-repository"
+  name        = "infra"
+  description = ":evergreen_tree: Terraforming Femiwiki Infrastructure"
+  # Not enforced on admins: a person has to be able to land something when
+  # the automation cannot, and there is no second admin to be blocked by.
+  enforce_admins                = false
   required_pull_request_reviews = local.with_cd.required_pull_request_reviews
   required_status_checks_strict = true
   required_status_checks_contexts = [
