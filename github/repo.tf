@@ -22,15 +22,8 @@ module "infra" {
   required_pull_request_reviews = local.with_cd.required_pull_request_reviews
   required_status_checks_strict = true
   required_status_checks_contexts = [
-    "docker plan is empty",
-    "docker-seoul plan is empty",
-    "grafana plan is empty",
-    "tflint",
-    "shellcheck",
-    "rumdl",
-    "yamllint",
-    "parallel-lint",
-    "taplo",
+    "lint gate",
+    "tofu gate",
   ]
   topics = [
     "terraform",
