@@ -87,7 +87,12 @@ EOF
 # for the engine change, because a security update becomes dnf update. See
 # femiwiki/femiwiki#491.
 dnf install -y mariadb1011-server
-cat <<'EOF' > /etc/my.cnf.d/femiwiki.cnf
+# zz-, because /etc/my.cnf.d is read in alphabetical order and the package's
+# own mariadb-server.cnf sets datadir=/var/lib/mysql. Named femiwiki.cnf this
+# file was read first and lost: mariadb-prepare-db-dir then took /var/lib/mysql
+# for the data directory, found the mount point below inside it, and refused to
+# initialise anything.
+cat <<'EOF' > /etc/my.cnf.d/zz-femiwiki.cnf
 [mysqld]
 datadir=/var/lib/mysql/data
 performance_schema=OFF
@@ -113,12 +118,21 @@ cat <<'UNIT' > /etc/systemd/system/mariadb.service.d/10-datadir-mount.conf
 RequiresMountsFor=/var/lib/mysql/data
 UNIT
 systemctl daemon-reload
+# The volume is formatted only if it has no filesystem, and the branch below
+# asks whether it carries a database rather than whether it carries a
+# filesystem. A volume that was formatted and then never seeded -- which is what
+# a failed first boot leaves -- is a fresh volume as far as this script is
+# concerned, so replacing the instance finishes the build instead of starting a
+# server with an empty data directory. The chown is after the mount: before it,
+# it applies to the directory the mount then hides.
 if ! file -s /dev/nvme1n1 | grep -q "filesystem data"; then
   mkfs.xfs /dev/nvme1n1
-  mkdir -p /var/lib/mysql/data
-  chown mysql:mysql /var/lib/mysql/data
-  grep -q " /var/lib/mysql/data " /etc/fstab || echo "UUID=$(blkid -s UUID -o value /dev/nvme1n1)  /var/lib/mysql/data  xfs  defaults,noatime,nofail  0  2" >> /etc/fstab
-  mount /var/lib/mysql/data
+fi
+mkdir -p /var/lib/mysql/data
+grep -q " /var/lib/mysql/data " /etc/fstab || echo "UUID=$(blkid -s UUID -o value /dev/nvme1n1)  /var/lib/mysql/data  xfs  defaults,noatime,nofail  0  2" >> /etc/fstab
+mountpoint -q /var/lib/mysql/data || mount /var/lib/mysql/data
+chown mysql:mysql /var/lib/mysql/data
+if [ ! -d /var/lib/mysql/data/mysql ]; then
   systemctl enable --now mariadb
   #
   # Tracing is off from here on: this part handles root's password and then the
@@ -208,10 +222,6 @@ CNF
   mysqldump --defaults-file=/root/.my.cnf --no-data femiwiki > /dev/null
   set -x
 else
-  mkdir -p /var/lib/mysql/data
-  chown mysql:mysql /var/lib/mysql/data
-  grep -q " /var/lib/mysql/data " /etc/fstab || echo "UUID=$(blkid -s UUID -o value /dev/nvme1n1)  /var/lib/mysql/data  xfs  defaults,noatime,nofail  0  2" >> /etc/fstab
-  mount /var/lib/mysql/data
   systemctl enable --now mariadb
 fi
 
