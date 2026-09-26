@@ -266,6 +266,40 @@ jobs:
           PR: ${{ github.event.issue.number }}
         run: .github/scripts/post-update.php "$REPO" "$PR"
 
+      # The apply has to leave nothing behind, because the required check that
+      # used to say so is gone and this is what replaces it. Planning here rather
+      # than in a fresh run keeps the tofu binary, the providers and the docker
+      # daemon this job already set up.
+      - uses: dflook/tofu-plan@c7416238983bdd94c5486fb856bb7358f2bcc935  # v3.1.0
+        if: github.event_name == 'issue_comment' && steps.apply.outcome == 'success'
+        id: verify
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          TF_PLAN_COLLAPSE_LENGTH: "100000"  # never collapse the plan
+          TF_VAR_docker_host: ${{ steps.daemon.outputs.host }}
+          TF_VAR_grafana_auth: ${{ matrix.workspace == 'grafana' && secrets.GRAFANA_PLAN_TOKEN || '' }}
+          TF_VAR_discord_webhook_url: ${{ matrix.workspace == 'grafana' && secrets.DISCORD_WEBHOOK_URL || '' }}
+          TF_VAR_healthchecksio_api_key: ${{ matrix.workspace == 'healthchecks' && secrets.HEALTHCHECKSIO_API_KEY || '' }}
+        with:
+          path: ${{ matrix.workspace }}
+          add_github_comment: changes-only
+
+      - name: Nothing may be left for a later apply
+        id: clean
+        if: github.event_name == 'issue_comment' && steps.apply.outcome == 'success'
+        env:
+          CHANGES: ${{ steps.verify.outputs.changes }}
+          PLAN: ${{ steps.verify.outputs.json_plan_path }}
+          WORKSPACE: ${{ matrix.workspace }}
+        run: |
+          # A plan that only moves resources can still count as having no changes
+          pending=$(jq '[.resource_changes[]? | select(.change.importing or .previous_address)] | length' "$PLAN")
+          if [ "$CHANGES" = true ] || [ "$pending" -gt 0 ]; then
+            echo "::error::$WORKSPACE still plans changes after the apply, so it is not safe to merge. The comment above has the plan."
+            exit 1
+          fi
+          echo "The plan is empty."
+
       - name: Say what actually happened
         id: outcome
         if: always()
@@ -274,6 +308,7 @@ jobs:
           RECOVER: ${{ steps.recover.outcome }}
           BASE: ${{ steps.recover.outputs.base }}
           APPLY: ${{ steps.apply.outcome }}
+          CLEAN: ${{ steps.clean.outcome }}
           PLAN: ${{ steps.apply.outputs.json_plan_path }}
           SUBJECT: ${{ github.event.issue.html_url || github.ref_name }}
           ACTOR: ${{ github.actor }}
@@ -285,6 +320,8 @@ jobs:
           fi
           if [ "$STATUS" = cancelled ]; then
             title=Cancelled
+          elif [ "$APPLY" = success ] && [ "$CLEAN" = failure ]; then
+            title='Applied, but still plans changes'
           elif [ "$APPLY" = success ]; then
             title=Applied
             if [ -n "$PLAN" ] && [ -f "$PLAN" ] &&
@@ -337,7 +374,8 @@ jobs:
             || echo "::warning::could not re-run plan $run"
 
   merge:
-    needs: replan
+    needs: apply
+    if: needs.apply.result == 'success' && github.event_name == 'issue_comment'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -346,9 +384,8 @@ jobs:
     steps:
       # An apply runs before the merge, so until the pull request lands the
       # default branch describes less than what is deployed, and the next apply
-      # from any other branch takes production back to it. Auto-merge rather
-      # than a merge, because replan is still refreshing the checks this has to
-      # wait for.
+      # from any other branch takes production back to it. Every apply leg
+      # succeeded, which now includes each one re-planning to nothing.
       - name: Merge the pull request this apply came from
         env:
           GH_TOKEN: ${{ github.token }}
@@ -359,8 +396,11 @@ jobs:
             echo "#$PR is already merged"
             exit 0
           fi
-          gh pr merge "$PR" --repo "$REPO" --squash --auto \
-            || echo "::warning::could not turn on auto-merge for #$PR; merge it by hand so the default branch matches what is deployed"
+          # Until the plan checks come off branch protection they are still red
+          # here, and only auto-merge can wait for the run that turns them green
+          gh pr merge "$PR" --repo "$REPO" --squash \
+            || gh pr merge "$PR" --repo "$REPO" --squash --auto \
+            || echo "::warning::could not merge #$PR; merge it by hand so the default branch matches what is deployed"
 
   log:
     needs: apply
