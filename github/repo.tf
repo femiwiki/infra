@@ -21,8 +21,11 @@ module "infra" {
   # An apply runs before the merge, so the merge has to come from the workflow
   # that applied it, and the plan checks it would otherwise wait on are gone.
   # Admins are exempt, so a person can still merge when the automation cannot.
-  enforce_admins                = false
-  push_allowances               = ["/github-actions"]
+  enforce_admins = false
+  # The GitHub Actions app by node id. A name only resolves to a user or a
+  # team here, so "/github-actions" was read as a user login and errored on
+  # apply, which the plan does not catch because it resolves no actors.
+  push_allowances               = ["MDM6QXBwMTUzNjg="]
   required_pull_request_reviews = local.with_cd.required_pull_request_reviews
   required_status_checks_strict = true
   required_status_checks_contexts = [

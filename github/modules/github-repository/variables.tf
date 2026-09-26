@@ -63,7 +63,7 @@ variable "required_status_checks_contexts" {
 }
 
 variable "push_allowances" {
-  description = "Actors that may push to the protected branches, apps as \"/slug\". Empty leaves pushing unrestricted."
+  description = "Actors that may push to the protected branches: \"/login\" for a user, \"org/team\" for a team, and an app by its node id. Empty leaves pushing unrestricted."
   type        = list(string)
   default     = []
 }
