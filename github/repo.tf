@@ -56,7 +56,7 @@ module "docker_mediawiki" {
   delete_branch_on_merge          = true
   enforce_admins                  = local.docker.enforce_admins
   required_pull_request_reviews   = local.docker.required_pull_request_reviews
-  required_status_checks_contexts = ["php-lint", "caddy-fmt", "etc-lint", "hadolint", "shellcheck", "image builds", "title scope"]
+  required_status_checks_contexts = ["php-lint", "caddy-fmt", "etc-lint", "hadolint", "shellcheck", "actionlint", "image builds", "title scope"]
   topics = [
     "docker-compose",
     "docker-image",
@@ -193,7 +193,7 @@ module "caddy_mwcache" {
     "cache",
     "mediawiki",
   ]
-  required_status_checks_contexts = ["lint-go", "caddy-fmt", "rumdl", "yamllint", "biome", "parallel-lint", "taplo"]
+  required_status_checks_contexts = ["lint-go", "caddy-fmt", "rumdl", "yamllint", "biome", "parallel-lint", "phpcs", "taplo"]
 }
 
 module "ooui_femiwiki_theme" {
@@ -206,7 +206,7 @@ module "ooui_femiwiki_theme" {
     "ooui",
     "theme",
   ]
-  required_status_checks_contexts = ["parallel-lint", "shellcheck", "prettier"]
+  required_status_checks_contexts = ["parallel-lint", "phpcs", "shellcheck", "prettier"]
 }
 
 module "quibble_action" {
