@@ -23,7 +23,6 @@ module "infra" {
   required_status_checks_strict = true
   required_status_checks_contexts = [
     "docker plan is empty",
-    "docker-seoul plan is empty",
     "grafana plan is empty",
     "tflint",
     "shellcheck",
