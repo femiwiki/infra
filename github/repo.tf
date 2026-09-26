@@ -286,3 +286,8 @@ resource "github_repository_environment" "infra_docker_seoul" {
   repository  = module.infra.name
   environment = "docker-seoul"
 }
+
+resource "github_repository_environment" "infra_github" {
+  repository  = module.infra.name
+  environment = "github"
+}
