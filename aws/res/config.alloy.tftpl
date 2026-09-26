@@ -107,7 +107,7 @@ prometheus.relabel "integrations_node_exporter" {
   }
 }
 
-%{ if name == "femiwiki" ~}
+%{ if type == "app" ~}
 // Caddy, on its admin endpoint
 prometheus.scrape "caddy" {
   targets    = [{__address__ = "127.0.0.1:2019", instance = "${name}", job = "integrations/caddy"}]

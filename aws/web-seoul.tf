@@ -2,7 +2,7 @@ locals {
   alloy_install_docker_seoul = replace(
     replace(file("res/install-alloy-config.sh"), "__REGION__", local.seoul_region),
     "__CONFIG__",
-    templatefile("res/config.alloy.tftpl", merge(local.alloy_grafana, { name = "femiwiki-seoul" }))
+    templatefile("res/config.alloy.tftpl", merge(local.alloy_grafana, { name = "femiwiki-seoul", type = "app" }))
   )
 }
 

@@ -18,7 +18,7 @@ locals {
   alloy_install_database_seoul = replace(
     replace(file("res/install-alloy-config.sh"), "__REGION__", local.seoul_region),
     "__CONFIG__",
-    templatefile("res/config.alloy.tftpl", merge(local.alloy_grafana, { name = "mysql-seoul" }))
+    templatefile("res/config.alloy.tftpl", merge(local.alloy_grafana, { name = "mysql-seoul", type = "database" }))
   )
 }
 
