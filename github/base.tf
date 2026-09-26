@@ -18,4 +18,5 @@ terraform {
 
 provider "github" {
   owner = "femiwiki"
+  token = var.github_token
 }
