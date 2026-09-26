@@ -1,4 +1,4 @@
-100 * max(
+100 * max by (instance) (
   php_opcache_interned_strings_bytes{job="integrations/opcache", state="used"}
   / ignoring(state)
   sum without(state) (php_opcache_interned_strings_bytes{job="integrations/opcache"})

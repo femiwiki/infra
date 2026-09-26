@@ -1,4 +1,4 @@
-100 * max(
+100 * max by (instance) (
   php_opcache_cached_keys{job="integrations/opcache"}
   / php_opcache_max_cached_keys{job="integrations/opcache"}
 )
