@@ -33,17 +33,18 @@ locals {
     docker   = "femiwiki"
   }
 
+  alloy_grafana = {
+    prometheus_endpoint = "https://prometheus-prod-49-prod-ap-northeast-0.grafana.net/api/prom/push"
+    prometheus_username = "1835631"
+    loki_endpoint       = "https://logs-prod-030.grafana.net/loki/api/v1/push"
+    loki_username       = "1017101"
+  }
+
   alloy_install = {
     for tag, name in local.alloy_hosts : tag => replace(
       replace(file("res/install-alloy-config.sh"), "__REGION__", data.aws_region.current.region),
       "__CONFIG__",
-      templatefile("res/config.alloy.tftpl", {
-        name                = name
-        prometheus_endpoint = "https://prometheus-prod-49-prod-ap-northeast-0.grafana.net/api/prom/push"
-        prometheus_username = "1835631"
-        loki_endpoint       = "https://logs-prod-030.grafana.net/loki/api/v1/push"
-        loki_username       = "1017101"
-      })
+      templatefile("res/config.alloy.tftpl", merge(local.alloy_grafana, { name = name }))
     )
   }
 }
