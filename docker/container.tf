@@ -37,7 +37,8 @@ resource "docker_container" "http" {
 
       # Exempts loopback and Chrome on iOS from the image's default; see femiwiki#523
       FW_BOTLIKE             = "!remote_ip('127.0.0.0/8') && ((header_regexp('User-Agent', '(Chrome|Chromium|Edg|CriOS)/') && ((!header_regexp('Sec-Ch-Ua', '.') && !header_regexp('User-Agent', 'CriOS/')) || !header_regexp('Priority', '.') || header_regexp('Accept-Language', 'q=0\\\\.5'))) || !header_regexp('User-Agent', '(Mozilla/5\\\\.0|Opera)'))"
-      FW_CRAWLER_EVENTS      = "30",
+      FW_CRAWLER_EVENTS      = "10",
+      FW_CRAWLER_LEAN_EVENTS = "3",
       FW_EXPENSIVE_EVENTS    = "3000",
       FW_EXPENSIVE_IP_EVENTS = "15",
 
