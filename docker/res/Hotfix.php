@@ -7,7 +7,6 @@
 
 $wgAutoConfirmAge = 3600;
 $wgUnifiedExtensionForFemiwikiBlockByEmail = false;
-$wgUnifiedExtensionForFemiwikiRelatedArticlesUseLinks = false;
 
 foreach ( [
 	NS_TALK,
