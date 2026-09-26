@@ -54,10 +54,10 @@ mysql_users =
 )
 CNF
 
-chmod 0644 "$tmpdir/proxysql.cnf"
 if ! cmp -s "$tmpdir/proxysql.cnf" "$dest"; then
   mv -f "$tmpdir/proxysql.cnf" "$dest"
   echo "wrote $dest"
 else
   echo "$dest is already current"
 fi
+chmod 0600 "$dest"
