@@ -93,21 +93,6 @@ module "rankingbot" {
   required_status_checks_contexts = ["ci", "ruff", "yamllint", "rumdl", "taplo", "biome"]
 }
 
-module "backupbot" {
-  source                        = "./modules/github-repository"
-  name                          = "backupbot"
-  description                   = ":robot: 페미위키 MySQL 백업봇"
-  enforce_admins                = local.bot.enforce_admins
-  required_pull_request_reviews = local.bot.required_pull_request_reviews
-  default_status_checks         = []
-  topics = [
-    "bot",
-    "docker-image",
-    "mysql",
-  ]
-  required_status_checks_contexts = ["hadolint", "rumdl", "yamllint", "actionlint", "shellcheck", "taplo"]
-}
-
 module "tweetbot" {
   source                        = "./modules/github-repository"
   name                          = "tweetbot"
