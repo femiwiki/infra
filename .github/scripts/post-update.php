@@ -47,6 +47,12 @@ function linkUnder( string $text, string $block, string $link ): string {
 	return substr_replace( $text, "$link\n\n", $offset + strlen( $heading ), 0 );
 }
 
+/** The name of the section a block sits in, for an edit summary that links to it */
+function sectionOf( string $text, string $block ): string {
+	preg_match_all( '/^==([^=].*?)==\h*$/mu', substr( $text, 0, strpos( $text, $block ) ), $headings );
+	return trim( end( $headings[1] ) ?: fail( 'no section heads the posted block' ) );
+}
+
 function wiki( array $params ): array {
 	static $ch = null;
 	$ch ??= curl_init();
@@ -93,10 +99,13 @@ $text = $revision['slots']['main']['content'] ?? '';
 // A re-run of the apply lands under a later minute, so a block already on the page is not posted again
 $link = "https://github.com/$repo/pull/$number";
 $new = array_values( array_filter( $blocks, fn ( $block ) => !str_contains( $text, $block ) ) );
+// The summary links to the section, since a summary does not link a URL or a repo#number
 if ( $new ) {
 	$merged = insert( $text, $at, $link, $new );
+	$summary = '/* ' . sectionOf( $merged, $new[0] ) . ' */ 배포된 변경 사항 추가';
 } elseif ( !preg_match( '/^' . preg_quote( $link, '/' ) . '$/m', $text ) ) {
 	$merged = linkUnder( $text, $blocks[0], $link );
+	$summary = '/* ' . sectionOf( $merged, $blocks[0] ) . ' */ 배포 풀 리퀘스트 링크 추가';
 } else {
 	echo "$title: already posted\n";
 	exit;
@@ -106,6 +115,7 @@ if ( $dryRun ) {
 	$after = tempnam( sys_get_temp_dir(), 'page' );
 	file_put_contents( $before, $text );
 	file_put_contents( $after, $merged );
+	echo "summary: $summary\n";
 	passthru( "diff -u $before $after" );
 	unlink( $before );
 	unlink( $after );
@@ -121,7 +131,7 @@ if ( $login['result'] !== 'Success' ) {
 }
 $token = wiki( [ 'action' => 'query', 'meta' => 'tokens' ] )['query']['tokens']['csrftoken'];
 $edit = wiki( [
-	'action' => 'edit', 'title' => $title, 'text' => $merged, 'summary' => "$repo#$number", 'bot' => 1,
+	'action' => 'edit', 'title' => $title, 'text' => $merged, 'summary' => $summary, 'bot' => 1,
 	'basetimestamp' => $revision['timestamp'] ?? '', 'token' => $token,
 ] )['edit'];
 echo "$title: $edit[result] rev " . ( $edit['newrevid'] ?? '?' ) . "\n";
