@@ -27,8 +27,3 @@ provider "aws" {
 provider "docker" {
   host = var.docker_host
 }
-
-data "aws_instances" "database" {
-  instance_tags        = { Name = "database-3" }
-  instance_state_names = ["running"]
-}

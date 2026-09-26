@@ -134,6 +134,7 @@ resource "docker_container" "fastcgi" {
       PHP_POST_MAX_SIZE       = "10M"
       PHP_UPLOAD_MAX_FILESIZE = "10M"
 
+      MEDIAWIKI_SKIP_CRON         = "1"
       MEDIAWIKI_SKIP_IMPORT_SITES = "1"
       MEDIAWIKI_SKIP_INSTALL      = "1"
       MEDIAWIKI_SKIP_UPDATE       = "1"
@@ -250,34 +251,3 @@ resource "docker_container" "autoheal" {
   }
 }
 
-resource "docker_container" "backupbot" {
-  name        = "backupbot"
-  image       = "ghcr.io/femiwiki/backupbot:2026-09-22T15-01-939d63be"
-  restart     = "always"
-  init        = true
-  log_driver  = "local"
-  memory      = 256
-  memory_swap = 256
-  env = [
-    for k, v in {
-      DB_SERVER   = "${data.aws_instances.database.private_ips[0]}:3306"
-      SSM_SECRETS = "1"
-      AWS_REGION  = "ap-northeast-1"
-    } : "${k}=${v}"
-  ]
-
-  healthcheck {
-    test = ["NONE"]
-  }
-
-  ulimit {
-    hard = 65536
-    name = "nofile"
-    soft = 32768
-  }
-
-  labels {
-    label = "autoheal"
-    value = "false"
-  }
-}
