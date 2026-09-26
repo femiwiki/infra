@@ -106,6 +106,7 @@ module "backupbot" {
     "mysql",
   ]
   required_status_checks_contexts = ["hadolint", "rumdl", "yamllint", "actionlint", "shellcheck", "taplo"]
+  archived                        = true
 }
 
 module "tweetbot" {
