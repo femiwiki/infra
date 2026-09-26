@@ -88,7 +88,15 @@ jobs:
         with:
           app-id: ${{ vars.TOFU_GITHUB_APP_ID }}
           private-key: ${{ secrets.TOFU_GITHUB_APP_PEM }}
-          owner: femiwiki
+          # This root manages every repository in the organisation, so the token
+          # is bounded by permission rather than by repository. Listing them here
+          # would be a second copy of github/repo.tf, drifting from the first.
+          owner: femiwiki  # zizmor: ignore[github-app]
+          permission-administration: write
+          permission-environments: write
+          permission-issues: write
+          permission-members: write
+          permission-pages: write
 
       - uses: dflook/tofu-plan@c7416238983bdd94c5486fb856bb7358f2bcc935  # v3.1.0
         if: steps.scope.outputs.plan == 'true'
@@ -267,7 +275,15 @@ jobs:
         with:
           app-id: ${{ vars.TOFU_GITHUB_APP_ID }}
           private-key: ${{ secrets.TOFU_GITHUB_APP_PEM }}
-          owner: femiwiki
+          # This root manages every repository in the organisation, so the token
+          # is bounded by permission rather than by repository. Listing them here
+          # would be a second copy of github/repo.tf, drifting from the first.
+          owner: femiwiki  # zizmor: ignore[github-app]
+          permission-administration: write
+          permission-environments: write
+          permission-issues: write
+          permission-members: write
+          permission-pages: write
 
       - uses: dflook/tofu-apply@e3e5dfc8f935d4b152c767801046f63abf8a77d3  # v3.1.0
         id: apply
