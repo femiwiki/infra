@@ -9,20 +9,6 @@ $wgAutoConfirmAge = 3600;
 $wgUnifiedExtensionForFemiwikiBlockByEmail = false;
 $wgUnifiedExtensionForFemiwikiRelatedArticlesUseLinks = false;
 
-# Extension:Lockdown
-$wgActionLockdown = [
-	'history' => [ 'user' ],
-	'info' => [ 'user' ],
-	'raw' => [ 'user' ],
-];
-$wgSpecialPageLockdown = [
-	'AbuseFilter' => [ 'user' ],
-	'Recentchangeslinked' => [ 'user' ],
-	'Contributions' => [ 'user' ],
-	'Whatlinkshere' => [ 'user' ],
-	'Log' => [ 'user' ],
-];
-
 foreach ( [
 	NS_TALK,
 	NS_USER_TALK,
