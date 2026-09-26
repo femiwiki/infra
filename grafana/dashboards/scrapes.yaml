@@ -1,0 +1,118 @@
+# Grafana takes this as JSON; the Terraform encodes it. A bare y reads as true where
+# OpenTofu decodes this, so the panel coordinate stays quoted.
+---
+uid: scrapes
+title: 긁는 쪽
+tags:
+- traffic
+timezone: browser
+schemaVersion: 39
+editable: true
+refresh: 1m
+time:
+  from: now-6h
+  to: now
+templating:
+  list:
+  - name: client
+    type: textbox
+    label: 주소로 좁히기
+    query: ''
+    current:
+      text: ''
+      value: ''
+panels:
+- id: 1
+  type: timeseries
+  title: 예산에 걸려 거절된 요청
+  description: |-
+    Caddy의 요금 제한이 거절한 요청을 존별로 셉니다. expensive는 로그인하지 않은 모두가 나눠 쓰는 예산이고, botlike_expensive는 그중 봇 서명에 걸린 것, crawlers는 스스로 봇이라 밝힌 것입니다. 어느 존이 물었는지가 손잡이를 고르는 기준입니다.
+  datasource: &loki
+    type: loki
+    uid: __LOKI_UID__
+  gridPos:
+    h: 9
+    w: 24
+    x: 0
+    'y': 0
+  fieldConfig:
+    defaults:
+      unit: short
+      min: 0
+      custom:
+        fillOpacity: 8
+        lineWidth: 1
+        showPoints: never
+    overrides: []
+  options:
+    legend:
+      displayMode: table
+      placement: right
+      calcs:
+      - lastNotNull
+      - max
+    tooltip:
+      mode: multi
+      sort: desc
+  targets:
+  - refId: A
+    datasource: *loki
+    expr: |-
+      sum by (zone) (count_over_time({docker_container_name=~"http.*"} |= "rate limit exceeded" | json | __error__="" [$__auto]))
+    legendFormat: '{{zone}}'
+- id: 2
+  type: table
+  title: 가장 많이 거절된 주소
+  description: |-
+    화면에 보이는 기간 전체를 셉니다. 한 주소가 크게 앞서면 한 대가 긁는 것이고, 비슷한 값이 수백 개면 주소를 바꿔 가며 긁는 것입니다. 후자는 예산을 키워도 소용이 없습니다.
+  datasource: *loki
+  gridPos:
+    h: 9
+    w: 12
+    x: 0
+    'y': 9
+  fieldConfig:
+    defaults:
+      custom:
+        align: auto
+    overrides: []
+  options:
+    sortBy:
+    - displayName: Value
+      desc: true
+  targets:
+  - refId: A
+    datasource: *loki
+    instant: true
+    queryType: instant
+    expr: |-
+      topk(20, sum by (remote_ip) (count_over_time({docker_container_name=~"http.*"} |= "rate limit exceeded" | json | __error__="" [$__range])))
+    legendFormat: '{{remote_ip}}'
+- id: 3
+  type: table
+  title: 가장 많이 읽힌 주소
+  description: |-
+    위 표에서 주소를 하나 골라 상단 입력칸에 넣으면 그 주소가 무엇을 가져갔는지만 보입니다. 비워 두면 전체입니다. 요청은 거절된 것이 아니라 실제로 처리된 것을 셉니다.
+  datasource: *loki
+  gridPos:
+    h: 9
+    w: 12
+    x: 12
+    'y': 9
+  fieldConfig:
+    defaults:
+      custom:
+        align: auto
+    overrides: []
+  options:
+    sortBy:
+    - displayName: Value
+      desc: true
+  targets:
+  - refId: A
+    datasource: *loki
+    instant: true
+    queryType: instant
+    expr: |-
+      topk(20, sum by (uri) (count_over_time({docker_container_name=~"http.*"} | json uri="request.uri", client="request.client_ip" | __error__="" | client =~ `$client.*` | uri != `` [$__range])))
+    legendFormat: '{{uri}}'
