@@ -1,15 +1,15 @@
 locals {
   dashboards = {
-    "container-memory" = { time_selection = true, annotations = false }
-    "site"             = { time_selection = true, annotations = false }
-    "availability"     = { time_selection = false, annotations = true }
+    "container-memory" = { folder = grafana_folder.hosts.uid, time_selection = true, annotations = false }
+    "site"             = { folder = data.grafana_folder.femiwiki.uid, time_selection = true, annotations = false }
+    "availability"     = { folder = data.grafana_folder.femiwiki.uid, time_selection = false, annotations = true }
   }
 }
 
 resource "grafana_dashboard" "this" {
   for_each = local.dashboards
 
-  folder = data.grafana_folder.femiwiki.uid
+  folder = each.value.folder
 
   config_json = replace(
     jsonencode(yamldecode(file("${path.module}/dashboards/${each.key}.yaml"))),
