@@ -23,6 +23,7 @@ module "infra" {
   required_status_checks_strict = true
   required_status_checks_contexts = [
     "docker plan is empty",
+    "docker-seoul plan is empty",
     "grafana plan is empty",
     "tflint",
     "shellcheck",
@@ -276,4 +277,12 @@ resource "github_repository_file" "status_index" {
   content             = file("${path.module}/res/status-index.html")
   commit_message      = "Send a reader to the board"
   overwrite_on_create = true
+}
+
+# The workflow takes the environment name from the workspace name, and the three
+# that came before this one were made by hand. This one is declared, so the
+# workspace it gates can be deleted with the region migration that needs it.
+resource "github_repository_environment" "infra_docker_seoul" {
+  repository  = module.infra.name
+  environment = "docker-seoul"
 }
