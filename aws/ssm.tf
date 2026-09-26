@@ -51,6 +51,11 @@ locals {
 }
 
 locals {
+  app_hosts = {
+    "docker"       = { region = data.aws_region.current.region }
+    "docker-seoul" = { region = local.seoul_region }
+  }
+
   database_hosts = {
     "database-4" = { region = local.seoul_region }
   }
@@ -135,7 +140,10 @@ locals {
 }
 
 resource "aws_ssm_document" "prune_docker_images" {
-  name            = "prune-docker-images"
+  for_each = local.app_hosts
+
+  region          = each.value.region
+  name            = "prune-docker-images-${each.key}"
   document_type   = "Command"
   document_format = "JSON"
 
@@ -153,9 +161,12 @@ resource "aws_ssm_document" "prune_docker_images" {
 }
 
 resource "aws_ssm_association" "prune_docker_images" {
-  association_name    = "prune-docker-images"
-  name                = aws_ssm_document.prune_docker_images.name
-  document_version    = aws_ssm_document.prune_docker_images.latest_version
+  for_each = local.app_hosts
+
+  region              = each.value.region
+  association_name    = "prune-docker-images-${each.key}"
+  name                = aws_ssm_document.prune_docker_images[each.key].name
+  document_version    = aws_ssm_document.prune_docker_images[each.key].latest_version
   schedule_expression = "cron(0 18 ? * * *)"
   compliance_severity = "MEDIUM"
   max_concurrency     = "1"
@@ -163,12 +174,15 @@ resource "aws_ssm_association" "prune_docker_images" {
 
   targets {
     key    = "tag:Name"
-    values = ["docker"]
+    values = [each.key]
   }
 }
 
 resource "aws_ssm_document" "swapfile" {
-  name            = "install-swapfile"
+  for_each = local.app_hosts
+
+  region          = each.value.region
+  name            = "install-swapfile-${each.key}"
   document_type   = "Command"
   document_format = "JSON"
 
@@ -186,9 +200,12 @@ resource "aws_ssm_document" "swapfile" {
 }
 
 resource "aws_ssm_association" "swapfile" {
-  association_name    = "install-swapfile"
-  name                = aws_ssm_document.swapfile.name
-  document_version    = aws_ssm_document.swapfile.latest_version
+  for_each = local.app_hosts
+
+  region              = each.value.region
+  association_name    = "install-swapfile-${each.key}"
+  name                = aws_ssm_document.swapfile[each.key].name
+  document_version    = aws_ssm_document.swapfile[each.key].latest_version
   schedule_expression = "rate(30 minutes)"
   compliance_severity = "HIGH"
   max_concurrency     = "1"
@@ -196,7 +213,7 @@ resource "aws_ssm_association" "swapfile" {
 
   targets {
     key    = "tag:Name"
-    values = ["docker"]
+    values = [each.key]
   }
 }
 
