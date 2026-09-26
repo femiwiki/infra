@@ -16,7 +16,23 @@ resource "aws_s3_bucket" "uploads_seoul" {
   bucket_namespace = "account-regional"
 }
 
+# A new bucket comes with all four Block Public Access settings on, so the
+# policy below is refused with BlockPublicPolicy until these two are off. The
+# two about ACLs stay on: the policy is the only thing that makes an object
+# public here, and no ACL should be able to.
+resource "aws_s3_bucket_public_access_block" "uploads_seoul" {
+  region = local.seoul_region
+  bucket = aws_s3_bucket.uploads_seoul.id
+
+  block_public_acls       = true
+  ignore_public_acls      = true
+  block_public_policy     = false
+  restrict_public_buckets = false
+}
+
 resource "aws_s3_bucket_policy" "uploads_seoul" {
+  depends_on = [aws_s3_bucket_public_access_block.uploads_seoul]
+
   region = local.seoul_region
   bucket = aws_s3_bucket.uploads_seoul.bucket
   policy = data.aws_iam_policy_document.uploads_seoul.json
