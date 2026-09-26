@@ -40,8 +40,8 @@ sed -i 's/^LOGINTERVAL=600.*/LOGINTERVAL=60/' /etc/sysconfig/atop
 mkdir -v /etc/systemd/system/sysstat-collect.timer.d/
 bash -c "sed -e 's|every 10 minutes|every 1 minute|g' -e '/^OnCalendar=/ s|/10$|/1|' /usr/lib/systemd/system/sysstat-collect.timer > /etc/systemd/system/sysstat-collect.timer.d/override.conf"
 sed -i 's|^SADC_OPTIONS=.*|SADC_OPTIONS=" -S XALL"|' /etc/sysconfig/sysstat
-systemctl enable atop.service sysstat-collect.timer sysstat.service
-systemctl restart atop.service sysstat-collect.timer sysstat.service
+systemctl enable atop.service atop-rotate.timer sysstat-collect.timer sysstat.service
+systemctl restart atop.service atop-rotate.timer sysstat-collect.timer sysstat.service
 
 #
 # Install and configure Grafana Alloy
