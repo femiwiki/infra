@@ -50,6 +50,67 @@ locals {
   }
 }
 
+locals {
+  database_hosts = {
+    "database-4" = { region = local.seoul_region }
+  }
+
+  mysql_backup_script = {
+    for tag, host in local.database_hosts : tag => templatefile("res/mysql-backup.sh.tftpl", {
+      region         = host.region
+      backups_bucket = aws_s3_bucket.backups.bucket
+    })
+  }
+
+  mysql_backup_install = {
+    for tag, host in local.database_hosts : tag => templatefile("res/install-mysql-backup.sh.tftpl", {
+      parameter_region = data.aws_region.current.region
+      backup_script    = local.mysql_backup_script[tag]
+    })
+  }
+}
+
+resource "aws_ssm_document" "mysql_backup" {
+  for_each = local.database_hosts
+
+  region          = each.value.region
+  name            = "install-mysql-backup-${each.key}"
+  document_type   = "Command"
+  document_format = "JSON"
+
+  content = jsonencode({
+    schemaVersion = "2.2"
+    description   = "Install /usr/local/sbin/mysql-backup, the credentials it pings with, and its timer."
+    mainSteps = [{
+      action = "aws:runShellScript"
+      name   = "installMysqlBackup"
+      inputs = {
+        runCommand = split("\n", local.mysql_backup_install[each.key])
+      }
+    }]
+  })
+}
+
+resource "aws_ssm_association" "mysql_backup" {
+  for_each = local.database_hosts
+
+  depends_on = [aws_ssm_parameter.mysql_backup_healthcheck_url]
+
+  region              = each.value.region
+  association_name    = "install-mysql-backup-${each.key}"
+  name                = aws_ssm_document.mysql_backup[each.key].name
+  document_version    = aws_ssm_document.mysql_backup[each.key].latest_version
+  schedule_expression = "rate(30 minutes)"
+  compliance_severity = "HIGH"
+  max_concurrency     = "1"
+  max_errors          = "0"
+
+  targets {
+    key    = "tag:Name"
+    values = [each.key]
+  }
+}
+
 resource "aws_ssm_parameter" "alloy" {
   for_each = {
     loki_password       = var.loki_password

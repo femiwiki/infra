@@ -1,0 +1,49 @@
+#!/bin/bash
+set -euo pipefail; IFS=$'\n\t'
+
+export AWS_DEFAULT_REGION=${region}
+
+NAME="$(TZ=Asia/Seoul date --iso-8601=minutes).sql.gz"
+FILE="/var/tmp/$NAME"
+trap 'rm -f "$FILE"' EXIT
+
+# Healthchecks.io expects one ping a day and complains when it does not arrive,
+# so a missed backup is noticed without anything of ours having to be alive to
+# notice it. The URL is a file because systemd promises this service nothing.
+PING_URL_FILE=/root/.healthcheck-url
+ping_check() {
+  test -s "$PING_URL_FILE" || return 0
+  curl -fsS -m 10 --retry 5 -o /dev/null "$(cat "$PING_URL_FILE")$1" || true
+}
+fail() { echo "$1" >&2; ping_check /fail; exit 1; }
+
+# A whole dump of this database compresses to a little over 900 MiB. A floor at
+# roughly half of that rejects an empty or a cut off file while leaving room for
+# ordinary growth and for a large deletion. A year of 20 byte gzips once went up
+# unnoticed because nothing looked at how big the file was.
+MINIMUM_BYTES=$((500 * 1024 * 1024))
+
+# --defaults-file, not ~/.my.cnf: systemd does not promise HOME to a
+# system service, and a dump that cannot log in is a silent one.
+dump() { nice -n 19 mysqldump --defaults-file=/root/.my.cnf femiwiki | nice -n 19 gzip -9 > "$FILE"; }
+upload() { nice -n 19 aws s3 cp --no-progress "$FILE" "s3://${backups_bucket}/mysql/$NAME"; }
+
+retry() {
+  for _ in 1 2 3; do
+    "$@" && return 0
+    sleep 15
+  done
+  return 1
+}
+
+retry dump || fail "the dump did not finish"
+
+SIZE="$(stat -c %s "$FILE")"
+test "$SIZE" -ge "$MINIMUM_BYTES" || fail "the dump is $SIZE bytes, too small to be the whole database"
+
+# mysqldump closes a whole dump with a "-- Dump completed" line. An empty or a
+# cut off file has none, and uploading it would hide the failure.
+nice -n 19 gzip -dc "$FILE" | tail -n 1 | grep -q '^-- Dump completed' || fail "the dump is empty or incomplete"
+
+retry upload || fail "the dump could not be uploaded"
+ping_check
