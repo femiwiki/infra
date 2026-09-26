@@ -4,7 +4,7 @@ data "healthchecksio_channel" "discord" {
 
 resource "healthchecksio_check" "mysql_backup" {
   name = "mysql-backup"
-  desc = "backupbot pings this after each day's dump of the wiki database reaches S3."
+  desc = "The database host pings this after each day's dump of the wiki database reaches S3, from its mysql-backup systemd timer."
 
   schedule = "0 6 * * *"
   timezone = "Asia/Seoul"
