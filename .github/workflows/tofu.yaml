@@ -131,6 +131,33 @@ jobs:
           fi
           echo "The plan is empty."
 
+  # One gate so a new job or a new workspace never needs a branch protection
+  # change. Registering a context that nothing reports blocks every pull request,
+  # which happened in femiwiki/infra#827, and this is what stops it recurring.
+  #
+  # The cost is that the list below is the thing to forget instead. Reading the
+  # run's own check runs rather than naming them is the eventual answer; it needs
+  # care because the gate is a check run too.
+  gate:
+    name: tofu gate
+    needs: [plan]
+    if: always() && github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions: {}
+    steps:
+      - name: Every job this gate stands for has to have succeeded
+        env:
+          RESULTS: ${{ toJSON(needs) }}
+        run: |
+          echo "$RESULTS"
+          failed=$(echo "$RESULTS" | jq -r 'to_entries[] | select(.value.result != "success") | "\(.key)=\(.value.result)"')
+          if [ -n "$failed" ]; then
+            echo "::error::$(echo "$failed" | paste -sd' ')"
+            exit 1
+          fi
+          echo "All green."
+
   scope:
     if: >-
       github.event_name == 'workflow_dispatch'
