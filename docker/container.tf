@@ -68,6 +68,8 @@ resource "docker_container" "http" {
         "198.144.176.0/20",
         "198.46.128.0/17",
         "23.94.0.0/15",
+        # Amazon Technologies, as ARIN registers 15.177.0.0/16 (AT-88-Z)
+        "15.177.0.0/16",
       ]),
     } : "${k}=${v}"
   ]
