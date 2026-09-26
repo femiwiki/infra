@@ -10,6 +10,10 @@ data "grafana_data_source" "usage" {
   name = "grafanacloud-usage"
 }
 
+data "grafana_data_source" "infinity" {
+  name = "grafanacloud-infinity"
+}
+
 locals {
   discord_contact_points = {
     critical = { title = "site-down-title.gotmpl", message = "discord-message.gotmpl" }
@@ -325,6 +329,80 @@ moved {
 moved {
   from = grafana_rule_group.logs
   to   = grafana_rule_group.threshold["logs"]
+}
+
+resource "grafana_rule_group" "femiwiki_jobs" {
+  name             = "jobs"
+  folder_uid       = data.grafana_folder.femiwiki.uid
+  interval_seconds = 300
+
+  rule {
+    name = "The job queue is not draining"
+    for  = "1h"
+
+    condition      = "C"
+    no_data_state  = "OK"
+    exec_err_state = "OK"
+
+    labels = {
+      severity = "warning"
+    }
+
+    annotations = {
+      summary = "작업 큐에 {{ printf \"%.0f\" $values.B.Value }}건이 한 시간 넘게 쌓여 있습니다. 위키는 멀쩡히 응답하면서도 이렇게 되고, 대개 cron이 데이터베이스에 닿지 못한다는 뜻입니다. 컨테이너에서 `run-jobs`가 도는지 봅니다."
+    }
+
+    data {
+      ref_id         = "A"
+      datasource_uid = data.grafana_data_source.infinity.uid
+      relative_time_range {
+        from = 600
+        to   = 0
+      }
+      model = jsonencode({
+        refId         = "A"
+        type          = "json"
+        source        = "url"
+        format        = "table"
+        parser        = "backend"
+        url           = "https://femiwiki.com/api.php?action=query&meta=siteinfo&siprop=statistics&format=json"
+        url_options   = { method = "GET" }
+        root_selector = "query.statistics"
+        json_options  = { root_is_not_array = true }
+        columns       = [{ selector = "jobs", text = "jobs", type = "number" }]
+      })
+    }
+
+    data {
+      ref_id         = "B"
+      datasource_uid = "__expr__"
+      relative_time_range {
+        from = 0
+        to   = 0
+      }
+      model = jsonencode({
+        refId      = "B"
+        type       = "reduce"
+        reducer    = "last"
+        expression = "A"
+      })
+    }
+
+    data {
+      ref_id         = "C"
+      datasource_uid = "__expr__"
+      relative_time_range {
+        from = 0
+        to   = 0
+      }
+      model = jsonencode({
+        refId      = "C"
+        type       = "threshold"
+        expression = "B"
+        conditions = [{ evaluator = { type = "gt", params = [1000] } }]
+      })
+    }
+  }
 }
 
 resource "grafana_rule_group" "femiwiki_http" {
