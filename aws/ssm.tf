@@ -29,8 +29,10 @@ resource "aws_ssm_parameter" "mysql_backup_healthcheck_url" {
 
 locals {
   alloy_hosts = {
-    database = "mysql"
-    docker   = "femiwiki"
+    "database-3"   = { name = "mysql", type = "database", region = data.aws_region.current.region }
+    "docker"       = { name = "femiwiki", type = "app", region = data.aws_region.current.region }
+    "database-4"   = { name = "mysql-seoul", type = "database", region = local.seoul_region }
+    "docker-seoul" = { name = "femiwiki-seoul", type = "app", region = local.seoul_region }
   }
 
   alloy_grafana = {
@@ -41,10 +43,10 @@ locals {
   }
 
   alloy_install = {
-    for tag, name in local.alloy_hosts : tag => replace(
-      replace(file("res/install-alloy-config.sh"), "__REGION__", data.aws_region.current.region),
+    for tag, host in local.alloy_hosts : tag => replace(
+      replace(file("res/install-alloy-config.sh"), "__REGION__", host.region),
       "__CONFIG__",
-      templatefile("res/config.alloy.tftpl", merge(local.alloy_grafana, { name = name }))
+      templatefile("res/config.alloy.tftpl", merge(local.alloy_grafana, { name = host.name, type = host.type }))
     )
   }
 }
@@ -141,6 +143,7 @@ resource "aws_ssm_association" "swapfile" {
 resource "aws_ssm_document" "alloy_config" {
   for_each = local.alloy_hosts
 
+  region          = each.value.region
   name            = "install-alloy-config-${each.key}"
   document_type   = "Command"
   document_format = "JSON"
@@ -161,8 +164,12 @@ resource "aws_ssm_document" "alloy_config" {
 resource "aws_ssm_association" "alloy_config" {
   for_each = local.alloy_hosts
 
-  depends_on = [aws_ssm_parameter.alloy]
+  depends_on = [
+    aws_ssm_parameter.alloy,
+    aws_ssm_parameter.alloy_seoul,
+  ]
 
+  region              = each.value.region
   association_name    = "install-alloy-config-${each.key}"
   name                = aws_ssm_document.alloy_config[each.key].name
   document_version    = aws_ssm_document.alloy_config[each.key].latest_version

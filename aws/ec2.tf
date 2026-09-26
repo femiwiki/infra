@@ -19,7 +19,7 @@ resource "aws_instance" "database_3" {
     region          = data.aws_region.current.region
     backups_bucket  = aws_s3_bucket.backups.bucket
 
-    alloy_install = local.alloy_install["database"]
+    alloy_install = local.alloy_install["database-3"]
   }))
 
   vpc_security_group_ids = [
