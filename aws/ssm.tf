@@ -31,6 +31,7 @@ locals {
   alloy_hosts = {
     "docker"       = { name = "femiwiki", type = "app", region = data.aws_region.current.region }
     "database-4"   = { name = "mysql-seoul", type = "database", region = local.seoul_region }
+    "database-5"   = { name = "mariadb-seoul", type = "database", region = local.seoul_region }
     "docker-seoul" = { name = "femiwiki-seoul", type = "app", region = local.seoul_region }
   }
 
