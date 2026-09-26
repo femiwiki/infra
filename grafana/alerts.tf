@@ -541,15 +541,20 @@ resource "grafana_rule_group" "femiwiki_http" {
   }
 
   rule {
-    name = "Logged-out requests refused"
-    for  = "30m"
+    name            = "Logged-out requests refused"
+    for             = "4h"
+    keep_firing_for = "1h"
 
     condition      = "B"
     no_data_state  = "OK"
     exec_err_state = "OK"
 
+    labels = {
+      severity = "warning"
+    }
+
     annotations = {
-      summary = "최근 5분 동안 로그인하지 않은 요청 {{ printf \"%.0f\" $values.A.Value }}건이 429로 거절됐습니다. 예산은 모두가 나눠 쓰므로 거절된 쪽이 사람인지 크롤러인지는 이 숫자로 알 수 없습니다."
+      summary = "로그인하지 않은 요청이 네 시간 내내 429로 거절되고 있습니다. 최근 한 시간에만 {{ printf \"%.0f\" $values.A.Value }}건입니다. 짧은 스크레이프는 예산이 알아서 막으므로 이 알림은 그것이 하루 종일 이어질 때만 옵니다. `docker/`의 `FW_EXPENSIVE_EVENTS`를 다시 볼 때라는 뜻입니다."
       logs    = local.explore_urls.refusals
     }
 
