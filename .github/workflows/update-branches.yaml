@@ -3,6 +3,9 @@ name: update branches
 on:
   push:
     branches: ["main"]
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
 permissions: {}
 concurrency:
   group: update-branches
@@ -36,6 +39,6 @@ jobs:
           token: ${{ steps.token.outputs.token }}
           base: main
           required_approval_count: 0
-          require_auto_merge_enabled: true
+          require_auto_merge_enabled: false
           require_passed_checks: true
           allow_ongoing_checks: true
