@@ -27,3 +27,10 @@ resource "aws_volume_attachment" "persistent_data_mysql_3" {
   volume_id   = aws_ebs_volume.persistent_data_mysql_3.id
   instance_id = aws_instance.database_3.id
 }
+
+resource "aws_ebs_snapshot" "persistent_data_mysql_2_final" {
+  volume_id = aws_ebs_volume.persistent_data_mysql_2.id
+  tags = {
+    Name = "Final snapshot of MySQL server_id = 2 before retirement"
+  }
+}
