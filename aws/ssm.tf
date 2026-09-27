@@ -56,30 +56,20 @@ locals {
     "docker-seoul" = { region = local.seoul_region }
   }
 
-  database_hosts = {
-    "database-5" = { region = local.seoul_region }
-  }
+  mysql_backup_script = templatefile("res/mysql-backup.sh.tftpl", {
+    region         = local.seoul_region
+    backups_bucket = aws_s3_bucket.backups.bucket
+  })
 
-  mysql_backup_script = {
-    for tag, host in local.database_hosts : tag => templatefile("res/mysql-backup.sh.tftpl", {
-      region         = host.region
-      backups_bucket = aws_s3_bucket.backups.bucket
-    })
-  }
-
-  mysql_backup_install = {
-    for tag, host in local.database_hosts : tag => templatefile("res/install-mysql-backup.sh.tftpl", {
-      parameter_region = data.aws_region.current.region
-      backup_script    = local.mysql_backup_script[tag]
-    })
-  }
+  mysql_backup_install = templatefile("res/install-mysql-backup.sh.tftpl", {
+    parameter_region = data.aws_region.current.region
+    backup_script    = local.mysql_backup_script
+  })
 }
 
 resource "aws_ssm_document" "mysql_backup" {
-  for_each = local.database_hosts
-
-  region          = each.value.region
-  name            = "install-mysql-backup-${each.key}"
+  region          = local.seoul_region
+  name            = "install-mysql-backup"
   document_type   = "Command"
   document_format = "JSON"
 
@@ -90,29 +80,31 @@ resource "aws_ssm_document" "mysql_backup" {
       action = "aws:runShellScript"
       name   = "installMysqlBackup"
       inputs = {
-        runCommand = split("\n", local.mysql_backup_install[each.key])
+        runCommand = split("\n", local.mysql_backup_install)
       }
     }]
   })
 }
 
 resource "aws_ssm_association" "mysql_backup" {
-  for_each = local.database_hosts
-
   depends_on = [aws_ssm_parameter.mysql_backup_healthcheck_url]
 
-  region              = each.value.region
-  association_name    = "install-mysql-backup-${each.key}"
-  name                = aws_ssm_document.mysql_backup[each.key].name
-  document_version    = aws_ssm_document.mysql_backup[each.key].latest_version
+  region              = local.seoul_region
+  association_name    = "install-mysql-backup"
+  name                = aws_ssm_document.mysql_backup.name
+  document_version    = aws_ssm_document.mysql_backup.latest_version
   schedule_expression = "rate(30 minutes)"
   compliance_severity = "HIGH"
   max_concurrency     = "1"
   max_errors          = "0"
 
+  # The role, not the host. Targeting tag:Name meant the association named
+  # whichever host happened to be the primary, and a promotion left the timer
+  # installed on the host it moved away from: on 2026-09-27 that would have
+  # uploaded a copy frozen at the switchover and pinged the check for it.
   targets {
-    key    = "tag:Name"
-    values = [each.key]
+    key    = "tag:MysqlBackup"
+    values = ["true"]
   }
 }
 
