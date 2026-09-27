@@ -145,6 +145,16 @@ jobs:
         with:
           pull-request: ${{ github.event.number }}
 
+      - name: Close the SSM session, which outlives the runner
+        if: always() && env.SSM_SESSION_ID != ''
+        env:
+          AWS_REGION: ${{ env.SSM_SESSION_REGION }}
+        run: |
+          # Nine were left Connected across both regions on 2026-09-27, from
+          # runs that had finished; see #901.
+          aws ssm terminate-session --session-id "$SSM_SESSION_ID" --output text \
+            || echo "::warning::could not terminate $SSM_SESSION_ID; it may have ended already."
+
   # One gate so a new job or a new workspace never needs a branch protection
   # change. Registering a context that nothing reports blocks every pull request,
   # which happened in femiwiki/infra#827, and this is what stops it recurring.
@@ -444,6 +454,14 @@ jobs:
           nodetail: true
           url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           description: ${{ steps.outcome.outputs.description }}
+
+      - name: Close the SSM session, which outlives the runner
+        if: always() && env.SSM_SESSION_ID != ''
+        env:
+          AWS_REGION: ${{ env.SSM_SESSION_REGION }}
+        run: |
+          aws ssm terminate-session --session-id "$SSM_SESSION_ID" --output text \
+            || echo "::warning::could not terminate $SSM_SESSION_ID; it may have ended already."
 
   replan:
     needs: apply
