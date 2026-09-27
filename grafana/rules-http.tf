@@ -1,7 +1,6 @@
 locals {
   explore_exprs = {
-    status   = trimspace(file("${path.module}/queries/explore-status.logql"))
-    refusals = trimspace(file("${path.module}/queries/explore-refusals.logql"))
+    status = trimspace(file("${path.module}/queries/explore-status.logql"))
   }
 
   explore_urls = {
@@ -176,8 +175,8 @@ resource "grafana_rule_group" "femiwiki_http" {
     }
 
     annotations = {
-      summary = "로그인하지 않은 요청이 네 시간 내내 429로 거절되고 있습니다. 최근 한 시간에만 {{ printf \"%.0f\" $values.A.Value }}건입니다. 짧은 스크레이프는 예산이 알아서 막으므로 이 알림은 그것이 하루 종일 이어질 때만 옵니다. `docker/`의 `FW_EXPENSIVE_EVENTS`를 다시 볼 때라는 뜻입니다."
-      logs    = local.explore_urls.refusals
+      summary = "로그인하지 않은 요청이 네 시간 내내 429로 거절되고 있습니다. 최근 한 시간에만 {{ printf \"%.0f\" $values.A.Value }}건입니다. 거절된 주소가 몇 군데에 몰려 있는지 먼저 보세요. 한두 곳이면 그 망을 막는 일이고, 수백 곳이면 예산은 제 일을 하는 중이니 올리지 말고 무엇이 긁히는지를 좁혀야 합니다."
+      logs    = grafana_dashboard.this["scrapes"].url
     }
 
     data {
