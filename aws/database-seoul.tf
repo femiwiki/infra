@@ -71,7 +71,10 @@ resource "aws_instance" "database_5" {
     http_tokens            = "required"
   }
 
-  tags = { Name = "database-5" }
+  tags = {
+    Name        = "database-5"
+    MysqlBackup = "true"
+  }
 
   lifecycle {
     create_before_destroy = true
