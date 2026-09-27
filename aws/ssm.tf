@@ -33,8 +33,8 @@ resource "aws_ssm_parameter" "mysql_backup_healthcheck_url" {
 
 locals {
   alloy_hosts = {
-    "database-5"   = { name = "mariadb-seoul", type = "database", region = local.seoul_region }
-    "docker-seoul" = { name = "femiwiki-seoul", type = "app", region = local.seoul_region }
+    "database-5" = { name = "mariadb-seoul", type = "database", region = local.seoul_region }
+    "docker"     = { name = "femiwiki-seoul", type = "app", region = local.seoul_region }
   }
 
   alloy_grafana = {
@@ -55,7 +55,7 @@ locals {
 
 locals {
   app_hosts = {
-    "docker-seoul" = { region = local.seoul_region }
+    "docker" = { region = local.seoul_region }
   }
 
   mysql_backup_script = templatefile("res/mysql-backup.sh.tftpl", {
