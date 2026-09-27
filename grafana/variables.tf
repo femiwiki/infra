@@ -15,3 +15,9 @@ variable "discord_mention_role_id" {
   type        = string
   default     = "678974055365476392"
 }
+
+variable "mastodon_token" {
+  description = "Access token for @femiwiki_status on mastodon.social, scope write:statuses"
+  type        = string
+  sensitive   = true
+}

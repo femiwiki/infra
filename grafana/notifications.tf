@@ -17,6 +17,21 @@ resource "grafana_notification_policy" "root" {
   group_interval  = "5m"
   repeat_interval = "4h"
 
+  policy {
+    matcher {
+      label = "severity"
+      match = "="
+      value = "critical"
+    }
+
+    contact_point   = grafana_contact_point.mastodon.name
+    continue        = true
+    group_by        = ["alertname"]
+    group_wait      = "30s"
+    group_interval  = "5m"
+    repeat_interval = "1d"
+  }
+
   dynamic "policy" {
     for_each = local.discord_routes
 
@@ -64,5 +79,19 @@ resource "grafana_contact_point" "discord_default" {
 
     title   = trimspace(file("${path.module}/templates/alert-title.gotmpl"))
     message = trimspace(file("${path.module}/templates/alert-message.gotmpl"))
+  }
+}
+
+resource "grafana_contact_point" "mastodon" {
+  name = "Mastodon"
+
+  webhook {
+    url                       = "https://mastodon.social/api/v1/statuses"
+    authorization_scheme      = "Bearer"
+    authorization_credentials = var.mastodon_token
+
+    payload {
+      template = trimspace(file("${path.module}/templates/mastodon-payload.gotmpl"))
+    }
   }
 }
