@@ -448,9 +448,15 @@ data "aws_iam_policy_document" "infra_docker" {
   }
 
   statement {
-    sid       = "OwnSessions"
-    actions   = ["ssm:TerminateSession", "ssm:ResumeSession"]
-    resources = ["arn:aws:ssm:*:*:session/$${aws:userid}-*"]
+    sid     = "OwnSessions"
+    actions = ["ssm:TerminateSession", "ssm:ResumeSession"]
+    resources = [
+      # SSM names a session after the role session name, GitHubActions-<random>,
+      # while aws:userid for an assumed role expands to <role id>:GitHubActions,
+      # so the pattern below never matches one of these.
+      "arn:aws:ssm:*:*:session/GitHubActions-*",
+      "arn:aws:ssm:*:*:session/$${aws:userid}-*",
+    ]
   }
 }
 
