@@ -1,0 +1,1 @@
+sum(count_over_time({unit=~".+-backup\\.service"} |= "upload: " |~ "s3://.+\\.sql\\.gz" [26h])) or vector(0)
