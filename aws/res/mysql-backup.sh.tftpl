@@ -11,9 +11,13 @@ trap 'rm -f "$FILE"' EXIT
 # so a missed backup is noticed without anything of ours having to be alive to
 # notice it. The URL is a file because systemd promises this service nothing.
 PING_URL_FILE=/root/.healthcheck-url
+# The success ping passes no path, so the suffix has to tolerate being unset:
+# under set -u a bare $1 ends the script after the upload and before the ping,
+# which reads as a missed backup. See femiwiki/infra#865. The doubled dollar is
+# for templatefile, which would otherwise read $${1:-} as an interpolation.
 ping_check() {
   test -s "$PING_URL_FILE" || return 0
-  curl -fsS -m 10 --retry 5 -o /dev/null "$(cat "$PING_URL_FILE")$1" || true
+  curl -fsS -m 10 --retry 5 -o /dev/null "$(cat "$PING_URL_FILE")$${1:-}" || true
 }
 fail() { echo "$1" >&2; ping_check /fail; exit 1; }
 
