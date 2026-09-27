@@ -91,3 +91,62 @@ resource "aws_s3_bucket_lifecycle_configuration" "uploads_seoul" {
     }
   }
 }
+
+# The dump is taken in Seoul, so it is kept in Seoul. Crossing to Tokyo cost
+# $0.0805/GB out, about $26 a year for one dump a night, and bought nothing.
+# See femiwiki/infra#892. A bucket cannot change region and its name is global,
+# so this is a new bucket under the account-regional namespace rather than a
+# move, and femiwiki-backups stays in Tokyo holding everything written before
+# today. A restore of something older than this bucket reaches across, which is
+# rare enough to pay $0.09/GB for.
+resource "aws_s3_bucket" "backups_seoul" {
+  region           = local.seoul_region
+  bucket           = "backups-${data.aws_caller_identity.current.account_id}-${local.seoul_region}-an"
+  bucket_namespace = "account-regional"
+}
+
+resource "aws_s3_bucket_lifecycle_configuration" "backups_seoul" {
+  region = local.seoul_region
+  bucket = aws_s3_bucket.backups_seoul.id
+
+  rule {
+    status = "Enabled"
+    id     = "Transition mysql dumps to Glacier Deep Archive after 14 days"
+
+    filter {
+      prefix = "mysql/"
+    }
+
+    transition {
+      days          = 14
+      storage_class = "DEEP_ARCHIVE"
+    }
+  }
+
+  rule {
+    status = "Enabled"
+    id     = "Expire replica seeds after 7 days"
+
+    filter {
+      prefix = "seed/"
+    }
+
+    expiration {
+      days = 7
+    }
+
+    abort_incomplete_multipart_upload {
+      days_after_initiation = 1
+    }
+  }
+}
+
+resource "aws_s3_bucket_public_access_block" "backups_seoul" {
+  region = local.seoul_region
+  bucket = aws_s3_bucket.backups_seoul.id
+
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
