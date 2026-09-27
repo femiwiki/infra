@@ -125,6 +125,7 @@ locals {
   uploaded_files_temp    = aws_s3_bucket.uploaded_files_temp.arn
   uploaded_files_deleted = aws_s3_bucket.uploaded_files_deleted.arn
   backups                = aws_s3_bucket.backups.arn
+  backups_seoul          = aws_s3_bucket.backups_seoul.arn
   uploads_seoul          = aws_s3_bucket.uploads_seoul.arn
 }
 
@@ -281,7 +282,7 @@ resource "aws_iam_policy" "upload_backup" {
 data "aws_iam_policy_document" "upload_backup" {
   statement {
     actions   = ["s3:PutObject"]
-    resources = ["${local.backups}/*"]
+    resources = ["${local.backups_seoul}/*"]
   }
 }
 
@@ -293,9 +294,14 @@ resource "aws_iam_policy" "read_backup" {
 }
 
 data "aws_iam_policy_document" "read_backup" {
+  # Both buckets: the Seoul one is where a dump is written now, and the Tokyo
+  # one still holds everything from before femiwiki/infra#892, which a restore
+  # of anything older has to reach.
   statement {
     actions = ["s3:GetObject"]
     resources = [
+      "${local.backups_seoul}/mysql/*",
+      "${local.backups_seoul}/seed/*",
       "${local.backups}/mysql/*",
       "${local.backups}/seed/*",
     ]
@@ -303,7 +309,7 @@ data "aws_iam_policy_document" "read_backup" {
 
   statement {
     actions   = ["s3:ListBucket"]
-    resources = [local.backups]
+    resources = [local.backups_seoul, local.backups]
 
     condition {
       test     = "StringLike"
@@ -564,26 +570,3 @@ data "aws_iam_policy_document" "infra_healthchecks" {
   }
 }
 
-data "aws_iam_policy_document" "backup_uploads" {
-  statement {
-    actions   = ["SNS:Publish"]
-    resources = [aws_sns_topic.backup_uploads.arn]
-
-    principals {
-      type        = "Service"
-      identifiers = ["s3.amazonaws.com"]
-    }
-
-    condition {
-      test     = "StringEquals"
-      variable = "aws:SourceAccount"
-      values   = [data.aws_caller_identity.current.account_id]
-    }
-
-    condition {
-      test     = "ArnLike"
-      variable = "aws:SourceArn"
-      values   = [aws_s3_bucket.backups.arn]
-    }
-  }
-}

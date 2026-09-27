@@ -59,7 +59,7 @@ locals {
 
   mysql_backup_script = templatefile("res/mysql-backup.sh.tftpl", {
     region         = local.seoul_region
-    backups_bucket = aws_s3_bucket.backups.bucket
+    backups_bucket = aws_s3_bucket.backups_seoul.bucket
   })
 
   mysql_backup_install = templatefile("res/install-mysql-backup.sh.tftpl", {
