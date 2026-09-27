@@ -45,7 +45,7 @@ resource "aws_instance" "docker_seoul" {
     http_put_response_hop_limit = 2
   }
 
-  tags = { Name = "docker-seoul" }
+  tags = { Name = "docker" }
 
   lifecycle {
     ignore_changes = [
