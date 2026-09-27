@@ -71,10 +71,15 @@ resource "aws_s3_bucket_versioning" "secrets" {
 #
 # Uploaded files (images and etc)
 #
+# All four are superseded by uploads_seoul, which serves the wiki since
+# femiwiki/docker-mediawiki#1177. force_destroy is here so that removing them
+# takes their objects with them; see femiwiki/femiwiki#489.
+#
 
 resource "aws_s3_bucket" "uploaded_files" {
-  region = local.tokyo_region
-  bucket = "femiwiki-uploaded-files"
+  region        = local.tokyo_region
+  bucket        = "femiwiki-uploaded-files"
+  force_destroy = true
 }
 
 resource "aws_s3_bucket_policy" "uploaded_files" {
@@ -98,8 +103,9 @@ data "aws_iam_policy_document" "uploaded_files" {
 }
 
 resource "aws_s3_bucket" "uploaded_files_deleted" {
-  region = local.tokyo_region
-  bucket = "femiwiki-uploaded-files-deleted"
+  region        = local.tokyo_region
+  bucket        = "femiwiki-uploaded-files-deleted"
+  force_destroy = true
 }
 
 resource "aws_s3_bucket_public_access_block" "uploaded_files_deleted" {
@@ -113,8 +119,9 @@ resource "aws_s3_bucket_public_access_block" "uploaded_files_deleted" {
 }
 
 resource "aws_s3_bucket" "uploaded_files_temp" {
-  region = local.tokyo_region
-  bucket = "femiwiki-uploaded-files-temp"
+  region        = local.tokyo_region
+  bucket        = "femiwiki-uploaded-files-temp"
+  force_destroy = true
 }
 
 resource "aws_s3_bucket_public_access_block" "uploaded_files_temp" {
@@ -128,8 +135,9 @@ resource "aws_s3_bucket_public_access_block" "uploaded_files_temp" {
 }
 
 resource "aws_s3_bucket" "uploaded_files_thumb" {
-  region = local.tokyo_region
-  bucket = "femiwiki-uploaded-files-thumb"
+  region        = local.tokyo_region
+  bucket        = "femiwiki-uploaded-files-thumb"
+  force_destroy = true
 }
 
 resource "aws_s3_bucket_policy" "uploaded_files_thumb" {
