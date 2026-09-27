@@ -304,6 +304,19 @@ femiwiki.com *.femiwiki.com 127.0.0.1:80 localhost:80 {
 	rewrite /w/api.php /api.php
 	rewrite /w/* /index.php
 
+	# Core resolves a title from oldid or diff only when the title is not a
+	# special page, so these do nothing there but put the request in the
+	# expensive zone, where they spend the budget real old-revision viewing
+	# draws on: 204 an hour measured on 2026-09-27, 364 of 408 already refused.
+	# Stripped rather than refused because only about half carry the botlike
+	# signature and the rest present as ordinary mobile browsers. See #910.
+	@special_title {
+		path /index.php*
+		vars_regexp {query} (^|&)title=(%ED%8A%B9%EC%88%98|특수|Special)(%3A|%3a|:)
+	}
+	uri @special_title query -oldid
+	uri @special_title query -diff
+
 	respond /health-check 200
 
 	# 404 rather than 403: there is no reason to confirm the installer is there
