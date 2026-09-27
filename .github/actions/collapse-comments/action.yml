@@ -1,0 +1,59 @@
+---
+name: Collapse older tofu comments
+description: >-
+  Minimizes, as outdated, every plan and apply comment on a pull request but the
+  newest of each kind and workspace, so only the latest of each stays open.
+inputs:
+  pull-request:
+    description: The pull request number.
+    required: true
+runs:
+  using: composite
+  steps:
+    - uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3  # v9.0.0
+      env:
+        PR: ${{ inputs.pull-request }}
+      with:
+        script: |
+          const { owner, repo } = context.repo;
+          const comments = [];
+          let after = null;
+          do {
+            const { repository } = await github.graphql(`
+              query($owner: String!, $repo: String!, $pr: Int!, $after: String) {
+                repository(owner: $owner, name: $repo) {
+                  pullRequest(number: $pr) {
+                    comments(first: 100, after: $after) {
+                      pageInfo { hasNextPage endCursor }
+                      nodes { id isMinimized createdAt body author { login } }
+                    }
+                  }
+                }
+              }`, { owner, repo, pr: Number(process.env.PR), after });
+            const page = repository.pullRequest.comments;
+            comments.push(...page.nodes);
+            after = page.pageInfo.hasNextPage ? page.pageInfo.endCursor : null;
+          } while (after);
+
+          // dflook's plan comment names its workspace; the log job's apply
+          // comment starts with it
+          const key = body => {
+            let m = body.match(/OpenTofu plan in __([\w-]+)__/);
+            if (m) return `plan ${m[1]}`;
+            m = body.match(/^\*\*([\w-]+) apply: /);
+            return m ? `apply ${m[1]}` : null;
+          };
+          const newest = new Map();
+          const ours = comments.filter(c => c.author?.login === 'github-actions' && key(c.body));
+          for (const c of ours) {
+            const k = key(c.body);
+            if (!newest.has(k) || newest.get(k).createdAt < c.createdAt) newest.set(k, c);
+          }
+          for (const c of ours) {
+            if (c.isMinimized || newest.get(key(c.body)) === c) continue;
+            await github.graphql(`
+              mutation($id: ID!) {
+                minimizeComment(input: { subjectId: $id, classifier: OUTDATED }) { clientMutationId }
+              }`, { id: c.id });
+            core.info(`collapsed ${key(c.body)} from ${c.createdAt}`);
+          }
