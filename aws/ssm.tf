@@ -10,7 +10,8 @@ data "aws_ssm_parameters_by_path" "mediawiki" {
 
 # The check lives in the healthchecks workspace and its ping URL is only known
 # there, so it comes across the way Terraform Cloud hands one workspace's
-# outputs to another. backupbot reads the parameter when its container starts.
+# outputs to another. The database host reads the parameter when the dump
+# installer runs.
 data "terraform_remote_state" "healthchecks" {
   backend = "s3"
 

@@ -212,11 +212,14 @@ loki.source.journal "read"  {
   labels        = {component = "loki.source.journal"}
 }
 
-// Containers whose logs do not go to the journal are read from the daemon
-// instead, and carry the same labels so a query does not have to know which
-// path a container took. The keep rule is the list of those containers: the
-// journal cannot be left to them, and reading both paths would ship a
-// container twice.
+// Container logs are read from the daemon, and carry the same labels as the
+// journal ones so a query does not have to know which path a line took. Every
+// container is collected rather than a named list: each one sets
+// log_driver = "local", so none reaches the journal and there is nothing to
+// ship twice. A list only decides which container is missing when something
+// goes wrong, and on 2026-09-27 that was ProxySQL, absent from it through the
+// database switchover it was introduced for. A container logging to the
+// journal would need excluding here; none does.
 discovery.docker "containers" {
   host             = "unix:///var/run/docker.sock"
   refresh_interval = "30s"
@@ -224,11 +227,6 @@ discovery.docker "containers" {
 discovery.relabel "container_logs" {
   targets = discovery.docker.containers.targets
 
-  rule {
-    source_labels = ["__meta_docker_container_name"]
-    regex         = "/(autoheal|backupbot|memcached|http-[0-9]+|fastcgi-[0-9]+)"
-    action        = "keep"
-  }
   rule {
     source_labels = ["__meta_docker_container_name"]
     regex         = "/(.*)"
