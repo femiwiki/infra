@@ -522,6 +522,12 @@ jobs:
             echo "#$PR is already merged"
             exit 0
           fi
+          # A draft cannot be merged at all, so an apply from one would leave
+          # production ahead of the default branch with only the warning below
+          # to say so, until the next apply from any other branch took it back.
+          if [ "$(gh pr view "$PR" --repo "$REPO" --json isDraft --jq .isDraft)" = true ]; then
+            gh pr ready "$PR" --repo "$REPO"
+          fi
           # Until the plan checks come off branch protection they are still red
           # here, and only auto-merge can wait for the run that turns them green
           gh pr merge "$PR" --repo "$REPO" --squash \
