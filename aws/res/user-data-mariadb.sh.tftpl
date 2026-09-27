@@ -98,6 +98,13 @@ datadir=/var/lib/mysql/data
 performance_schema=OFF
 max_connections=90 # default to 151
 
+# Match an account's host pattern against the client's IP rather than the name
+# it reverse resolves to. With this off, a pattern like 10.20.% is compared
+# against ip-10-20-9-62.ap-northeast-2.compute.internal and never matches, which
+# is what kept database-5 from replicating. It also spares every connection a
+# DNS round trip. See femiwiki/femiwiki#491.
+skip_name_resolve=ON
+
 server_id=${mysql_server_id}
 log_bin=mysql-bin
 
