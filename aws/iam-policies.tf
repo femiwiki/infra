@@ -294,8 +294,11 @@ resource "aws_iam_policy" "read_backup" {
 
 data "aws_iam_policy_document" "read_backup" {
   statement {
-    actions   = ["s3:GetObject"]
-    resources = ["${local.backups}/mysql/*"]
+    actions = ["s3:GetObject"]
+    resources = [
+      "${local.backups}/mysql/*",
+      "${local.backups}/seed/*",
+    ]
   }
 
   statement {
@@ -305,7 +308,7 @@ data "aws_iam_policy_document" "read_backup" {
     condition {
       test     = "StringLike"
       variable = "s3:prefix"
-      values   = ["mysql/*"]
+      values   = ["mysql/*", "seed/*"]
     }
   }
 }
