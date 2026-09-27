@@ -6,8 +6,13 @@ locals {
   proxysql_park_ms          = 30000
   proxysql_server_version   = "8.0.43"
 
+  # Only the host that runs the proxy. Seoul's container went in
+  # femiwiki/infra#890, and leaving the installer behind rewrote a file holding
+  # the database password every thirty minutes for nothing to read.
+  proxysql_hosts = { for key, host in local.app_hosts : key => host if key == "docker" }
+
   proxysql_config_install = {
-    for key, host in local.app_hosts : key => templatefile("res/install-proxysql-config.sh.tftpl", {
+    for key, host in local.proxysql_hosts : key => templatefile("res/install-proxysql-config.sh.tftpl", {
       region           = host.region
       admin_port       = local.proxysql_admin_port
       proxy_port       = local.proxysql_proxy_port
@@ -21,7 +26,7 @@ locals {
 }
 
 resource "aws_ssm_document" "proxysql_config" {
-  for_each = local.app_hosts
+  for_each = local.proxysql_hosts
 
   region          = each.value.region
   name            = "install-proxysql-config-${each.key}"
@@ -42,7 +47,7 @@ resource "aws_ssm_document" "proxysql_config" {
 }
 
 resource "aws_ssm_association" "proxysql_config" {
-  for_each = local.app_hosts
+  for_each = local.proxysql_hosts
 
   region              = each.value.region
   association_name    = "install-proxysql-config-${each.key}"
