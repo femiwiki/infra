@@ -8,6 +8,3 @@ output "ssm_parameters_mediawiki" {
   sensitive = true
 }
 
-output "femiwiki_eip" {
-  value = aws_eip.femiwiki.public_ip
-}

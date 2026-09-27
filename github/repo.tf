@@ -50,7 +50,7 @@ module "docker_mediawiki" {
   delete_branch_on_merge          = true
   enforce_admins                  = local.docker.enforce_admins
   required_pull_request_reviews   = local.docker.required_pull_request_reviews
-  required_status_checks_contexts = ["php-lint", "caddy-fmt", "etc-lint", "hadolint", "shellcheck", "actionlint", "image builds", "title scope"]
+  required_status_checks_contexts = ["php-lint", "caddy-fmt", "etc-lint", "hadolint", "shellcheck", "actionlint", "phan", "image builds", "title scope"]
   topics = [
     "docker-compose",
     "docker-image",
@@ -149,10 +149,9 @@ module "dot_github" {
 }
 
 module "legunto" {
-  source                = "./modules/github-repository"
-  name                  = "legunto"
-  description           = "Fetch MediaWiki Scribunto modules from wikis"
-  default_status_checks = []
+  source      = "./modules/github-repository"
+  name        = "legunto"
+  description = "Fetch MediaWiki Scribunto modules from wikis"
   topics = [
     "scribunto",
   ]
@@ -211,10 +210,9 @@ module "quibble_action" {
 }
 
 module "lambda" {
-  source                = "./modules/github-repository"
-  name                  = "lambda"
-  description           = "A simple lambda function which subscribes AWS SNS to ping Femiwiki's Discord webhook."
-  default_status_checks = []
+  source      = "./modules/github-repository"
+  name        = "lambda"
+  description = "A simple lambda function which subscribes AWS SNS to ping Femiwiki's Discord webhook."
   topics = [
     "lambda",
     "aws",
