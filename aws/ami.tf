@@ -1,4 +1,5 @@
 data "aws_ami" "amazon_linux_2_arm64" {
+  region      = local.tokyo_region
   owners      = ["amazon"]
   most_recent = true
 

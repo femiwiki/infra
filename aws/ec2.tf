@@ -1,5 +1,6 @@
 data "aws_availability_zone" "femiwiki" {
-  name = "ap-northeast-1a"
+  region = local.tokyo_region
+  name   = "ap-northeast-1a"
 }
 
 resource "aws_instance" "docker" {

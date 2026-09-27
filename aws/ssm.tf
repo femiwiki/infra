@@ -1,9 +1,11 @@
 data "aws_ssm_parameters_by_path" "mysql" {
+  region    = local.tokyo_region
   path      = "/mysql/"
   recursive = true
 }
 
 data "aws_ssm_parameters_by_path" "mediawiki" {
+  region    = local.tokyo_region
   path      = "/mediawiki/"
   recursive = true
 }
