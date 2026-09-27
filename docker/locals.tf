@@ -1,5 +1,5 @@
 locals {
-  fastcgi_generation = 83
+  fastcgi_generation = 84
 
   proxysql_proxy_port = 6033
 
