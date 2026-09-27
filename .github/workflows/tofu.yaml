@@ -146,15 +146,16 @@ jobs:
           pull-request: ${{ github.event.number }}
 
       - name: Close the SSM session, which outlives the runner
-        if: always() && steps.daemon.outputs.session-id != ''
+        if: always() && startsWith(matrix.workspace, 'docker')
         env:
           AWS_REGION: ${{ matrix.workspace == 'docker-seoul' && 'ap-northeast-2' || 'ap-northeast-1' }}
-          SSM_SESSION_ID: ${{ steps.daemon.outputs.session-id }}
         run: |
           # Nine were left Connected across both regions on 2026-09-27, from
           # runs that had finished; see #901.
-          aws ssm terminate-session --session-id "$SSM_SESSION_ID" --output text \
-            || echo "::warning::could not terminate $SSM_SESSION_ID; it may have ended already."
+          [ -s /tmp/ssm-session-id ] || { echo "No session was opened, so there is none to close."; exit 0; }
+          sid=$(cat /tmp/ssm-session-id)
+          aws ssm terminate-session --session-id "$sid" --output text \
+            || echo "::warning::could not terminate $sid; it may have ended already."
 
   # One gate so a new job or a new workspace never needs a branch protection
   # change. Registering a context that nothing reports blocks every pull request,
@@ -457,13 +458,14 @@ jobs:
           description: ${{ steps.outcome.outputs.description }}
 
       - name: Close the SSM session, which outlives the runner
-        if: always() && steps.daemon.outputs.session-id != ''
+        if: always() && startsWith(matrix.workspace, 'docker')
         env:
           AWS_REGION: ${{ matrix.workspace == 'docker-seoul' && 'ap-northeast-2' || 'ap-northeast-1' }}
-          SSM_SESSION_ID: ${{ steps.daemon.outputs.session-id }}
         run: |
-          aws ssm terminate-session --session-id "$SSM_SESSION_ID" --output text \
-            || echo "::warning::could not terminate $SSM_SESSION_ID; it may have ended already."
+          [ -s /tmp/ssm-session-id ] || { echo "No session was opened, so there is none to close."; exit 0; }
+          sid=$(cat /tmp/ssm-session-id)
+          aws ssm terminate-session --session-id "$sid" --output text \
+            || echo "::warning::could not terminate $sid; it may have ended already."
 
   replan:
     needs: apply

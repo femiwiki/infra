@@ -17,11 +17,6 @@ outputs:
   host:
     description: The docker provider host to use from a container action.
     value: ${{ steps.relay.outputs.host }}
-  session-id:
-    description: >-
-      The SSM session this opened. It outlives the runner, so the caller closes
-      it with a step of its own; see femiwiki/infra#901.
-    value: ${{ steps.forward.outputs.session-id }}
 runs:
   using: composite
   steps:
@@ -64,15 +59,29 @@ runs:
         nohup aws ssm start-session --target "$instance" \
           --document-name AWS-StartPortForwardingSession \
           --parameters portNumber=2376,localPortNumber=2376 > /tmp/ssm-session.log 2>&1 &
+        # Read before the wait below and left in a file rather than a step
+        # output: a session that never carries traffic still exists and still
+        # has to be closed, and a composite action that fails does not reliably
+        # carry its outputs. The tunnel failing to come up is exactly when this
+        # was leaking. The id reaches the log about a second after the start.
+        rm -f /tmp/ssm-session-id
+        for _ in $(seq 10); do
+          awk '/^Starting session with SessionId: /{print $NF; exit}' /tmp/ssm-session.log > /tmp/ssm-session-id
+          if [ -s /tmp/ssm-session-id ]; then
+            echo "Session $(cat /tmp/ssm-session-id), to be closed by the caller."
+            break
+          fi
+          sleep 1
+        done
+        if [ ! -s /tmp/ssm-session-id ]; then
+          echo "::warning::the session id never appeared in the log, so nothing can close this session."
+        fi
         # --max-time, or a tunnel that accepts the connection and then answers
         # nothing blocks the first iteration for ever and the loop never reaches
         # its second: this read as a 30 second budget while a job sat here for
         # sixteen minutes. See femiwiki/infra#901.
         for _ in $(seq 30); do
           if curl -sf --max-time 3 http://127.0.0.1:2376/_ping > /dev/null; then
-            # The session outlives the runner, so the caller has to close it.
-            sid=$(awk '/^Starting session with SessionId: /{print $NF; exit}' /tmp/ssm-session.log)
-            echo "session-id=$sid" >> "$GITHUB_OUTPUT"
             exit 0
           fi
           sleep 1
