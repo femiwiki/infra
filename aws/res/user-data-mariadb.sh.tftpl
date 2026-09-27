@@ -176,8 +176,12 @@ SQL
   #
   # mysqldump on a primary with gtid_mode=ON writes SET @@GLOBAL.GTID_PURGED,
   # and MariaDB has no such variable: it keeps its position in gtid_slave_pos.
-  # The line is dropped rather than the dump being retaken, because the dump
-  # this restores from is the nightly one and it is not ours to change.
+  # The statement is dropped rather than the dump being retaken, because the dump
+  # this restores from is the nightly one and it is not ours to change. It spans
+  # one line per GTID set, three of them today, so deleting the line that starts
+  # it leaves the rest as fragments and the client stops on the first one. The
+  # skip therefore runs to the line that ends the statement, and tests for that
+  # on the same line so a single-line statement is not over-run.
   #
   # utf8mb4_0900_ai_ci does not exist in MariaDB. It reaches the dump because
   # searchindex and translate_tmf are the only tables MediaWiki creates without
@@ -190,7 +194,8 @@ SQL
   POOL="$(mysql -uroot -N -B -e 'SELECT @@innodb_buffer_pool_size;')"
   mysql -uroot -e "SET GLOBAL innodb_buffer_pool_size = 268435456;"
   zcat /var/lib/mysql/restore.sql.gz \
-    | sed -e '/^SET @@GLOBAL.GTID_PURGED=/d' -e 's/utf8mb4_0900_ai_ci/utf8mb4_general_ci/g' \
+    | awk '/^SET @@GLOBAL\.GTID_PURGED=/ { skip = 1 } skip { if (/;[[:space:]]*$/) skip = 0; next } { print }' \
+    | sed -e 's/utf8mb4_0900_ai_ci/utf8mb4_general_ci/g' \
     | mysql -uroot femiwiki
   mysql -uroot -e "SET GLOBAL innodb_buffer_pool_size = $POOL;"
   rm -f /var/lib/mysql/restore.sql.gz
