@@ -407,47 +407,6 @@ data "aws_iam_policy_document" "femiwiki_github_io" {
   }
 }
 
-data "aws_iam_policy_document" "infra_docker" {
-  statement {
-    sid       = "State"
-    actions   = ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"]
-    resources = ["${aws_s3_bucket.tfstate.arn}/docker/terraform.tfstate*"]
-  }
-
-  statement {
-    sid       = "StateBucket"
-    actions   = ["s3:ListBucket"]
-    resources = [aws_s3_bucket.tfstate.arn]
-  }
-
-  statement {
-    sid       = "FindInstances"
-    actions   = ["ec2:DescribeInstances", "ec2:DescribeInstanceTypes"]
-    resources = ["*"]
-  }
-
-  statement {
-    sid     = "DockerPortForward"
-    actions = ["ssm:StartSession"]
-    resources = [
-      aws_instance.docker.arn,
-      "arn:aws:ssm:${local.tokyo_region}::document/AWS-StartPortForwardingSession",
-    ]
-  }
-
-  statement {
-    sid     = "OwnSessions"
-    actions = ["ssm:TerminateSession", "ssm:ResumeSession"]
-    resources = [
-      # SSM names a session after the role session name, GitHubActions-<random>,
-      # while aws:userid for an assumed role expands to <role id>:GitHubActions,
-      # so the pattern below never matches one of these.
-      "arn:aws:ssm:*:*:session/GitHubActions-*",
-      "arn:aws:ssm:*:*:session/$${aws:userid}-*",
-    ]
-  }
-}
-
 data "aws_iam_policy_document" "discord_noti" {
   statement {
     actions = ["logs:CreateLogGroup"]

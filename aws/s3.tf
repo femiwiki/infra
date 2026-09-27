@@ -170,7 +170,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "tfstate" {
   bucket = aws_s3_bucket.tfstate.id
 
   dynamic "rule" {
-    for_each = ["docker", "grafana"]
+    for_each = ["grafana"]
 
     content {
       status = "Enabled"

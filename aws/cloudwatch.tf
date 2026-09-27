@@ -8,23 +8,6 @@ resource "aws_cloudwatch_log_group" "discord_noti_us" {
   region = "us-east-1"
 }
 
-resource "aws_cloudwatch_metric_alarm" "femiwiki_volume_idle_time_cloud_watch_alarm" {
-  region      = local.tokyo_region
-  alarm_name  = "Femiwiki VolumeIdleTime"
-  namespace   = "AWS/EBS"
-  metric_name = "VolumeIdleTime"
-  period      = 300
-  statistic   = "Minimum"
-  dimensions = {
-    VolumeId = aws_instance.docker.root_block_device[0].volume_id
-  }
-  threshold           = 20
-  comparison_operator = "LessThanThreshold"
-  datapoints_to_alarm = 2
-  evaluation_periods  = 2
-  alarm_actions       = []
-}
-
 resource "aws_cloudwatch_metric_alarm" "bounce_rate" {
   alarm_name          = "Bounce Rate"
   namespace           = "AWS/SES"
