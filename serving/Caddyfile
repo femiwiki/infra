@@ -28,11 +28,23 @@
 	expression {$FW_BOTLIKE:(header_regexp('User-Agent', '(Chrome|Chromium|Edg|CriOS)/') && (!header_regexp('Sec-Ch-Ua', '.') || !header_regexp('Priority', '.') || header_regexp('Accept-Language', 'q=0\\.5'))) || !header_regexp('User-Agent', '(Mozilla/5\\.0|Opera)')}
 }
 
+# Old revisions and diffs: a space a crawler walks, rather than something a
+# reader asks for once. Page history left for history_requests below.
 (expensive_requests) {
 	match {
 		# api.php is left out: the search box asks it on every keystroke
 		path /index.php*
-		vars_regexp {query} (^|&)(diff|oldid)=|(^|&)action=(history|info)(&|$)
+		vars_regexp {query} (^|&)(diff|oldid)=
+		not header Cookie *femiwikiUserID=*
+	}
+}
+
+# History and info are one click each, and the reader is looking at the result,
+# so they are counted on their own for the same reason search is.
+(history_requests) {
+	match {
+		path /index.php*
+		vars_regexp {query} (^|&)action=(history|info)(&|$)
 		not header Cookie *femiwikiUserID=*
 	}
 }
@@ -68,15 +80,14 @@ femiwiki.com *.femiwiki.com 127.0.0.1:80 localhost:80 {
 			events {$FW_DYNAMIC_EVENTS:300}
 			window {$FW_DYNAMIC_WINDOW:10m}
 		}
-		# Search, diffs, old revisions and page history from anyone not logged
-		# in, counted across the whole site. A crawler spread over enough /24s
-		# stays under the zone above in every one of them while together taking
-		# every php-fpm worker, and a session cookie is no exemption here since
-		# any client gets one from the login page. One bucket for everybody
-		# means a reader who is not logged in is refused as soon as crawlers
-		# have spent it, so the cap sits above what those readers ask for on an
-		# ordinary day and only bites when the site is being hammered. Both
-		# zones read their count and window from the environment so infra can
+		# Diffs and old revisions from anyone not logged in, counted across the
+		# whole site. A crawler spread over enough /24s stays under the zone
+		# above in every one of them while together taking every php-fpm worker,
+		# and a session cookie is no exemption here since any client gets one
+		# from the login page. One bucket for everybody means a reader who is
+		# not logged in is refused as soon as crawlers have spent it, which is
+		# why the things a reader asks for once are counted elsewhere. Every
+		# zone reads its count and window from the environment so infra can
 		# retune them without waiting for an image.
 		zone expensive {
 			import expensive_requests
@@ -111,6 +122,23 @@ femiwiki.com *.femiwiki.com 127.0.0.1:80 localhost:80 {
 			ipv6_prefix 64
 			events {$FW_SEARCH_EVENTS:30}
 			window {$FW_SEARCH_WINDOW:10m}
+		}
+		# History and info shared the bucket above, so a revision crawl spent it
+		# and a logged-out reader clicking 역사 was refused 95% of the time:
+		# 331 history requests an hour, 14 of them served. Counted per /24, the
+		# busiest network asking for history was 9 an hour, so 20 in ten minutes
+		# leaves a person twice the room they use, while the crawl gains nothing
+		# because it is spread over 883 networks and already under this in every
+		# one of them. The revision crawl keeps its cap in expensive above. A
+		# history request that also carries the bot signature keeps its shared
+		# cap in botlike_expensive below. See #902.
+		zone history_per_ip {
+			import history_requests
+			key {client_ip}
+			ipv4_prefix 24
+			ipv6_prefix 64
+			events {$FW_HISTORY_EVENTS:20}
+			window {$FW_HISTORY_WINDOW:10m}
 		}
 		# Anything that calls itself a crawler, counted per agent string. These
 		# are a quarter of the time php-fpm spends, and nearly all of it is
