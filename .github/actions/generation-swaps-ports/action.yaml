@@ -1,0 +1,45 @@
+---
+name: A new generation has to swap the ports it binds
+description: >-
+  Refuses a fastcgi_generation that would collide with the containers running
+  right now. The ports every container binds alternate on generation % 2, and
+  create_before_destroy has both generations alive at once, so a new number of
+  the same parity makes the new containers fight the old ones for :9000 and the
+  rest; a number at or below the running one reuses a name that already exists.
+  Needs the docker-daemon action to have run, since the running number is read
+  off the host rather than off main, which sits one behind whenever something is
+  applied but not yet merged.
+inputs:
+  workspace:
+    description: The root whose locals.tf to read.
+    required: true
+runs:
+  using: composite
+  steps:
+    - name: Compare the branch's generation with the running one
+      shell: bash
+      env:
+        WORKSPACE: ${{ inputs.workspace }}
+      run: |
+        gen=$(grep -oE 'fastcgi_generation = [0-9]+' "$WORKSPACE/locals.tf" | grep -oE '[0-9]+$')
+        [ -n "$gen" ] || { echo "::error::no fastcgi_generation in $WORKSPACE/locals.tf"; exit 1; }
+        running=$(curl -sf http://127.0.0.1:2376/containers/json \
+          | jq -r '.[].Names[]' \
+          | grep -oE '^/fastcgi-[0-9]+$' | grep -oE '[0-9]+$' | sort -n | tail -1 || true)
+        if [ -z "$running" ]; then
+          echo "No fastcgi container is running, so there is nothing for generation $gen to collide with."
+          exit 0
+        fi
+        if [ "$gen" -eq "$running" ]; then
+          echo "Generation $gen is the one running; this pull request does not swap it."
+          exit 0
+        fi
+        if [ "$gen" -lt "$running" ]; then
+          echo "::error::$WORKSPACE asks for generation $gen while $running is running, so it would reuse a name that exists and undo a swap that already happened. A stale branch does this; update it."
+          exit 1
+        fi
+        if [ $(( (gen - running) % 2 )) -eq 0 ]; then
+          echo "::error::$WORKSPACE asks for generation $gen while $running is running, and they have the same parity, so the new containers would bind the ports the old ones still hold. Use $((running + 1)) instead, or apply the other pull request that took it first."
+          exit 1
+        fi
+        echo "Generation $gen swaps the ports generation $running holds."

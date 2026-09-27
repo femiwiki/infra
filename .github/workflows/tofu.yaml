@@ -102,6 +102,11 @@ jobs:
           permission-members: write
           permission-pages: write
 
+      - uses: ./.github/actions/generation-swaps-ports
+        if: steps.scope.outputs.plan == 'true' && startsWith(matrix.workspace, 'docker')
+        with:
+          workspace: ${{ matrix.workspace }}
+
       - uses: dflook/tofu-plan@c7416238983bdd94c5486fb856bb7358f2bcc935  # v3.1.0
         if: steps.scope.outputs.plan == 'true'
         id: plan
@@ -323,6 +328,11 @@ jobs:
           permission-issues: write
           permission-members: write
           permission-pages: write
+
+      - uses: ./.github/actions/generation-swaps-ports
+        if: startsWith(matrix.workspace, 'docker')
+        with:
+          workspace: ${{ matrix.workspace }}
 
       - uses: dflook/tofu-apply@e3e5dfc8f935d4b152c767801046f63abf8a77d3  # v3.1.0
         id: apply
