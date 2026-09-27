@@ -152,7 +152,7 @@ resource "docker_container" "fastcgi" {
       WG_CDN_SERVERS                 = "127.0.0.1:80"
       WG_INTERNAL_SERVER             = "http://127.0.0.1:80"
       WG_MEMCACHED_SERVERS           = "127.0.0.1:11211"
-      # Used by fcgi-probe.php
+      # Used by fcgi-probe.php and databasez-probe.php
       FCGI_URL = "127.0.0.1:${9100 + local.fastcgi_generation % 2}"
 
       WG_DB_SERVER           = "${data.aws_instances.database.private_ips[0]}:3306"
@@ -165,7 +165,7 @@ resource "docker_container" "fastcgi" {
   ]
 
   healthcheck {
-    test         = ["CMD-SHELL", "test ! -e /tmp/warming && /usr/local/bin/php /srv/fcgi-check/fcgi-probe.php"]
+    test         = ["CMD-SHELL", "test ! -e /tmp/warming && /usr/local/bin/php /srv/fcgi-check/fcgi-probe.php && /usr/local/bin/php /a/databasez-probe.php"]
     interval     = "10s"
     timeout      = "10s"
     retries      = 3
