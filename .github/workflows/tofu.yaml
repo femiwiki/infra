@@ -135,6 +135,11 @@ jobs:
           fi
           echo "The plan is empty."
 
+      - uses: ./.github/actions/collapse-comments
+        if: always() && steps.plan.outcome != 'skipped'
+        with:
+          pull-request: ${{ github.event.number }}
+
   # One gate so a new job or a new workspace never needs a branch protection
   # change. Registering a context that nothing reports blocks every pull request,
   # which happened in femiwiki/infra#827, and this is what stops it recurring.
@@ -495,6 +500,7 @@ jobs:
     timeout-minutes: 5
     permissions:
       actions: read
+      contents: read
       pull-requests: write
     steps:
       - name: Keep each apply's output on the pull request, since run logs expire
@@ -547,3 +553,12 @@ jobs:
               });
               core.info(`${workspace}: posted the apply log`);
             }
+
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+        with:
+          persist-credentials: false
+          sparse-checkout: .github/actions/collapse-comments
+
+      - uses: ./.github/actions/collapse-comments
+        with:
+          pull-request: ${{ github.event.issue.number || github.event.pull_request.number }}
