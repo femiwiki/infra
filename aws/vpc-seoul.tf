@@ -1,4 +1,7 @@
 locals {
+  # Named rather than inherited from the provider, so a resource says which
+  # region it is in and the provider default can move. See #919.
+  tokyo_region = "ap-northeast-1"
   seoul_region = "ap-northeast-2"
   seoul_az     = "ap-northeast-2a"
 }

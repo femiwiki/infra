@@ -2,6 +2,7 @@
 # Default SG
 #
 resource "aws_default_security_group" "default" {
+  region = local.tokyo_region
   vpc_id = aws_default_vpc.default.id
 
   egress {
@@ -21,6 +22,7 @@ resource "aws_default_security_group" "default" {
 
 # See https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-connect-set-up.html#ec2-instance-connect-setup-security-group
 resource "aws_security_group_rule" "default_instance_connect_browser_based_client" {
+  region            = local.tokyo_region
   security_group_id = aws_default_security_group.default.id
   description       = "EC2 Instance Connect Browser-based client"
   type              = "ingress"
@@ -34,6 +36,7 @@ resource "aws_security_group_rule" "default_instance_connect_browser_based_clien
 # SG for the Femiwiki server
 #
 resource "aws_security_group" "femiwiki" {
+  region      = local.tokyo_region
   name        = "internal-server"
   description = "internal server"
   vpc_id      = aws_default_vpc.default.id
@@ -44,6 +47,7 @@ resource "aws_security_group" "femiwiki" {
 }
 
 resource "aws_security_group_rule" "femiwiki_ingress_http" {
+  region            = local.tokyo_region
   security_group_id = aws_security_group.femiwiki.id
   description       = "http"
   type              = "ingress"
@@ -55,6 +59,7 @@ resource "aws_security_group_rule" "femiwiki_ingress_http" {
 }
 
 resource "aws_security_group_rule" "femiwiki_ingress_https" {
+  region            = local.tokyo_region
   security_group_id = aws_security_group.femiwiki.id
   description       = "https"
   type              = "ingress"
@@ -66,6 +71,7 @@ resource "aws_security_group_rule" "femiwiki_ingress_https" {
 }
 
 resource "aws_security_group_rule" "femiwiki_egress" {
+  region            = local.tokyo_region
   security_group_id = aws_security_group.femiwiki.id
 
   type             = "egress"
@@ -80,6 +86,7 @@ resource "aws_security_group_rule" "femiwiki_egress" {
 # MySQL
 #
 resource "aws_security_group" "mysql" {
+  region      = local.tokyo_region
   name        = "mysql"
   description = "MySQL"
   vpc_id      = aws_default_vpc.default.id
@@ -90,6 +97,7 @@ resource "aws_security_group" "mysql" {
 }
 
 resource "aws_security_group_rule" "mysql_ingress_self" {
+  region            = local.tokyo_region
   security_group_id = aws_security_group.mysql.id
   description       = "replication"
   type              = "ingress"
@@ -100,6 +108,7 @@ resource "aws_security_group_rule" "mysql_ingress_self" {
 }
 
 resource "aws_security_group_rule" "mysql_ingress_mediawiki" {
+  region                   = local.tokyo_region
   security_group_id        = aws_security_group.mysql.id
   description              = "MySQL from Mediawiki"
   type                     = "ingress"
@@ -110,6 +119,7 @@ resource "aws_security_group_rule" "mysql_ingress_mediawiki" {
 }
 
 resource "aws_security_group_rule" "mysql_egress" {
+  region            = local.tokyo_region
   security_group_id = aws_security_group.mysql.id
 
   type             = "egress"
@@ -124,6 +134,7 @@ resource "aws_security_group_rule" "mysql_egress" {
 # MediaWiki
 #
 resource "aws_security_group" "mediawiki" {
+  region      = local.tokyo_region
   name        = "mediawiki"
   description = "MediaWiki"
   vpc_id      = aws_default_vpc.default.id

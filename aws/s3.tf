@@ -1,8 +1,10 @@
 resource "aws_s3_bucket" "digger" {
+  region = local.tokyo_region
   bucket = "femiwiki-digger-state"
 }
 
 resource "aws_s3_bucket_public_access_block" "digger" {
+  region = local.tokyo_region
   bucket = aws_s3_bucket.digger.id
 
   block_public_acls       = true
@@ -16,10 +18,12 @@ resource "aws_s3_bucket_public_access_block" "digger" {
 #
 
 resource "aws_s3_bucket" "secrets" {
+  region = local.tokyo_region
   bucket = "femiwiki-secrets"
 }
 
 resource "aws_s3_bucket_public_access_block" "secrets" {
+  region = local.tokyo_region
   bucket = aws_s3_bucket.secrets.id
 
   block_public_acls       = true
@@ -29,6 +33,7 @@ resource "aws_s3_bucket_public_access_block" "secrets" {
 }
 
 resource "aws_s3_bucket_policy" "secrets" {
+  region = local.tokyo_region
   bucket = aws_s3_bucket.secrets.bucket
 
   policy = data.aws_iam_policy_document.s3_secrets.json
@@ -56,6 +61,7 @@ data "aws_iam_policy_document" "s3_secrets" {
 }
 
 resource "aws_s3_bucket_versioning" "secrets" {
+  region = local.tokyo_region
   bucket = aws_s3_bucket.secrets.id
   versioning_configuration {
     status = "Enabled"
@@ -67,10 +73,12 @@ resource "aws_s3_bucket_versioning" "secrets" {
 #
 
 resource "aws_s3_bucket" "uploaded_files" {
+  region = local.tokyo_region
   bucket = "femiwiki-uploaded-files"
 }
 
 resource "aws_s3_bucket_policy" "uploaded_files" {
+  region = local.tokyo_region
   bucket = aws_s3_bucket.uploaded_files.bucket
 
   policy = data.aws_iam_policy_document.uploaded_files.json
@@ -90,10 +98,12 @@ data "aws_iam_policy_document" "uploaded_files" {
 }
 
 resource "aws_s3_bucket" "uploaded_files_deleted" {
+  region = local.tokyo_region
   bucket = "femiwiki-uploaded-files-deleted"
 }
 
 resource "aws_s3_bucket_public_access_block" "uploaded_files_deleted" {
+  region = local.tokyo_region
   bucket = aws_s3_bucket.uploaded_files_deleted.id
 
   block_public_acls       = true
@@ -103,10 +113,12 @@ resource "aws_s3_bucket_public_access_block" "uploaded_files_deleted" {
 }
 
 resource "aws_s3_bucket" "uploaded_files_temp" {
+  region = local.tokyo_region
   bucket = "femiwiki-uploaded-files-temp"
 }
 
 resource "aws_s3_bucket_public_access_block" "uploaded_files_temp" {
+  region = local.tokyo_region
   bucket = aws_s3_bucket.uploaded_files_temp.id
 
   block_public_acls       = true
@@ -116,10 +128,12 @@ resource "aws_s3_bucket_public_access_block" "uploaded_files_temp" {
 }
 
 resource "aws_s3_bucket" "uploaded_files_thumb" {
+  region = local.tokyo_region
   bucket = "femiwiki-uploaded-files-thumb"
 }
 
 resource "aws_s3_bucket_policy" "uploaded_files_thumb" {
+  region = local.tokyo_region
   bucket = aws_s3_bucket.uploaded_files_thumb.bucket
 
   policy = data.aws_iam_policy_document.uploaded_files_thumb.json
@@ -143,10 +157,12 @@ data "aws_iam_policy_document" "uploaded_files_thumb" {
 #
 
 resource "aws_s3_bucket" "backups" {
+  region = local.tokyo_region
   bucket = "femiwiki-backups"
 }
 
 resource "aws_s3_bucket_lifecycle_configuration" "backups" {
+  region = local.tokyo_region
   bucket = aws_s3_bucket.backups.id
 
   rule {
@@ -185,6 +201,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "backups" {
 }
 
 resource "aws_s3_bucket_public_access_block" "backups" {
+  region = local.tokyo_region
   bucket = aws_s3_bucket.backups.id
 
   block_public_acls       = true
@@ -198,11 +215,13 @@ resource "aws_s3_bucket_public_access_block" "backups" {
 #
 
 resource "aws_s3_bucket" "tfstate" {
+  region           = local.tokyo_region
   bucket           = "tfstate-${data.aws_caller_identity.current.account_id}-${data.aws_region.current.region}-an"
   bucket_namespace = "account-regional"
 }
 
 resource "aws_s3_bucket_public_access_block" "tfstate" {
+  region = local.tokyo_region
   bucket = aws_s3_bucket.tfstate.id
 
   block_public_acls       = true
@@ -212,6 +231,7 @@ resource "aws_s3_bucket_public_access_block" "tfstate" {
 }
 
 resource "aws_s3_bucket_versioning" "tfstate" {
+  region = local.tokyo_region
   bucket = aws_s3_bucket.tfstate.id
   versioning_configuration {
     status = "Enabled"
@@ -219,6 +239,7 @@ resource "aws_s3_bucket_versioning" "tfstate" {
 }
 
 resource "aws_s3_bucket_server_side_encryption_configuration" "tfstate" {
+  region = local.tokyo_region
   bucket = aws_s3_bucket.tfstate.id
 
   rule {
@@ -229,6 +250,7 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "tfstate" {
 }
 
 resource "aws_s3_bucket_lifecycle_configuration" "tfstate" {
+  region = local.tokyo_region
   bucket = aws_s3_bucket.tfstate.id
 
   dynamic "rule" {
@@ -254,11 +276,13 @@ resource "aws_s3_bucket_lifecycle_configuration" "tfstate" {
 }
 
 resource "aws_s3_bucket" "cost_exports" {
+  region           = local.tokyo_region
   bucket           = "cost-exports-${data.aws_caller_identity.current.account_id}-${data.aws_region.current.region}-an"
   bucket_namespace = "account-regional"
 }
 
 resource "aws_s3_bucket_public_access_block" "cost_exports" {
+  region = local.tokyo_region
   bucket = aws_s3_bucket.cost_exports.id
 
   block_public_acls       = true
@@ -295,6 +319,7 @@ data "aws_iam_policy_document" "cost_exports_bucket" {
 }
 
 resource "aws_s3_bucket_policy" "cost_exports" {
+  region = local.tokyo_region
   bucket = aws_s3_bucket.cost_exports.id
   policy = data.aws_iam_policy_document.cost_exports_bucket.json
 }

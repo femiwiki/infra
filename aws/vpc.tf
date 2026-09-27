@@ -6,10 +6,14 @@ locals {
   }
 }
 
-resource "aws_default_vpc" "default" {}
+resource "aws_default_vpc" "default" {
+  region = local.tokyo_region
+}
 
 resource "aws_default_subnet" "default" {
   for_each = local.availability_zones
+
+  region = local.tokyo_region
 
   availability_zone = each.value
 }

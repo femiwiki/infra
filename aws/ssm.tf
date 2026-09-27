@@ -23,9 +23,10 @@ data "terraform_remote_state" "healthchecks" {
 }
 
 resource "aws_ssm_parameter" "mysql_backup_healthcheck_url" {
-  name  = "/mysql/backup/healthcheck-url"
-  type  = "SecureString"
-  value = data.terraform_remote_state.healthchecks.outputs.mysql_backup_ping_url
+  region = local.tokyo_region
+  name   = "/mysql/backup/healthcheck-url"
+  type   = "SecureString"
+  value  = data.terraform_remote_state.healthchecks.outputs.mysql_backup_ping_url
 }
 
 locals {
@@ -114,6 +115,8 @@ resource "aws_ssm_parameter" "alloy" {
     loki_password       = var.loki_password
     prometheus_password = var.prometheus_password
   }
+
+  region = local.tokyo_region
 
   name  = "/alloy/${each.key}"
   type  = "SecureString"

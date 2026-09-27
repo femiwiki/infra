@@ -1,5 +1,6 @@
 resource "aws_cloudwatch_log_group" "discord_noti" {
-  name = "/aws/lambda/DiscordNoti"
+  region = local.tokyo_region
+  name   = "/aws/lambda/DiscordNoti"
 }
 
 resource "aws_cloudwatch_log_group" "discord_noti_us" {
@@ -8,6 +9,7 @@ resource "aws_cloudwatch_log_group" "discord_noti_us" {
 }
 
 resource "aws_cloudwatch_metric_alarm" "femiwiki_volume_idle_time_cloud_watch_alarm" {
+  region      = local.tokyo_region
   alarm_name  = "Femiwiki VolumeIdleTime"
   namespace   = "AWS/EBS"
   metric_name = "VolumeIdleTime"
