@@ -1,4 +1,5 @@
 resource "aws_vpc_peering_connection" "tokyo_seoul" {
+  region      = local.tokyo_region
   vpc_id      = aws_default_vpc.default.id
   peer_vpc_id = aws_vpc.seoul.id
   peer_region = local.seoul_region
@@ -16,6 +17,7 @@ resource "aws_vpc_peering_connection_accepter" "seoul" {
 }
 
 resource "aws_route" "tokyo_to_seoul" {
+  region                    = local.tokyo_region
   route_table_id            = aws_default_vpc.default.main_route_table_id
   destination_cidr_block    = aws_vpc.seoul.cidr_block
   vpc_peering_connection_id = aws_vpc_peering_connection.tokyo_seoul.id
@@ -24,6 +26,7 @@ resource "aws_route" "tokyo_to_seoul" {
 }
 
 resource "aws_security_group_rule" "mysql_ingress_seoul" {
+  region            = local.tokyo_region
   security_group_id = aws_security_group.mysql.id
   description       = "replication from Seoul"
   type              = "ingress"

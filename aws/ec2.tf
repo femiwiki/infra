@@ -1,8 +1,10 @@
 data "aws_availability_zone" "femiwiki" {
-  name = "ap-northeast-1a"
+  region = local.tokyo_region
+  name   = "ap-northeast-1a"
 }
 
 resource "aws_instance" "docker" {
+  region                      = local.tokyo_region
   ami                         = data.aws_ami.amazon_linux_2_arm64.image_id
   availability_zone           = data.aws_availability_zone.femiwiki.name
   disable_api_termination     = true

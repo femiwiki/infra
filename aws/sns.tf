@@ -5,6 +5,7 @@
 #   https://www.terraform.io/docs/providers/aws/r/sns_topic_subscription.html#email
 
 resource "aws_sns_topic" "cloudwatch_alarms_topic" {
+  region = local.tokyo_region
   name   = "CloudWatch_Alarms_Topic"
   policy = data.aws_iam_policy_document.sns_default_policy.json
 }

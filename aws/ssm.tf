@@ -1,9 +1,11 @@
 data "aws_ssm_parameters_by_path" "mysql" {
+  region    = local.tokyo_region
   path      = "/mysql/"
   recursive = true
 }
 
 data "aws_ssm_parameters_by_path" "mediawiki" {
+  region    = local.tokyo_region
   path      = "/mediawiki/"
   recursive = true
 }
@@ -18,19 +20,20 @@ data "terraform_remote_state" "healthchecks" {
   config = {
     bucket = aws_s3_bucket.tfstate.bucket
     key    = "healthchecks/terraform.tfstate"
-    region = data.aws_region.current.region
+    region = local.tokyo_region
   }
 }
 
 resource "aws_ssm_parameter" "mysql_backup_healthcheck_url" {
-  name  = "/mysql/backup/healthcheck-url"
-  type  = "SecureString"
-  value = data.terraform_remote_state.healthchecks.outputs.mysql_backup_ping_url
+  region = local.tokyo_region
+  name   = "/mysql/backup/healthcheck-url"
+  type   = "SecureString"
+  value  = data.terraform_remote_state.healthchecks.outputs.mysql_backup_ping_url
 }
 
 locals {
   alloy_hosts = {
-    "docker"       = { name = "femiwiki", type = "app", region = data.aws_region.current.region }
+    "docker"       = { name = "femiwiki", type = "app", region = local.tokyo_region }
     "database-5"   = { name = "mariadb-seoul", type = "database", region = local.seoul_region }
     "docker-seoul" = { name = "femiwiki-seoul", type = "app", region = local.seoul_region }
   }
@@ -53,7 +56,7 @@ locals {
 
 locals {
   app_hosts = {
-    "docker"       = { region = data.aws_region.current.region }
+    "docker"       = { region = local.tokyo_region }
     "docker-seoul" = { region = local.seoul_region }
   }
 
@@ -63,7 +66,7 @@ locals {
   })
 
   mysql_backup_install = templatefile("res/install-mysql-backup.sh.tftpl", {
-    parameter_region = data.aws_region.current.region
+    parameter_region = local.tokyo_region
     backup_script    = local.mysql_backup_script
   })
 }
@@ -114,6 +117,8 @@ resource "aws_ssm_parameter" "alloy" {
     loki_password       = var.loki_password
     prometheus_password = var.prometheus_password
   }
+
+  region = local.tokyo_region
 
   name  = "/alloy/${each.key}"
   type  = "SecureString"
