@@ -165,6 +165,23 @@ resource "aws_s3_bucket_lifecycle_configuration" "backups" {
       storage_class = "DEEP_ARCHIVE"
     }
   }
+
+  rule {
+    status = "Enabled"
+    id     = "Expire replica seeds after 7 days"
+
+    filter {
+      prefix = "seed/"
+    }
+
+    expiration {
+      days = 7
+    }
+
+    abort_incomplete_multipart_upload {
+      days_after_initiation = 1
+    }
+  }
 }
 
 resource "aws_s3_bucket_notification" "backups" {
