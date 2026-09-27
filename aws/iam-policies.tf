@@ -119,24 +119,16 @@ resource "aws_iam_policy" "amazon_s3_access" {
 #   https://github.com/hashicorp/terraform/issues/27171#issuecomment-740249394
 #   https://github.com/hashicorp/terraform/issues/27282
 locals {
-  secrets                = aws_s3_bucket.secrets.arn
-  uploaded_files         = aws_s3_bucket.uploaded_files.arn
-  uploaded_files_thumb   = aws_s3_bucket.uploaded_files_thumb.arn
-  uploaded_files_temp    = aws_s3_bucket.uploaded_files_temp.arn
-  uploaded_files_deleted = aws_s3_bucket.uploaded_files_deleted.arn
-  backups                = aws_s3_bucket.backups.arn
-  backups_seoul          = aws_s3_bucket.backups_seoul.arn
-  uploads_seoul          = aws_s3_bucket.uploads_seoul.arn
+  secrets       = aws_s3_bucket.secrets.arn
+  backups       = aws_s3_bucket.backups.arn
+  backups_seoul = aws_s3_bucket.backups_seoul.arn
+  uploads_seoul = aws_s3_bucket.uploads_seoul.arn
 }
 
 data "aws_iam_policy_document" "amazon_s3_access" {
   statement {
     actions = ["s3:*"]
     resources = [
-      "${local.uploaded_files}/*",
-      "${local.uploaded_files_thumb}/*",
-      "${local.uploaded_files_temp}/*",
-      "${local.uploaded_files_deleted}/*",
       "${local.uploads_seoul}/*",
     ]
   }
@@ -147,10 +139,6 @@ data "aws_iam_policy_document" "amazon_s3_access" {
       "s3:List*"
     ]
     resources = [
-      local.uploaded_files,
-      local.uploaded_files_thumb,
-      local.uploaded_files_temp,
-      local.uploaded_files_deleted,
       local.uploads_seoul,
     ]
   }
