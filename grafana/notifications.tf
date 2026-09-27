@@ -17,10 +17,6 @@ resource "grafana_notification_policy" "root" {
   group_interval  = "5m"
   repeat_interval = "4h"
 
-  # Public, and ahead of the Discord branches with continue so an alert reaches
-  # both. Only critical goes here: the rest name hosts and cache internals that
-  # tell a reader nothing. A timeline stacks a repeat rather than raising it back
-  # into view, so the repeat is a day rather than the pager's half hour.
   policy {
     matcher {
       label = "severity"
@@ -33,7 +29,7 @@ resource "grafana_notification_policy" "root" {
     group_by        = ["alertname"]
     group_wait      = "30s"
     group_interval  = "5m"
-    repeat_interval = "24h"
+    repeat_interval = "1d"
   }
 
   dynamic "policy" {
