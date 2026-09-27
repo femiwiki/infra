@@ -17,6 +17,11 @@ outputs:
   host:
     description: The docker provider host to use from a container action.
     value: ${{ steps.relay.outputs.host }}
+  session-id:
+    description: >-
+      The SSM session this opened. It outlives the runner, so the caller closes
+      it with a step of its own; see femiwiki/infra#901.
+    value: ${{ steps.forward.outputs.session-id }}
 runs:
   using: composite
   steps:
@@ -46,6 +51,7 @@ runs:
         command -v socat > /dev/null || sudo apt-get install -y -q socat > /dev/null
 
     - name: Forward the daemon's port
+      id: forward
       shell: bash
       env:
         INSTANCE_TAG: ${{ inputs.instance-tag }}
@@ -58,8 +64,17 @@ runs:
         nohup aws ssm start-session --target "$instance" \
           --document-name AWS-StartPortForwardingSession \
           --parameters portNumber=2376,localPortNumber=2376 > /tmp/ssm-session.log 2>&1 &
+        # --max-time, or a tunnel that accepts the connection and then answers
+        # nothing blocks the first iteration for ever and the loop never reaches
+        # its second: this read as a 30 second budget while a job sat here for
+        # sixteen minutes. See femiwiki/infra#901.
         for _ in $(seq 30); do
-          curl -sf http://127.0.0.1:2376/_ping > /dev/null && exit 0
+          if curl -sf --max-time 3 http://127.0.0.1:2376/_ping > /dev/null; then
+            # The session outlives the runner, so the caller has to close it.
+            sid=$(awk '/^Starting session with SessionId: /{print $NF; exit}' /tmp/ssm-session.log)
+            echo "session-id=$sid" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
           sleep 1
         done
         echo "::error::the port forward did not come up"; cat /tmp/ssm-session.log; exit 1
@@ -71,5 +86,5 @@ runs:
         gateway=$(docker network inspect bridge --format '{{(index .IPAM.Config 0).Gateway}}')
         nohup socat "TCP-LISTEN:2376,bind=$gateway,fork,reuseaddr" TCP:127.0.0.1:2376 > /tmp/socat.log 2>&1 &
         sleep 1
-        curl -sf "http://$gateway:2376/_ping" > /dev/null
+        curl -sf --max-time 3 "http://$gateway:2376/_ping" > /dev/null
         echo "host=tcp://$gateway:2376" >> "$GITHUB_OUTPUT"
