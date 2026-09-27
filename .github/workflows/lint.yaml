@@ -108,12 +108,12 @@ jobs:
         with:
           persist-credentials: false
 
-      # The caddy and the plugins the Seoul http container runs, and the port
+      # The caddy and the plugins the http container runs, and the port
       # variables the Caddyfile reads, which come from that image's ENV rather
       # than from caddy. `caddy validate` would go on to provision the s3
       # storage, which needs credentials, so this stops at adapting.
       - id: image
-        run: echo "image=$(grep -m1 -oE 'ghcr\.io/femiwiki/femiwiki:[^"]+' docker-seoul/container.tf)" >> "$GITHUB_OUTPUT"
+        run: echo "image=$(grep -m1 -oE 'ghcr\.io/femiwiki/femiwiki:[^"]+' docker/container.tf)" >> "$GITHUB_OUTPUT"
 
       # The image is 2.87 GB and holds a 95 MB static binary. Keyed on the tag,
       # so a new image pays the pull once and every pull request until the next
