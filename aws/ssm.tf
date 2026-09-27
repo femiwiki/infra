@@ -18,7 +18,7 @@ data "terraform_remote_state" "healthchecks" {
   config = {
     bucket = aws_s3_bucket.tfstate.bucket
     key    = "healthchecks/terraform.tfstate"
-    region = data.aws_region.current.region
+    region = local.tokyo_region
   }
 }
 
@@ -31,7 +31,7 @@ resource "aws_ssm_parameter" "mysql_backup_healthcheck_url" {
 
 locals {
   alloy_hosts = {
-    "docker"       = { name = "femiwiki", type = "app", region = data.aws_region.current.region }
+    "docker"       = { name = "femiwiki", type = "app", region = local.tokyo_region }
     "database-5"   = { name = "mariadb-seoul", type = "database", region = local.seoul_region }
     "docker-seoul" = { name = "femiwiki-seoul", type = "app", region = local.seoul_region }
   }
@@ -54,7 +54,7 @@ locals {
 
 locals {
   app_hosts = {
-    "docker"       = { region = data.aws_region.current.region }
+    "docker"       = { region = local.tokyo_region }
     "docker-seoul" = { region = local.seoul_region }
   }
 
@@ -64,7 +64,7 @@ locals {
   })
 
   mysql_backup_install = templatefile("res/install-mysql-backup.sh.tftpl", {
-    parameter_region = data.aws_region.current.region
+    parameter_region = local.tokyo_region
     backup_script    = local.mysql_backup_script
   })
 }

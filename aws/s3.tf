@@ -216,7 +216,7 @@ resource "aws_s3_bucket_public_access_block" "backups" {
 
 resource "aws_s3_bucket" "tfstate" {
   region           = local.tokyo_region
-  bucket           = "tfstate-${data.aws_caller_identity.current.account_id}-${data.aws_region.current.region}-an"
+  bucket           = "tfstate-${data.aws_caller_identity.current.account_id}-${local.tokyo_region}-an"
   bucket_namespace = "account-regional"
 }
 
@@ -277,7 +277,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "tfstate" {
 
 resource "aws_s3_bucket" "cost_exports" {
   region           = local.tokyo_region
-  bucket           = "cost-exports-${data.aws_caller_identity.current.account_id}-${data.aws_region.current.region}-an"
+  bucket           = "cost-exports-${data.aws_caller_identity.current.account_id}-${local.tokyo_region}-an"
   bucket_namespace = "account-regional"
 }
 

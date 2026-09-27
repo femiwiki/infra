@@ -1,5 +1,5 @@
 locals {
-  parameter_store_regions = [data.aws_region.current.region, local.seoul_region]
+  parameter_store_regions = [local.tokyo_region, local.seoul_region]
 }
 
 #
@@ -367,7 +367,7 @@ data "aws_iam_policy_document" "write_mysql_root_password" {
     condition {
       test     = "StringEquals"
       variable = "kms:ViaService"
-      values   = ["ssm.${data.aws_region.current.region}.amazonaws.com"]
+      values   = ["ssm.${local.tokyo_region}.amazonaws.com"]
     }
   }
 }
@@ -443,7 +443,7 @@ data "aws_iam_policy_document" "infra_docker" {
     actions = ["ssm:StartSession"]
     resources = [
       aws_instance.docker.arn,
-      "arn:aws:ssm:${data.aws_region.current.region}::document/AWS-StartPortForwardingSession",
+      "arn:aws:ssm:${local.tokyo_region}::document/AWS-StartPortForwardingSession",
     ]
   }
 
