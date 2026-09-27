@@ -110,21 +110,11 @@ jobs:
 
       # With the caddy and plugins the Seoul http container runs. `caddy
       # validate` would go on to provision the s3 storage, which needs
-      # credentials, so this stops at adapting. The env stands in for the
-      # placeholders serving/Caddyfile uses without a default.
-      - env:
-          FW_PROBE_PORT: '8080'
-          FW_METRICS_PORT: '9180'
-          PHP_FPM_LISTEN: '9000'
-          PHP_FPM_STATUS_LISTEN: '9200'
-          FW_LOG_EXCLUDE: http.handlers.mwcache
-          BLOCKED_CIDR: 192.0.2.0/24
-        run: |
+      # credentials, so this stops at adapting.
+      - run: |
           image=$(grep -m1 -oE 'ghcr\.io/femiwiki/femiwiki:[^"]+' docker-seoul/container.tf)
           echo "Adapting serving/Caddyfile with $image"
           docker run --rm \
-            -e FW_PROBE_PORT -e FW_METRICS_PORT -e PHP_FPM_LISTEN -e PHP_FPM_STATUS_LISTEN \
-            -e FW_LOG_EXCLUDE -e BLOCKED_CIDR \
             -v "$PWD/serving/Caddyfile:/tmp/Caddyfile:ro" \
             "$image" caddy adapt --adapter caddyfile --config /tmp/Caddyfile > /dev/null
 
