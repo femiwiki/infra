@@ -165,8 +165,13 @@ jobs:
   # The cost is that the list below is the thing to forget instead. Reading the
   # run's own check runs rather than naming them is the eventual answer; it needs
   # care because the gate is a check run too.
+  #
+  # Only a pull_request run may carry the required name. A run for any other
+  # event skips this job but still reports it, and a skipped check counts as
+  # passing, so a review-triggered run once satisfied the gate and let an
+  # unapplied pull request merge (#870).
   gate:
-    name: tofu gate
+    name: ${{ github.event_name == 'pull_request' && 'tofu gate' || 'tofu gate (pull requests only)' }}
     needs: [plan]
     if: always() && github.event_name == 'pull_request'
     runs-on: ubuntu-latest
