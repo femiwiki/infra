@@ -259,6 +259,15 @@ resource "github_repository_environment" "infra_docker_seoul" {
   environment = "docker-seoul"
 }
 
+# Both exist while the workspace is renamed, because the apply job intersects
+# the changed paths with this list and the role's trust policy names it too.
+# docker-seoul goes once a plan and an apply have run green under the new name.
+# See #942.
+resource "github_repository_environment" "infra_docker" {
+  repository  = module.infra.name
+  environment = "docker"
+}
+
 resource "github_repository_environment" "infra_github" {
   repository  = module.infra.name
   environment = "github"
