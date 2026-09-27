@@ -24,6 +24,7 @@ locals {
   server_errors        = trimspace(file("${path.module}/queries/server-errors.logql"))
   all_responses        = trimspace(file("${path.module}/queries/all-responses.logql"))
   refused_readers      = trimspace(file("${path.module}/queries/refused-readers.logql"))
+  history_refused      = trimspace(file("${path.module}/queries/history-refused.logql"))
 }
 
 resource "grafana_rule_group" "femiwiki_http" {
@@ -208,6 +209,57 @@ resource "grafana_rule_group" "femiwiki_http" {
         type       = "threshold"
         expression = "A"
         conditions = [{ evaluator = { type = "gt", params = [0] } }]
+      })
+    }
+  }
+
+  rule {
+    name            = "Page history refused by its own budget"
+    for             = "1h"
+    keep_firing_for = "1h"
+
+    condition      = "B"
+    no_data_state  = "OK"
+    exec_err_state = "OK"
+
+    labels = {
+      severity = "warning"
+    }
+
+    annotations = {
+      summary = "역사와 정보 요청이 자기 예산에서 거절되고 있습니다. 최근 한 시간에 {{ printf \"%.0f\" $values.A.Value }}건입니다. 거절이 한 망에서만 나오면 그 망이 긁고 있는 것이고, 여러 망에서 나오면 `FW_HISTORY_EVENTS`가 낮은 것입니다."
+      logs    = grafana_dashboard.this["scrapes"].url
+    }
+
+    data {
+      ref_id         = "A"
+      datasource_uid = data.grafana_data_source.loki.uid
+      query_type     = "instant"
+      relative_time_range {
+        from = 3600
+        to   = 0
+      }
+      model = jsonencode({
+        refId     = "A"
+        expr      = local.history_refused
+        queryType = "instant"
+        instant   = true
+        range     = false
+      })
+    }
+
+    data {
+      ref_id         = "B"
+      datasource_uid = "__expr__"
+      relative_time_range {
+        from = 0
+        to   = 0
+      }
+      model = jsonencode({
+        refId      = "B"
+        type       = "threshold"
+        expression = "A"
+        conditions = [{ evaluator = { type = "gt", params = [10] } }]
       })
     }
   }
