@@ -1,5 +1,5 @@
 locals {
-  fastcgi_generation = 7
+  fastcgi_generation = 9
 
   memcached_default_mib  = 64 # the -m default memcached has been running on
   memcached_observed_mib = 28 # buffers, hash table and stacks it allocates outside -m today
