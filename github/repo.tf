@@ -108,10 +108,9 @@ module "tweetbot" {
 }
 
 module "remote_gadgets" {
-  source                = "./modules/github-repository"
-  name                  = "remote-gadgets"
-  description           = "📽️ External repository for JavaScript/CSS on Femiwiki"
-  default_status_checks = []
+  source      = "./modules/github-repository"
+  name        = "remote-gadgets"
+  description = "📽️ External repository for JavaScript/CSS on Femiwiki"
   topics = [
     "bot",
   ]
@@ -144,7 +143,6 @@ module "dot_github" {
   source                          = "./modules/github-repository"
   name                            = ".github"
   description                     = "Community health files"
-  default_status_checks           = []
   required_status_checks_contexts = ["prettier", "ruff", "taplo"]
 }
 
@@ -175,10 +173,9 @@ module "caddy_mwcache" {
 }
 
 module "ooui_femiwiki_theme" {
-  source                = "./modules/github-repository"
-  name                  = "OOUIFemiwikiTheme"
-  description           = ":jack_o_lantern: OOUI Femiwiki Theme"
-  default_status_checks = []
+  source      = "./modules/github-repository"
+  name        = "OOUIFemiwikiTheme"
+  description = ":jack_o_lantern: OOUI Femiwiki Theme"
   topics = [
     "ooui-theme",
     "ooui",
@@ -222,10 +219,9 @@ module "lambda" {
 }
 
 module "terraform-provider-mediawiki" {
-  source                = "./modules/github-repository"
-  name                  = "terraform-provider-mediawiki"
-  description           = "💜"
-  default_status_checks = []
+  source      = "./modules/github-repository"
+  name        = "terraform-provider-mediawiki"
+  description = "💜"
   topics = [
     "mediawiki",
     "terraform-provider",
