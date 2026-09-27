@@ -90,7 +90,7 @@ jobs:
         if: steps.scope.outputs.plan == 'true' && matrix.workspace == 'github'
         id: app-token
         with:
-          app-id: ${{ vars.TOFU_GITHUB_APP_ID }}
+          client-id: ${{ vars.TOFU_GITHUB_CLIENT_ID }}
           private-key: ${{ secrets.TOFU_GITHUB_APP_PEM }}
           # This root manages every repository in the organisation, so the token
           # is bounded by permission rather than by repository. Listing them here
@@ -330,7 +330,7 @@ jobs:
         if: matrix.workspace == 'github'
         id: app-token
         with:
-          app-id: ${{ vars.TOFU_GITHUB_APP_ID }}
+          client-id: ${{ vars.TOFU_GITHUB_CLIENT_ID }}
           private-key: ${{ secrets.TOFU_GITHUB_APP_PEM }}
           # This root manages every repository in the organisation, so the token
           # is bounded by permission rather than by repository. Listing them here
