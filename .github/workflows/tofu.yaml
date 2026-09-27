@@ -14,7 +14,7 @@ on:
         description: The workspace to apply from this branch, without asking.
         required: true
         type: choice
-        options: &workspaces [docker-seoul, github, grafana, healthchecks]
+        options: &workspaces [docker, github, grafana, healthchecks]
 permissions: {}
 jobs:
   plan:
@@ -84,7 +84,7 @@ jobs:
         id: daemon
         with:
           instance-tag: ${{ matrix.workspace }}
-          region: ${{ matrix.workspace == 'docker-seoul' && 'ap-northeast-2' || 'ap-northeast-1' }}
+          region: ap-northeast-2
 
       - uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1  # v3.2.0
         if: steps.scope.outputs.plan == 'true' && matrix.workspace == 'github'
@@ -149,7 +149,7 @@ jobs:
       - name: Close the SSM session, which outlives the runner
         if: always() && startsWith(matrix.workspace, 'docker')
         env:
-          AWS_REGION: ${{ matrix.workspace == 'docker-seoul' && 'ap-northeast-2' || 'ap-northeast-1' }}
+          AWS_REGION: ap-northeast-2
         run: |
           # Nine were left Connected across both regions on 2026-09-27, from
           # runs that had finished; see #901.
@@ -320,7 +320,7 @@ jobs:
         id: daemon
         with:
           instance-tag: ${{ matrix.workspace }}
-          region: ${{ matrix.workspace == 'docker-seoul' && 'ap-northeast-2' || 'ap-northeast-1' }}
+          region: ap-northeast-2
 
       - name: Pull the images the plan will start
         if: startsWith(matrix.workspace, 'docker')
@@ -370,7 +370,7 @@ jobs:
       # A failed post does not fail an apply that has already changed production.
       # The next post carries the note, and the Discord message says it is owed.
       - name: Post the ```wikitext blocks of the applied pull request to the wiki
-        if: (github.event_name == 'issue_comment' || startsWith(github.event_name, 'pull_request_review')) && matrix.workspace == 'docker-seoul'
+        if: (github.event_name == 'issue_comment' || startsWith(github.event_name, 'pull_request_review')) && matrix.workspace == 'docker'
         id: post
         continue-on-error: true
         env:
@@ -468,7 +468,7 @@ jobs:
       - name: Close the SSM session, which outlives the runner
         if: always() && startsWith(matrix.workspace, 'docker')
         env:
-          AWS_REGION: ${{ matrix.workspace == 'docker-seoul' && 'ap-northeast-2' || 'ap-northeast-1' }}
+          AWS_REGION: ap-northeast-2
         run: |
           [ -s /tmp/ssm-session-id ] || { echo "No session was opened, so there is none to close."; exit 0; }
           sid=$(cat /tmp/ssm-session-id)
