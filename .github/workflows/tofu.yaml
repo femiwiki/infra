@@ -14,7 +14,7 @@ on:
         description: The workspace to apply from this branch, without asking.
         required: true
         type: choice
-        options: &workspaces [docker, docker-seoul, github, grafana, healthchecks]
+        options: &workspaces [docker-seoul, github, grafana, healthchecks]
 permissions: {}
 jobs:
   plan:
@@ -365,7 +365,7 @@ jobs:
       # A failed post does not fail an apply that has already changed production.
       # The next post carries the note, and the Discord message says it is owed.
       - name: Post the ```wikitext blocks of the applied pull request to the wiki
-        if: (github.event_name == 'issue_comment' || startsWith(github.event_name, 'pull_request_review')) && matrix.workspace == 'docker'
+        if: (github.event_name == 'issue_comment' || startsWith(github.event_name, 'pull_request_review')) && matrix.workspace == 'docker-seoul'
         id: post
         continue-on-error: true
         env:
