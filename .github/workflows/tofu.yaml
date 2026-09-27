@@ -146,9 +146,10 @@ jobs:
           pull-request: ${{ github.event.number }}
 
       - name: Close the SSM session, which outlives the runner
-        if: always() && env.SSM_SESSION_ID != ''
+        if: always() && steps.daemon.outputs.session-id != ''
         env:
-          AWS_REGION: ${{ env.SSM_SESSION_REGION }}
+          AWS_REGION: ${{ matrix.workspace == 'docker-seoul' && 'ap-northeast-2' || 'ap-northeast-1' }}
+          SSM_SESSION_ID: ${{ steps.daemon.outputs.session-id }}
         run: |
           # Nine were left Connected across both regions on 2026-09-27, from
           # runs that had finished; see #901.
@@ -456,9 +457,10 @@ jobs:
           description: ${{ steps.outcome.outputs.description }}
 
       - name: Close the SSM session, which outlives the runner
-        if: always() && env.SSM_SESSION_ID != ''
+        if: always() && steps.daemon.outputs.session-id != ''
         env:
-          AWS_REGION: ${{ env.SSM_SESSION_REGION }}
+          AWS_REGION: ${{ matrix.workspace == 'docker-seoul' && 'ap-northeast-2' || 'ap-northeast-1' }}
+          SSM_SESSION_ID: ${{ steps.daemon.outputs.session-id }}
         run: |
           aws ssm terminate-session --session-id "$SSM_SESSION_ID" --output text \
             || echo "::warning::could not terminate $SSM_SESSION_ID; it may have ended already."

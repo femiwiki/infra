@@ -17,6 +17,11 @@ outputs:
   host:
     description: The docker provider host to use from a container action.
     value: ${{ steps.relay.outputs.host }}
+  session-id:
+    description: >-
+      The SSM session this opened. It outlives the runner, so the caller closes
+      it with a step of its own; see femiwiki/infra#901.
+    value: ${{ steps.forward.outputs.session-id }}
 runs:
   using: composite
   steps:
@@ -46,6 +51,7 @@ runs:
         command -v socat > /dev/null || sudo apt-get install -y -q socat > /dev/null
 
     - name: Forward the daemon's port
+      id: forward
       shell: bash
       env:
         INSTANCE_TAG: ${{ inputs.instance-tag }}
@@ -66,10 +72,7 @@ runs:
           if curl -sf --max-time 3 http://127.0.0.1:2376/_ping > /dev/null; then
             # The session outlives the runner, so the caller has to close it.
             sid=$(awk '/^Starting session with SessionId: /{print $NF; exit}' /tmp/ssm-session.log)
-            if [ -n "$sid" ]; then
-              echo "SSM_SESSION_ID=$sid" >> "$GITHUB_ENV"
-              echo "SSM_SESSION_REGION=$AWS_REGION" >> "$GITHUB_ENV"
-            fi
+            echo "session-id=$sid" >> "$GITHUB_OUTPUT"
             exit 0
           fi
           sleep 1
