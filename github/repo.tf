@@ -254,15 +254,6 @@ resource "github_repository_file" "status_index" {
 # The workflow takes the environment name from the workspace name, and the three
 # that came before this one were made by hand. This one is declared, so the
 # workspace it gates can be deleted with the region migration that needs it.
-resource "github_repository_environment" "infra_docker_seoul" {
-  repository  = module.infra.name
-  environment = "docker-seoul"
-}
-
-# Both exist while the workspace is renamed, because the apply job intersects
-# the changed paths with this list and the role's trust policy names it too.
-# docker-seoul goes once a plan and an apply have run green under the new name.
-# See #942.
 resource "github_repository_environment" "infra_docker" {
   repository  = module.infra.name
   environment = "docker"
