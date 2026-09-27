@@ -30,7 +30,6 @@ resource "aws_ssm_parameter" "mysql_backup_healthcheck_url" {
 locals {
   alloy_hosts = {
     "docker"       = { name = "femiwiki", type = "app", region = data.aws_region.current.region }
-    "database-4"   = { name = "mysql-seoul", type = "database", region = local.seoul_region }
     "database-5"   = { name = "mariadb-seoul", type = "database", region = local.seoul_region }
     "docker-seoul" = { name = "femiwiki-seoul", type = "app", region = local.seoul_region }
   }
@@ -57,15 +56,9 @@ locals {
     "docker-seoul" = { region = local.seoul_region }
   }
 
-  # Both hosts render the script, because database-4's user_data embeds it, but
-  # only the one taking writes installs the timer: the other would upload a
-  # frozen copy every night and ping the check as though it were today's backup.
   database_hosts = {
-    "database-4" = { region = local.seoul_region, backup = false }
-    "database-5" = { region = local.seoul_region, backup = true }
+    "database-5" = { region = local.seoul_region }
   }
-
-  backup_hosts = { for tag, host in local.database_hosts : tag => host if host.backup }
 
   mysql_backup_script = {
     for tag, host in local.database_hosts : tag => templatefile("res/mysql-backup.sh.tftpl", {
@@ -83,7 +76,7 @@ locals {
 }
 
 resource "aws_ssm_document" "mysql_backup" {
-  for_each = local.backup_hosts
+  for_each = local.database_hosts
 
   region          = each.value.region
   name            = "install-mysql-backup-${each.key}"
@@ -104,7 +97,7 @@ resource "aws_ssm_document" "mysql_backup" {
 }
 
 resource "aws_ssm_association" "mysql_backup" {
-  for_each = local.backup_hosts
+  for_each = local.database_hosts
 
   depends_on = [aws_ssm_parameter.mysql_backup_healthcheck_url]
 
