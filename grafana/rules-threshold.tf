@@ -99,7 +99,7 @@ locals {
           name      = "Requests waiting for a worker"
           expr      = trimspace(file("${path.module}/queries/listen-queue.promql"))
           threshold = 0
-          labels    = {}
+          labels    = { severity = "warning" }
           annotations = {
             summary = "{{ $labels.instance }}에서 요청이 5분 넘게 php-fpm 앞에 줄 서 있습니다. 워커가 모자라면 `phpfpm_max_children_reached`가 함께 오르고, 메모리가 모자라면 `node_memory_MemAvailable_bytes`가 떨어집니다."
             # A resolved notification carries the value it resolved at, which for a
