@@ -1,15 +1,21 @@
-{{/* Mastodon takes the whole post as one string, so title and body are joined
-     here. coll.Dict and data.ToJSON build the request body, which escapes the
-     quotes and newlines the text carries. A post is capped at 500 characters
-     and a rejected one is simply lost, so the text is truncated well under
-     that; %.450s counts runes, not bytes, which is what Mastodon counts too.
-     Unlisted keeps these off the server's public timelines while followers
-     and anyone visiting the profile still see them. */ -}}
+{{/* Mastodon takes the whole post as one string. coll.Dict and data.ToJSON
+     build the request body, which escapes the quotes and newlines the text
+     carries. A post is capped at 500 characters and a rejected one is simply
+     lost, so the text is truncated well under that; %.450s counts runes, not
+     bytes, which is what Mastodon counts too. Unlisted keeps these off the
+     server's public timelines while followers and anyone visiting the profile
+     still see them. The rule's own name is left out: it is English, and this
+     account is read in Korean. The icon and the summary carry the meaning. */ -}}
 {{- $icon := "✅" -}}
 {{- if eq .Status "firing" }}{{ $icon = "⚠️" }}{{ end -}}
-{{- $text := printf "%s %s" $icon .CommonLabels.alertname -}}
-{{- range .Alerts -}}
-{{- $text = printf "%s\n\n%s" $text .Annotations.summary -}}
-{{- if .Annotations.logs }}{{- $text = printf "%s\n%s" $text .Annotations.logs -}}{{- end -}}
+{{- $text := "" -}}
+{{- range $i, $alert := .Alerts -}}
+{{- if eq $i 0 -}}
+{{- $text = printf "%s %s" $icon $alert.Annotations.summary -}}
+{{- else -}}
+{{- $text = printf "%s\n\n%s" $text $alert.Annotations.summary -}}
 {{- end -}}
+{{- if $alert.Annotations.logs }}{{- $text = printf "%s\n%s" $text $alert.Annotations.logs -}}{{- end -}}
+{{- end -}}
+{{- if eq $text "" }}{{ $text = printf "%s %s" $icon .CommonLabels.alertname }}{{ end -}}
 {{ coll.Dict "status" (printf "%.450s" $text) "visibility" "unlisted" | data.ToJSON }}
