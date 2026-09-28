@@ -23,7 +23,7 @@ locals {
   successful_responses = trimspace(file("${path.module}/queries/site-down.logql"))
   server_errors        = trimspace(file("${path.module}/queries/server-errors.logql"))
   all_responses        = trimspace(file("${path.module}/queries/all-responses.logql"))
-  refused_readers      = trimspace(file("${path.module}/queries/refused-readers.logql"))
+  busiest_network      = trimspace(file("${path.module}/queries/concentrated-refusals.logql"))
   history_refused      = trimspace(file("${path.module}/queries/history-refused.logql"))
 }
 
@@ -163,8 +163,8 @@ resource "grafana_rule_group" "femiwiki_http" {
   }
 
   rule {
-    name            = "Logged-out requests refused"
-    for             = "4h"
+    name            = "One network is being refused far more than the rest"
+    for             = "1h"
     keep_firing_for = "1h"
 
     condition      = "B"
@@ -176,7 +176,7 @@ resource "grafana_rule_group" "femiwiki_http" {
     }
 
     annotations = {
-      summary = "로그인하지 않은 요청이 네 시간 내내 429로 거절되고 있습니다. 최근 한 시간에만 {{ printf \"%.0f\" $values.A.Value }}건입니다. 거절된 주소가 몇 군데에 몰려 있는지 먼저 보세요. 한두 곳이면 그 망을 막는 일이고, 수백 곳이면 예산은 제 일을 하는 중이니 올리지 말고 무엇이 긁히는지를 좁혀야 합니다."
+      summary = "{{ $labels.net }} 한 망에서만 최근 한 시간에 {{ printf \"%.0f\" $values.A.Value }}건이 거절됐습니다. 퍼져 있는 크롤은 한 망에서 백 건을 넘지 않으니, 이건 한 곳이 긁고 있다는 뜻입니다. 그 대역을 막을지 정하면 됩니다."
       logs    = grafana_dashboard.this["scrapes"].url
     }
 
@@ -185,12 +185,12 @@ resource "grafana_rule_group" "femiwiki_http" {
       datasource_uid = data.grafana_data_source.loki.uid
       query_type     = "instant"
       relative_time_range {
-        from = 300
+        from = 3600
         to   = 0
       }
       model = jsonencode({
         refId     = "A"
-        expr      = local.refused_readers
+        expr      = local.busiest_network
         queryType = "instant"
         instant   = true
         range     = false
@@ -208,7 +208,7 @@ resource "grafana_rule_group" "femiwiki_http" {
         refId      = "B"
         type       = "threshold"
         expression = "A"
-        conditions = [{ evaluator = { type = "gt", params = [0] } }]
+        conditions = [{ evaluator = { type = "gt", params = [400] } }]
       })
     }
   }
