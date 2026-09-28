@@ -1,6 +1,6 @@
 locals {
   discord_contact_points = {
-    critical = { title = "site-down-title.gotmpl", message = "discord-message.gotmpl" }
+    critical = { title = "critical-title.gotmpl", message = "discord-message.gotmpl" }
     warning  = { title = "warning-title.gotmpl", message = "alert-message.gotmpl" }
   }
 
