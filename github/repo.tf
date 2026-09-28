@@ -257,13 +257,3 @@ resource "github_repository_environment" "infra" {
   repository  = module.infra.name
   environment = each.key
 }
-
-moved {
-  from = github_repository_environment.infra_docker
-  to   = github_repository_environment.infra["docker"]
-}
-
-moved {
-  from = github_repository_environment.infra_github
-  to   = github_repository_environment.infra["github"]
-}

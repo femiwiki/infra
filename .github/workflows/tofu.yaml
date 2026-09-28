@@ -14,7 +14,7 @@ on:
         description: The workspace to apply from this branch, without asking.
         required: true
         type: choice
-        options: &workspaces [docker, github, grafana, healthchecks]
+        options: &workspaces [docker, github, gitlab, grafana, healthchecks]
 permissions: {}
 jobs:
   plan:
@@ -119,6 +119,7 @@ jobs:
           TF_VAR_discord_webhook_url: ${{ matrix.workspace == 'grafana' && secrets.DISCORD_WEBHOOK_URL || '' }}
           TF_VAR_mastodon_token: ${{ matrix.workspace == 'grafana' && secrets.MASTODON_TOKEN || '' }}
           TF_VAR_healthchecksio_api_key: ${{ matrix.workspace == 'healthchecks' && secrets.HEALTHCHECKSIO_API_KEY || '' }}
+          TF_VAR_gitlab_token: ${{ matrix.workspace == 'gitlab' && secrets.GITLAB_TOKEN || '' }}
         with:
           path: ${{ matrix.workspace }}
 
@@ -363,6 +364,7 @@ jobs:
           TF_VAR_discord_webhook_url: ${{ matrix.workspace == 'grafana' && secrets.DISCORD_WEBHOOK_URL || '' }}
           TF_VAR_mastodon_token: ${{ matrix.workspace == 'grafana' && secrets.MASTODON_TOKEN || '' }}
           TF_VAR_healthchecksio_api_key: ${{ matrix.workspace == 'healthchecks' && secrets.HEALTHCHECKSIO_API_KEY || '' }}
+          TF_VAR_gitlab_token: ${{ matrix.workspace == 'gitlab' && secrets.GITLAB_TOKEN || '' }}
         with:
           path: ${{ matrix.workspace }}
           auto_approve: ${{ github.event_name == 'workflow_dispatch' }}
@@ -397,6 +399,7 @@ jobs:
           TF_VAR_discord_webhook_url: ${{ matrix.workspace == 'grafana' && secrets.DISCORD_WEBHOOK_URL || '' }}
           TF_VAR_mastodon_token: ${{ matrix.workspace == 'grafana' && secrets.MASTODON_TOKEN || '' }}
           TF_VAR_healthchecksio_api_key: ${{ matrix.workspace == 'healthchecks' && secrets.HEALTHCHECKSIO_API_KEY || '' }}
+          TF_VAR_gitlab_token: ${{ matrix.workspace == 'gitlab' && secrets.GITLAB_TOKEN || '' }}
         with:
           path: ${{ matrix.workspace }}
           add_github_comment: changes-only
