@@ -1,6 +1,6 @@
 locals {
   discord_contact_points = {
-    critical = { title = "site-down-title.gotmpl", message = "discord-message.gotmpl" }
+    critical = { title = "critical-title.gotmpl", message = "discord-message.gotmpl" }
     warning  = { title = "warning-title.gotmpl", message = "alert-message.gotmpl" }
   }
 
@@ -20,8 +20,8 @@ resource "grafana_notification_policy" "root" {
   policy {
     matcher {
       label = "severity"
-      match = "="
-      value = "critical"
+      match = "=~"
+      value = "critical|warning"
     }
 
     contact_point   = grafana_contact_point.mastodon.name

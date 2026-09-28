@@ -92,6 +92,10 @@ resource "grafana_rule_group" "femiwiki_http" {
     no_data_state  = "OK"
     exec_err_state = "OK"
 
+    labels = {
+      severity = "critical"
+    }
+
     annotations = {
       summary          = "최근 5분 동안 응답의 {{ printf \"%.0f\" $values.C.Value }}%가 5xx입니다. 5xx는 {{ printf \"%.0f\" $values.A.Value }}건입니다."
       logs             = local.explore_urls.status
