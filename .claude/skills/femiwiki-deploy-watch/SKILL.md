@@ -8,7 +8,7 @@ description: Watch a femiwiki deploy end to end — assert a branch is current b
 Deploys here are a chain, and each link has a way of failing quietly. Follow the
 whole chain rather than the step in front of you.
 
-```
+```text
 docker-mediawiki PR merged
   -> image build (images.yml)
   -> infra bump PR opens by itself on branch bump-femiwiki-image
@@ -57,7 +57,7 @@ leaves `main` describing less than what is deployed, and an apply from any other
 branch takes production back to it. The plan says so plainly when it is about to
 happen:
 
-```
+```text
 ~ image = "…7045adc5" -> "…2f501144"  # forces replacement
 ~ name  = "fastcgi-60" -> "fastcgi-59"
 Plan: 2 to add, 0 to change, 2 to destroy.
