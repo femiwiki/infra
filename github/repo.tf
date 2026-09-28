@@ -252,7 +252,7 @@ resource "github_repository_file" "status_index" {
 }
 
 resource "github_repository_environment" "infra" {
-  for_each = toset(["docker", "github", "gitlab"])
+  for_each = toset(["aws", "docker", "github", "gitlab"])
 
   repository  = module.infra.name
   environment = each.key
