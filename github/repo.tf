@@ -251,15 +251,19 @@ resource "github_repository_file" "status_index" {
   overwrite_on_create = true
 }
 
-# The workflow takes the environment name from the workspace name, and the three
-# that came before this one were made by hand. This one is declared, so the
-# workspace it gates can be deleted with the region migration that needs it.
-resource "github_repository_environment" "infra_docker" {
+resource "github_repository_environment" "infra" {
+  for_each = toset(["aws", "docker", "github", "gitlab"])
+
   repository  = module.infra.name
-  environment = "docker"
+  environment = each.key
 }
 
-resource "github_repository_environment" "infra_github" {
-  repository  = module.infra.name
-  environment = "github"
+moved {
+  from = github_repository_environment.infra_docker
+  to   = github_repository_environment.infra["docker"]
+}
+
+moved {
+  from = github_repository_environment.infra_github
+  to   = github_repository_environment.infra["github"]
 }
