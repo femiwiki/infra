@@ -4,8 +4,8 @@
 # Each gate here exists because its prose version was read and not followed.
 # Read-only: it never comments, merges, applies or pushes.
 #
-#   fw-deploy preflight <pr>   refuse or approve before asking for a tofu apply
-#   fw-deploy watch-apply <pr> wait for the issue_comment apply run and report it
+#   fw-deploy preflight <pr>   refuse or approve before asking for an apply approval
+#   fw-deploy watch-apply <pr> wait for the pull request's run and its apply, and report them
 #   fw-deploy verify           probe the site and print the running generation
 set -eu
 
@@ -27,9 +27,9 @@ num() { # num <value> <fallback>
 usage() {
   cat >&2 <<'EOF'
 fw-deploy preflight <pr> [--pretend-head-gen <n>]
-    refuse or approve before asking anyone for a tofu apply
-fw-deploy watch-apply <pr> [--run-id <id>] [--since <iso8601>] [--grace <s>] [--timeout <s>]
-    wait for the issue_comment apply run and report its jobs
+    refuse or approve before asking anyone to approve an apply
+fw-deploy watch-apply <pr> [--run-id <id>] [--timeout <s>]
+    wait for the run of the pull request's head, apply included, and report its jobs
 fw-deploy verify [probes]
     probe the front page and print the declared and applied generation
 EOF
@@ -74,7 +74,7 @@ cmd_preflight() {
   fail=0
 
   # -- gate 1: branch freshness -----------------------------------------------
-  # The scope job refuses a pull request behind its base. Print the verdict as
+  # The plan and apply jobs refuse a pull request behind its base. Print the verdict as
   # a word: a bare number in a wall of output has been read as "fine" before.
   if [ "$merged" = true ]; then
     echo "FRESHNESS SKIPPED (pull request already merged)"
@@ -88,7 +88,7 @@ cmd_preflight() {
       echo "READY"
     else
       echo "BEHIND $behind"
-      echo "  the scope job rejects a branch behind its base; rebase or update the branch"
+      echo "  the apply job rejects a branch behind its base; rebase or update the branch"
       fail=1
     fi
   fi
@@ -155,14 +155,10 @@ $env_hits"
 cmd_watch_apply() {
   pr=''
   run_id=''
-  since=''
-  grace=${FW_GRACE:-300}
   timeout=${FW_TIMEOUT:-2400}
   while [ $# -gt 0 ]; do
     case "$1" in
       --run-id) shift; run_id=${1:?} ;;
-      --since) shift; since=${1:?} ;;
-      --grace) shift; grace=${1:?} ;;
       --timeout) shift; timeout=${1:?} ;;
       -*) die "unknown option $1" ;;
       *) pr=$1 ;;
@@ -171,50 +167,22 @@ cmd_watch_apply() {
   done
   [ -n "$pr" ] || [ -n "$run_id" ] || usage
 
-  title=''
-  [ -n "$pr" ] && title=$(gh api "repos/$REPO/pulls/$pr" --jq .title)
-
   if [ -z "$run_id" ]; then
-    # The apply is an issue_comment run and reports headBranch=main, not the
-    # pull request's branch, so a branch filter matches nothing forever. A
-    # pull_request plan run lands seconds earlier and looks identical in a
-    # listing, so select by event plus a --created bound taken now. Comments
-    # that are not 'tofu apply' also produce issue_comment runs that end
-    # 'skipped'; those are not the apply.
-    # The operator comments first and the watcher starts after, so the run is
-    # normally created a few seconds BEFORE now; a cutoff of now misses it and
-    # waits out the timeout while the apply finishes. Look back a grace period
-    # instead. That window can also hold a previous failed attempt on the same
-    # pull request, so among the matches prefer one still running, and fall
-    # back to the newest, which is what gh lists first.
-    [ -n "$since" ] || since=$(date -u -d "@$(( $(date -u +%s) - grace ))" +%Y-%m-%dT%H:%M:%SZ)
-    echo "waiting for an issue_comment run of tofu.yaml created after $since"
-    [ -n "$title" ] && echo "matching displayTitle: $title"
+    # The apply is a job of the pull request's own run, waiting for its
+    # environment's approval, so the run to follow is the newest one for the
+    # head commit. An older run of the same pull request plans a commit the
+    # branch no longer has, and its apply refuses to start.
+    head=$(gh api "repos/$REPO/pulls/$pr" --jq .head.sha)
+    echo "waiting for a pull_request run of tofu.yaml on $head"
     waited=0
     while [ "$waited" -lt "$timeout" ]; do
-      rows=$(gh run list -R "$REPO" -w tofu.yaml -e issue_comment \
-        --created ">$since" -L 20 \
-        --json databaseId,displayTitle,conclusion,status,createdAt \
-        --jq '.[] | select(.conclusion != "skipped")
-                  | [.databaseId, .status, (.conclusion // "-"), .displayTitle, .createdAt] | @tsv' 2>/dev/null || true)
-      if [ -n "$rows" ]; then
-        if [ -n "$title" ]; then
-          match=$(printf '%s\n' "$rows" | awk -F'\t' -v t="$title" '$4 == t')
-        else
-          match=$rows
-        fi
-        if [ -n "$match" ]; then
-          run_id=$(printf '%s\n' "$match" | awk -F'\t' '$2 != "completed" { print $1; exit }')
-          [ -n "$run_id" ] || run_id=$(printf '%s\n' "$match" | awk -F'\t' 'NR == 1 { print $1 }')
-          chosen=$(printf '%s\n' "$match" | awk -F'\t' -v id="$run_id" '$1 == id { print $5 " " $2 "/" $3; exit }')
-          [ -n "$run_id" ] && echo "picked run $run_id created $chosen"
-        fi
-      fi
+      run_id=$(gh api "repos/$REPO/actions/workflows/tofu.yaml/runs?event=pull_request&head_sha=$head" \
+        --jq '.workflow_runs[0].id // empty' 2>/dev/null || true)
       [ -n "$run_id" ] && break
       sleep 15
       waited=$((waited + 15))
     done
-    [ -n "$run_id" ] || { echo "no apply run appeared within ${timeout}s"; exit 1; }
+    [ -n "$run_id" ] || { echo "no run appeared within ${timeout}s"; exit 1; }
   fi
 
   echo "run $run_id  https://github.com/$REPO/actions/runs/$run_id"
@@ -226,7 +194,9 @@ cmd_watch_apply() {
       completed) break ;;
       '') echo "could not read run $run_id"; exit 1 ;;
     esac
-    printf '%s status=%s\n' "$(date -u +%H:%M:%SZ)" "$status"
+    note=''
+    [ "$status" = waiting ] && note='  (an apply waits for its environment to be approved)'
+    printf '%s status=%s%s\n' "$(date -u +%H:%M:%SZ)" "$status" "$note"
     sleep 20
     waited=$((waited + 20))
   done
@@ -243,15 +213,21 @@ cmd_watch_apply() {
 
 # -------------------------------------------------------------------- verify --
 
-# The generation actually applied, read from the newest successful apply run's
-# log. A rollback shows here as the arrow pointing down; one happened because a
-# plan saying fastcgi-60 -> fastcgi-59 went unread.
+# The generation actually applied, read from the log of the newest successful
+# docker apply job. A rollback shows here as the arrow pointing down; one
+# happened because a plan saying fastcgi-60 -> fastcgi-59 went unread.
 applied_generation() {
-  id=$(gh run list -R "$REPO" -w tofu.yaml -e issue_comment -s success -L 1 \
-    --json databaseId --jq '.[0].databaseId' 2>/dev/null || echo '')
-  case "$id" in ''|null) echo "  no successful apply run found"; return ;; esac
-  echo "  last successful apply run: https://github.com/$REPO/actions/runs/$id"
-  line=$(gh run view "$id" -R "$REPO" --log 2>/dev/null |
+  # Most runs apply nothing, so look for the newest one whose docker apply ran
+  found=$(gh api "repos/$REPO/actions/workflows/tofu.yaml/runs?status=success&per_page=30" \
+    --jq '.workflow_runs[].id' 2>/dev/null | while read -r run; do
+      gh api "repos/$REPO/actions/runs/$run/jobs" \
+        --jq ".jobs[] | select(.name == \"docker apply\" and .conclusion == \"success\") | \"$run \\(.id)\"" 2>/dev/null
+    done | head -1 || true)
+  [ -n "$found" ] || { echo "  no successful docker apply found"; return; }
+  run=${found% *}
+  job=${found#* }
+  echo "  last successful docker apply: https://github.com/$REPO/actions/runs/$run/job/$job"
+  line=$(gh run view -R "$REPO" --job "$job" --log 2>/dev/null |
     grep -E 'name[[:space:]]*=[[:space:]]*"fastcgi-[0-9]+"[[:space:]]*->' | head -1 || true)
   if [ -z "$line" ]; then
     echo "  that apply replaced no container (no fastcgi name change in its log)"
