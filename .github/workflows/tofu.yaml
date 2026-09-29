@@ -2,26 +2,19 @@
 name: tofu
 on:
   pull_request:
-  issue_comment:
-    types: [created]
-  pull_request_review:
-    types: [submitted]
-  pull_request_review_comment:
-    types: [created]
   workflow_dispatch:
     inputs:
       workspace:
-        description: The workspace to apply from this branch, without asking.
+        description: The workspace to apply from this branch, once its environment approves.
         required: true
         type: choice
         options: &workspaces [docker, github, grafana, healthchecks]
 permissions: {}
 jobs:
   plan:
-    # The required status check. Branch protection names it, so it has to come
-    # out exactly "<workspace> plan is empty". The job has no concurrency group
-    # on purpose: a cancelled check run does not satisfy a required check.
-    name: ${{ matrix.workspace }} plan is empty
+    # No concurrency group on purpose: a cancelled plan fails the gate below,
+    # and the gate is the required check.
+    name: ${{ matrix.workspace }} plan
     if: github.event_name == 'pull_request'
     strategy:
       fail-fast: false
@@ -122,7 +115,8 @@ jobs:
         with:
           path: ${{ matrix.workspace }}
 
-      - name: Nothing may reach main unapplied
+      - name: Whether there is anything to apply
+        id: changes
         if: steps.scope.outputs.plan == 'true'
         env:
           CHANGES: ${{ steps.plan.outputs.changes }}
@@ -132,14 +126,21 @@ jobs:
           # A plan that only moves resources can still count as having no changes
           pending=$(jq '[.resource_changes[]? | select(.change.importing or .previous_address)] | length' "$PLAN")
           if [ "$CHANGES" = true ] || [ "$pending" -gt 0 ]; then
-            echo "::error::the plan still has changes. Comment 'tofu apply', then merge."
-            exit 1
+            echo "apply=true" >> "$GITHUB_OUTPUT"
+            echo "The plan has changes, so $WORKSPACE apply waits for its environment to approve them."
+            exit 0
           fi
           # With nothing left to import or move, such a block has done its job
           if grep -rnE '^(import|moved) \{' --include='*.tf' "$WORKSPACE"; then
             echo "::warning::applied, so the import and moved blocks above can go."
           fi
           echo "The plan is empty."
+
+      # A matrix job has one set of outputs for all of its legs, so the pending
+      # job reads this step's conclusion in each leg instead. Keep the name.
+      - name: Changes to apply
+        if: steps.changes.outputs.apply == 'true'
+        run: echo "Queued for the apply job."
 
       - uses: ./.github/actions/collapse-comments
         if: always() && steps.plan.outcome != 'skipped'
@@ -170,9 +171,13 @@ jobs:
   # event skips this job but still reports it, and a skipped check counts as
   # passing, so a review-triggered run once satisfied the gate and let an
   # unapplied pull request merge (#870).
+  #
+  # While an apply waits for its environment's approval this job has not
+  # started, and a required check that has not reported keeps the merge button
+  # dead. Nothing reaches main unapplied that way.
   gate:
     name: ${{ github.event_name == 'pull_request' && 'tofu gate' || 'tofu gate (pull requests only)' }}
-    needs: [plan]
+    needs: [plan, pending, apply]
     if: always() && github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -183,123 +188,144 @@ jobs:
           RESULTS: ${{ toJSON(needs) }}
         run: |
           echo "$RESULTS"
-          failed=$(echo "$RESULTS" | jq -r 'to_entries[] | select(.value.result != "success") | "\(.key)=\(.value.result)"')
+          # apply alone may be skipped, which is what a run with nothing to apply does
+          failed=$(echo "$RESULTS" | jq -r 'to_entries[]
+            | select(.value.result != "success" and (.key != "apply" or .value.result != "skipped"))
+            | "\(.key)=\(.value.result)"')
           if [ -n "$failed" ]; then
             echo "::error::$(echo "$failed" | paste -sd' ')"
             exit 1
           fi
           echo "All green."
 
-  scope:
+  # Which workspaces to apply. On a pull request, those whose plan has
+  # changes; the apply job then waits for each one's environment to approve.
+  pending:
+    needs: plan
     if: >-
-      github.event_name == 'workflow_dispatch'
-      || (github.event.issue.pull_request && github.event.comment.body == 'tofu apply')
-      || (github.event_name == 'pull_request_review' && github.event.review.body == 'tofu apply')
-      || (github.event_name == 'pull_request_review_comment' && github.event.comment.body == 'tofu apply')
+      !cancelled() && (github.event_name == 'workflow_dispatch'
+      || (needs.plan.result == 'success' && github.event.pull_request.head.repo.full_name == github.repository))
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
-      contents: read
-      pull-requests: read
+      actions: write
     outputs:
-      workspaces: ${{ steps.files.outputs.workspaces }}
+      workspaces: ${{ steps.workspaces.outputs.workspaces }}
     steps:
-      - name: The branch has to carry everything on its base, and its base has to be the default branch
-        if: (github.event_name == 'issue_comment' || startsWith(github.event_name, 'pull_request_review'))
+      # Each push leaves a run behind, and one still waiting for approval would
+      # apply a plan of a commit the pull request no longer has. The apply job
+      # refuses that too; this keeps it from being offered at all.
+      - name: Cancel this pull request's older runs that still wait for approval
+        if: github.event_name == 'pull_request'
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
-          PR: ${{ github.event.issue.number || github.event.pull_request.number }}
-          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+          BRANCH: ${{ github.head_ref }}
+          RUN_ID: ${{ github.run_id }}
         run: |
-          base=$(gh pr view "$PR" --repo "$REPO" --json baseRefName --jq .baseRefName)
-          if [ "$base" != "$DEFAULT_BRANCH" ]; then
-            echo "::error::#$PR targets $base rather than $DEFAULT_BRANCH. An apply runs before the merge, so a plan from a stacked branch carries whatever is below it and applying this would apply those too. Merge the branch underneath first, retarget this one at $DEFAULT_BRANCH, then plan again."
-            exit 1
-          fi
-          head=$(gh pr view "$PR" --repo "$REPO" --json headRefOid --jq .headRefOid)
-          behind=$(gh api "repos/$REPO/compare/$base...$head" --jq .behind_by)
-          if [ "$behind" -gt 0 ]; then
-            echo "::error::#$PR is $behind commits behind $base, so a plan from it describes a tree that no longer exists and applying it would undo what landed meanwhile. Update the branch, then plan again."
-            exit 1
-          fi
-          echo "Up to date with $base."
+          gh api "repos/$REPO/actions/workflows/tofu.yaml/runs?event=pull_request&status=waiting&branch=$BRANCH" --paginate \
+            --jq '.workflow_runs[] | select(.id < (env.RUN_ID | tonumber)) | .id' | while read -r run; do
+            gh api --method POST "repos/$REPO/actions/runs/$run/cancel" \
+              && echo "Cancelled run $run" || echo "::warning::could not cancel run $run"
+          done
 
-      - name: Only a collaborator with write access, only a branch of this repository
-        if: (github.event_name == 'issue_comment' || startsWith(github.event_name, 'pull_request_review'))
-        env:
-          GH_TOKEN: ${{ github.token }}
-          REPO: ${{ github.repository }}
-          PR: ${{ github.event.issue.number || github.event.pull_request.number }}
-          USER: ${{ github.event.comment.user.login || github.event.review.user.login }}
-        run: |
-          permission=$(gh api "repos/$REPO/collaborators/$USER/permission" --jq .permission)
-          case "$permission" in admin|maintain|write) ;; *) echo "::error::$USER has $permission access"; exit 1 ;; esac
-          [ "$(gh pr view "$PR" --repo "$REPO" --json isCrossRepository --jq .isCrossRepository)" = false ] || { echo "::error::PR #$PR is from a fork"; exit 1; }
-
-      - name: Only the workspaces the pull request changes, each of which has an environment
-        id: files
+      - name: The workspaces to apply, each behind an environment that asks first
+        id: workspaces
         env:
           EVENT: ${{ github.event_name }}
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
-          PR: ${{ github.event.issue.number || github.event.pull_request.number }}
+          RUN_ID: ${{ github.run_id }}
           WORKSPACE: ${{ inputs.workspace }}
         run: |
           if [ "$EVENT" = workflow_dispatch ]; then
             workspaces=$(jq -nc --arg w "$WORKSPACE" '[$w]')
           else
-            environments=$(gh api "repos/$REPO/environments" --jq '[.environments[].name]')
-            workspaces=$(gh api "repos/$REPO/pulls/$PR/files" --paginate --jq '.[].filename' \
-              | cut -d/ -f1 | sort -u | jq -Rnc --argjson envs "$environments" '[inputs] | map(select(IN($envs[])))')
+            workspaces=$(gh api "repos/$REPO/actions/runs/$RUN_ID/jobs?filter=latest" --paginate \
+              --jq '.jobs[] | select(any(.steps[]?; .name == "Changes to apply" and .conclusion == "success")) | .name | sub(" plan$"; "")' \
+              | jq -Rnc '[inputs]')
           fi
+          # A job naming an environment that does not exist creates it without
+          # any protection, and the apply would then run without asking anyone
+          for w in $(echo "$workspaces" | jq -r '.[]'); do
+            reviewers=$(gh api "repos/$REPO/environments/$w" --jq '[.protection_rules[]? | select(.type == "required_reviewers")] | length' 2>/dev/null || echo 0)
+            if [ "$reviewers" -eq 0 ]; then
+              echo "::error::the $w environment has no required reviewers, so nothing would stop its apply. Add them in github/repo.tf."
+              exit 1
+            fi
+          done
           echo "workspaces=$workspaces" >> "$GITHUB_OUTPUT"
           echo "Applying $workspaces"
 
+  # The environment's required reviewers are what starts this job; approving
+  # the run is the apply. No concurrency group: a job waiting for approval
+  # would hold it and stall every other pull request's apply behind it. Two
+  # applies of one workspace at once still cannot both run, because the second
+  # fails on the S3 state lock.
   apply:
     name: ${{ matrix.workspace }} apply
-    needs: scope
-    if: needs.scope.outputs.workspaces != '[]'
+    needs: pending
+    if: needs.pending.outputs.workspaces != '[]'
     strategy:
       fail-fast: false
       matrix:
-        workspace: ${{ fromJSON(needs.scope.outputs.workspaces) }}
-    concurrency:
-      group: ${{ matrix.workspace }}
+        workspace: ${{ fromJSON(needs.pending.outputs.workspaces) }}
     runs-on: ubuntu-latest
     timeout-minutes: ${{ startsWith(matrix.workspace, 'docker') && 20 || 10 }}
     environment: ${{ matrix.workspace }}
     permissions:
+      actions: read
       contents: read
       id-token: write
       pull-requests: write
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
-        id: checkout
-        continue-on-error: true
-        with:
-          ref: ${{ (github.event_name == 'issue_comment' || startsWith(github.event_name, 'pull_request_review')) && format('refs/pull/{0}/merge', github.event.issue.number || github.event.pull_request.number) || github.ref }}
-          persist-credentials: false
-
-      - name: Merging deletes the ref above, so take the branch it merged into
-        id: recover
-        if: steps.checkout.outcome == 'failure'
+      # Approval can come long after the plan, so check again what the plan
+      # job checked when it ran.
+      - name: The pull request is still what this run planned, and still current
+        if: github.event_name == 'pull_request'
         env:
-          EVENT: ${{ github.event_name }}
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
-          PR: ${{ github.event.issue.number || github.event.pull_request.number }}
+          PR: ${{ github.event.pull_request.number }}
+          PLANNED: ${{ github.event.pull_request.head.sha }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
         run: |
-          case "$EVENT" in issue_comment|pull_request_review*) ;; *) echo "::error::the checkout failed"; exit 1 ;; esac
-          base=$(gh pr view "$PR" --repo "$REPO" --json merged,baseRefName --jq 'select(.merged) | .baseRefName')
-          [ -n "$base" ] || { echo "::error::could not check out #$PR, which has not merged"; exit 1; }
-          echo "base=$base" >> "$GITHUB_OUTPUT"
+          pr=$(gh api "repos/$REPO/pulls/$PR")
+          if [ "$(echo "$pr" | jq .merged)" = true ]; then
+            echo "::error::#$PR has merged, so there is no pull request left to apply. Apply $DEFAULT_BRANCH with workflow_dispatch instead."
+            exit 1
+          fi
+          head=$(echo "$pr" | jq -r .head.sha)
+          if [ "$head" != "$PLANNED" ]; then
+            echo "::error::#$PR is at $head now, not $PLANNED, which this run planned. Approve the run for $head instead."
+            exit 1
+          fi
+          base=$(echo "$pr" | jq -r .base.ref)
+          if [ "$base" != "$DEFAULT_BRANCH" ]; then
+            echo "::error::#$PR targets $base rather than $DEFAULT_BRANCH. An apply runs before the merge, so a plan from a stacked branch carries whatever is below it and applying this would apply those too. Merge the branch underneath first, retarget this one at $DEFAULT_BRANCH, then plan again."
+            exit 1
+          fi
+          behind=$(gh api "repos/$REPO/compare/$base...$head" --jq .behind_by)
+          if [ "$behind" -gt 0 ]; then
+            echo "::error::#$PR is $behind commits behind $base, so a plan from it describes a tree that no longer exists and applying it would undo what landed meanwhile. Update the branch, then approve the new run."
+            exit 1
+          fi
+          echo "Still $PLANNED, up to date with $base."
 
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
-        if: steps.recover.outcome == 'success'
         with:
-          ref: ${{ steps.recover.outputs.base }}
           persist-credentials: false
+
+      - name: Who approved this
+        id: approver
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          RUN_ID: ${{ github.run_id }}
+          ACTOR: ${{ github.actor }}
+        run: |
+          by=$(gh api "repos/$REPO/actions/runs/$RUN_ID/approvals" --jq '[.[] | select(.state == "approved") | .user.login] | last // empty' || true)
+          echo "by=${by:-$ACTOR}" >> "$GITHUB_OUTPUT"
 
       - uses: sarisia/actions-status-discord@eb045afee445dc055c18d3d90bd0f244fd062708  # v1.16.0
         with:
@@ -308,7 +334,7 @@ jobs:
           color: 0x3498db
           nodetail: true
           url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-          description: ${{ github.event.issue.html_url || github.event.pull_request.html_url || github.ref_name }} by ${{ github.actor }}
+          description: ${{ github.event.pull_request.html_url || github.ref_name }} by ${{ steps.approver.outputs.by }}
 
       - uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd  # v6.3.0
         with:
@@ -370,7 +396,7 @@ jobs:
       # A failed post does not fail an apply that has already changed production.
       # The next post carries the note, and the Discord message says it is owed.
       - name: Post the ```wikitext blocks of the applied pull request to the wiki
-        if: (github.event_name == 'issue_comment' || startsWith(github.event_name, 'pull_request_review')) && matrix.workspace == 'docker'
+        if: github.event_name == 'pull_request' && matrix.workspace == 'docker'
         id: post
         continue-on-error: true
         env:
@@ -378,7 +404,7 @@ jobs:
           WIKI_DEPLOY_BOT_USER: ${{ vars.WIKI_DEPLOY_BOT_USER }}
           WIKI_DEPLOY_BOT_PASSWORD: ${{ secrets.WIKI_DEPLOY_BOT_PASSWORD }}
           REPO: ${{ github.repository }}
-          PR: ${{ github.event.issue.number || github.event.pull_request.number }}
+          PR: ${{ github.event.pull_request.number }}
         run: .github/scripts/post-update.php "$REPO" "$PR"
 
       # The apply has to leave nothing behind, because the required check that
@@ -386,7 +412,7 @@ jobs:
       # than in a fresh run keeps the tofu binary, the providers and the docker
       # daemon this job already set up.
       - uses: dflook/tofu-plan@c7416238983bdd94c5486fb856bb7358f2bcc935  # v3.1.0
-        if: (github.event_name == 'issue_comment' || startsWith(github.event_name, 'pull_request_review')) && steps.apply.outcome == 'success'
+        if: github.event_name == 'pull_request' && steps.apply.outcome == 'success'
         id: verify
         env:
           GITHUB_TOKEN: ${{ github.token }}
@@ -403,7 +429,7 @@ jobs:
 
       - name: Nothing may be left for a later apply
         id: clean
-        if: (github.event_name == 'issue_comment' || startsWith(github.event_name, 'pull_request_review')) && steps.apply.outcome == 'success'
+        if: github.event_name == 'pull_request' && steps.apply.outcome == 'success'
         env:
           CHANGES: ${{ steps.verify.outputs.changes }}
           PLAN: ${{ steps.verify.outputs.json_plan_path }}
@@ -422,20 +448,15 @@ jobs:
         if: always()
         env:
           STATUS: ${{ job.status }}
-          RECOVER: ${{ steps.recover.outcome }}
-          BASE: ${{ steps.recover.outputs.base }}
           APPLY: ${{ steps.apply.outcome }}
           CLEAN: ${{ steps.clean.outcome }}
           POST: ${{ steps.post.outcome }}
           PLAN: ${{ steps.apply.outputs.json_plan_path }}
-          SUBJECT: ${{ github.event.issue.html_url || github.event.pull_request.html_url || github.ref_name }}
-          ACTOR: ${{ github.actor }}
+          SUBJECT: ${{ github.event.pull_request.html_url || github.ref_name }}
+          ACTOR: ${{ steps.approver.outputs.by }}
         run: |
           title=Errored
           note=
-          if [ "$RECOVER" = success ]; then
-            note=" - the pull request merged first, so this ran on $BASE"
-          fi
           if [ "$POST" = failure ]; then
             note="$note - the update note was not posted, and the next apply's post carries it"
           fi
@@ -475,38 +496,9 @@ jobs:
           aws ssm terminate-session --session-id "$sid" --output text \
             || echo "::warning::could not terminate $sid; it may have ended already."
 
-  replan:
-    needs: apply
-    if: needs.apply.result == 'success' && (github.event_name == 'issue_comment' || startsWith(github.event_name, 'pull_request_review'))
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    permissions:
-      actions: write
-      pull-requests: read
-    steps:
-      - name: Re-run the plans the apply emptied so the merge gate sees them
-        env:
-          GH_TOKEN: ${{ github.token }}
-          REPO: ${{ github.repository }}
-          PR: ${{ github.event.issue.number || github.event.pull_request.number }}
-        run: |
-          if [ "$(gh pr view "$PR" --repo "$REPO" --json merged --jq .merged)" = true ]; then
-            echo "#$PR merged first, so there is no merge gate left to refresh"
-            exit 0
-          fi
-          sha=$(gh pr view "$PR" --repo "$REPO" --json headRefOid --jq .headRefOid)
-          run=$(gh api "repos/$REPO/actions/workflows/tofu.yaml/runs?event=pull_request&head_sha=$sha" \
-            --jq '.workflow_runs[0] | select(.conclusion == "failure") | .id')
-          if [ -z "$run" ]; then
-            echo "No failed plan run for $sha, so nothing to re-run"
-            exit 0
-          fi
-          gh api --method POST "repos/$REPO/actions/runs/$run/rerun-failed-jobs" \
-            || echo "::warning::could not re-run plan $run"
-
   merge:
-    needs: apply
-    if: needs.apply.result == 'success' && (github.event_name == 'issue_comment' || startsWith(github.event_name, 'pull_request_review'))
+    needs: [apply, gate]
+    if: needs.apply.result == 'success' && needs.gate.result == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -521,7 +513,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
-          PR: ${{ github.event.issue.number || github.event.pull_request.number }}
+          PR: ${{ github.event.pull_request.number }}
         run: |
           if [ "$(gh pr view "$PR" --repo "$REPO" --json merged --jq .merged)" = true ]; then
             echo "#$PR is already merged"
@@ -533,15 +525,15 @@ jobs:
           if [ "$(gh pr view "$PR" --repo "$REPO" --json isDraft --jq .isDraft)" = true ]; then
             gh pr ready "$PR" --repo "$REPO"
           fi
-          # Until the plan checks come off branch protection they are still red
-          # here, and only auto-merge can wait for the run that turns them green
+          # The gate has just reported, and branch protection can take a moment
+          # to see it, so auto-merge waits out that moment
           gh pr merge "$PR" --repo "$REPO" --squash \
             || gh pr merge "$PR" --repo "$REPO" --squash --auto \
             || echo "::warning::could not merge #$PR; merge it by hand so the default branch matches what is deployed"
 
   log:
     needs: apply
-    if: always() && (github.event_name == 'issue_comment' || startsWith(github.event_name, 'pull_request_review')) && needs.apply.result != 'skipped'
+    if: always() && github.event_name == 'pull_request' && needs.apply.result != 'skipped'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -607,4 +599,4 @@ jobs:
 
       - uses: ./.github/actions/collapse-comments
         with:
-          pull-request: ${{ github.event.issue.number || github.event.pull_request.number }}
+          pull-request: ${{ github.event.pull_request.number }}
