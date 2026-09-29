@@ -8,7 +8,7 @@ on:
         description: The workspace to apply from this branch, once its environment approves.
         required: true
         type: choice
-        options: &workspaces [docker, github, grafana, healthchecks]
+        options: &workspaces [aws, docker, github, grafana, healthchecks]
 permissions: {}
 jobs:
   plan:
@@ -59,7 +59,9 @@ jobs:
       - uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd  # v6.3.0
         if: steps.scope.outputs.plan == 'true'
         with:
-          role-to-assume: arn:aws:iam::302617221463:role/infra-${{ matrix.workspace }}
+          # aws plans read-only: its apply role can change IAM, and any branch
+          # can open a pull request.
+          role-to-assume: arn:aws:iam::302617221463:role/infra-${{ matrix.workspace }}${{ matrix.workspace == 'aws' && '-plan' || '' }}
           aws-region: ap-northeast-1
 
       - uses: ./.github/actions/docker-daemon
@@ -102,6 +104,9 @@ jobs:
           TF_VAR_discord_webhook_url: ${{ matrix.workspace == 'grafana' && secrets.DISCORD_WEBHOOK_URL || '' }}
           TF_VAR_mastodon_token: ${{ matrix.workspace == 'grafana' && secrets.MASTODON_TOKEN || '' }}
           TF_VAR_healthchecksio_api_key: ${{ matrix.workspace == 'healthchecks' && secrets.HEALTHCHECKSIO_API_KEY || '' }}
+          TF_VAR_prometheus_password: ${{ matrix.workspace == 'aws' && secrets.AWS_PROMETHEUS_PASSWORD || '' }}
+          TF_VAR_loki_password: ${{ matrix.workspace == 'aws' && secrets.AWS_LOKI_PASSWORD || '' }}
+          TF_VAR_state_passphrase: ${{ matrix.workspace == 'aws' && secrets.AWS_STATE_PASSPHRASE || '' }}
         with:
           path: ${{ matrix.workspace }}
 
@@ -286,6 +291,9 @@ jobs:
           TF_VAR_discord_webhook_url: ${{ matrix.workspace == 'grafana' && secrets.DISCORD_WEBHOOK_URL || '' }}
           TF_VAR_mastodon_token: ${{ matrix.workspace == 'grafana' && secrets.MASTODON_TOKEN || '' }}
           TF_VAR_healthchecksio_api_key: ${{ matrix.workspace == 'healthchecks' && secrets.HEALTHCHECKSIO_API_KEY || '' }}
+          TF_VAR_prometheus_password: ${{ matrix.workspace == 'aws' && secrets.AWS_PROMETHEUS_PASSWORD || '' }}
+          TF_VAR_loki_password: ${{ matrix.workspace == 'aws' && secrets.AWS_LOKI_PASSWORD || '' }}
+          TF_VAR_state_passphrase: ${{ matrix.workspace == 'aws' && secrets.AWS_STATE_PASSPHRASE || '' }}
         with:
           path: ${{ matrix.workspace }}
           auto_approve: ${{ github.event_name == 'workflow_dispatch' }}
@@ -320,6 +328,9 @@ jobs:
           TF_VAR_discord_webhook_url: ${{ matrix.workspace == 'grafana' && secrets.DISCORD_WEBHOOK_URL || '' }}
           TF_VAR_mastodon_token: ${{ matrix.workspace == 'grafana' && secrets.MASTODON_TOKEN || '' }}
           TF_VAR_healthchecksio_api_key: ${{ matrix.workspace == 'healthchecks' && secrets.HEALTHCHECKSIO_API_KEY || '' }}
+          TF_VAR_prometheus_password: ${{ matrix.workspace == 'aws' && secrets.AWS_PROMETHEUS_PASSWORD || '' }}
+          TF_VAR_loki_password: ${{ matrix.workspace == 'aws' && secrets.AWS_LOKI_PASSWORD || '' }}
+          TF_VAR_state_passphrase: ${{ matrix.workspace == 'aws' && secrets.AWS_STATE_PASSPHRASE || '' }}
         with:
           path: ${{ matrix.workspace }}
           add_github_comment: changes-only
