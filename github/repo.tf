@@ -216,7 +216,8 @@ module "terraform_github_tacos" {
     "tacos",
   ]
 
-  required_pull_request_reviews = []
+  required_pull_request_reviews   = []
+  required_status_checks_contexts = ["shellcheck", "tofu"]
 }
 
 module "lambda" {
