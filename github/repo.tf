@@ -206,6 +206,19 @@ module "quibble_action" {
   ]
 }
 
+module "terraform_github_tacos" {
+  source      = "./modules/github-repository"
+  name        = "terraform-github-tacos"
+  description = "GitHub Actions and an OpenTofu module that plan in the PR and apply on environment approval"
+  topics = [
+    "github-actions",
+    "opentofu",
+    "tacos",
+  ]
+
+  required_pull_request_reviews = []
+}
+
 module "lambda" {
   source      = "./modules/github-repository"
   name        = "lambda"
