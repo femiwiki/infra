@@ -1,0 +1,282 @@
+#!/bin/sh
+# fw-deploy - preflight, watch and verify a femiwiki/infra deploy.
+#
+# Each gate here exists because its prose version was read and not followed.
+# Read-only: it never comments, merges, applies or pushes.
+#
+#   fw-deploy preflight <pr>   refuse or approve before asking for an apply approval
+#   fw-deploy watch-apply <pr> wait for the pull request's run and its apply, and report them
+#   fw-deploy verify           probe the site and print the running generation
+set -eu
+
+REPO=${FW_REPO:-femiwiki/infra}
+INFRA_DIR=${FW_INFRA_DIR:-$HOME/git/fw/infra}
+SITE=${FW_SITE:-https://femiwiki.com/}
+
+die() { echo "fw-deploy: $*" >&2; exit 2; }
+
+# gh returns the literal string "null" for a missing field, and "null" in a
+# numeric test aborts the script. Every number from gh goes through this.
+num() { # num <value> <fallback>
+  case "$1" in
+    ''|null|*[!0-9]*) echo "$2" ;;
+    *) echo "$1" ;;
+  esac
+}
+
+usage() {
+  cat >&2 <<'EOF'
+fw-deploy preflight <pr> [--pretend-head-gen <n>]
+    refuse or approve before asking anyone to approve an apply
+fw-deploy watch-apply <pr> [--run-id <id>] [--timeout <s>]
+    wait for the run of the pull request's head, apply included, and report its jobs
+fw-deploy verify [probes]
+    probe the front page and print the declared and applied generation
+EOF
+  exit 2
+}
+
+# ---------------------------------------------------------------- preflight ---
+
+# The generation appears once in docker/locals.tf; read it, never assume it.
+gen_at() { # gen_at <ref>
+  gh api "repos/$REPO/contents/docker/locals.tf?ref=$1" --jq .content 2>/dev/null |
+    tr -d '\n' | base64 -d 2>/dev/null |
+    awk '/fastcgi_generation[[:space:]]*=/ { gsub(/[^0-9]/, "", $NF); print $NF; exit }'
+}
+
+cmd_preflight() {
+  pretend_head_gen=''
+  pr=''
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      # Only to exercise the gate: acts as if head declared this generation.
+      --pretend-head-gen) shift; pretend_head_gen=${1:?}; ;;
+      -*) die "unknown option $1" ;;
+      *) pr=$1 ;;
+    esac
+    shift
+  done
+  [ -n "$pr" ] || usage
+
+  facts=$(gh api "repos/$REPO/pulls/$pr" \
+    --jq '[.base.ref, .base.sha, .head.sha, (.merged | tostring), .title] | @tsv')
+  base_ref=$(printf '%s\n' "$facts" | cut -f1)
+  base_sha=$(printf '%s\n' "$facts" | cut -f2)
+  head_sha=$(printf '%s\n' "$facts" | cut -f3)
+  merged=$(printf '%s\n' "$facts" | cut -f4)
+  title=$(printf '%s\n' "$facts" | cut -f5)
+
+  echo "PR $pr  $title"
+  echo "base=$base_ref  head=$head_sha  merged=$merged"
+  echo
+
+  fail=0
+
+  # -- gate 1: branch freshness -----------------------------------------------
+  # The plan and apply jobs refuse a pull request behind its base. Print the verdict as
+  # a word: a bare number in a wall of output has been read as "fine" before.
+  if [ "$merged" = true ]; then
+    echo "FRESHNESS SKIPPED (pull request already merged)"
+  else
+    behind_raw=$(gh api "repos/$REPO/compare/$base_ref...$head_sha" --jq .behind_by 2>/dev/null || echo '')
+    behind=$(num "$behind_raw" -1)
+    if [ "$behind" -lt 0 ]; then
+      echo "FRESHNESS UNKNOWN (compare returned '$behind_raw')"
+      fail=1
+    elif [ "$behind" -eq 0 ]; then
+      echo "READY"
+    else
+      echo "BEHIND $behind"
+      echo "  the apply job rejects a branch behind its base; rebase or update the branch"
+      fail=1
+    fi
+  fi
+
+  # -- gate 2: generation bump ------------------------------------------------
+  # docker/res/* files and docker/container.tf env/image values reach the
+  # container only at creation, so the provider replaces it. With
+  # create_before_destroy the new container is created while the old one still
+  # holds the name, and the apply dies on
+  #   Conflict. The container name "/fastcgi-69" is already in use
+  # unless the same pull request raises local.fastcgi_generation.
+  files=$(gh api "repos/$REPO/pulls/$pr/files" --paginate --jq '.[].filename')
+  triggers=''
+  res_hits=$(printf '%s\n' "$files" | grep '^docker/res/' || true)
+  [ -n "$res_hits" ] && triggers="$res_hits"
+
+  ctf=$(printf '%s\n' "$files" | grep -x 'docker/container.tf' || true)
+  if [ -n "$ctf" ]; then
+    patch=$(gh api "repos/$REPO/pulls/$pr/files" --paginate \
+      --jq '.[] | select(.filename == "docker/container.tf") | .patch' 2>/dev/null || true)
+    # Container env names are upper case; image is the other create-only value.
+    env_hits=$(printf '%s\n' "$patch" |
+      grep -E '^[+-][[:space:]]*([A-Z][A-Z0-9_]*|image)[[:space:]]*=' || true)
+    if [ -n "$env_hits" ]; then
+      triggers="${triggers:+$triggers
+}docker/container.tf (create-only values):
+$env_hits"
+    fi
+  fi
+
+  old_gen=$(num "$(gen_at "$base_sha")" -1)
+  if [ -n "$pretend_head_gen" ]; then
+    new_gen=$(num "$pretend_head_gen" -1)
+    echo "(--pretend-head-gen: treating head as generation $new_gen)"
+  else
+    new_gen=$(num "$(gen_at "$head_sha")" -1)
+  fi
+
+  if [ -z "$triggers" ]; then
+    echo "GENERATION NOT REQUIRED (no docker/res/* or create-only container value changed)"
+  elif [ "$old_gen" -lt 0 ] || [ "$new_gen" -lt 0 ]; then
+    echo "GENERATION UNKNOWN (could not read fastcgi_generation: base=$old_gen head=$new_gen)"
+    fail=1
+  elif [ "$new_gen" -gt "$old_gen" ]; then
+    echo "GENERATION BUMP OK ($old_gen -> $new_gen)"
+  else
+    echo "MISSING GENERATION BUMP (fastcgi_generation stays $old_gen)"
+    echo "  create_before_destroy makes the new container claim the name the old one still holds:"
+    echo "  Conflict. The container name \"/fastcgi-$old_gen\" is already in use"
+    fail=1
+  fi
+  if [ -n "$triggers" ]; then
+    echo "  create-only changes found:"
+    printf '%s\n' "$triggers" | sed 's/^/    /'
+  fi
+
+  [ "$fail" -eq 0 ] || { echo; echo "PREFLIGHT FAILED - do not ask for an apply"; exit 1; }
+  echo
+  echo "PREFLIGHT PASSED"
+}
+
+# --------------------------------------------------------------- watch-apply --
+
+cmd_watch_apply() {
+  pr=''
+  run_id=''
+  timeout=${FW_TIMEOUT:-2400}
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --run-id) shift; run_id=${1:?} ;;
+      --timeout) shift; timeout=${1:?} ;;
+      -*) die "unknown option $1" ;;
+      *) pr=$1 ;;
+    esac
+    shift
+  done
+  [ -n "$pr" ] || [ -n "$run_id" ] || usage
+
+  if [ -z "$run_id" ]; then
+    # The apply is a job of the pull request's own run, waiting for its
+    # environment's approval, so the run to follow is the newest one for the
+    # head commit. An older run of the same pull request plans a commit the
+    # branch no longer has, and its apply refuses to start.
+    head=$(gh api "repos/$REPO/pulls/$pr" --jq .head.sha)
+    echo "waiting for a pull_request run of tofu.yaml on $head"
+    waited=0
+    while [ "$waited" -lt "$timeout" ]; do
+      run_id=$(gh api "repos/$REPO/actions/workflows/tofu.yaml/runs?event=pull_request&head_sha=$head" \
+        --jq '.workflow_runs[0].id // empty' 2>/dev/null || true)
+      [ -n "$run_id" ] && break
+      sleep 15
+      waited=$((waited + 15))
+    done
+    [ -n "$run_id" ] || { echo "no run appeared within ${timeout}s"; exit 1; }
+  fi
+
+  echo "run $run_id  https://github.com/$REPO/actions/runs/$run_id"
+
+  waited=0
+  while [ "$waited" -lt "$timeout" ]; do
+    status=$(gh api "repos/$REPO/actions/runs/$run_id" --jq .status 2>/dev/null || echo '')
+    case "$status" in
+      completed) break ;;
+      '') echo "could not read run $run_id"; exit 1 ;;
+    esac
+    note=''
+    [ "$status" = waiting ] && note='  (an apply waits for its environment to be approved)'
+    printf '%s status=%s%s\n' "$(date -u +%H:%M:%SZ)" "$status" "$note"
+    sleep 20
+    waited=$((waited + 20))
+  done
+
+  echo
+  echo "jobs:"
+  gh api "repos/$REPO/actions/runs/$run_id/jobs" --paginate \
+    --jq '.jobs[] | "  \(.conclusion // .status)\t\(.name)"'
+  conclusion=$(gh api "repos/$REPO/actions/runs/$run_id" --jq '.conclusion // "-"')
+  echo
+  echo "run conclusion: $conclusion"
+  [ "$conclusion" = success ] || exit 1
+}
+
+# -------------------------------------------------------------------- verify --
+
+# The generation actually applied, read from the log of the newest successful
+# docker apply job. A rollback shows here as the arrow pointing down; one
+# happened because a plan saying fastcgi-60 -> fastcgi-59 went unread.
+applied_generation() {
+  # Most runs apply nothing, so look for the newest one whose docker apply ran
+  found=$(gh api "repos/$REPO/actions/workflows/tofu.yaml/runs?status=success&per_page=30" \
+    --jq '.workflow_runs[].id' 2>/dev/null | while read -r run; do
+      gh api "repos/$REPO/actions/runs/$run/jobs" \
+        --jq ".jobs[] | select(.name == \"docker apply\" and .conclusion == \"success\") | \"$run \\(.id)\"" 2>/dev/null
+    done | head -1 || true)
+  [ -n "$found" ] || { echo "  no successful docker apply found"; return; }
+  run=${found% *}
+  job=${found#* }
+  echo "  last successful docker apply: https://github.com/$REPO/actions/runs/$run/job/$job"
+  line=$(gh run view -R "$REPO" --job "$job" --log 2>/dev/null |
+    grep -E 'name[[:space:]]*=[[:space:]]*"fastcgi-[0-9]+"[[:space:]]*->' | head -1 || true)
+  if [ -z "$line" ]; then
+    echo "  that apply replaced no container (no fastcgi name change in its log)"
+    return
+  fi
+  from=$(num "$(printf '%s\n' "$line" | sed -n 's/.*"fastcgi-\([0-9]*\)".*->.*/\1/p')" -1)
+  to=$(num "$(printf '%s\n' "$line" | sed -n 's/.*->[^"]*"fastcgi-\([0-9]*\)".*/\1/p')" -1)
+  echo "  applied generation: $from -> $to"
+  if [ "$from" -ge 0 ] && [ "$to" -ge 0 ] && [ "$to" -lt "$from" ]; then
+    echo "  ROLLBACK: the generation went DOWN"
+  fi
+}
+
+cmd_verify() {
+  n=${1:-5}
+  echo "probing $SITE ($n times)"
+  i=0
+  while [ "$i" -lt "$n" ]; do
+    # -L: the front page is a redirect, and a bare 301 tells nothing about
+    # whether the wiki behind it answers.
+    out=$(curl -sSL -o /dev/null -w '%{http_code} %{time_total}s %{url_effective}' "$SITE" 2>&1 ||
+      echo 'curl failed')
+    printf '  %s %s\n' "$(date -u +%H:%M:%SZ)" "$out"
+    i=$((i + 1))
+    [ "$i" -lt "$n" ] && sleep 2
+  done
+
+  echo
+  echo "generation:"
+  if [ -d "$INFRA_DIR/.git" ]; then
+    git -C "$INFRA_DIR" fetch -q origin 2>/dev/null || true
+    declared=$(num "$(git -C "$INFRA_DIR" show origin/main:docker/locals.tf 2>/dev/null |
+      awk '/fastcgi_generation[[:space:]]*=/ { gsub(/[^0-9]/, "", $NF); print $NF; exit }')" -1)
+    [ "$declared" -ge 0 ] && echo "  origin/main declares: $declared" ||
+      echo "  could not read origin/main:docker/locals.tf"
+  else
+    echo "  no infra checkout at $INFRA_DIR (set FW_INFRA_DIR)"
+  fi
+  applied_generation
+}
+
+# ---------------------------------------------------------------------- main --
+
+[ $# -gt 0 ] || usage
+sub=$1
+shift
+case "$sub" in
+  preflight) cmd_preflight "$@" ;;
+  watch-apply) cmd_watch_apply "$@" ;;
+  verify) cmd_verify "$@" ;;
+  *) usage ;;
+esac
