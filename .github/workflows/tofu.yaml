@@ -27,20 +27,10 @@ jobs:
       id-token: write
       pull-requests: write
     steps:
-      - name: The branch has to carry everything on its base
-        env:
-          GH_TOKEN: ${{ github.token }}
-          REPO: ${{ github.repository }}
-          PR: ${{ github.event.number }}
-        run: |
-          base=$(gh pr view "$PR" --repo "$REPO" --json baseRefName --jq .baseRefName)
-          head=$(gh pr view "$PR" --repo "$REPO" --json headRefOid --jq .headRefOid)
-          behind=$(gh api "repos/$REPO/compare/$base...$head" --jq .behind_by)
-          if [ "$behind" -gt 0 ]; then
-            echo "::error::#$PR is $behind commits behind $base, so a plan from it describes a tree that no longer exists and applying it would undo what landed meanwhile. Update the branch, then plan again."
-            exit 1
-          fi
-          echo "Up to date with $base."
+      - uses: femiwiki/terraform-github-tacos@1a7d68b983281e58359bbda2242ca865625396ba  # main
+        with:
+          step: plan
+          workspace: ${{ matrix.workspace }}
 
       - name: Only a pull request that changes this workspace
         id: scope
@@ -115,32 +105,24 @@ jobs:
         with:
           path: ${{ matrix.workspace }}
 
-      - name: Whether there is anything to apply
+      - uses: femiwiki/terraform-github-tacos@1a7d68b983281e58359bbda2242ca865625396ba  # main
         id: changes
         if: steps.scope.outputs.plan == 'true'
+        with:
+          step: changes
+          workspace: ${{ matrix.workspace }}
+          changes: ${{ steps.plan.outputs.changes }}
+          plan-json: ${{ steps.plan.outputs.json_plan_path }}
+
+      # With nothing left to import or move, such a block has done its job
+      - name: Leftover import and moved blocks
+        if: steps.changes.outputs.apply == 'false'
         env:
-          CHANGES: ${{ steps.plan.outputs.changes }}
-          PLAN: ${{ steps.plan.outputs.json_plan_path }}
           WORKSPACE: ${{ matrix.workspace }}
         run: |
-          # A plan that only moves resources can still count as having no changes
-          pending=$(jq '[.resource_changes[]? | select(.change.importing or .previous_address)] | length' "$PLAN")
-          if [ "$CHANGES" = true ] || [ "$pending" -gt 0 ]; then
-            echo "apply=true" >> "$GITHUB_OUTPUT"
-            echo "The plan has changes, so $WORKSPACE apply waits for its environment to approve them."
-            exit 0
-          fi
-          # With nothing left to import or move, such a block has done its job
           if grep -rnE '^(import|moved) \{' --include='*.tf' "$WORKSPACE"; then
             echo "::warning::applied, so the import and moved blocks above can go."
           fi
-          echo "The plan is empty."
-
-      # A matrix job has one set of outputs for all of its legs, so the pending
-      # job reads this step's conclusion in each leg instead. Keep the name.
-      - name: Changes to apply
-        if: steps.changes.outputs.apply == 'true'
-        run: echo "Queued for the apply job."
 
       - uses: ./.github/actions/collapse-comments
         if: always() && steps.plan.outcome != 'skipped'
@@ -183,20 +165,10 @@ jobs:
     timeout-minutes: 5
     permissions: {}
     steps:
-      - name: Every job this gate stands for has to have succeeded
-        env:
-          RESULTS: ${{ toJSON(needs) }}
-        run: |
-          echo "$RESULTS"
-          # apply alone may be skipped, which is what a run with nothing to apply does
-          failed=$(echo "$RESULTS" | jq -r 'to_entries[]
-            | select(.value.result != "success" and (.key != "apply" or .value.result != "skipped"))
-            | "\(.key)=\(.value.result)"')
-          if [ -n "$failed" ]; then
-            echo "::error::$(echo "$failed" | paste -sd' ')"
-            exit 1
-          fi
-          echo "All green."
+      - uses: femiwiki/terraform-github-tacos@1a7d68b983281e58359bbda2242ca865625396ba  # main
+        with:
+          step: gate
+          needs: ${{ toJSON(needs) }}
 
   # Which workspaces to apply. On a pull request, those whose plan has
   # changes; the apply job then waits for each one's environment to approve.
@@ -209,53 +181,15 @@ jobs:
     timeout-minutes: 5
     permissions:
       actions: write
+      checks: read
     outputs:
-      workspaces: ${{ steps.workspaces.outputs.workspaces }}
+      workspaces: ${{ steps.pending.outputs.workspaces }}
     steps:
-      # Each push leaves a run behind, and one still waiting for approval would
-      # apply a plan of a commit the pull request no longer has. The apply job
-      # refuses that too; this keeps it from being offered at all.
-      - name: Cancel this pull request's older runs that still wait for approval
-        if: github.event_name == 'pull_request'
-        env:
-          GH_TOKEN: ${{ github.token }}
-          REPO: ${{ github.repository }}
-          BRANCH: ${{ github.head_ref }}
-          RUN_ID: ${{ github.run_id }}
-        run: |
-          gh api "repos/$REPO/actions/workflows/tofu.yaml/runs?event=pull_request&status=waiting&branch=$BRANCH" --paginate \
-            --jq '.workflow_runs[] | select(.id < (env.RUN_ID | tonumber)) | .id' | while read -r run; do
-            gh api --method POST "repos/$REPO/actions/runs/$run/cancel" \
-              && echo "Cancelled run $run" || echo "::warning::could not cancel run $run"
-          done
-
-      - name: The workspaces to apply, each behind an environment that asks first
-        id: workspaces
-        env:
-          EVENT: ${{ github.event_name }}
-          GH_TOKEN: ${{ github.token }}
-          REPO: ${{ github.repository }}
-          RUN_ID: ${{ github.run_id }}
-          WORKSPACE: ${{ inputs.workspace }}
-        run: |
-          if [ "$EVENT" = workflow_dispatch ]; then
-            workspaces=$(jq -nc --arg w "$WORKSPACE" '[$w]')
-          else
-            workspaces=$(gh api "repos/$REPO/actions/runs/$RUN_ID/jobs?filter=latest" --paginate \
-              --jq '.jobs[] | select(any(.steps[]?; .name == "Changes to apply" and .conclusion == "success")) | .name | sub(" plan$"; "")' \
-              | jq -Rnc '[inputs]')
-          fi
-          # A job naming an environment that does not exist creates it without
-          # any protection, and the apply would then run without asking anyone
-          for w in $(echo "$workspaces" | jq -r '.[]'); do
-            reviewers=$(gh api "repos/$REPO/environments/$w" --jq '[.protection_rules[]? | select(.type == "required_reviewers")] | length' 2>/dev/null || echo 0)
-            if [ "$reviewers" -eq 0 ]; then
-              echo "::error::the $w environment has no required reviewers, so nothing would stop its apply. Add them in github/repo.tf."
-              exit 1
-            fi
-          done
-          echo "workspaces=$workspaces" >> "$GITHUB_OUTPUT"
-          echo "Applying $workspaces"
+      - uses: femiwiki/terraform-github-tacos@1a7d68b983281e58359bbda2242ca865625396ba  # main
+        id: pending
+        with:
+          step: pending
+          workspaces: ${{ inputs.workspace && format('["{0}"]', inputs.workspace) || '' }}
 
   # The environment's required reviewers are what starts this job; approving
   # the run is the apply. No concurrency group: a job waiting for approval
@@ -279,53 +213,15 @@ jobs:
       id-token: write
       pull-requests: write
     steps:
-      # Approval can come long after the plan, so check again what the plan
-      # job checked when it ran.
-      - name: The pull request is still what this run planned, and still current
-        if: github.event_name == 'pull_request'
-        env:
-          GH_TOKEN: ${{ github.token }}
-          REPO: ${{ github.repository }}
-          PR: ${{ github.event.pull_request.number }}
-          PLANNED: ${{ github.event.pull_request.head.sha }}
-          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
-        run: |
-          pr=$(gh api "repos/$REPO/pulls/$PR")
-          if [ "$(echo "$pr" | jq .merged)" = true ]; then
-            echo "::error::#$PR has merged, so there is no pull request left to apply. Apply $DEFAULT_BRANCH with workflow_dispatch instead."
-            exit 1
-          fi
-          head=$(echo "$pr" | jq -r .head.sha)
-          if [ "$head" != "$PLANNED" ]; then
-            echo "::error::#$PR is at $head now, not $PLANNED, which this run planned. Approve the run for $head instead."
-            exit 1
-          fi
-          base=$(echo "$pr" | jq -r .base.ref)
-          if [ "$base" != "$DEFAULT_BRANCH" ]; then
-            echo "::error::#$PR targets $base rather than $DEFAULT_BRANCH. An apply runs before the merge, so a plan from a stacked branch carries whatever is below it and applying this would apply those too. Merge the branch underneath first, retarget this one at $DEFAULT_BRANCH, then plan again."
-            exit 1
-          fi
-          behind=$(gh api "repos/$REPO/compare/$base...$head" --jq .behind_by)
-          if [ "$behind" -gt 0 ]; then
-            echo "::error::#$PR is $behind commits behind $base, so a plan from it describes a tree that no longer exists and applying it would undo what landed meanwhile. Update the branch, then approve the new run."
-            exit 1
-          fi
-          echo "Still $PLANNED, up to date with $base."
+      - uses: femiwiki/terraform-github-tacos@1a7d68b983281e58359bbda2242ca865625396ba  # main
+        id: approver
+        with:
+          step: apply
+          workspace: ${{ matrix.workspace }}
 
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
         with:
           persist-credentials: false
-
-      - name: Who approved this
-        id: approver
-        env:
-          GH_TOKEN: ${{ github.token }}
-          REPO: ${{ github.repository }}
-          RUN_ID: ${{ github.run_id }}
-          ACTOR: ${{ github.actor }}
-        run: |
-          by=$(gh api "repos/$REPO/actions/runs/$RUN_ID/approvals" --jq '[.[] | select(.state == "approved") | .user.login] | last // empty' || true)
-          echo "by=${by:-$ACTOR}" >> "$GITHUB_OUTPUT"
 
       - uses: sarisia/actions-status-discord@eb045afee445dc055c18d3d90bd0f244fd062708  # v1.16.0
         with:
@@ -334,7 +230,7 @@ jobs:
           color: 0x3498db
           nodetail: true
           url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-          description: ${{ github.event.pull_request.html_url || github.ref_name }} by ${{ steps.approver.outputs.by }}
+          description: ${{ github.event.pull_request.html_url || github.ref_name }} by ${{ steps.approver.outputs.approver }}
 
       - uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd  # v6.3.0
         with:
@@ -453,7 +349,7 @@ jobs:
           POST: ${{ steps.post.outcome }}
           PLAN: ${{ steps.apply.outputs.json_plan_path }}
           SUBJECT: ${{ github.event.pull_request.html_url || github.ref_name }}
-          ACTOR: ${{ steps.approver.outputs.by }}
+          ACTOR: ${{ steps.approver.outputs.approver }}
         run: |
           title=Errored
           note=
@@ -505,31 +401,9 @@ jobs:
       contents: write
       pull-requests: write
     steps:
-      # An apply runs before the merge, so until the pull request lands the
-      # default branch describes less than what is deployed, and the next apply
-      # from any other branch takes production back to it. Every apply leg
-      # succeeded, which now includes each one re-planning to nothing.
-      - name: Merge the pull request this apply came from
-        env:
-          GH_TOKEN: ${{ github.token }}
-          REPO: ${{ github.repository }}
-          PR: ${{ github.event.pull_request.number }}
-        run: |
-          if [ "$(gh pr view "$PR" --repo "$REPO" --json merged --jq .merged)" = true ]; then
-            echo "#$PR is already merged"
-            exit 0
-          fi
-          # A draft cannot be merged at all, so an apply from one would leave
-          # production ahead of the default branch with only the warning below
-          # to say so, until the next apply from any other branch took it back.
-          if [ "$(gh pr view "$PR" --repo "$REPO" --json isDraft --jq .isDraft)" = true ]; then
-            gh pr ready "$PR" --repo "$REPO"
-          fi
-          # The gate has just reported, and branch protection can take a moment
-          # to see it, so auto-merge waits out that moment
-          gh pr merge "$PR" --repo "$REPO" --squash \
-            || gh pr merge "$PR" --repo "$REPO" --squash --auto \
-            || echo "::warning::could not merge #$PR; merge it by hand so the default branch matches what is deployed"
+      - uses: femiwiki/terraform-github-tacos@1a7d68b983281e58359bbda2242ca865625396ba  # main
+        with:
+          step: merge
 
   log:
     needs: apply
