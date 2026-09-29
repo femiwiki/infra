@@ -41,6 +41,7 @@ locals {
     "rankingbot",
     "remote-gadgets",
     "status",
+    "terraform-github-tacos",
     "terraform-provider-mediawiki",
     "tweetbot",
   ])
