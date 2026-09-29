@@ -1,6 +1,6 @@
 ---
 name: femiwiki-deploy-watch
-description: Watch a femiwiki deploy end to end — assert a branch is current before asking for `tofu apply`, follow the image-build and bump-PR chain, probe across the container swap, and verify afterwards. Use for any femiwiki/infra apply or femiwiki/docker-mediawiki image change.
+description: Watch a femiwiki deploy end to end — assert a branch is current before asking for an apply approval, follow the image-build and bump-PR chain, probe across the container swap, and verify afterwards. Use for any femiwiki/infra apply or femiwiki/docker-mediawiki image change.
 ---
 
 # Watching a femiwiki deploy
@@ -12,7 +12,8 @@ whole chain rather than the step in front of you.
 docker-mediawiki PR merged
   -> image build (images.yml)
   -> infra bump PR opens by itself on branch bump-femiwiki-image
-  -> operator comments 'tofu apply'
+  -> its run plans, then 'docker apply' waits for the docker environment
+  -> operator approves the deployment
   -> Actions applies, re-plans in place, merges the PR itself
   -> containers swap, generation + 1
 ```
@@ -75,31 +76,16 @@ A bump should be `2 to add, 2 to destroy` with the generation going **up**.
 It waits, then prints the per-job conclusions and the run conclusion, exiting
 non-zero unless the run succeeded. The selection rules it encodes:
 
-- Match the run by event, not by recency: a `pull_request` plan run and an
-  `issue_comment` apply run land seconds apart and look alike.
-- Filter with `-e issue_comment`, never by branch: an `issue_comment` run reports
-  `headBranch=main`, not the pull request's branch, so a branch filter matches
-  nothing and the watcher waits forever while the apply finishes without it.
-- **An `issue_comment` run executes the workflow file on the default branch**,
-  not the pull request's. Same root cause as the line above: GitHub treats the
-  event as belonging to `main`. So a change under `.github/workflows/` or
-  `.github/actions/` cannot be exercised by a `tofu apply` comment on its own
-  pull request. The plan side uses the pull request's file and passes; the apply
-  side behaves as if the change were absent. Merge first, then apply from `main`
-  with `gh workflow run tofu.yaml -f workspace=<name>`.
-- A comment that is not `tofu apply` also produces an `issue_comment` run, which
-  ends `skipped`. That run is not the apply.
-- The run is usually created **before** the watcher starts: the operator comments,
-  then the watcher is launched. A cutoff of "now" misses it by seconds and then
-  waits out the whole timeout while the apply succeeds without it. `watch-apply`
-  looks back `--grace` seconds, 300 by default. Seen on infra#957, where the run
-  was created at 15:38:23Z and the watcher wanted runs after 15:38:31Z.
-- That window can also contain a previous failed attempt on the same pull
-  request, so among the matches it takes one that is still running, and only
-  falls back to the newest when they have all finished. It prints the run it
-  picked and when that run was created, so the choice can be checked.
-- `issue_comment` runs carry no `pull_requests`, so the only link back to the
-  pull request is `displayTitle`.
+- The apply is not a run of its own. It is the `<workspace> apply` job of the
+  pull request's `pull_request` run, and that run shows `waiting` until the
+  environment is approved. So the watcher follows the newest run for the head
+  commit, and starting it before the approval is fine.
+- An older run of the same pull request plans a commit the branch no longer
+  has. A new run cancels such runs while they wait, and the apply job refuses
+  a head that moved, so approving the wrong one fails before tofu starts.
+- The run reads the workflow file from the pull request's branch, so a change
+  under `.github/workflows/` or `.github/actions/` applies itself, including a
+  new `TF_VAR_*`.
 
 Guard the bump pull request's number before comparing it, or `[ "$num" -gt 0 ]`
 errors on the literal string `null`:
@@ -117,8 +103,8 @@ will time out. Changes under `dockers/femiwiki/` go straight there.
 
 ## Probing the swap
 
-Start the probe when the apply job is actually running, not when the comment is
-posted; a queued run can sit for many minutes and a fixed-length probe expires
+Start the probe when the apply job is actually running, not when the deployment
+is approved; a queued job can sit for many minutes and a fixed-length probe expires
 before the swap.
 
 ```sh
