@@ -1,5 +1,6 @@
 {{ if eq .Status "firing" }}<@&__MENTION_ROLE__>{{ end }}
-{{ range .Alerts }}{{ .Annotations.summary }}
-시작 {{ .StartsAt.Format "2006-01-02 15:04" }} UTC
+{{ range .Alerts }}{{ if eq .Status "resolved" }}해제됐습니다. 아래 숫자는 해제 시점에 다시 잰 값입니다.
+{{ end }}{{ .Annotations.summary }}
+시작 {{ .StartsAt.Format "2006-01-02 15:04" }} UTC{{ if eq .Status "resolved" }}, 해제 {{ .EndsAt.Format "2006-01-02 15:04" }} UTC{{ end }}
 {{ if .Annotations.logs }}[최근 상태 보기]({{ .Annotations.logs }}){{ end }}
 {{ end }}
