@@ -1,11 +1,39 @@
 terraform {
-  required_version = "~> 1.0"
+  required_version = "~> 1.10"
 
-  backend "remote" {
-    organization = "femiwiki"
+  backend "s3" {
+    bucket       = "tfstate-302617221463-ap-northeast-1-an"
+    key          = "aws/terraform.tfstate"
+    region       = "ap-northeast-1"
+    use_lockfile = true
+  }
 
-    workspaces {
-      name = "aws"
+  # The state holds var.prometheus_password and var.loki_password, so it is
+  # encrypted before it reaches the bucket. Never rename the key provider or the
+  # method: the encrypted state records their names, and a renamed one cannot
+  # read it back.
+  encryption {
+    key_provider "pbkdf2" "state" {
+      passphrase = var.state_passphrase
+    }
+
+    method "aes_gcm" "state" {
+      keys = key_provider.pbkdf2.state
+    }
+
+    # Only to read the Terraform Cloud state once, while it moves here.
+    method "unencrypted" "migrate" {}
+
+    state {
+      method = method.aes_gcm.state
+
+      fallback {
+        method = method.unencrypted.migrate
+      }
+    }
+
+    plan {
+      method = method.aes_gcm.state
     }
   }
 
