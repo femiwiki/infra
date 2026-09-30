@@ -8,10 +8,16 @@
      account is read in Korean. The icon and the summary carry the meaning. */ -}}
 {{- $icon := "✅" -}}
 {{- if eq .Status "firing" }}{{ $icon = "⚠️" }}{{ end -}}
+{{/* A resolved post repeats the summary, which is written for the firing
+     state, so it opens by saying the alert is over. Grafana expands the
+     summary again at every evaluation, so its numbers are the ones that
+     resolved it. */ -}}
+{{- $head := printf "%s " $icon -}}
+{{- if ne .Status "firing" }}{{ $head = printf "%s 해제됐습니다. 아래 숫자는 해제 시점에 다시 잰 값입니다.\n\n" $icon }}{{ end -}}
 {{- $text := "" -}}
 {{- range $i, $alert := .Alerts -}}
 {{- if eq $i 0 -}}
-{{- $text = printf "%s %s" $icon $alert.Annotations.summary -}}
+{{- $text = printf "%s%s" $head $alert.Annotations.summary -}}
 {{- else -}}
 {{- $text = printf "%s\n\n%s" $text $alert.Annotations.summary -}}
 {{- end -}}

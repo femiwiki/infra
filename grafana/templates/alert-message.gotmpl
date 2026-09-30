@@ -1,7 +1,8 @@
 {{/* Only the annotations this wiki writes are printed. Grafana adds its own
      when a rule is edited or a query fails, grafana_state_reason and
      datasource_uid and ref_id so far, and a reader has no use for them. */ -}}
-{{ range .Alerts }}{{ .Annotations.summary }}
+{{ range .Alerts }}{{ if eq .Status "resolved" }}해제됐습니다. 아래 숫자는 해제 시점에 다시 잰 값입니다.
+{{ end }}{{ .Annotations.summary }}
 {{ range .Annotations.SortedPairs }}{{ if eq .Name "queue" }}{{ .Name }}: {{ .Value }}
 {{ end }}{{ end }}{{ if .Annotations.logs }}[최근 상태 보기]({{ .Annotations.logs }})
 {{ end }}{{ end }}
