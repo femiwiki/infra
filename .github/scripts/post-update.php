@@ -1,7 +1,7 @@
 #!/usr/bin/env php
 <?php
 // Post the ```wikitext blocks of an applied pull request to 페미위키:업데이트, under the minute of the apply within its
-// day, after any merged docker pull request whose own post failed, under the minute it merged.
+// day, after any merged pull request whose own post failed, under the minute it merged.
 //
 // Usage: post-update.php OWNER/REPO PR_NUMBER [--dry-run]
 // Environment: GH_TOKEN, WIKI_DEPLOY_BOT_USER, WIKI_DEPLOY_BOT_PASSWORD (the last two not needed with --dry-run),
@@ -112,19 +112,9 @@ function seoul( string $time ): DateTime {
 	return ( new DateTime( $time, new DateTimeZone( 'Asia/Seoul' ) ) )->setTimezone( new DateTimeZone( 'Asia/Seoul' ) );
 }
 
-/** Whether a pull request changes the workspace whose apply posts the notes */
-function appliesDocker( string $repo, int $number ): bool {
-	foreach ( gh( "repos/$repo/pulls/$number/files?per_page=100" ) as $file ) {
-		if ( str_starts_with( $file['filename'], 'docker/' ) ) {
-			return true;
-		}
-	}
-	return false;
-}
-
 /**
  * The merged pull requests whose note a failed post left off the page: merged after the newest one the page links,
- * carrying a block, and changing docker/, oldest first
+ * and carrying a block, oldest first
  */
 function missed( string $repo, int $current, string $text ): array {
 	if ( !preg_match( '/^https:\/\/github\.com\/' . preg_quote( $repo, '/' ) . '\/pull\/(\d+)$/m', $text, $m ) ) {
@@ -142,7 +132,7 @@ function missed( string $repo, int $current, string $text ): array {
 			continue;
 		}
 		$pr = gh( "repos/$repo/pulls/$number" );
-		if ( blocks( $pr['body'] ?? '' ) && appliesDocker( $repo, $number ) ) {
+		if ( blocks( $pr['body'] ?? '' ) ) {
 			$found[$pr['merged_at']] = $number;
 		}
 	}
