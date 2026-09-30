@@ -217,7 +217,9 @@ module "terraform_github_tacos" {
   ]
 
   required_pull_request_reviews   = []
-  required_status_checks_contexts = ["shellcheck", "tofu"]
+  required_status_checks_contexts = ["docs", "shellcheck", "tofu"]
+  pages_build_type                = "workflow"
+  homepage_url                    = "https://femiwiki.github.io/terraform-github-tacos/"
 }
 
 module "lambda" {
