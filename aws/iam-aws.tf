@@ -29,7 +29,7 @@ data "aws_iam_policy_document" "infra_aws_assume_role" {
   }
 }
 
-# The same permissions the terraform-cloud user applies this root with today.
+# Everything this root manages, IAM included.
 resource "aws_iam_role_policy" "infra_aws" {
   name   = "InfraAws"
   role   = aws_iam_role.infra_aws.name
