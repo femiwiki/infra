@@ -1,7 +1,6 @@
 locals {
   programmatic_users = [
     "femiwiki-email",
-    "terraform-cloud",
   ]
 }
 
@@ -28,13 +27,6 @@ resource "aws_iam_user_policy" "ses_sending_access" {
   name   = "AmazonSesSendingAccess"
   user   = "femiwiki-email"
   policy = data.aws_iam_policy_document.ses_sending_access.json
-}
-
-resource "aws_iam_user_policy" "terraform_cloud" {
-  depends_on = [aws_iam_user.programmatic_users["terraform-cloud"]]
-  name       = "TerraformCloud"
-  user       = "terraform-cloud"
-  policy     = data.aws_iam_policy_document.iac.json
 }
 
 
