@@ -3,20 +3,57 @@ resource "aws_route53_zone" "femiwiki_com" {
   name          = "femiwiki.com."
 }
 
-resource "aws_route53_record" "femiwiki_com" {
-  name    = "femiwiki.com"
-  type    = "A"
-  zone_id = aws_route53_zone.femiwiki_com.zone_id
-  records = [aws_eip.seoul.public_ip]
-  ttl     = 300
+# Readers go through CloudFront when this is true, and straight to the box when
+# it is false. Turning it off takes the steps in femiwiki/femiwiki#639 ("Keep it
+# removable") first: Caddy back to the pinned ranges, then the security group
+# open to everyone.
+locals {
+  through_cloudfront = true
 }
 
-resource "aws_route53_record" "www_femiwiki_com" {
-  name    = "www.femiwiki.com"
+resource "aws_route53_record" "femiwiki_com" {
+  for_each = toset(["femiwiki.com", "www.femiwiki.com"])
+
+  name    = each.key
   type    = "A"
   zone_id = aws_route53_zone.femiwiki_com.zone_id
-  records = [aws_eip.seoul.public_ip]
-  ttl     = 300
+  records = local.through_cloudfront ? null : [aws_eip.seoul.public_ip]
+  ttl     = local.through_cloudfront ? null : 300
+
+  dynamic "alias" {
+    for_each = local.through_cloudfront ? [aws_cloudfront_distribution.femiwiki_com] : []
+
+    content {
+      name                   = alias.value.domain_name
+      zone_id                = alias.value.hosted_zone_id
+      evaluate_target_health = false
+    }
+  }
+}
+
+# The box has no IPv6, so these exist only behind CloudFront
+resource "aws_route53_record" "femiwiki_com_ipv6" {
+  for_each = local.through_cloudfront ? toset(["femiwiki.com", "www.femiwiki.com"]) : toset([])
+
+  name    = each.key
+  type    = "AAAA"
+  zone_id = aws_route53_zone.femiwiki_com.zone_id
+
+  alias {
+    name                   = aws_cloudfront_distribution.femiwiki_com.domain_name
+    zone_id                = aws_cloudfront_distribution.femiwiki_com.hosted_zone_id
+    evaluate_target_health = false
+  }
+}
+
+moved {
+  from = aws_route53_record.femiwiki_com
+  to   = aws_route53_record.femiwiki_com["femiwiki.com"]
+}
+
+moved {
+  from = aws_route53_record.www_femiwiki_com
+  to   = aws_route53_record.femiwiki_com["www.femiwiki.com"]
 }
 
 resource "aws_route53_record" "status_femiwiki_com" {
