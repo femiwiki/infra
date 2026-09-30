@@ -20,7 +20,6 @@ module "infra" {
   description                   = ":evergreen_tree: Terraforming Femiwiki Infrastructure"
   enforce_admins                = false
   required_pull_request_reviews = local.with_cd.required_pull_request_reviews
-  required_status_checks_strict = true
   required_status_checks_contexts = [
     "lint gate",
     "tofu gate",
