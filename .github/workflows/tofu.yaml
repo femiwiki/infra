@@ -86,6 +86,7 @@ jobs:
           permission-issues: write
           permission-members: write
           permission-pages: write
+          permission-secrets: write
 
       - uses: ./.github/actions/generation-swaps-ports
         if: steps.scope.outputs.plan == 'true' && startsWith(matrix.workspace, 'docker')
@@ -107,6 +108,7 @@ jobs:
           TF_VAR_prometheus_password: ${{ matrix.workspace == 'aws' && secrets.AWS_PROMETHEUS_PASSWORD || '' }}
           TF_VAR_loki_password: ${{ matrix.workspace == 'aws' && secrets.AWS_LOKI_PASSWORD || '' }}
           TF_VAR_state_passphrase: ${{ matrix.workspace == 'aws' && secrets.AWS_STATE_PASSPHRASE || matrix.workspace == 'github' && secrets.TOFU_GITHUB_STATE_PASSPHRASE || '' }}
+          OP_SERVICE_ACCOUNT_TOKEN: ${{ matrix.workspace == 'github' && secrets.TOFU_OP_SERVICE_ACCOUNT_TOKEN || '' }}
         with:
           path: ${{ matrix.workspace }}
 
@@ -274,6 +276,7 @@ jobs:
           permission-issues: write
           permission-members: write
           permission-pages: write
+          permission-secrets: write
 
       - uses: ./.github/actions/generation-swaps-ports
         if: startsWith(matrix.workspace, 'docker')
@@ -294,6 +297,7 @@ jobs:
           TF_VAR_prometheus_password: ${{ matrix.workspace == 'aws' && secrets.AWS_PROMETHEUS_PASSWORD || '' }}
           TF_VAR_loki_password: ${{ matrix.workspace == 'aws' && secrets.AWS_LOKI_PASSWORD || '' }}
           TF_VAR_state_passphrase: ${{ matrix.workspace == 'aws' && secrets.AWS_STATE_PASSPHRASE || matrix.workspace == 'github' && secrets.TOFU_GITHUB_STATE_PASSPHRASE || '' }}
+          OP_SERVICE_ACCOUNT_TOKEN: ${{ matrix.workspace == 'github' && secrets.TOFU_OP_SERVICE_ACCOUNT_TOKEN || '' }}
         with:
           path: ${{ matrix.workspace }}
           auto_approve: ${{ github.event_name == 'workflow_dispatch' }}
@@ -333,6 +337,7 @@ jobs:
           TF_VAR_prometheus_password: ${{ matrix.workspace == 'aws' && secrets.AWS_PROMETHEUS_PASSWORD || '' }}
           TF_VAR_loki_password: ${{ matrix.workspace == 'aws' && secrets.AWS_LOKI_PASSWORD || '' }}
           TF_VAR_state_passphrase: ${{ matrix.workspace == 'aws' && secrets.AWS_STATE_PASSPHRASE || matrix.workspace == 'github' && secrets.TOFU_GITHUB_STATE_PASSPHRASE || '' }}
+          OP_SERVICE_ACCOUNT_TOKEN: ${{ matrix.workspace == 'github' && secrets.TOFU_OP_SERVICE_ACCOUNT_TOKEN || '' }}
         with:
           path: ${{ matrix.workspace }}
           add_github_comment: false

@@ -40,6 +40,10 @@ terraform {
       source  = "integrations/github"
       version = "~> 6.0"
     }
+    onepassword = {
+      source  = "1Password/onepassword"
+      version = "~> 3.3"
+    }
   }
 }
 
@@ -47,3 +51,6 @@ provider "github" {
   owner = "femiwiki"
   token = var.github_token
 }
+
+# Reads OP_SERVICE_ACCOUNT_TOKEN, a service account that can only read the infra vault.
+provider "onepassword" {}
