@@ -382,6 +382,7 @@ data "aws_iam_policy_document" "github_lambda" {
     resources = [
       "arn:aws:lambda:ap-northeast-1:302617221463:function:DiscordNoti",
       "arn:aws:lambda:us-east-1:302617221463:function:DiscordNoti",
+      aws_lambda_function.mastodon_discord.arn,
     ]
   }
 }

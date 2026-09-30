@@ -12,6 +12,11 @@ locals {
     WIKI_DEPLOY_BOT_PASSWORD    = "WIKI_DEPLOY_BOT_PASSWORD"
   }
 
+  lambda_secrets = {
+    DISCORD_BOT_TOKEN = "LAMBDA_DISCORD_BOT_TOKEN"
+    MASTODON_TOKEN    = "LAMBDA_MASTODON_TOKEN"
+  }
+
   # Read by no plan, so they sit behind the environment's reviewers (#982).
   infra_environment_secrets = {
     GRAFANA_APPLY_TOKEN = { environment = "grafana", item = "GRAFANA_APPLY_TOKEN" }
@@ -23,7 +28,7 @@ data "onepassword_vault" "infra" {
 }
 
 data "onepassword_item" "infra" {
-  for_each = toset(concat(values(local.infra_secrets), [for s in values(local.infra_environment_secrets) : s.item]))
+  for_each = toset(concat(values(local.infra_secrets), values(local.lambda_secrets), [for s in values(local.infra_environment_secrets) : s.item]))
 
   vault = data.onepassword_vault.infra.uuid
   title = each.key
@@ -44,4 +49,12 @@ resource "github_actions_environment_secret" "infra" {
   environment = github_repository_environment.infra[each.value.environment].environment
   secret_name = each.key
   value       = data.onepassword_item.infra[each.value.item].password
+}
+
+resource "github_actions_secret" "lambda" {
+  for_each = local.lambda_secrets
+
+  repository  = module.lambda.name
+  secret_name = each.key
+  value       = data.onepassword_item.infra[each.value].password
 }
