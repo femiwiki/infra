@@ -1,1 +1,1 @@
-topk(3, sum by (net) (count_over_time({docker_container_name=~"http.*"} |= "rate limit exceeded" | json | __error__="" | zone = "expensive" | label_format net=`{{ regexReplaceAll "^([0-9]+\.[0-9]+\.[0-9]+)\..*$" .remote_ip "${1}.0/24" }}` | keep net [1h])))
+topk(3, sum by (net) (count_over_time({docker_container_name=~"http.*"} |= `"msg":"refused"` | json | __error__="" | uri =~ `/(index\.php|w/).*[?&](diff|oldid)=.*` | uri !~ `/w/api\.php.*` | label_format net=`{{ regexReplaceAll "^([0-9]+\.[0-9]+\.[0-9]+)\..*$" .client_ip "${1}.0/24" }}` | keep net [1h])))

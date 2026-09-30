@@ -86,8 +86,8 @@ panels:
     instant: true
     queryType: instant
     expr: |-
-      topk(20, sum by (remote_ip) (count_over_time({docker_container_name=~"http.*"} |= "rate limit exceeded" | json | __error__="" [$__range])))
-    legendFormat: '{{remote_ip}}'
+      topk(20, sum by (client_ip) (count_over_time({docker_container_name=~"http.*"} |= `"msg":"refused"` | json | __error__="" [$__range])))
+    legendFormat: '{{client_ip}}'
 - id: 3
   type: table
   title: 가장 많이 읽힌 주소
