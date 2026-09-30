@@ -301,7 +301,7 @@ jobs:
       # A failed post does not fail an apply that has already changed production.
       # The next post carries the note, and the Discord message says it is owed.
       - name: Post the ```wikitext blocks of the applied pull request to the wiki
-        if: github.event_name == 'pull_request' && matrix.workspace == 'docker'
+        if: github.event_name == 'pull_request'
         id: post
         continue-on-error: true
         env:
