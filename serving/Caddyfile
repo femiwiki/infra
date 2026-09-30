@@ -140,6 +140,23 @@ femiwiki.com *.femiwiki.com 127.0.0.1:80 localhost:80 {
 			events {$FW_HISTORY_EVENTS:20}
 			window {$FW_HISTORY_WINDOW:10m}
 		}
+		# Red links, the mobile and desktop toggle, and what links here, from
+		# anyone not logged in, counted across the whole site. None of them is
+		# cached, and a reader clicks one now and then, but on 2026-09-30 a crawl
+		# spread over more than 500 addresses walked them at about 5,700 in half
+		# an hour (red links 85 to 2,418), filled the php-fpm queue and left
+		# every uncached page waiting 50 seconds. The zones above count per /24
+		# or only diffs and history, so none of this reached them.
+		zone link_walk {
+			match {
+				path /index.php*
+				vars_regexp {query} {$FW_LINK_WALK_QUERY:(?i)(^|&)(redlink=1|mobileaction=)|(^|&)title=(%ED%8A%B9%EC%88%98|특수|Special)(%3A|:)(%EA%B0%80%EB%A6%AC%ED%82%A4%EB%8A%94%EB%AC%B8%EC%84%9C|가리키는문서|WhatLinksHere)}
+				not header Cookie *femiwikiUserID=*
+			}
+			key link_walk
+			events {$FW_LINK_WALK_EVENTS:150}
+			window {$FW_LINK_WALK_WINDOW:10m}
+		}
 		# Anything that calls itself a crawler, counted per agent string. These
 		# are a quarter of the time php-fpm spends, and nearly all of it is
 		# article reads that robots.txt allows, so a budget is the only thing
