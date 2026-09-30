@@ -265,22 +265,27 @@ loki.process "fastcgi" {
   }
 
   // A refused request is logged twice: the rate limiter's own line, and the
-  // access log line for the 429. The first carries the zone and the address
-  // that grafana/queries/concentrated-refusals.logql and history-refused.logql
-  // read. The second carries neither, is ten times the size, and nothing reads
-  // it. On 2026-09-30 it was 29.7% of what was still leaving the box after
-  // #967. The small line stays, so refusals are still counted.
+  // access log line for the 429. The first carries the zone but only the
+  // connection address, which behind CloudFront is an edge (femiwiki#639). The
+  // second carries the reader's client_ip but is ten times the size: on
+  // 2026-09-30 it was 29.7% of what was still leaving the box after #967. So
+  // the second is cut down to the address and the URI, which is what
+  // grafana/queries/concentrated-refusals.logql and the scrapes dashboard read.
+  // It has no status, so the queries counting responses still leave 429s out.
   stage.match {
-    selector = "{docker_container_name=~\"http.*\"}"
+    selector = `{docker_container_name=~"http.*"} |= "\"status\":429"`
 
     stage.json {
-      expressions = {status = "status"}
+      expressions = {client_ip = "request.client_ip", uri = "request.uri"}
     }
 
-    stage.drop {
-      source              = "status"
-      value               = "429"
-      drop_counter_reason = "refused_request_access_log"
+    stage.template {
+      source   = "refused"
+      template = `{{ dict "msg" "refused" "client_ip" .client_ip "uri" .uri | toJson }}`
+    }
+
+    stage.output {
+      source = "refused"
     }
   }
 }
