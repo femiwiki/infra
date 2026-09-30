@@ -19,19 +19,14 @@ terraform {
       keys = key_provider.pbkdf2.state
     }
 
-    # Only until the next github apply rewrites the plaintext state.
-    method "unencrypted" "migrate" {}
-
     state {
-      method = method.aes_gcm.state
-
-      fallback {
-        method = method.unencrypted.migrate
-      }
+      method   = method.aes_gcm.state
+      enforced = true
     }
 
     plan {
-      method = method.aes_gcm.state
+      method   = method.aes_gcm.state
+      enforced = true
     }
   }
 
