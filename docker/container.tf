@@ -51,6 +51,10 @@ resource "docker_container" "http" {
       S3_BUCKET           = "femiwiki-secrets",
       S3_PREFIX           = "caddycerts",
 
+      # CloudFront's origin-facing ranges, for trusted_proxies. When AWS changes them:
+      # curl -s https://ip-ranges.amazonaws.com/ip-ranges.json | jq -r '.prefixes[] | select(.service == "CLOUDFRONT_ORIGIN_FACING") | .ip_prefix' | sort -uV
+      FW_TRUSTED_PROXIES = join(" ", split("\n", trimspace(file("../serving/cloudfront-origin-facing.txt")))),
+
       BLOCKED_CIDR = join(" ", [
         # Alibaba Cloud LLC
         "47.74.0.0/15", "47.76.0.0/14", "47.80.0.0/13",

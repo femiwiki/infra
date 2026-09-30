@@ -14,8 +14,14 @@
 		exclude http.handlers.reverse_proxy.health_checker.active {$FW_LOG_EXCLUDE}
 	}
 
+	# CloudFront's origin-facing ranges, the only peers whose X-Forwarded-For
+	# is read. Strict takes the rightmost address they did not add, so a
+	# viewer cannot pick its own {client_ip} by sending the header. A request
+	# straight to the box keeps its connection address. See femiwiki#639.
 	servers {
 		metrics
+		trusted_proxies static {$FW_TRUSTED_PROXIES}
+		trusted_proxies_strict
 	}
 }
 # Headers that contradict the browser the User-Agent claims. Every term is
@@ -241,6 +247,9 @@ femiwiki.com *.femiwiki.com 127.0.0.1:80 localhost:80 {
 		# Caddy rather than a worker. Responses here are 8 KB to 150 KB, and a
 		# larger one streams as before instead of failing. See femiwiki#583.
 		response_buffers {$FW_RESPONSE_BUFFERS:1MB}
+		# php_fastcgi sets REMOTE_ADDR from the connection, which behind
+		# CloudFront is an edge; MediaWiki blocks and CheckUser want the reader
+		env REMOTE_ADDR {client_ip}
 		lb_policy round_robin
 		# One immediate retry reaches the other port; waiting longer only
 		# delays the fallback below
@@ -265,6 +274,7 @@ femiwiki.com *.femiwiki.com 127.0.0.1:80 localhost:80 {
 			rewrite /w/* /index.php
 			php_fastcgi 127.0.0.1:9000 127.0.0.1:9001 {
 				response_buffers {$FW_RESPONSE_BUFFERS:1MB}
+				env REMOTE_ADDR {client_ip}
 				lb_policy round_robin
 				lb_retries 1
 				# Try the other port when one refuses; left alone, only GET is retried
@@ -383,7 +393,7 @@ femiwiki.com *.femiwiki.com 127.0.0.1:80 localhost:80 {
 	}
 
 	@block_cidr {
-		remote_ip {$BLOCKED_CIDR}
+		client_ip {$BLOCKED_CIDR}
 	}
 
 	respond @block_cidr 403 {
