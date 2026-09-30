@@ -21,19 +21,14 @@ terraform {
       keys = key_provider.pbkdf2.state
     }
 
-    # Only to read the Terraform Cloud state once, while it moves here.
-    method "unencrypted" "migrate" {}
-
     state {
-      method = method.aes_gcm.state
-
-      fallback {
-        method = method.unencrypted.migrate
-      }
+      method   = method.aes_gcm.state
+      enforced = true
     }
 
     plan {
-      method = method.aes_gcm.state
+      method   = method.aes_gcm.state
+      enforced = true
     }
   }
 
