@@ -437,9 +437,11 @@ data "aws_iam_policy_document" "discord_noti" {
 data "aws_iam_policy_document" "iac" {
   statement {
     actions = [
+      "acm:*",
       "autoscaling:*",
       "bcm-data-exports:*",
       "budgets:*",
+      "cloudfront:*",
       "cloudwatch:*",
       "cur:*",
       "ec2:*",
