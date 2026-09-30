@@ -263,4 +263,24 @@ loki.process "fastcgi" {
       source = "line"
     }
   }
+
+  // A refused request is logged twice: the rate limiter's own line, and the
+  // access log line for the 429. The first carries the zone and the address
+  // that grafana/queries/concentrated-refusals.logql and history-refused.logql
+  // read. The second carries neither, is ten times the size, and nothing reads
+  // it. On 2026-09-30 it was 29.7% of what was still leaving the box after
+  // #967. The small line stays, so refusals are still counted.
+  stage.match {
+    selector = "{docker_container_name=~\"http.*\"}"
+
+    stage.json {
+      expressions = {status = "status"}
+    }
+
+    stage.drop {
+      source              = "status"
+      value               = "429"
+      drop_counter_reason = "refused_request_access_log"
+    }
+  }
 }
