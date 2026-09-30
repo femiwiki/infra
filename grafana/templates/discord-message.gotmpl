@@ -4,3 +4,4 @@
 시작 {{ .StartsAt.Format "2006-01-02 15:04" }} UTC{{ if eq .Status "resolved" }}, 해제 {{ .EndsAt.Format "2006-01-02 15:04" }} UTC{{ end }}
 {{ if .Annotations.logs }}[최근 상태 보기]({{ .Annotations.logs }}){{ end }}
 {{ end }}
+{{ with index .Alerts 0 }}-# id {{ printf "%.8s" .Fingerprint }}{{ end }}
