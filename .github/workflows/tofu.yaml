@@ -315,7 +315,9 @@ jobs:
       # The apply has to leave nothing behind, because the required check that
       # used to say so is gone and this is what replaces it. Planning here rather
       # than in a fresh run keeps the tofu binary, the providers and the docker
-      # daemon this job already set up.
+      # daemon this job already set up. It leaves the pull request's plan
+      # comment alone: a newer run's apply compares its plan against that
+      # comment, and this one finishing later would overwrite it.
       - uses: dflook/tofu-plan@c7416238983bdd94c5486fb856bb7358f2bcc935  # v3.1.0
         if: github.event_name == 'pull_request' && steps.apply.outcome == 'success'
         id: verify
@@ -333,7 +335,7 @@ jobs:
           TF_VAR_state_passphrase: ${{ matrix.workspace == 'aws' && secrets.AWS_STATE_PASSPHRASE || '' }}
         with:
           path: ${{ matrix.workspace }}
-          add_github_comment: changes-only
+          add_github_comment: false
 
       - name: Nothing may be left for a later apply
         id: clean
