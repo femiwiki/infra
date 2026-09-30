@@ -59,6 +59,12 @@
 	}
 }
 
+# The trees MediaWiki links files from with a version hash; see Cache-Control
+(static_asset_paths) {
+	path /fw-resources/* /resources/* /skins/* /extensions/*
+	not path *.php
+}
+
 femiwiki.com *.femiwiki.com 127.0.0.1:80 localhost:80 {
 	tls {
 		dns route53
@@ -308,6 +314,35 @@ femiwiki.com *.femiwiki.com 127.0.0.1:80 localhost:80 {
 		X-Content-Type-Options "nosniff"
 		# Avoid clickjacking
 		X-Frame-Options "DENY"
+	}
+	# Files read off disk went out with no Cache-Control, so a page render
+	# revalidated every skin icon with a 304. MediaWiki puts the first five hex
+	# digits of a file's content hash in the query when it links one, so that
+	# URL never changes meaning and can be kept for a year. The same file is
+	# also linked bare, logo-transparent-white.svg among them, and a bare path
+	# gets load.php's five minutes instead, so a new logo shows the way a new
+	# stylesheet does. Only 2xx and 304, so a missing file is not remembered.
+	# Uploads under /images carry no hash and can be overwritten in place, so
+	# they are left alone. See #968.
+	@static_versioned {
+		import static_asset_paths
+		vars_regexp {query} ^[0-9a-f]{5}$
+	}
+	header @static_versioned {
+		Cache-Control "public, max-age=31536000, immutable"
+		match {
+			status 2xx 304
+		}
+	}
+	@static_bare {
+		import static_asset_paths
+		not vars_regexp {query} ^[0-9a-f]{5}$
+	}
+	header @static_bare {
+		Cache-Control "public, max-age=300"
+		match {
+			status 2xx 304
+		}
 	}
 	log {
 		# Two thirds of a line used to be headers that are the same on every
