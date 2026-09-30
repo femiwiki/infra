@@ -27,7 +27,7 @@ jobs:
       id-token: write
       pull-requests: write
     steps:
-      - uses: femiwiki/terraform-github-tacos@4016a3868e2edb0434ebc09eeead96bd19491109  # v0.1.0
+      - uses: femiwiki/terraform-github-tacos@9b66444dbcb422d1012c4d4c35c9a5365e2e8c89  # v0.2.0
         with:
           step: plan
           workspace: ${{ matrix.workspace }}
@@ -105,7 +105,7 @@ jobs:
         with:
           path: ${{ matrix.workspace }}
 
-      - uses: femiwiki/terraform-github-tacos@4016a3868e2edb0434ebc09eeead96bd19491109  # v0.1.0
+      - uses: femiwiki/terraform-github-tacos@9b66444dbcb422d1012c4d4c35c9a5365e2e8c89  # v0.2.0
         id: changes
         if: steps.scope.outputs.plan == 'true'
         with:
@@ -113,6 +113,7 @@ jobs:
           workspace: ${{ matrix.workspace }}
           changes: ${{ steps.plan.outputs.changes }}
           plan-json: ${{ steps.plan.outputs.json_plan_path }}
+          plan-text: ${{ steps.plan.outputs.text_plan_path }}
 
       # With nothing left to import or move, such a block has done its job
       - name: Leftover import and moved blocks
@@ -165,7 +166,7 @@ jobs:
     timeout-minutes: 5
     permissions: {}
     steps:
-      - uses: femiwiki/terraform-github-tacos@4016a3868e2edb0434ebc09eeead96bd19491109  # v0.1.0
+      - uses: femiwiki/terraform-github-tacos@9b66444dbcb422d1012c4d4c35c9a5365e2e8c89  # v0.2.0
         with:
           step: gate
           needs: ${{ toJSON(needs) }}
@@ -185,7 +186,7 @@ jobs:
     outputs:
       workspaces: ${{ steps.pending.outputs.workspaces }}
     steps:
-      - uses: femiwiki/terraform-github-tacos@4016a3868e2edb0434ebc09eeead96bd19491109  # v0.1.0
+      - uses: femiwiki/terraform-github-tacos@9b66444dbcb422d1012c4d4c35c9a5365e2e8c89  # v0.2.0
         id: pending
         with:
           step: pending
@@ -213,7 +214,7 @@ jobs:
       id-token: write
       pull-requests: write
     steps:
-      - uses: femiwiki/terraform-github-tacos@4016a3868e2edb0434ebc09eeead96bd19491109  # v0.1.0
+      - uses: femiwiki/terraform-github-tacos@9b66444dbcb422d1012c4d4c35c9a5365e2e8c89  # v0.2.0
         id: approver
         with:
           step: apply
@@ -401,7 +402,7 @@ jobs:
       contents: write
       pull-requests: write
     steps:
-      - uses: femiwiki/terraform-github-tacos@4016a3868e2edb0434ebc09eeead96bd19491109  # v0.1.0
+      - uses: femiwiki/terraform-github-tacos@9b66444dbcb422d1012c4d4c35c9a5365e2e8c89  # v0.2.0
         with:
           step: merge
 
