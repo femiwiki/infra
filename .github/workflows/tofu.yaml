@@ -112,6 +112,21 @@ jobs:
         with:
           path: ${{ matrix.workspace }}
 
+      # create_before_destroy cannot start a container under a name still taken
+      - name: A replaced container needs a new name
+        if: steps.scope.outputs.plan == 'true' && startsWith(matrix.workspace, 'docker')
+        env:
+          PLAN_JSON: ${{ steps.plan.outputs.json_plan_path }}
+        run: |
+          same=$(jq -r '.resource_changes[]
+            | select(.type == "docker_container" and .change.actions == ["create", "delete"])
+            | select(.change.before.name == .change.after.name)
+            | "\(.address) (\(.change.after.name))"' "$PLAN_JSON")
+          if [ -n "$same" ]; then
+            echo "::error::these would be replaced under the name they run as, so the apply fails: $same. Bump fastcgi_generation."
+            exit 1
+          fi
+
       - uses: femiwiki/terraform-github-tacos@9b66444dbcb422d1012c4d4c35c9a5365e2e8c89  # v0.2.0
         id: changes
         if: steps.scope.outputs.plan == 'true'
