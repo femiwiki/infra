@@ -53,8 +53,10 @@ data "aws_cloudfront_cache_policy" "caching_disabled" {
   name = "Managed-CachingDisabled"
 }
 
+# CloudFront adds X-Forwarded-For whatever the policy says, and nothing here
+# reads the CloudFront-* headers, which dominated every access log line.
 data "aws_cloudfront_origin_request_policy" "all_viewer" {
-  name = "Managed-AllViewerAndCloudFrontHeaders-2022-06"
+  name = "Managed-AllViewer"
 }
 
 locals {
