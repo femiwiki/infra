@@ -13,8 +13,9 @@ locals {
   }
 
   lambda_secrets = {
-    DISCORD_BOT_TOKEN = "LAMBDA_DISCORD_BOT_TOKEN"
-    MASTODON_TOKEN    = "LAMBDA_MASTODON_TOKEN"
+    DISCORD_BOT_TOKEN     = "LAMBDA_DISCORD_BOT_TOKEN"
+    DISCORD_WEBHOOK_URL   = "LAMBDA_DISCORD_WEBHOOK_URL"
+    MASTODON_TOKEN        = "LAMBDA_MASTODON_TOKEN"
   }
 
   # Read by no plan, so they sit behind the environment's reviewers (#982).
