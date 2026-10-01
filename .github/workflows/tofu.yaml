@@ -102,8 +102,8 @@ jobs:
           TF_VAR_docker_host: ${{ steps.daemon.outputs.host }}
           TF_VAR_github_token: ${{ steps.app-token.outputs.token }}
           TF_VAR_grafana_auth: ${{ matrix.workspace == 'grafana' && secrets.GRAFANA_PLAN_TOKEN || '' }}
-          TF_VAR_discord_webhook_url: ${{ matrix.workspace == 'grafana' && secrets.DISCORD_WEBHOOK_URL || '' }}
-          TF_VAR_mastodon_token: ${{ matrix.workspace == 'grafana' && secrets.MASTODON_TOKEN || '' }}
+          TF_VAR_discord_webhook_url: ${{ matrix.workspace == 'grafana' && secrets.GRAFANA_DISCORD_WEBHOOK_URL || '' }}
+          TF_VAR_mastodon_token: ${{ matrix.workspace == 'grafana' && secrets.GRAFANA_MASTODON_TOKEN || '' }}
           TF_VAR_healthchecksio_api_key: ${{ matrix.workspace == 'healthchecks' && secrets.HEALTHCHECKSIO_API_KEY || '' }}
           TF_VAR_prometheus_password: ${{ matrix.workspace == 'aws' && secrets.AWS_PROMETHEUS_PASSWORD || '' }}
           TF_VAR_loki_password: ${{ matrix.workspace == 'aws' && secrets.AWS_LOKI_PASSWORD || '' }}
@@ -291,8 +291,8 @@ jobs:
           TF_VAR_docker_host: ${{ steps.daemon.outputs.host }}
           TF_VAR_github_token: ${{ steps.app-token.outputs.token }}
           TF_VAR_grafana_auth: ${{ matrix.workspace == 'grafana' && secrets.GRAFANA_APPLY_TOKEN || '' }}
-          TF_VAR_discord_webhook_url: ${{ matrix.workspace == 'grafana' && secrets.DISCORD_WEBHOOK_URL || '' }}
-          TF_VAR_mastodon_token: ${{ matrix.workspace == 'grafana' && secrets.MASTODON_TOKEN || '' }}
+          TF_VAR_discord_webhook_url: ${{ matrix.workspace == 'grafana' && secrets.GRAFANA_DISCORD_WEBHOOK_URL || '' }}
+          TF_VAR_mastodon_token: ${{ matrix.workspace == 'grafana' && secrets.GRAFANA_MASTODON_TOKEN || '' }}
           TF_VAR_healthchecksio_api_key: ${{ matrix.workspace == 'healthchecks' && secrets.HEALTHCHECKSIO_API_KEY || '' }}
           TF_VAR_prometheus_password: ${{ matrix.workspace == 'aws' && secrets.AWS_PROMETHEUS_PASSWORD || '' }}
           TF_VAR_loki_password: ${{ matrix.workspace == 'aws' && secrets.AWS_LOKI_PASSWORD || '' }}
@@ -331,8 +331,8 @@ jobs:
           TF_VAR_docker_host: ${{ steps.daemon.outputs.host }}
           TF_VAR_github_token: ${{ steps.app-token.outputs.token }}
           TF_VAR_grafana_auth: ${{ matrix.workspace == 'grafana' && secrets.GRAFANA_PLAN_TOKEN || '' }}
-          TF_VAR_discord_webhook_url: ${{ matrix.workspace == 'grafana' && secrets.DISCORD_WEBHOOK_URL || '' }}
-          TF_VAR_mastodon_token: ${{ matrix.workspace == 'grafana' && secrets.MASTODON_TOKEN || '' }}
+          TF_VAR_discord_webhook_url: ${{ matrix.workspace == 'grafana' && secrets.GRAFANA_DISCORD_WEBHOOK_URL || '' }}
+          TF_VAR_mastodon_token: ${{ matrix.workspace == 'grafana' && secrets.GRAFANA_MASTODON_TOKEN || '' }}
           TF_VAR_healthchecksio_api_key: ${{ matrix.workspace == 'healthchecks' && secrets.HEALTHCHECKSIO_API_KEY || '' }}
           TF_VAR_prometheus_password: ${{ matrix.workspace == 'aws' && secrets.AWS_PROMETHEUS_PASSWORD || '' }}
           TF_VAR_loki_password: ${{ matrix.workspace == 'aws' && secrets.AWS_LOKI_PASSWORD || '' }}
