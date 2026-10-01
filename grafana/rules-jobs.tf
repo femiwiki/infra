@@ -12,6 +12,7 @@ resource "grafana_rule_group" "femiwiki_jobs" {
     exec_err_state = "OK"
 
     labels = {
+      impact   = "operators"
       severity = "warning"
     }
 
@@ -80,6 +81,7 @@ resource "grafana_rule_group" "femiwiki_jobs" {
     exec_err_state = "OK"
 
     labels = {
+      impact   = "operators"
       severity = "warning"
     }
 
@@ -129,6 +131,7 @@ resource "grafana_rule_group" "femiwiki_jobs" {
     exec_err_state = "Alerting"
 
     labels = {
+      impact   = "operators"
       severity = "warning"
     }
 

@@ -16,6 +16,7 @@ resource "grafana_rule_group" "backup" {
     exec_err_state = "Alerting"
 
     labels = {
+      impact   = "operators"
       severity = "warning"
     }
 

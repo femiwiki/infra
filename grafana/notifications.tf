@@ -4,9 +4,12 @@ locals {
     warning  = { title = "warning-title.gotmpl", message = "alert-message.gotmpl" }
   }
 
-  discord_routes = {
-    critical = "30m"
-    warning  = "12h"
+  # Keyed by the rules' impact label: who feels it decides where it goes.
+  impact_routes = {
+    readers   = { contact_point = grafana_contact_point.discord["critical"].name, group_interval = "5m", repeat_interval = "30m" }
+    writers   = { contact_point = grafana_contact_point.discord["warning"].name, group_interval = "5m", repeat_interval = "12h" }
+    operators = { contact_point = grafana_contact_point.github.name, group_interval = "1h", repeat_interval = "168h" }
+    none      = { contact_point = grafana_contact_point.discord["warning"].name, group_interval = "5m", repeat_interval = "12h" }
   }
 }
 
@@ -19,9 +22,9 @@ resource "grafana_notification_policy" "root" {
 
   policy {
     matcher {
-      label = "severity"
+      label = "impact"
       match = "=~"
-      value = "critical|warning"
+      value = "readers|writers"
     }
 
     contact_point   = grafana_contact_point.mastodon.name
@@ -33,20 +36,20 @@ resource "grafana_notification_policy" "root" {
   }
 
   dynamic "policy" {
-    for_each = local.discord_routes
+    for_each = local.impact_routes
 
     content {
       matcher {
-        label = "severity"
+        label = "impact"
         match = "="
         value = policy.key
       }
 
-      contact_point   = grafana_contact_point.discord[policy.key].name
+      contact_point   = policy.value.contact_point
       group_by        = ["alertname"]
       group_wait      = "30s"
-      group_interval  = "5m"
-      repeat_interval = policy.value
+      group_interval  = policy.value.group_interval
+      repeat_interval = policy.value.repeat_interval
     }
   }
 }
@@ -93,5 +96,16 @@ resource "grafana_contact_point" "mastodon" {
     payload {
       template = trimspace(file("${path.module}/templates/mastodon-payload.gotmpl"))
     }
+  }
+}
+
+resource "grafana_contact_point" "github" {
+  name = "GitHub issue"
+
+  # The grafana-github function in femiwiki/lambda, which opens and comments on issues in femiwiki/infra.
+  webhook {
+    url                       = "https://5jd5wc535aduc32dvlpdg5zyq40fspgt.lambda-url.ap-northeast-2.on.aws/"
+    authorization_scheme      = "Bearer"
+    authorization_credentials = var.alerts_webhook_token
   }
 }

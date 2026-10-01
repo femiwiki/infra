@@ -18,7 +18,7 @@ locals {
           expr        = trimspace(file("${path.module}/queries/container-memory-share.promql"))
           threshold   = 95
           for         = "30m"
-          labels      = { severity = "warning" }
+          labels      = { impact = "operators", severity = "warning" }
           annotations = { summary = "{{ $labels.instance }}의 {{ $labels.name }}이 제 메모리 상한의 {{ printf \"%.0f\" $values.A.Value }}%를 쓰고 있습니다." }
         },
         {
@@ -26,7 +26,7 @@ locals {
           expr        = trimspace(file("${path.module}/queries/oom-kills.promql"))
           threshold   = 0
           for         = "0m"
-          labels      = {}
+          labels      = { impact = "readers" }
           annotations = { summary = "{{ $labels.instance }}에서 커널이 프로세스를 죽였습니다. 최근 10분 동안 {{ printf \"%.0f\" $values.A.Value }}번입니다." }
         },
       ]
@@ -45,7 +45,7 @@ locals {
           for            = "10m"
           no_data_state  = "Alerting"
           exec_err_state = "Alerting"
-          labels         = {}
+          labels         = { impact = "operators" }
           annotations    = { summary = "{{ $labels.instance }}: {{ printf \"%.0f\" $values.A.Value }}% of / left" }
         },
         {
@@ -53,7 +53,7 @@ locals {
           expr        = trimspace(file("${path.module}/queries/vanished-targets.promql"))
           threshold   = 0
           for         = "30m"
-          labels      = { severity = "warning" }
+          labels      = { impact = "operators", severity = "warning" }
           annotations = { summary = "{{ $labels.instance }}의 {{ $labels.job }}이 30분 넘게 지표를 보내지 않습니다. 두 시간 안에는 보내고 있었습니다. 호스트를 내린 것이면 두 시간 뒤 스스로 해소되고, 아니면 그 호스트의 Alloy를 봐야 합니다." }
         },
         {
@@ -65,7 +65,7 @@ locals {
           for            = "15m"
           no_data_state  = "NoData"
           exec_err_state = "Alerting"
-          labels         = {}
+          labels         = { impact = "operators" }
           annotations    = { summary = "{{ $labels.instance }}: {{ printf \"%.0f\" $values.A.Value }} MB available" }
         },
       ]
@@ -80,7 +80,7 @@ locals {
           expr      = trimspace(file("${path.module}/queries/opcache-interned-strings.promql"))
           threshold = 95
           for       = "15m"
-          labels    = { severity = "warning" }
+          labels    = { impact = "operators", severity = "warning" }
           annotations = {
             summary = "{{ $labels.instance }}의 opcache에서 interned strings 버퍼가 {{ printf \"%.0f\" $values.A.Value }}% 찼습니다. 다 차면 PHP가 인터닝을 멈춰서 워커마다 클래스와 함수 이름을 따로 들고 갑니다. `PHP_OPCACHE_INTERNED_STRINGS_BUFFER`를 올리면 이미지 빌드 없이 적용됩니다."
           }
@@ -90,7 +90,7 @@ locals {
           expr      = trimspace(file("${path.module}/queries/opcache-oom-restarts.promql"))
           threshold = 0
           for       = "0m"
-          labels    = { severity = "warning" }
+          labels    = { impact = "operators", severity = "warning" }
           annotations = {
             summary = "{{ $labels.instance }}의 opcache가 메모리가 모자라 최근 10분 동안 {{ printf \"%.0f\" $values.A.Value }}번 재시작했습니다. 재시작 직후에는 모든 요청이 컴파일을 다시 합니다. `PHP_OPCACHE_MEMORY_CONSUMPTION`를 올리면 이미지 빌드 없이 적용됩니다."
           }
@@ -99,7 +99,7 @@ locals {
           name      = "Requests waiting for a worker"
           expr      = trimspace(file("${path.module}/queries/listen-queue.promql"))
           threshold = 0
-          labels    = { severity = "warning" }
+          labels    = { impact = "readers", severity = "warning" }
           annotations = {
             summary = "{{ $labels.instance }}에서 요청이 5분 넘게 php-fpm 앞에 줄 서 있습니다. 워커가 모자라면 `phpfpm_max_children_reached`가 함께 오르고, 메모리가 모자라면 `node_memory_MemAvailable_bytes`가 떨어집니다."
             # A resolved notification carries the value it resolved at, which for a
@@ -112,7 +112,7 @@ locals {
           expr      = trimspace(file("${path.module}/queries/opcache-table-share.promql"))
           threshold = 99
           for       = "15m"
-          labels    = { severity = "warning" }
+          labels    = { impact = "operators", severity = "warning" }
           annotations = {
             summary = "{{ $labels.instance }}의 opcache가 스크립트를 담는 표의 {{ printf \"%.0f\" $values.A.Value }}%를 썼습니다. 다 차면 새 스크립트는 캐시에 들어가지 못해 요청마다 다시 컴파일됩니다. `PHP_OPCACHE_MAX_ACCELERATED_FILES`를 올리면 이미지 빌드 없이 적용됩니다."
           }
@@ -123,7 +123,7 @@ locals {
           op        = "lt"
           threshold = 8
           for       = "15m"
-          labels    = { severity = "warning" }
+          labels    = { impact = "operators", severity = "warning" }
           annotations = {
             summary = "{{ $labels.instance }}의 opcache에 스크립트 메모리가 {{ printf \"%.0f\" $values.A.Value }} MB 남았습니다. 다 쓰면 opcache가 재시작하면서 캐시를 비웁니다. `PHP_OPCACHE_MEMORY_CONSUMPTION`를 올리면 이미지 빌드 없이 적용됩니다."
           }
@@ -133,7 +133,7 @@ locals {
           expr      = trimspace(file("${path.module}/queries/opcache-hash-restarts.promql"))
           threshold = 0
           for       = "0m"
-          labels    = { severity = "warning" }
+          labels    = { impact = "operators", severity = "warning" }
           annotations = {
             summary = "{{ $labels.instance }}의 opcache가 표가 모자라 최근 10분 동안 {{ printf \"%.0f\" $values.A.Value }}번 재시작했습니다. 재시작 직후에는 모든 요청이 컴파일을 다시 합니다. `PHP_OPCACHE_MAX_ACCELERATED_FILES`를 올리면 이미지 빌드 없이 적용됩니다."
           }
@@ -154,7 +154,7 @@ locals {
           for            = "30m"
           no_data_state  = "Alerting"
           exec_err_state = "Alerting"
-          labels         = { severity = "warning" }
+          labels         = { impact = "operators", severity = "warning" }
           annotations = {
             summary = "최근 6시간 속도가 이어지면 이 달 로그가 포함량의 {{ printf \"%.0f\" $values.A.Value }}%가 됩니다. 넘기면 수집이 끊겨 로그를 세는 감시가 통째로 조용해집니다."
           }

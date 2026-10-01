@@ -1,1 +1,1 @@
-{{ if eq .Status "firing" }}🟡 경고{{ else }}🟢 해제{{ end }}
+{{ if eq .CommonLabels.alertname "The wiki is read-only" }}{{ if eq .Status "firing" }}✏️ 페미위키 편집 중단{{ else }}✏️ 페미위키 편집 재개{{ end }}{{ else }}{{ if eq .Status "firing" }}🟡 경고{{ else }}🟢 해제{{ end }}{{ end }}
