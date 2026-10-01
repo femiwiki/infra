@@ -8,7 +8,7 @@ locals {
   impact_routes = {
     readers   = { contact_point = grafana_contact_point.discord["critical"].name, group_interval = "5m", repeat_interval = "30m" }
     writers   = { contact_point = grafana_contact_point.discord["warning"].name, group_interval = "5m", repeat_interval = "12h" }
-    operators = { contact_point = grafana_contact_point.github.name, group_interval = "1h", repeat_interval = "168h" }
+    operators = { contact_point = grafana_contact_point.github.name, group_interval = "1h", repeat_interval = "1w" }
     none      = { contact_point = grafana_contact_point.discord["warning"].name, group_interval = "5m", repeat_interval = "12h" }
   }
 }
