@@ -93,11 +93,6 @@ resource "github_repository_environment" "dot_github_gitlab" {
   environment = "gitlab"
 }
 
-import {
-  to = github_repository_environment.dot_github_gitlab
-  id = ".github:gitlab"
-}
-
 data "onepassword_item" "gitlab_mirror_ssh_key" {
   vault = data.onepassword_vault.infra.uuid
   title = "DOT_GITHUB_GITLAB_MIRROR_SSH_KEY"
