@@ -106,7 +106,8 @@ module "tweetbot" {
     "bot",
     "twitter",
   ]
-  required_status_checks_contexts = ["ci", "ruff", "yamllint", "rumdl", "taplo"]
+  required_status_checks_contexts = ["required"]
+  default_status_checks           = []
 }
 
 module "remote_gadgets" {
@@ -209,7 +210,8 @@ module "terraform_github_tacos" {
   ]
 
   required_pull_request_reviews   = []
-  required_status_checks_contexts = ["docs", "shellcheck", "tofu"]
+  required_status_checks_contexts = ["required"]
+  default_status_checks           = []
   pages_build_type                = "workflow"
   homepage_url                    = "https://femiwiki.github.io/terraform-github-tacos/"
 }
@@ -249,7 +251,8 @@ module "status" {
   topics = [
     "status",
   ]
-  required_status_checks_contexts = ["rumdl"]
+  required_status_checks_contexts = ["required"]
+  default_status_checks           = []
 }
 
 resource "github_repository_file" "status_index" {
