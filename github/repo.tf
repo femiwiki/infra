@@ -171,6 +171,21 @@ module "caddy_mwcache" {
   default_status_checks           = []
 }
 
+module "caddy_cloudfront_ip" {
+  source      = "./modules/github-repository"
+  name        = "caddy-cloudfront-ip"
+  description = "Caddy IP source module that trusts CloudFront's origin-facing ranges"
+  topics = [
+    "caddy",
+    "caddy2",
+    "caddy-plugin",
+    "caddy-module",
+    "cloudfront",
+  ]
+  required_status_checks_contexts = ["required"]
+  default_status_checks           = []
+}
+
 module "ooui_femiwiki_theme" {
   source      = "./modules/github-repository"
   name        = "OOUIFemiwikiTheme"
