@@ -10,7 +10,10 @@ resource "aws_security_group" "web_seoul" {
   tags = { Name = "web" }
 }
 
+# CloudFront reaches the origin over HTTPS only, so port 80 serves only
+# readers who come straight to the box.
 resource "aws_vpc_security_group_ingress_rule" "web_seoul_http" {
+  for_each          = local.through_cloudfront ? toset([]) : toset(["http"])
   region            = local.seoul_region
   security_group_id = aws_security_group.web_seoul.id
   description       = "http"
@@ -27,7 +30,19 @@ resource "aws_vpc_security_group_ingress_rule" "web_seoul_https" {
   ip_protocol       = "tcp"
   from_port         = 443
   to_port           = 443
-  cidr_ipv4         = "0.0.0.0/0"
+  cidr_ipv4         = local.through_cloudfront ? null : "0.0.0.0/0"
+  prefix_list_id    = local.through_cloudfront ? data.aws_ec2_managed_prefix_list.cloudfront_origin_facing.id : null
+}
+
+# Counts as 55 of the group's 60 inbound rules, so it fits once, not twice
+data "aws_ec2_managed_prefix_list" "cloudfront_origin_facing" {
+  region = local.seoul_region
+  name   = "com.amazonaws.global.cloudfront.origin-facing"
+}
+
+moved {
+  from = aws_vpc_security_group_ingress_rule.web_seoul_http
+  to   = aws_vpc_security_group_ingress_rule.web_seoul_http["http"]
 }
 
 resource "aws_vpc_security_group_egress_rule" "web_seoul" {
