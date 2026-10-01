@@ -152,7 +152,8 @@ module "legunto" {
   topics = [
     "scribunto",
   ]
-  required_status_checks_contexts = ["ci", "yamllint", "actionlint", "rumdl", "taplo"]
+  required_status_checks_contexts = ["required"]
+  default_status_checks           = []
 }
 
 module "caddy_mwcache" {
