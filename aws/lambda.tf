@@ -190,3 +190,80 @@ resource "aws_lambda_permission" "sns_discord" {
   principal     = "sns.amazonaws.com"
   source_arn    = aws_sns_topic.cloudwatch_alarms_topic_us.arn
 }
+
+# The hand-made copies sns-discord replaced, and log groups whose functions are
+# gone. Imported only so that the next change deletes them on the record (#1016).
+locals {
+  discord_noti = {
+    "us-east-1" = {
+      topic_arn    = aws_sns_topic.cloudwatch_alarms_topic_us.arn
+      subscription = "arn:aws:sns:us-east-1:302617221463:CloudWatch_Alarms_Topic:b82b352e-fa16-44db-bf3d-4f887df61219"
+    }
+    "ap-northeast-1" = {
+      topic_arn    = aws_sns_topic.cloudwatch_alarms_topic.arn
+      subscription = "arn:aws:sns:ap-northeast-1:302617221463:CloudWatch_Alarms_Topic:a63e4780-3dc6-4662-85f0-604aae393dae"
+    }
+  }
+
+  orphaned_log_groups = {
+    "us-east-1/EmailBounceHandler"      = { region = "us-east-1", name = "/aws/lambda/EmailBounceHandler" }
+    "ap-northeast-1/EmailBounceHandler" = { region = "ap-northeast-1", name = "/aws/lambda/EmailBounceHandler" }
+    "ap-northeast-2/html2feed"          = { region = "ap-northeast-2", name = "/aws/lambda/html2feed" }
+    "ap-northeast-2/html2rss"           = { region = "ap-northeast-2", name = "/aws/lambda/html2rss" }
+  }
+}
+
+import {
+  for_each = local.discord_noti
+
+  to = aws_lambda_function.discord_noti[each.key]
+  id = "DiscordNoti@${each.key}"
+}
+
+resource "aws_lambda_function" "discord_noti" {
+  for_each = local.discord_noti
+
+  region        = each.key
+  function_name = "DiscordNoti"
+  role          = aws_iam_role.discord_noti.arn
+  runtime       = "python3.13"
+  architectures = ["x86_64"]
+  handler       = "lambda_function.lambda_handler"
+  filename      = "${path.module}/res/lambda-placeholder.zip"
+  timeout       = 3
+  memory_size   = 128
+
+  lifecycle {
+    ignore_changes = [filename, source_code_hash, environment]
+  }
+}
+
+import {
+  for_each = local.discord_noti
+
+  to = aws_sns_topic_subscription.discord_noti[each.key]
+  id = each.value.subscription
+}
+
+resource "aws_sns_topic_subscription" "discord_noti" {
+  for_each = local.discord_noti
+
+  region    = each.key
+  topic_arn = each.value.topic_arn
+  protocol  = "lambda"
+  endpoint  = aws_lambda_function.discord_noti[each.key].arn
+}
+
+import {
+  for_each = local.orphaned_log_groups
+
+  to = aws_cloudwatch_log_group.orphaned[each.key]
+  id = "${each.value.name}@${each.value.region}"
+}
+
+resource "aws_cloudwatch_log_group" "orphaned" {
+  for_each = local.orphaned_log_groups
+
+  region = each.value.region
+  name   = each.value.name
+}
