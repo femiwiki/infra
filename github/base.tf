@@ -49,6 +49,9 @@ terraform {
 provider "github" {
   owner = "femiwiki"
   token = var.github_token
+
+  # The legacy client sends one request at a time, which is most of the plan
+  legacy_client = false
 }
 
 # Reads OP_SERVICE_ACCOUNT_TOKEN, a service account that can only read the infra vault.
