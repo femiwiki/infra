@@ -22,7 +22,7 @@ The three checks that have been skipped before are a script, not prose:
 `.claude/skills/femiwiki-deploy-watch/fw-deploy`, with the subcommands
 `preflight`, `watch-apply` and `verify`. Run it; the prose below is only why each
 gate is there. The paths below are relative to a femiwiki/infra checkout, which
-is where this skill lives, so that a change to `.github/workflows/tofu.yaml` and
+is where this skill lives, so that a change to `.github/workflows/tofu.yml` and
 the skill that describes it can land in one pull request.
 
 ## Before asking for an apply, run the preflight

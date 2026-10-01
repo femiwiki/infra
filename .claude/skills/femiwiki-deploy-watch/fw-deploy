@@ -173,10 +173,10 @@ cmd_watch_apply() {
     # head commit. An older run of the same pull request plans a commit the
     # branch no longer has, and its apply refuses to start.
     head=$(gh api "repos/$REPO/pulls/$pr" --jq .head.sha)
-    echo "waiting for a pull_request run of tofu.yaml on $head"
+    echo "waiting for a pull_request run of tofu.yml on $head"
     waited=0
     while [ "$waited" -lt "$timeout" ]; do
-      run_id=$(gh api "repos/$REPO/actions/workflows/tofu.yaml/runs?event=pull_request&head_sha=$head" \
+      run_id=$(gh api "repos/$REPO/actions/workflows/tofu.yml/runs?event=pull_request&head_sha=$head" \
         --jq '.workflow_runs[0].id // empty' 2>/dev/null || true)
       [ -n "$run_id" ] && break
       sleep 15
@@ -218,7 +218,7 @@ cmd_watch_apply() {
 # happened because a plan saying fastcgi-60 -> fastcgi-59 went unread.
 applied_generation() {
   # Most runs apply nothing, so look for the newest one whose docker apply ran
-  found=$(gh api "repos/$REPO/actions/workflows/tofu.yaml/runs?status=success&per_page=30" \
+  found=$(gh api "repos/$REPO/actions/workflows/tofu.yml/runs?status=success&per_page=30" \
     --jq '.workflow_runs[].id' 2>/dev/null | while read -r run; do
       gh api "repos/$REPO/actions/runs/$run/jobs" \
         --jq ".jobs[] | select(.name == \"docker apply\" and .conclusion == \"success\") | \"$run \\(.id)\"" 2>/dev/null

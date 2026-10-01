@@ -25,7 +25,7 @@ terraform plan
 
 ## `docker/` 적용하기
 
-`docker/`는 Terraform Cloud를 쓰지 않습니다. 상태는 S3에 있고, 도커 데몬은 엣지 박스의 루프백에만 열려 있어서 SSM 터널로 붙습니다. PR을 열면 `.github/workflows/tofu.yaml`이 plan을 코멘트로 답니다. plan에 바뀌는 것이 있으면 같은 실행의 `<워크스페이스> apply` 잡이 그 이름의 GitHub 환경에서 승인을 기다리고, 실행 화면의 Review deployments에서 승인하면 그 plan을 적용합니다. 이미지 bump PR도 같은 흐름입니다. 커밋을 새로 푸시하면 이전 실행의 승인 대기는 취소되고 새 실행이 다시 승인을 기다립니다.
+`docker/`는 Terraform Cloud를 쓰지 않습니다. 상태는 S3에 있고, 도커 데몬은 엣지 박스의 루프백에만 열려 있어서 SSM 터널로 붙습니다. PR을 열면 `.github/workflows/tofu.yml`이 plan을 코멘트로 답니다. plan에 바뀌는 것이 있으면 같은 실행의 `<워크스페이스> apply` 잡이 그 이름의 GitHub 환경에서 승인을 기다리고, 실행 화면의 Review deployments에서 승인하면 그 plan을 적용합니다. 이미지 bump PR도 같은 흐름입니다. 커밋을 새로 푸시하면 이전 실행의 승인 대기는 취소되고 새 실행이 다시 승인을 기다립니다.
 
 결과는 [dflook/tofu-apply]가 plan 코멘트 맨 아래 상태 줄에 씁니다. 🟠는 적용하는 중, ✅는 적용했음, ❌는 적용하지 않았거나 실패했음입니다. 워크플로 실행 로그는 시간이 지나면 지워지므로, 적용이 끝나면 워크스페이스마다 apply 로그를 PR 코멘트로 남깁니다.
 
@@ -45,12 +45,12 @@ terraform plan
 
 ## 워크스페이스 추가하기
 
-plan과 apply는 모든 워크스페이스가 `tofu.yaml` 하나를 같이 씁니다. 새 워크스페이스를 만들 때 필요한 것은 이렇습니다.
+plan과 apply는 모든 워크스페이스가 `tofu.yml` 하나를 같이 씁니다. 새 워크스페이스를 만들 때 필요한 것은 이렇습니다.
 
 1. `<이름>/` 디렉터리와 S3 백엔드 키 `<이름>/terraform.tfstate`
 2. `aws/iam.tf`에 상태 버킷을 읽는 `infra-<이름>` 역할. 신뢰 정책의 `sub`는 `pull_request`와 `environment:<이름>` 둘입니다
 3. 같은 이름의 GitHub 환경. `github/repo.tf`의 `github_repository_environment.infra`에 더하면 필수 승인자가 같이 붙습니다. 승인자가 없는 환경은 아무도 묻지 않고 적용되므로 워크플로가 거부합니다
-4. `tofu.yaml`의 `workflow_dispatch` 선택지(`&workspaces`)에 `<이름>`. plan의 `matrix`가 이 목록을 같이 쓰고, apply는 plan에 바뀌는 것이 있는 워크스페이스만 적용합니다. Discord 웹후크의 `case()`에도 더하고, 변수가 있으면 `TF_VAR_*`도 더합니다
+4. `tofu.yml`의 `workflow_dispatch` 선택지(`&workspaces`)에 `<이름>`. plan의 `matrix`가 이 목록을 같이 쓰고, apply는 plan에 바뀌는 것이 있는 워크스페이스만 적용합니다. Discord 웹후크의 `case()`에도 더하고, 변수가 있으면 `TF_VAR_*`도 더합니다
 
 필수 검사는 `tofu gate` 하나라서 브랜치 보호는 바꾸지 않습니다.
 
