@@ -63,3 +63,65 @@ resource "aws_lambda_permission" "mastodon_discord" {
   principal     = "events.amazonaws.com"
   source_arn    = aws_cloudwatch_event_rule.mastodon_discord.arn
 }
+
+resource "aws_lambda_function" "grafana_github" {
+  function_name = "grafana-github"
+  description   = "Opens a GitHub issue per Grafana alert rule that only operators need to act on. Code: femiwiki/lambda."
+  role          = aws_iam_role.grafana_github.arn
+  runtime       = "python3.13"
+  architectures = ["arm64"]
+  handler       = "lambda_function.lambda_handler"
+  filename      = "${path.module}/res/lambda-placeholder.zip"
+  timeout       = 30
+  memory_size   = 128
+
+  lifecycle {
+    ignore_changes = [filename, source_code_hash, environment]
+  }
+
+  depends_on = [aws_cloudwatch_log_group.grafana_github]
+}
+
+resource "aws_cloudwatch_log_group" "grafana_github" {
+  name              = "/aws/lambda/grafana-github"
+  retention_in_days = 14
+}
+
+resource "aws_iam_role" "grafana_github" {
+  name               = "grafana-github"
+  description        = "Execution role for the grafana-github Lambda function."
+  assume_role_policy = data.aws_iam_policy_document.discord_noti_assume_role.json
+}
+
+resource "aws_iam_role_policy" "grafana_github" {
+  name   = "GrafanaGithub"
+  role   = aws_iam_role.grafana_github.name
+  policy = data.aws_iam_policy_document.grafana_github.json
+}
+
+data "aws_iam_policy_document" "grafana_github" {
+  statement {
+    actions   = ["logs:CreateLogStream", "logs:PutLogEvents"]
+    resources = ["${aws_cloudwatch_log_group.grafana_github.arn}:*"]
+  }
+}
+
+# Grafana cannot sign AWS requests, so the function checks a bearer token itself.
+resource "aws_lambda_function_url" "grafana_github" {
+  function_name      = aws_lambda_function.grafana_github.function_name
+  authorization_type = "NONE"
+}
+
+resource "aws_lambda_permission" "grafana_github" {
+  for_each = {
+    AllowFunctionUrl      = "lambda:InvokeFunctionUrl"
+    AllowInvokeThroughUrl = "lambda:InvokeFunction"
+  }
+
+  statement_id             = each.key
+  action                   = each.value
+  function_name            = aws_lambda_function.grafana_github.function_name
+  principal                = "*"
+  function_url_auth_type   = each.value == "lambda:InvokeFunctionUrl" ? "NONE" : null
+  invoked_via_function_url = each.value == "lambda:InvokeFunction" ? true : null
+}

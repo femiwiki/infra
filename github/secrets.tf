@@ -58,3 +58,31 @@ resource "github_actions_secret" "lambda" {
   secret_name = each.key
   value       = data.onepassword_item.infra[each.value].password
 }
+
+data "onepassword_item" "alerts_app_private_key" {
+  vault = data.onepassword_vault.infra.uuid
+  title = "LAMBDA_ALERTS_APP_PRIVATE_KEY"
+}
+
+resource "github_actions_secret" "alerts_app_private_key" {
+  repository  = module.lambda.name
+  secret_name = "ALERTS_APP_PRIVATE_KEY"
+  value       = data.onepassword_item.alerts_app_private_key.note_value
+}
+
+# Grafana sends it and the grafana-github Lambda function checks it; nobody types it.
+resource "random_password" "alerts_webhook" {
+  length  = 48
+  special = false
+}
+
+resource "github_actions_secret" "alerts_webhook" {
+  for_each = {
+    GRAFANA_ALERTS_WEBHOOK_TOKEN = module.infra.name
+    ALERTS_WEBHOOK_TOKEN         = module.lambda.name
+  }
+
+  repository  = each.value
+  secret_name = each.key
+  value       = random_password.alerts_webhook.result
+}
