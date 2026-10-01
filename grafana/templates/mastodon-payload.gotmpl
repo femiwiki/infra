@@ -6,7 +6,7 @@
      server's public timelines while followers and anyone visiting the profile
      still see them. The rule's own name is left out: it is English, and this
      account is read in Korean. The icon and the summary carry the meaning.
-     The last line is the first alert's fingerprint, as in the Discord message. */ -}}
+     It ends with the first alert's fingerprint, as in the Discord message. */ -}}
 {{- $icon := "✅" -}}
 {{- if eq .Status "firing" }}{{ $icon = "⚠️" }}{{ end -}}
 {{/* A resolved post repeats the summary, which is written for the firing
@@ -26,5 +26,5 @@
 {{- end -}}
 {{- if eq $text "" }}{{ $text = printf "%s %s" $icon .CommonLabels.alertname }}{{ end -}}
 {{- $text = printf "%.440s" $text -}}
-{{- with index .Alerts 0 }}{{ $text = printf "%s\n\nid %.8s" $text .Fingerprint }}{{ end -}}
+{{- with index .Alerts 0 }}{{ $text = printf "%s (id %.8s)" $text .Fingerprint }}{{ end -}}
 {{ coll.Dict "status" $text "visibility" "unlisted" | data.ToJSON }}
