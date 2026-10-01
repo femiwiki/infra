@@ -27,7 +27,7 @@ jobs:
       id-token: write
       pull-requests: write
     steps:
-      - uses: femiwiki/terraform-github-tacos@9b66444dbcb422d1012c4d4c35c9a5365e2e8c89  # v0.2.0
+      - uses: femiwiki/terraform-github-tacos@e029c8b26096ad079174b1e2a1221fcaf574fe91  # v0.2.1
         with:
           step: plan
           workspace: ${{ matrix.workspace }}
@@ -129,7 +129,7 @@ jobs:
             exit 1
           fi
 
-      - uses: femiwiki/terraform-github-tacos@9b66444dbcb422d1012c4d4c35c9a5365e2e8c89  # v0.2.0
+      - uses: femiwiki/terraform-github-tacos@e029c8b26096ad079174b1e2a1221fcaf574fe91  # v0.2.1
         id: changes
         if: steps.scope.outputs.plan == 'true'
         with:
@@ -190,7 +190,7 @@ jobs:
     timeout-minutes: 5
     permissions: {}
     steps:
-      - uses: femiwiki/terraform-github-tacos@9b66444dbcb422d1012c4d4c35c9a5365e2e8c89  # v0.2.0
+      - uses: femiwiki/terraform-github-tacos@e029c8b26096ad079174b1e2a1221fcaf574fe91  # v0.2.1
         with:
           step: gate
           needs: ${{ toJSON(needs) }}
@@ -210,7 +210,7 @@ jobs:
     outputs:
       workspaces: ${{ steps.pending.outputs.workspaces }}
     steps:
-      - uses: femiwiki/terraform-github-tacos@9b66444dbcb422d1012c4d4c35c9a5365e2e8c89  # v0.2.0
+      - uses: femiwiki/terraform-github-tacos@e029c8b26096ad079174b1e2a1221fcaf574fe91  # v0.2.1
         id: pending
         with:
           step: pending
@@ -242,7 +242,7 @@ jobs:
       id-token: write
       pull-requests: write
     steps:
-      - uses: femiwiki/terraform-github-tacos@9b66444dbcb422d1012c4d4c35c9a5365e2e8c89  # v0.2.0
+      - uses: femiwiki/terraform-github-tacos@e029c8b26096ad079174b1e2a1221fcaf574fe91  # v0.2.1
         id: approver
         with:
           step: apply
@@ -437,15 +437,18 @@ jobs:
             || echo "::warning::could not terminate $sid; it may have ended already."
 
   merge:
-    needs: [apply, gate]
-    if: needs.apply.result == 'success' && needs.gate.result == 'success'
+    needs: [pending, apply, gate]
+    if: >-
+      !cancelled() && needs.gate.result == 'success'
+      && (needs.apply.result == 'success' || needs.pending.outputs.workspaces == '[]')
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
+      actions: read
       contents: write
       pull-requests: write
     steps:
-      - uses: femiwiki/terraform-github-tacos@9b66444dbcb422d1012c4d4c35c9a5365e2e8c89  # v0.2.0
+      - uses: femiwiki/terraform-github-tacos@e029c8b26096ad079174b1e2a1221fcaf574fe91  # v0.2.1
         with:
           step: merge
 
