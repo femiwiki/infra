@@ -308,6 +308,12 @@ femiwiki.com *.femiwiki.com 127.0.0.1:80 localhost:80 {
 			10.20.0.0/16
 			127.0.0.1
 		}
+		# Cache-Control for skin icons and other files MediaWiki links with a
+		# version hash, which browsers otherwise revalidate on every page
+		static {
+			paths /fw-resources/* /resources/* /skins/* /extensions/*
+			unversioned_max_age 5m
+		}
 	}
 	header {
 		# HSTS
