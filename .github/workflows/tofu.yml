@@ -47,7 +47,7 @@ jobs:
           shared=
           case "$WORKSPACE" in docker*) shared="|^serving/" ;; esac
           gh api "repos/$REPO/pulls/$PR/files" --paginate --jq '.[].filename' \
-            | grep -qE "^($WORKSPACE/|\.github/(workflows/tofu\.yaml$|actions/)$shared)" || plan=false
+            | grep -qE "^($WORKSPACE/|\.github/(workflows/tofu\.yml$|actions/)$shared)" || plan=false
           echo "plan=$plan" >> "$GITHUB_OUTPUT"
           [ "$plan" = true ] || echo "This pull request does not change $WORKSPACE/."
 
