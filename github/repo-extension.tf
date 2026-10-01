@@ -22,35 +22,26 @@ module "femiwiki_skin" {
   topics = [
     "mediawiki-skin",
   ]
-  enforce_admins                = local.extension.enforce_admins
-  required_pull_request_reviews = local.extension.required_pull_request_reviews
-  required_status_checks_contexts = [
-    "test (REL1_43, composer-test)",
-    "test (REL1_43, npm-test)",
-    "test (REL1_43, phan)",
-    # "test (REL1_43, selenium)",
-    "semantic-pull-request",
-  ]
-  patterns     = ["main"]
-  collaborator = local.extension.collaborator
+  enforce_admins                  = local.extension.enforce_admins
+  required_pull_request_reviews   = local.extension.required_pull_request_reviews
+  required_status_checks_contexts = ["required", "semantic-pull-request"]
+  patterns                        = ["main"]
+  collaborator                    = local.extension.collaborator
+  default_status_checks           = []
 }
 
 module "unified_extension_for_femiwiki" {
-  source                        = "./modules/github-repository"
-  name                          = "UnifiedExtensionForFemiwiki"
-  description                   = "Unified Extension For Femiwiki"
-  homepage_url                  = "https://www.mediawiki.org/wiki/Special:MyLanguage/Extension:UnifiedExtensionForFemiwiki"
-  topics                        = ["mediawiki-extension"]
-  enforce_admins                = local.extension.enforce_admins
-  required_pull_request_reviews = local.extension.required_pull_request_reviews
-  required_status_checks_contexts = [
-    "test (REL1_43, composer-test)",
-    "test (REL1_43, npm-test)",
-    "test (REL1_43, phan)",
-    "test (REL1_43, selenium)",
-  ]
-  patterns     = ["main"]
-  collaborator = local.extension.collaborator
+  source                          = "./modules/github-repository"
+  name                            = "UnifiedExtensionForFemiwiki"
+  description                     = "Unified Extension For Femiwiki"
+  homepage_url                    = "https://www.mediawiki.org/wiki/Special:MyLanguage/Extension:UnifiedExtensionForFemiwiki"
+  topics                          = ["mediawiki-extension"]
+  enforce_admins                  = local.extension.enforce_admins
+  required_pull_request_reviews   = local.extension.required_pull_request_reviews
+  required_status_checks_contexts = ["required"]
+  patterns                        = ["main"]
+  collaborator                    = local.extension.collaborator
+  default_status_checks           = []
 }
 
 removed {
