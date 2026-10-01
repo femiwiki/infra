@@ -1,0 +1,21 @@
+---
+rules:
+  - id: grafana-duration-not-normalised
+    languages: [regex]
+    paths:
+      include: ["grafana/*.tf"]
+    patterns:
+      - pattern-either:
+          - pattern-regex: '"(?P<N>\d+)(?P<U>s)"'
+          - pattern-regex: '"(?P<N>\d+)(?P<U>m)"'
+          - pattern-regex: '"(?P<N>\d+)(?P<U>h)"'
+          - pattern-regex: '"(?P<N>\d+)(?P<U>d)"'
+      - metavariable-comparison:
+          comparison: >-
+            $U in ["s", "m"] and int($N) >= 60
+            or $U == "h" and int($N) >= 24
+            or $U == "d" and int($N) >= 7
+    message: >-
+      Grafana saves durations in their largest unit (168h as 1w, 90m as 1h30m),
+      so the next plan shows a change. Write it the way Grafana saves it.
+    severity: WARNING
