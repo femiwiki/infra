@@ -207,7 +207,11 @@ jobs:
   apply:
     name: ${{ matrix.workspace }} apply
     needs: pending
-    if: needs.pending.outputs.workspaces != '[]'
+    # Without !cancelled(), the plan job that a workflow_dispatch run skips
+    # skips this one too.
+    if: >-
+      !cancelled() && needs.pending.result == 'success'
+      && needs.pending.outputs.workspaces != '[]'
     strategy:
       fail-fast: false
       matrix:
