@@ -67,7 +67,7 @@ resource "aws_iam_group_policy_attachment" "readonly_mfa" {
 #
 resource "aws_iam_role" "github_lambda" {
   name               = "github-lambda"
-  description        = "Allows GitHub Actions workflows of femiwiki/lambda to deploy the DiscordNoti function."
+  description        = "Allows GitHub Actions workflows of femiwiki/lambda to deploy its functions."
   assume_role_policy = data.aws_iam_policy_document.github_lambda_assume_role.json
 }
 

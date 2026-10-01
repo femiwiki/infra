@@ -125,3 +125,68 @@ resource "aws_lambda_permission" "grafana_github" {
   function_url_auth_type   = each.value == "lambda:InvokeFunctionUrl" ? "NONE" : null
   invoked_via_function_url = each.value == "lambda:InvokeFunction" ? true : null
 }
+
+resource "aws_lambda_function" "sns_discord" {
+  function_name = "sns-discord"
+  description   = "Posts CloudWatch alarm notifications from SNS to Discord. Code: femiwiki/lambda."
+  role          = aws_iam_role.sns_discord.arn
+  runtime       = "python3.13"
+  architectures = ["arm64"]
+  handler       = "lambda_function.lambda_handler"
+  filename      = "${path.module}/res/lambda-placeholder.zip"
+  timeout       = 30
+  memory_size   = 128
+
+  lifecycle {
+    ignore_changes = [filename, source_code_hash, environment]
+  }
+
+  depends_on = [aws_cloudwatch_log_group.sns_discord]
+}
+
+resource "aws_cloudwatch_log_group" "sns_discord" {
+  name              = "/aws/lambda/sns-discord"
+  retention_in_days = 14
+}
+
+resource "aws_iam_role" "sns_discord" {
+  name               = "sns-discord"
+  description        = "Execution role for the sns-discord Lambda function."
+  assume_role_policy = data.aws_iam_policy_document.discord_noti_assume_role.json
+}
+
+resource "aws_iam_role_policy" "sns_discord" {
+  name   = "SnsDiscord"
+  role   = aws_iam_role.sns_discord.name
+  policy = data.aws_iam_policy_document.sns_discord.json
+}
+
+data "aws_iam_policy_document" "sns_discord" {
+  statement {
+    actions   = ["logs:CreateLogStream", "logs:PutLogEvents"]
+    resources = ["${aws_cloudwatch_log_group.sns_discord.arn}:*"]
+  }
+
+  statement {
+    # GetMetricWidgetImage does not support resource-level permissions.
+    actions   = ["cloudwatch:GetMetricWidgetImage"]
+    resources = ["*"]
+  }
+}
+
+# The Route 53 and SES alarms can only live in us-east-1, so their topic calls
+# the function across regions.
+resource "aws_sns_topic_subscription" "sns_discord" {
+  region    = "us-east-1"
+  topic_arn = aws_sns_topic.cloudwatch_alarms_topic_us.arn
+  protocol  = "lambda"
+  endpoint  = aws_lambda_function.sns_discord.arn
+}
+
+resource "aws_lambda_permission" "sns_discord" {
+  statement_id  = "AllowSNS"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.sns_discord.function_name
+  principal     = "sns.amazonaws.com"
+  source_arn    = aws_sns_topic.cloudwatch_alarms_topic_us.arn
+}
