@@ -104,7 +104,7 @@ resource "grafana_contact_point" "github" {
 
   # The grafana-github function in femiwiki/lambda, which opens and comments on issues in femiwiki/infra.
   webhook {
-    url                       = "https://5jd5wc535aduc32dvlpdg5zyq40fspgt.lambda-url.ap-northeast-2.on.aws/"
+    url                       = data.terraform_remote_state.aws.outputs.grafana_github_url
     authorization_scheme      = "Bearer"
     authorization_credentials = var.alerts_webhook_token
   }
