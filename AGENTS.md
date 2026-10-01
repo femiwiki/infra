@@ -3,7 +3,7 @@
 ## Auto-merge
 
 Open a pull request with auto-merge already on when every workspace it changes
-is planned by `.github/workflows/tofu.yaml`:
+is planned by `.github/workflows/tofu.yml`:
 
 ```sh
 gh pr merge <number> --squash --auto
