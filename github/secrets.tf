@@ -87,3 +87,25 @@ resource "github_actions_secret" "alerts_webhook" {
   secret_name = each.key
   value       = random_password.alerts_webhook.result
 }
+
+resource "github_repository_environment" "dot_github_gitlab" {
+  repository  = module.dot_github.name
+  environment = "gitlab"
+}
+
+import {
+  to = github_repository_environment.dot_github_gitlab
+  id = ".github:gitlab"
+}
+
+data "onepassword_item" "gitlab_mirror_ssh_key" {
+  vault = data.onepassword_vault.infra.uuid
+  title = "DOT_GITHUB_GITLAB_MIRROR_SSH_KEY"
+}
+
+resource "github_actions_environment_secret" "gitlab_mirror_ssh_key" {
+  repository  = module.dot_github.name
+  environment = github_repository_environment.dot_github_gitlab.environment
+  secret_name = "GITLAB_MIRROR_SSH_KEY"
+  value       = data.onepassword_item.gitlab_mirror_ssh_key.note_value
+}
