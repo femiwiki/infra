@@ -39,7 +39,8 @@ module "femiwiki" {
     "feminism",
     "wiki",
   ]
-  required_status_checks_contexts = ["lint"]
+  required_status_checks_contexts = ["required"]
+  default_status_checks           = []
 }
 
 module "docker_mediawiki" {
@@ -49,13 +50,14 @@ module "docker_mediawiki" {
   delete_branch_on_merge          = true
   enforce_admins                  = local.docker.enforce_admins
   required_pull_request_reviews   = local.docker.required_pull_request_reviews
-  required_status_checks_contexts = ["php-lint", "caddy-fmt", "etc-lint", "hadolint", "shellcheck", "actionlint", "phan", "image builds", "title scope"]
+  required_status_checks_contexts = ["required", "title scope"]
   topics = [
     "docker-compose",
     "docker-image",
     "server",
     "wiki",
   ]
+  default_status_checks = []
 }
 
 module "docker_poolcounter" {
@@ -89,7 +91,8 @@ module "rankingbot" {
   topics = [
     "bot",
   ]
-  required_status_checks_contexts = ["ci", "ruff", "yamllint", "rumdl", "taplo", "biome"]
+  required_status_checks_contexts = ["required"]
+  default_status_checks           = []
 }
 
 module "tweetbot" {
@@ -113,36 +116,30 @@ module "remote_gadgets" {
   topics = [
     "bot",
   ]
-  required_status_checks_contexts = ["taplo", "prettier", "ruff"]
+  required_status_checks_contexts = ["required"]
+  default_status_checks           = []
 }
 
 module "femiwiki_github_io" {
-  source           = "./modules/github-repository"
-  name             = "femiwiki.github.io"
-  description      = "Static pages published by the Femiwiki team"
-  homepage_url     = "https://femiwiki.github.io/"
-  pages_build_type = "workflow"
-  required_status_checks_contexts = [
-    "actionlint",
-    "biome",
-    "luacheck",
-    "rumdl",
-    "shellcheck",
-    "stylua",
-    "taplo",
-    "yamllint",
-  ]
+  source                          = "./modules/github-repository"
+  name                            = "femiwiki.github.io"
+  description                     = "Static pages published by the Femiwiki team"
+  homepage_url                    = "https://femiwiki.github.io/"
+  pages_build_type                = "workflow"
+  required_status_checks_contexts = ["required"]
   topics = [
     "static-site",
     "wikven",
   ]
+  default_status_checks = []
 }
 
 module "dot_github" {
   source                          = "./modules/github-repository"
   name                            = ".github"
   description                     = "Community health files"
-  required_status_checks_contexts = ["prettier", "ruff", "taplo"]
+  required_status_checks_contexts = ["required"]
+  default_status_checks           = []
 }
 
 module "legunto" {
@@ -169,7 +166,8 @@ module "caddy_mwcache" {
     "cache",
     "mediawiki",
   ]
-  required_status_checks_contexts = ["lint-go", "caddy-fmt", "rumdl", "yamllint", "biome", "parallel-lint", "phpcs", "taplo"]
+  required_status_checks_contexts = ["required"]
+  default_status_checks           = []
 }
 
 module "ooui_femiwiki_theme" {
@@ -181,7 +179,8 @@ module "ooui_femiwiki_theme" {
     "ooui",
     "theme",
   ]
-  required_status_checks_contexts = ["parallel-lint", "phpcs", "shellcheck", "prettier"]
+  required_status_checks_contexts = ["required"]
+  default_status_checks           = []
 }
 
 module "quibble_action" {
@@ -194,16 +193,9 @@ module "quibble_action" {
     "github-actions",
   ]
 
-  required_pull_request_reviews = []
-  required_status_checks_contexts = [
-    "semantic-pull-request",
-    "yamllint",
-    "ruff",
-    "actionlint",
-    "biome",
-    "rumdl",
-    "taplo",
-  ]
+  required_pull_request_reviews   = []
+  required_status_checks_contexts = ["required", "semantic-pull-request"]
+  default_status_checks           = []
 }
 
 module "terraform_github_tacos" {
@@ -231,7 +223,8 @@ module "lambda" {
     "aws",
     "rust",
   ]
-  required_status_checks_contexts = ["fmt-prettier", "test", "taplo"]
+  required_status_checks_contexts = ["required"]
+  default_status_checks           = []
 }
 
 module "terraform-provider-mediawiki" {
@@ -242,7 +235,8 @@ module "terraform-provider-mediawiki" {
     "mediawiki",
     "terraform-provider",
   ]
-  required_status_checks_contexts = ["rumdl", "actionlint"]
+  required_status_checks_contexts = ["required"]
+  default_status_checks           = []
 }
 
 module "status" {
