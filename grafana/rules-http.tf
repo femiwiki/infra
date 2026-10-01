@@ -286,7 +286,7 @@ resource "grafana_rule_group" "femiwiki_http" {
     }
 
     annotations = {
-      summary = "지금 페미위키를 편집할 수 없습니다. 읽기는 평소대로 됩니다."
+      summary = "지금 페미위키를 편집할 수 없으며 읽기만 가능합니다."
     }
 
     data {
