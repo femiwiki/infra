@@ -41,6 +41,7 @@ resource "grafana_rule_group" "femiwiki_http" {
     exec_err_state = "OK"
 
     labels = {
+      impact   = "readers"
       severity = "critical"
     }
 
@@ -93,6 +94,7 @@ resource "grafana_rule_group" "femiwiki_http" {
     exec_err_state = "OK"
 
     labels = {
+      impact   = "readers"
       severity = "critical"
     }
 
@@ -176,6 +178,7 @@ resource "grafana_rule_group" "femiwiki_http" {
     exec_err_state = "OK"
 
     labels = {
+      impact   = "none"
       severity = "warning"
     }
 
@@ -227,6 +230,7 @@ resource "grafana_rule_group" "femiwiki_http" {
     exec_err_state = "OK"
 
     labels = {
+      impact   = "none"
       severity = "warning"
     }
 
@@ -264,6 +268,75 @@ resource "grafana_rule_group" "femiwiki_http" {
         type       = "threshold"
         expression = "A"
         conditions = [{ evaluator = { type = "gt", params = [10] } }]
+      })
+    }
+  }
+
+  rule {
+    name = "The wiki is read-only"
+    for  = "0m"
+
+    condition      = "C"
+    no_data_state  = "OK"
+    exec_err_state = "OK"
+
+    labels = {
+      impact   = "writers"
+      severity = "warning"
+    }
+
+    annotations = {
+      summary = "지금 페미위키를 편집할 수 없으며 읽기만 가능합니다."
+    }
+
+    data {
+      ref_id         = "A"
+      datasource_uid = data.grafana_data_source.infinity.uid
+      relative_time_range {
+        from = 600
+        to   = 0
+      }
+      model = jsonencode({
+        refId         = "A"
+        type          = "json"
+        source        = "url"
+        format        = "table"
+        parser        = "backend"
+        url           = "https://femiwiki.com/api.php?action=query&meta=siteinfo&siprop=general&format=json&formatversion=2"
+        url_options   = { method = "GET" }
+        root_selector = "query.general.{\"readonly\": readonly ? 1 : 0}"
+        json_options  = { root_is_not_array = true }
+        columns       = [{ selector = "readonly", text = "readonly", type = "number" }]
+      })
+    }
+
+    data {
+      ref_id         = "B"
+      datasource_uid = "__expr__"
+      relative_time_range {
+        from = 0
+        to   = 0
+      }
+      model = jsonencode({
+        refId      = "B"
+        type       = "reduce"
+        reducer    = "last"
+        expression = "A"
+      })
+    }
+
+    data {
+      ref_id         = "C"
+      datasource_uid = "__expr__"
+      relative_time_range {
+        from = 0
+        to   = 0
+      }
+      model = jsonencode({
+        refId      = "C"
+        type       = "threshold"
+        expression = "B"
+        conditions = [{ evaluator = { type = "gt", params = [0] } }]
       })
     }
   }

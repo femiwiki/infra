@@ -21,3 +21,9 @@ variable "mastodon_token" {
   type        = string
   sensitive   = true
 }
+
+variable "alerts_webhook_token" {
+  description = "Bearer token the grafana-github Lambda function expects"
+  type        = string
+  sensitive   = true
+}

@@ -503,6 +503,12 @@ data "aws_iam_policy_document" "infra_grafana" {
     ]
     resources = ["${aws_s3_bucket.tfstate.arn}/grafana/*"]
   }
+
+  # For the grafana-github function URL in the aws outputs.
+  statement {
+    actions   = ["s3:GetObject"]
+    resources = ["${aws_s3_bucket.tfstate.arn}/aws/terraform.tfstate"]
+  }
 }
 
 data "aws_iam_policy_document" "infra_healthchecks" {
