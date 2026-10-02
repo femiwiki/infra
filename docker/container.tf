@@ -158,6 +158,11 @@ resource "docker_container" "fastcgi" {
     start_period = "4m0s"
   }
 
+  upload {
+    file    = "/usr/local/etc/php-fpm.d/zzz-backlog.conf"
+    content = "[www]\nlisten.backlog = 64\n"
+  }
+
   mounts {
     type      = "volume"
     source    = docker_volume.sitemap.id
