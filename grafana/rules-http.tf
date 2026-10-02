@@ -49,7 +49,7 @@ resource "grafana_rule_group" "femiwiki_http" {
     }
 
     annotations = {
-      summary          = "페미위키에 접속이 잘 되지 않습니다."
+      summary          = "페미위키 접속이 잘 되지 않고 있습니다."
       description      = "최근 5분 동안 정상 응답이 {{ printf \"%.0f\" $values.A.Value }}건입니다."
       logs             = local.explore_urls.status
       __dashboardUid__ = grafana_dashboard.availability.uid
