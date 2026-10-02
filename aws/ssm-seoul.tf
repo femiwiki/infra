@@ -10,6 +10,19 @@ resource "aws_ssm_parameter" "alloy_seoul" {
   value  = each.value
 }
 
+# Read by publish-dump in the MediaWiki image (femiwiki/docker-mediawiki#1235).
+resource "aws_ssm_parameter" "internet_archive" {
+  for_each = {
+    access_key = var.internet_archive_access_key
+    secret_key = var.internet_archive_secret_key
+  }
+
+  region = local.seoul_region
+  name   = "/mediawiki/internet_archive/${each.key}"
+  type   = "SecureString"
+  value  = each.value
+}
+
 # Written by hand, so the values stay out of the configuration; only the type is
 # managed here (femiwiki/femiwiki#597).
 locals {
