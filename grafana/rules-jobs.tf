@@ -191,4 +191,121 @@ resource "grafana_rule_group" "femiwiki_jobs" {
       })
     }
   }
+
+  rule {
+    name = "The public dump failed to upload"
+    for  = "0s"
+
+    condition      = "B"
+    no_data_state  = "OK"
+    exec_err_state = "OK"
+
+    labels = {
+      impact   = "operators"
+      severity = "warning"
+    }
+
+    annotations = {
+      summary = "`publish-dump`가 공개 덤프를 Internet Archive에 올리지 못했습니다. fastcgi 컨테이너의 `/var/log/cron.log`에 실패한 단계가 남아 있습니다. 덤프 파일은 지워졌으니 원인을 고친 뒤 컨테이너에서 `publish-dump`를 다시 돌립니다."
+    }
+
+    data {
+      ref_id         = "A"
+      datasource_uid = data.grafana_data_source.loki.uid
+      query_type     = "instant"
+      # Keeps the alert firing for a day after the failure.
+      relative_time_range {
+        from = 86400
+        to   = 0
+      }
+      model = jsonencode({
+        refId     = "A"
+        expr      = local.dump_failed
+        queryType = "instant"
+        instant   = true
+        range     = false
+      })
+    }
+
+    data {
+      ref_id         = "B"
+      datasource_uid = "__expr__"
+      relative_time_range {
+        from = 0
+        to   = 0
+      }
+      model = jsonencode({
+        refId      = "B"
+        type       = "threshold"
+        expression = "A"
+        conditions = [{ evaluator = { type = "gt", params = [0] } }]
+      })
+    }
+  }
+
+  rule {
+    name = "The public dump was not published"
+    for  = "0s"
+
+    condition      = "C"
+    no_data_state  = "OK"
+    exec_err_state = "OK"
+
+    labels = {
+      impact   = "operators"
+      severity = "warning"
+    }
+
+    annotations = {
+      summary = "1월 1일·7월 1일 18:00 UTC에 시작한 공개 덤프가 18시간이 지나도록 끝났다는 줄을 남기지 않았습니다. cron이 돌지 않았거나, 실패 줄을 남기기 전에 죽었거나, 아직 덤프 중입니다. fastcgi 컨테이너의 `/var/log/cron.log`를 봅니다."
+    }
+
+    data {
+      ref_id         = "A"
+      datasource_uid = data.grafana_data_source.loki.uid
+      query_type     = "instant"
+      # Reaches back past the 18:00 start from the end of the next day.
+      relative_time_range {
+        from = 172800
+        to   = 0
+      }
+      model = jsonencode({
+        refId     = "A"
+        expr      = local.dump_published
+        queryType = "instant"
+        instant   = true
+        range     = false
+      })
+    }
+
+    # 1 from 18 hours after the Jan 1 and Jul 1 run until the day ends, else 0.
+    data {
+      ref_id         = "B"
+      datasource_uid = data.grafana_data_source.prometheus.uid
+      relative_time_range {
+        from = 600
+        to   = 0
+      }
+      model = jsonencode({
+        refId   = "B"
+        expr    = local.dump_due
+        instant = true
+        range   = false
+      })
+    }
+
+    data {
+      ref_id         = "C"
+      datasource_uid = "__expr__"
+      relative_time_range {
+        from = 0
+        to   = 0
+      }
+      model = jsonencode({
+        refId      = "C"
+        type       = "math"
+        expression = "($B > 0) && ($A < 1)"
+      })
+    }
+  }
 }

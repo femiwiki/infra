@@ -1,0 +1,1 @@
+(vector(1) and on() (month() == 1 or month() == 7) and on() day_of_month() == 2 and on() hour() >= 12) or vector(0)
