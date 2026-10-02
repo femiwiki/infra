@@ -5,16 +5,16 @@
      bytes, which is what Mastodon counts too. Unlisted keeps these off the
      server's public timelines while followers and anyone visiting the profile
      still see them. The rule's own name is left out: it is English, and this
-     account is read in Korean. The icon and the summary carry the meaning.
-     It ends with the first alert's fingerprint, as in the Discord message. */ -}}
+     account is read in Korean. Only summary is posted: it is written for
+     readers, and description and logs are for operators. The public status
+     page goes in its place. It ends with the first alert's fingerprint, as in
+     the Discord message. */ -}}
 {{- $icon := "✅" -}}
 {{- if eq .Status "firing" }}{{ $icon = "⚠️" }}{{ end -}}
 {{/* A resolved post repeats the summary, which is written for the firing
-     state, so it opens by saying the alert is over. Grafana expands the
-     summary again at every evaluation, so its numbers are the ones that
-     resolved it. */ -}}
+     state, so it opens by saying that alert is over. */ -}}
 {{- $head := printf "%s " $icon -}}
-{{- if ne .Status "firing" }}{{ $head = printf "%s 해제됐습니다. 아래 숫자는 해제 시점에 다시 잰 값입니다.\n\n" $icon }}{{ end -}}
+{{- if ne .Status "firing" }}{{ $head = printf "%s 아래 알림이 해제됐습니다.\n\n" $icon }}{{ end -}}
 {{- $text := "" -}}
 {{- range $i, $alert := .Alerts -}}
 {{- if eq $i 0 -}}
@@ -22,9 +22,8 @@
 {{- else -}}
 {{- $text = printf "%s\n\n%s" $text $alert.Annotations.summary -}}
 {{- end -}}
-{{- if $alert.Annotations.logs }}{{- $text = printf "%s\n%s" $text $alert.Annotations.logs -}}{{- end -}}
 {{- end -}}
 {{- if eq $text "" }}{{ $text = printf "%s %s" $icon .CommonLabels.alertname }}{{ end -}}
-{{- $text = printf "%.440s" $text -}}
+{{- $text = printf "%.440s\n%s" $text "__STATUS_PAGE__" -}}
 {{- with index .Alerts 0 }}{{ $text = printf "%s (id %.8s)" $text .Fingerprint }}{{ end -}}
 {{ coll.Dict "status" $text "visibility" "unlisted" | data.ToJSON }}

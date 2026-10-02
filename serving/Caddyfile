@@ -162,6 +162,18 @@ femiwiki.com *.femiwiki.com 127.0.0.1:80 localhost:80 {
 			events {$FW_LINK_WALK_EVENTS:150}
 			window {$FW_LINK_WALK_WINDOW:10m}
 		}
+		# Sidebar page tools from anyone not logged in, site-wide, on the URI as sent
+		# since /w/ is rewritten first. New item calls our own api.php: two workers.
+		zone page_tools {
+			match {
+				method GET
+				vars_regexp {http.request.orig_uri} {$FW_PAGE_TOOLS_URI:(?i)[?&]action=(edit|watch|unwatch|credits)(&|$)|[?&]title=(%ED%8A%B9%EC%88%98|특수|Special)(%3A|:)(%EC%83%88%ED%95%AD%EB%AA%A9|새항목|NewItem|%EB%A7%81%ED%81%AC%EC%B5%9C%EA%B7%BC%EB%B0%94%EB%80%9C|링크최근바뀜|RecentChangesLinked|%EC%9D%B4%EB%AC%B8%EC%84%9C%EC%9D%B8%EC%9A%A9|이문서인용|CiteThisPage)|^/w/(%ED%8A%B9%EC%88%98|특수|Special)(%3A|:)(%EC%83%88%ED%95%AD%EB%AA%A9|새항목|NewItem|%EB%A7%81%ED%81%AC%EC%B5%9C%EA%B7%BC%EB%B0%94%EB%80%9C|링크최근바뀜|RecentChangesLinked|%EC%9D%B4%EB%AC%B8%EC%84%9C%EC%9D%B8%EC%9A%A9|이문서인용|CiteThisPage|%EA%B0%80%EB%A6%AC%ED%82%A4%EB%8A%94%EB%AC%B8%EC%84%9C|가리키는문서|WhatLinksHere)}
+				not header Cookie *femiwikiUserID=*
+			}
+			key page_tools
+			events {$FW_PAGE_TOOLS_EVENTS:150}
+			window {$FW_PAGE_TOOLS_WINDOW:10m}
+		}
 		# Login and signup pages opened from anywhere but a page here, site-wide; the
 		# #978 crawl forges search engine Referers. GET only, so an open form logs in.
 		zone login_walk {

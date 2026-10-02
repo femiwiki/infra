@@ -1,9 +1,12 @@
 {{/* Only the annotations this wiki writes are printed. Grafana adds its own
      when a rule is edited or a query fails, grafana_state_reason and
-     datasource_uid and ref_id so far, and a reader has no use for them. */ -}}
+     datasource_uid and ref_id so far, and nobody here has use for them.
+     Rules that also post to Mastodon keep summary for readers and the
+     operator's detail in description. */ -}}
 {{ range .Alerts }}{{ if eq .Status "resolved" }}해제됐습니다. 아래 숫자는 해제 시점에 다시 잰 값입니다.
 {{ end }}{{ .Annotations.summary }}
-{{ range .Annotations.SortedPairs }}{{ if eq .Name "queue" }}{{ .Name }}: {{ .Value }}
+{{ if .Annotations.description }}{{ .Annotations.description }}
+{{ end }}{{ range .Annotations.SortedPairs }}{{ if eq .Name "queue" }}{{ .Name }}: {{ .Value }}
 {{ end }}{{ end }}{{ if .Annotations.logs }}[최근 상태 보기]({{ .Annotations.logs }})
 {{ end }}{{ end }}
 {{ with index .Alerts 0 }}-# id {{ printf "%.8s" .Fingerprint }}{{ end }}

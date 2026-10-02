@@ -94,7 +94,11 @@ resource "grafana_contact_point" "mastodon" {
     authorization_credentials = var.mastodon_token
 
     payload {
-      template = trimspace(file("${path.module}/templates/mastodon-payload.gotmpl"))
+      template = trimspace(replace(
+        file("${path.module}/templates/mastodon-payload.gotmpl"),
+        "__STATUS_PAGE__",
+        "https://femiwiki.grafana.net/public-dashboards/${grafana_dashboard_public.availability.access_token}",
+      ))
     }
   }
 }
