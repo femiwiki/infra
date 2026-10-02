@@ -239,3 +239,71 @@ resource "aws_s3_bucket_policy" "cost_exports" {
   bucket = aws_s3_bucket.cost_exports.id
   policy = data.aws_iam_policy_document.cost_exports_bucket.json
 }
+
+resource "aws_s3_bucket" "rate_limit" {
+  region           = local.seoul_region
+  bucket           = "rate-limit-${data.aws_caller_identity.current.account_id}-${local.seoul_region}-an"
+  bucket_namespace = "account-regional"
+}
+
+resource "aws_s3_bucket_public_access_block" "rate_limit" {
+  region = local.seoul_region
+  bucket = aws_s3_bucket.rate_limit.id
+
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
+resource "aws_s3_bucket_lifecycle_configuration" "rate_limit" {
+  region = local.seoul_region
+  bucket = aws_s3_bucket.rate_limit.id
+
+  rule {
+    id     = "expire-states-of-gone-containers"
+    status = "Enabled"
+
+    filter {}
+
+    expiration {
+      days = 1
+    }
+
+    abort_incomplete_multipart_upload {
+      days_after_initiation = 1
+    }
+  }
+}
+
+resource "aws_s3_bucket_policy" "rate_limit" {
+  depends_on = [aws_s3_bucket_public_access_block.rate_limit]
+
+  region = local.seoul_region
+  bucket = aws_s3_bucket.rate_limit.bucket
+  policy = data.aws_iam_policy_document.rate_limit.json
+}
+
+data "aws_iam_policy_document" "rate_limit" {
+  statement {
+    sid     = "DenyPlainHttp"
+    effect  = "Deny"
+    actions = ["s3:*"]
+
+    principals {
+      type        = "AWS"
+      identifiers = ["*"]
+    }
+
+    resources = [
+      aws_s3_bucket.rate_limit.arn,
+      "${aws_s3_bucket.rate_limit.arn}/*",
+    ]
+
+    condition {
+      test     = "Bool"
+      variable = "aws:SecureTransport"
+      values   = ["false"]
+    }
+  }
+}

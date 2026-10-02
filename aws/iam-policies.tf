@@ -119,10 +119,11 @@ resource "aws_iam_policy" "amazon_s3_access" {
 #   https://github.com/hashicorp/terraform/issues/27171#issuecomment-740249394
 #   https://github.com/hashicorp/terraform/issues/27282
 locals {
-  secrets       = aws_s3_bucket.secrets.arn
-  backups       = aws_s3_bucket.backups.arn
-  backups_seoul = aws_s3_bucket.backups_seoul.arn
-  uploads_seoul = aws_s3_bucket.uploads_seoul.arn
+  secrets          = aws_s3_bucket.secrets.arn
+  backups          = aws_s3_bucket.backups.arn
+  backups_seoul    = aws_s3_bucket.backups_seoul.arn
+  uploads_seoul    = aws_s3_bucket.uploads_seoul.arn
+  rate_limit = aws_s3_bucket.rate_limit.arn
 }
 
 data "aws_iam_policy_document" "amazon_s3_access" {
@@ -215,6 +216,28 @@ data "aws_iam_policy_document" "access_caddycerts" {
       "s3:DeleteObject",
     ]
     resources = ["${local.secrets}/caddycerts/*"]
+  }
+}
+
+resource "aws_iam_policy" "share_rate_limit_state" {
+  name        = "ShareRateLimitState"
+  description = "Allows Caddy to share its rate limit counters between containers"
+
+  policy = data.aws_iam_policy_document.share_rate_limit_state.json
+}
+
+data "aws_iam_policy_document" "share_rate_limit_state" {
+  statement {
+    actions   = ["s3:ListBucket"]
+    resources = [local.rate_limit]
+  }
+  statement {
+    actions = [
+      "s3:GetObject",
+      "s3:PutObject",
+      "s3:DeleteObject",
+    ]
+    resources = ["${local.rate_limit}/*"]
   }
 }
 
