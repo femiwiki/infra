@@ -3,6 +3,8 @@
 ---
 uid: container-memory
 title: 컨테이너 메모리
+description: |-
+  컨테이너마다 메모리를 얼마나 쓰는지, 호스트에는 얼마나 남았는지 봅니다.
 tags:
 - containers
 timezone: browser
@@ -15,9 +17,9 @@ time:
 panels:
 - id: 1
   type: timeseries
-  title: Memory in use, per container
+  title: 컨테이너별 사용 중인 메모리
   description: |-
-    Working set is what the kernel counts against a memory limit, and what docker stats shows. A limit line appears once a container has one.
+    커널이 메모리 상한에 견주어 세는 working set으로, docker stats가 보여주는 값과 같습니다. 상한이 있는 컨테이너는 상한 선도 함께 나옵니다.
   datasource: &prom
     type: prometheus
     uid: __PROM_UID__
@@ -55,12 +57,12 @@ panels:
     datasource: *prom
     expr: |-
       container_spec_memory_limit_bytes{job="integrations/cadvisor"} != 0
-    legendFormat: '{{name}} limit'
+    legendFormat: '{{name}} 상한'
 - id: 2
   type: bargauge
-  title: Peak memory since the container started
+  title: 컨테이너가 뜬 뒤 가장 많이 쓴 메모리
   description: |-
-    memory.peak from cgroup v2. It never falls while the container lives, so it is the floor for any limit.
+    cgroup v2의 memory.peak입니다. 컨테이너가 살아 있는 동안 줄지 않으므로, 상한은 이보다 낮게 잡을 수 없습니다.
   datasource: *prom
   gridPos:
     h: 8
@@ -91,9 +93,9 @@ panels:
     legendFormat: '{{name}}'
 - id: 3
   type: timeseries
-  title: How much of the limit is in use
+  title: 상한 대비 사용량
   description: |-
-    Only containers that have a limit appear here.
+    상한이 있는 컨테이너만 나옵니다.
   datasource: *prom
   gridPos:
     h: 8
@@ -135,9 +137,9 @@ panels:
     legendFormat: '{{name}}'
 - id: 4
   type: timeseries
-  title: What is left on the host, and what Alloy costs
+  title: 호스트에 남은 메모리와 Alloy가 쓰는 메모리
   description: |-
-    The containers above have to fit in what the host has left, and Alloy is not free either.
+    위 컨테이너들은 호스트에 남은 메모리 안에서 돌아야 하고, Alloy도 그 메모리를 나눠 씁니다.
   datasource: *prom
   gridPos:
     h: 8
@@ -168,9 +170,9 @@ panels:
     datasource: *prom
     expr: |-
       node_memory_MemAvailable_bytes{job="integrations/node_exporter"}
-    legendFormat: '{{instance}} available'
+    legendFormat: '{{instance}} 남음'
   - refId: B
     datasource: *prom
     expr: |-
       process_resident_memory_bytes{job="integrations/alloy-check"}
-    legendFormat: '{{instance}} alloy'
+    legendFormat: '{{instance}} Alloy'
