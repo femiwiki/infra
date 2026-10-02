@@ -11,8 +11,8 @@ resource "aws_instance" "docker_seoul" {
   ami                         = data.aws_ami.amazon_linux_2_arm64_seoul.image_id
   availability_zone           = local.seoul_az
   subnet_id                   = aws_subnet.seoul.id
-  disable_api_termination     = false
-  disable_api_stop            = false
+  disable_api_termination     = true
+  disable_api_stop            = true
   ebs_optimized               = true
   iam_instance_profile        = aws_iam_instance_profile.femiwiki.name
   instance_type               = "t4g.small"
