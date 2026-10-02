@@ -183,6 +183,11 @@ resource "aws_iam_role_policy_attachment" "femiwiki_access_caddycerts" {
   policy_arn = aws_iam_policy.access_caddycerts.arn
 }
 
+resource "aws_iam_role_policy_attachment" "femiwiki_share_rate_limit_state" {
+  role       = aws_iam_role.femiwiki.name
+  policy_arn = aws_iam_policy.share_rate_limit_state.arn
+}
+
 resource "aws_iam_role_policy_attachment" "femiwiki_read_secret_parameters" {
   role       = aws_iam_role.femiwiki.name
   policy_arn = aws_iam_policy.read_secret_parameters.arn
