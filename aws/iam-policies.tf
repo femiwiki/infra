@@ -454,6 +454,7 @@ data "aws_iam_policy_document" "iac" {
       "sns:*",
       "sqs:*",
       "ssm:*",
+      "sso:*",
       "tag:GetResources",
     ]
     resources = ["*"]
