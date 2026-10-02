@@ -119,11 +119,11 @@ resource "aws_iam_policy" "amazon_s3_access" {
 #   https://github.com/hashicorp/terraform/issues/27171#issuecomment-740249394
 #   https://github.com/hashicorp/terraform/issues/27282
 locals {
-  secrets          = aws_s3_bucket.secrets.arn
-  backups          = aws_s3_bucket.backups.arn
-  backups_seoul    = aws_s3_bucket.backups_seoul.arn
-  uploads_seoul    = aws_s3_bucket.uploads_seoul.arn
-  rate_limit = aws_s3_bucket.rate_limit.arn
+  secrets       = aws_s3_bucket.secrets.arn
+  backups       = aws_s3_bucket.backups.arn
+  backups_seoul = aws_s3_bucket.backups_seoul.arn
+  uploads_seoul = aws_s3_bucket.uploads_seoul.arn
+  rate_limit    = aws_s3_bucket.rate_limit.arn
 }
 
 data "aws_iam_policy_document" "amazon_s3_access" {
