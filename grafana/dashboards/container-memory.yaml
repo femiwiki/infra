@@ -2,7 +2,7 @@
 # OpenTofu decodes this, so the panel coordinate stays quoted.
 ---
 uid: container-memory
-title: Container memory
+title: 컨테이너 메모리
 tags:
 - containers
 timezone: browser
