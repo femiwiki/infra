@@ -41,7 +41,17 @@ prometheus.relabel "alloy_check" {
 
   rule {
     source_labels = ["__name__"]
-    regex         = "(prometheus_target_sync_length_seconds_sum|prometheus_target_scrapes_.*|prometheus_target_interval.*|prometheus_sd_discovered_targets|alloy_build.*|prometheus_remote_write_wal_samples_appended_total|process_start_time_seconds|process_resident_memory_bytes)"
+    regex         = string.join([
+      "prometheus_target_sync_length_seconds_sum",
+      "prometheus_target_scrapes_.*",
+      "prometheus_target_interval.*",
+      "prometheus_sd_discovered_targets",
+      "alloy_build.*",
+      "prometheus_remote_write_wal_samples_appended_total",
+      "process_start_time_seconds",
+      "process_resident_memory_bytes",
+      "loki_process_custom_rate_limit_refusals_total",
+    ], "|")
     action        = "keep"
   }
 }
@@ -286,6 +296,32 @@ loki.process "fastcgi" {
 
     stage.output {
       source = "refused"
+    }
+  }
+
+  // Refusals per zone outlive the log lines, so an unused zone shows as zero
+  stage.match {
+    selector = `{docker_container_name=~"http.*"} |= "\"logger\":\"http.handlers.rate_limit\"" |= "rate limit exceeded"`
+
+    stage.json {
+      expressions = {zone = "zone"}
+    }
+
+    stage.labels {
+      values = {zone = ""}
+    }
+
+    stage.metrics {
+      metric.counter {
+        name        = "rate_limit_refusals_total"
+        description = "Requests Caddy's rate_limit refused, by zone"
+        match_all   = true
+        action      = "inc"
+      }
+    }
+
+    stage.label_drop {
+      values = ["zone"]
     }
   }
 }
