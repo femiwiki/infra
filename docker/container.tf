@@ -54,25 +54,6 @@ resource "docker_container" "http" {
       # CloudFront's origin-facing ranges, for trusted_proxies. When AWS changes them:
       # curl -s https://ip-ranges.amazonaws.com/ip-ranges.json | jq -r '.prefixes[] | select(.service == "CLOUDFRONT_ORIGIN_FACING") | .ip_prefix' | sort -uV
       FW_TRUSTED_PROXIES = join(" ", split("\n", trimspace(file("../serving/cloudfront-origin-facing.txt")))),
-
-      BLOCKED_CIDR = join(" ", [
-        # Alibaba Cloud LLC
-        "47.74.0.0/15", "47.76.0.0/14", "47.80.0.0/13",
-        # ACEVILLE PTE.LTD and TencentCloud, as APNIC registers them
-        "43.128.64.0/18", "43.153.0.0/17", "43.154.0.0/16", "43.156.0.0/16",
-        "43.157.0.0/17", "43.160.0.0/12",
-        "49.51.0.0/16", "119.28.0.0/15", "124.156.96.0/19", "124.156.128.0/18",
-        # ColoCrossing
-        "104.168.0.0/17",
-        "107.172.0.0/14",
-        "172.245.0.0/16",
-        "192.210.128.0/17",
-        "192.227.128.0/17",
-        "192.3.0.0/16",
-        "198.144.176.0/20",
-        "198.46.128.0/17",
-        "23.94.0.0/15",
-      ]),
     } : "${k}=${v}"
   ]
 
