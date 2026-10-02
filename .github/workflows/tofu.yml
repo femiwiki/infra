@@ -27,7 +27,7 @@ jobs:
       id-token: write
       pull-requests: write
     steps:
-      - uses: femiwiki/terraform-github-tacos@e029c8b26096ad079174b1e2a1221fcaf574fe91  # v0.2.1
+      - uses: femiwiki/terraform-github-tacos@1584b307aa8635c1782ec8aa836b6e998f54fbee  # v0.2.2
         with:
           step: plan
           workspace: ${{ matrix.workspace }}
@@ -129,7 +129,7 @@ jobs:
             exit 1
           fi
 
-      - uses: femiwiki/terraform-github-tacos@e029c8b26096ad079174b1e2a1221fcaf574fe91  # v0.2.1
+      - uses: femiwiki/terraform-github-tacos@1584b307aa8635c1782ec8aa836b6e998f54fbee  # v0.2.2
         id: changes
         if: steps.scope.outputs.plan == 'true'
         with:
@@ -190,7 +190,7 @@ jobs:
     timeout-minutes: 5
     permissions: {}
     steps:
-      - uses: femiwiki/terraform-github-tacos@e029c8b26096ad079174b1e2a1221fcaf574fe91  # v0.2.1
+      - uses: femiwiki/terraform-github-tacos@1584b307aa8635c1782ec8aa836b6e998f54fbee  # v0.2.2
         with:
           step: gate
           needs: ${{ toJSON(needs) }}
@@ -210,7 +210,7 @@ jobs:
     outputs:
       workspaces: ${{ steps.pending.outputs.workspaces }}
     steps:
-      - uses: femiwiki/terraform-github-tacos@e029c8b26096ad079174b1e2a1221fcaf574fe91  # v0.2.1
+      - uses: femiwiki/terraform-github-tacos@1584b307aa8635c1782ec8aa836b6e998f54fbee  # v0.2.2
         id: pending
         with:
           step: pending
@@ -242,7 +242,7 @@ jobs:
       id-token: write
       pull-requests: write
     steps:
-      - uses: femiwiki/terraform-github-tacos@e029c8b26096ad079174b1e2a1221fcaf574fe91  # v0.2.1
+      - uses: femiwiki/terraform-github-tacos@1584b307aa8635c1782ec8aa836b6e998f54fbee  # v0.2.2
         id: approver
         with:
           step: apply
@@ -448,7 +448,7 @@ jobs:
       contents: write
       pull-requests: write
     steps:
-      - uses: femiwiki/terraform-github-tacos@e029c8b26096ad079174b1e2a1221fcaf574fe91  # v0.2.1
+      - uses: femiwiki/terraform-github-tacos@1584b307aa8635c1782ec8aa836b6e998f54fbee  # v0.2.2
         with:
           step: merge
 
