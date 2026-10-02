@@ -1,13 +1,3 @@
-resource "aws_cloudwatch_log_group" "discord_noti" {
-  region = local.tokyo_region
-  name   = "/aws/lambda/DiscordNoti"
-}
-
-resource "aws_cloudwatch_log_group" "discord_noti_us" {
-  name   = "/aws/lambda/DiscordNoti"
-  region = "us-east-1"
-}
-
 resource "aws_cloudwatch_metric_alarm" "bounce_rate" {
   alarm_name          = "Bounce Rate"
   namespace           = "AWS/SES"
