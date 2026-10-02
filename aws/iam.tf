@@ -135,13 +135,7 @@ resource "aws_iam_role_policy" "femiwiki_github_io" {
   policy = data.aws_iam_policy_document.femiwiki_github_io.json
 }
 
-resource "aws_iam_role" "discord_noti" {
-  name               = "DiscordNoti"
-  description        = "Execution role for the DiscordNoti Lambda function."
-  assume_role_policy = data.aws_iam_policy_document.discord_noti_assume_role.json
-}
-
-data "aws_iam_policy_document" "discord_noti_assume_role" {
+data "aws_iam_policy_document" "lambda_assume_role" {
   statement {
     actions = ["sts:AssumeRole"]
 
@@ -150,12 +144,6 @@ data "aws_iam_policy_document" "discord_noti_assume_role" {
       identifiers = ["lambda.amazonaws.com"]
     }
   }
-}
-
-resource "aws_iam_role_policy" "discord_noti" {
-  name   = "DiscordNoti"
-  role   = aws_iam_role.discord_noti.name
-  policy = data.aws_iam_policy_document.discord_noti.json
 }
 
 resource "aws_iam_role" "femiwiki" {

@@ -380,8 +380,6 @@ data "aws_iam_policy_document" "github_lambda" {
       "lambda:GetFunctionConfiguration",
     ]
     resources = [
-      "arn:aws:lambda:ap-northeast-1:302617221463:function:DiscordNoti",
-      "arn:aws:lambda:us-east-1:302617221463:function:DiscordNoti",
       aws_lambda_function.mastodon_discord.arn,
       aws_lambda_function.grafana_github.arn,
       aws_lambda_function.sns_discord.arn,
@@ -407,33 +405,6 @@ data "aws_iam_policy_document" "femiwiki_github_io" {
   statement {
     actions   = ["s3:GetObject", "s3:ListBucket"]
     resources = [aws_s3_bucket.cost_exports.arn, "${aws_s3_bucket.cost_exports.arn}/*"]
-  }
-}
-
-data "aws_iam_policy_document" "discord_noti" {
-  statement {
-    actions = ["logs:CreateLogGroup"]
-    resources = [
-      aws_cloudwatch_log_group.discord_noti.arn,
-      aws_cloudwatch_log_group.discord_noti_us.arn,
-    ]
-  }
-
-  statement {
-    actions = [
-      "logs:CreateLogStream",
-      "logs:PutLogEvents",
-    ]
-    resources = [
-      "${aws_cloudwatch_log_group.discord_noti.arn}:*",
-      "${aws_cloudwatch_log_group.discord_noti_us.arn}:*",
-    ]
-  }
-
-  statement {
-    # GetMetricWidgetImage does not support resource-level permissions.
-    actions   = ["cloudwatch:GetMetricWidgetImage"]
-    resources = ["*"]
   }
 }
 
