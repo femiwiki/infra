@@ -256,3 +256,43 @@ resource "aws_ssm_association" "alloy_config" {
     values = [each.key]
   }
 }
+
+# The hand-made copies left in Tokyo; everything reads Seoul now. Imported only
+# so that the next change deletes them on the record.
+locals {
+  tokyo_leftover_parameters = {
+    "/mediawiki/firebase_key"          = "String"
+    "/mediawiki/o_auth_2_private_key"  = "String"
+    "/mediawiki/rc_feeds_discord_url"  = "String"
+    "/mediawiki/re_captcha/secret_key" = "String"
+    "/mediawiki/re_captcha/site_key"   = "String"
+    "/mediawiki/site_key"              = "String"
+    "/mediawiki/smtp/password"         = "String"
+    "/mediawiki/smtp/username"         = "String"
+    "/mediawiki/upgrade_key"           = "String"
+    "/mysql/users/mediawiki/password"  = "String"
+    "/mysql/users/mediawiki/username"  = "String"
+    "/mysql/users/repl/password"       = "SecureString"
+    "/mysql/users/repl/username"       = "String"
+  }
+}
+
+import {
+  for_each = local.tokyo_leftover_parameters
+
+  to = aws_ssm_parameter.tokyo_leftover[each.key]
+  id = "${each.key}@${local.tokyo_region}"
+}
+
+resource "aws_ssm_parameter" "tokyo_leftover" {
+  for_each = local.tokyo_leftover_parameters
+
+  region = local.tokyo_region
+  name   = each.key
+  type   = each.value
+  value  = "placeholder"
+
+  lifecycle {
+    ignore_changes = [value]
+  }
+}
