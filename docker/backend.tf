@@ -8,6 +8,23 @@ terraform {
     use_lockfile = true
   }
 
+  # Only to read the aws outputs, under aws/base.tf's names
+  encryption {
+    key_provider "pbkdf2" "state" {
+      passphrase = var.aws_state_passphrase
+    }
+
+    method "aes_gcm" "state" {
+      keys = key_provider.pbkdf2.state
+    }
+
+    remote_state_data_sources {
+      remote_state_data_source "aws" {
+        method = method.aes_gcm.state
+      }
+    }
+  }
+
   required_providers {
     aws = {
       source  = "hashicorp/aws"
@@ -31,4 +48,14 @@ provider "docker" {
 data "aws_instances" "database" {
   instance_tags        = { Name = "database-5" }
   instance_state_names = ["running"]
+}
+
+data "terraform_remote_state" "aws" {
+  backend = "s3"
+
+  config = {
+    bucket = "tfstate-302617221463-ap-northeast-1-an"
+    key    = "aws/terraform.tfstate"
+    region = "ap-northeast-1"
+  }
 }

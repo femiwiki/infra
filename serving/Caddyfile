@@ -253,6 +253,19 @@ femiwiki.com *.femiwiki.com 127.0.0.1:80 localhost:80 {
 		log_key
 		# The module keeps a histogram per key, one series set per /24 seen
 		disable_metrics
+		# Counters in memory would reset with every deploy, so each generation
+		# adds in the counts the others write to the bucket
+		distributed {
+			read_interval {$FW_RATE_LIMIT_SYNC:30s}
+			write_interval {$FW_RATE_LIMIT_SYNC:30s}
+			purge_age 20m
+		}
+		storage s3 {
+			host {$FW_RATE_LIMIT_S3_HOST}
+			bucket {$FW_RATE_LIMIT_S3_BUCKET}
+			prefix instances
+			use_iam_provider true
+		}
 	}
 	# 429.html and 429.json are built from MediaWiki's own messages by 429.php;
 	# the page is English, the browser fetches its own language from the json
