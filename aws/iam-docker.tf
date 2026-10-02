@@ -44,6 +44,12 @@ data "aws_iam_policy_document" "infra_docker" {
   }
 
   statement {
+    sid       = "ReadAwsOutputs"
+    actions   = ["s3:GetObject"]
+    resources = ["${aws_s3_bucket.tfstate.arn}/aws/terraform.tfstate"]
+  }
+
+  statement {
     sid       = "StateBucket"
     actions   = ["s3:ListBucket"]
     resources = [aws_s3_bucket.tfstate.arn]
