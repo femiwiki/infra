@@ -6,5 +6,5 @@ import {
 resource "aws_ssoadmin_permission_set" "administrator_access" {
   name             = "AdministratorAccess"
   instance_arn     = "arn:aws:sso:::instance/ssoins-723078109ea304b8"
-  session_duration = "PT1H"
+  session_duration = "PT12H"
 }
