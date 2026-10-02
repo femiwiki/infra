@@ -35,7 +35,7 @@ resource "aws_ssm_parameter" "secret_seoul" {
 
   region = local.seoul_region
   name   = each.key
-  type   = "String"
+  type   = "SecureString"
   value  = "placeholder"
 
   lifecycle {
