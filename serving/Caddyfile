@@ -3,7 +3,6 @@
 	storage s3
 
 	order mwcache before rewrite
-	# NOTE: See @block_cidr and @claudebot for the further details
 	order respond before mwcache
 	order encode before mwcache
 
@@ -229,6 +228,19 @@ femiwiki.com *.femiwiki.com 127.0.0.1:80 localhost:80 {
 			events {$FW_BOTLIKE_EVENTS:150}
 			window {$FW_BOTLIKE_WINDOW:10m}
 		}
+		# The api.php calls the skin makes on every article view, from a faked
+		# browser. Readers make them too, so a budget rather than a 403. See #1038.
+		zone botlike_api {
+			match {
+				path /api.php*
+				vars_regexp {query} {$FW_API_QUERY:(^|&)action=flow(&|$)|(^|&)inprop=watchers|(^|&)prop=linkshere}
+				not header Cookie *femiwikiUserID=*
+				import botlike
+			}
+			key botlike_api
+			events {$FW_BOTLIKE_API_EVENTS:150}
+			window {$FW_BOTLIKE_API_WINDOW:10m}
+		}
 		log_key
 		# The module keeps a histogram per key, one series set per /24 seen
 		disable_metrics
@@ -379,40 +391,6 @@ femiwiki.com *.femiwiki.com 127.0.0.1:80 localhost:80 {
 
 	# 404 rather than 403: there is no reason to confirm the installer is there
 	respond /mw-config* 404
-
-	# The three api.php calls the skin makes on every article view: the talk
-	# page's topic list, the watcher count and the related-articles links. They
-	# are 94% of api.php's time and 79% of them come from the clients above, so
-	# a crawler's one page read costs a render plus three of these. None of it
-	# is article text, so refusing them takes nothing from a reader of content.
-	# opensearch, which the search box asks on every keystroke, is not in the
-	# pattern. See femiwiki#523.
-	@botlike_api {
-		path /api.php*
-		vars_regexp {query} {$FW_API_QUERY:(^|&)action=flow(&|$)|(^|&)inprop=watchers|(^|&)prop=linkshere}
-		not header Cookie *femiwikiUserID=*
-		import botlike
-	}
-
-	respond @botlike_api 403 {
-		close
-	}
-
-	@block_cidr {
-		client_ip {$BLOCKED_CIDR}
-	}
-
-	respond @block_cidr 403 {
-		close
-	}
-
-	@claudebot {
-		header User-Agent *ClaudeBot*
-	}
-
-	respond @claudebot 403 {
-		close
-	}
 }
 
 # php-fpm's status page and opcache for Alloy on the host. infra alternates
