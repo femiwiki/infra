@@ -162,17 +162,14 @@ femiwiki.com *.femiwiki.com 127.0.0.1:80 localhost:80 {
 			events {$FW_LINK_WALK_EVENTS:150}
 			window {$FW_LINK_WALK_WINDOW:10m}
 		}
-		# The login and signup pages opened with no Referer, counted across the
-		# whole site. The same crawl asked for them about 1,800 times an hour on
-		# 2026-09-30, 92% with no Referer, while a person reaches them from the
-		# 로그인 link on a page, which sends one. Only the form's GET is counted,
-		# so a person who has the page open can always log in. See #978.
+		# Login and signup pages opened from anywhere but a page here, site-wide; the
+		# #978 crawl forges search engine Referers. GET only, so an open form logs in.
 		zone login_walk {
 			match {
 				method GET
 				path /index.php*
 				vars_regexp {query} {$FW_LOGIN_WALK_QUERY:(?i)(^|&)title=(%ED%8A%B9%EC%88%98|특수|Special)(%3A|:)(%EB%A1%9C%EA%B7%B8%EC%9D%B8|로그인|%EA%B3%84%EC%A0%95%EB%A7%8C%EB%93%A4%EA%B8%B0|계정만들기|UserLogin|CreateAccount)(/|&|$)}
-				not header Referer *
+				not header_regexp Referer ^https://([a-z0-9-]+\.)?femiwiki\.com/
 			}
 			key login_walk
 			events {$FW_LOGIN_WALK_EVENTS:60}
