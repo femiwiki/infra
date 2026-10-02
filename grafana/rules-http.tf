@@ -49,7 +49,8 @@ resource "grafana_rule_group" "femiwiki_http" {
     }
 
     annotations = {
-      summary          = "최근 5분 동안 정상 응답이 {{ printf \"%.0f\" $values.A.Value }}건입니다."
+      summary          = "페미위키에 접속이 잘 되지 않습니다."
+      description      = "최근 5분 동안 정상 응답이 {{ printf \"%.0f\" $values.A.Value }}건입니다."
       logs             = local.explore_urls.status
       __dashboardUid__ = grafana_dashboard.availability.uid
       __panelId__      = "1"
@@ -102,7 +103,8 @@ resource "grafana_rule_group" "femiwiki_http" {
     }
 
     annotations = {
-      summary          = "최근 5분 동안 응답의 {{ printf \"%.0f\" $values.C.Value }}%가 5xx입니다. 5xx는 {{ printf \"%.0f\" $values.A.Value }}건입니다."
+      summary          = "페미위키 요청 상당수가 오류로 끝나고 있습니다. 페이지가 안 열리면 잠시 뒤 다시 시도해 주세요."
+      description      = "최근 5분 동안 응답의 {{ printf \"%.0f\" $values.C.Value }}%가 5xx입니다. 5xx는 {{ printf \"%.0f\" $values.A.Value }}건입니다."
       logs             = local.explore_urls.status
       __dashboardUid__ = grafana_dashboard.availability.uid
       __panelId__      = "1"
