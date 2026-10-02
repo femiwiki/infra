@@ -30,6 +30,8 @@ locals {
     prometheus_username = "1835631"
     loki_endpoint       = "https://logs-prod-030.grafana.net/loki/api/v1/push"
     loki_username       = "1017101"
+    pyroscope_endpoint  = "https://profiles-prod-019.grafana.net"
+    pyroscope_username  = "1059321"
   }
 
   alloy_install = {
