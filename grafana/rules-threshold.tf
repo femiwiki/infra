@@ -22,12 +22,15 @@ locals {
           annotations = { summary = "{{ $labels.instance }}의 {{ $labels.name }}이 제 메모리 상한의 {{ printf \"%.0f\" $values.A.Value }}%를 쓰고 있습니다." }
         },
         {
-          name        = "Out of memory"
-          expr        = trimspace(file("${path.module}/queries/oom-kills.promql"))
-          threshold   = 0
-          for         = "0m"
-          labels      = { impact = "readers" }
-          annotations = { summary = "{{ $labels.instance }}에서 커널이 프로세스를 죽였습니다. 최근 10분 동안 {{ printf \"%.0f\" $values.A.Value }}번입니다." }
+          name      = "Out of memory"
+          expr      = trimspace(file("${path.module}/queries/oom-kills.promql"))
+          threshold = 0
+          for       = "0m"
+          labels    = { impact = "readers" }
+          annotations = {
+            summary     = "서버 메모리가 모자라 일부 요청이 실패했을 수 있습니다."
+            description = "{{ $labels.instance }}에서 커널이 프로세스를 죽였습니다. 최근 10분 동안 {{ printf \"%.0f\" $values.A.Value }}번입니다."
+          }
         },
       ]
     }
@@ -101,7 +104,8 @@ locals {
           threshold = 0
           labels    = { impact = "readers", severity = "warning" }
           annotations = {
-            summary = "{{ $labels.instance }}에서 요청이 5분 넘게 php-fpm 앞에 줄 서 있습니다. 워커가 모자라면 `phpfpm_max_children_reached`가 함께 오르고, 메모리가 모자라면 `node_memory_MemAvailable_bytes`가 떨어집니다."
+            summary     = "페미위키가 느립니다. 페이지가 늦게 열리거나 오류가 날 수 있습니다."
+            description = "{{ $labels.instance }}에서 요청이 5분 넘게 php-fpm 앞에 줄 서 있습니다. 워커가 모자라면 `phpfpm_max_children_reached`가 함께 오르고, 메모리가 모자라면 `node_memory_MemAvailable_bytes`가 떨어집니다."
             # A resolved notification carries the value it resolved at, which for a
             # queue is always zero, so the reading goes beside the text rather than in it
             queue = "{{ printf \"%.0f\" $values.A.Value }}"
