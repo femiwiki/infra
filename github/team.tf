@@ -32,3 +32,24 @@ resource "github_team_repository" "deployer_infra" {
   repository = module.infra.name
   permission = "pull"
 }
+
+# Mentioned by the grafana-github function in each alert issue it opens
+resource "github_team" "pager" {
+  name        = "Pager"
+  description = "People notified of alerts only operators need to act on"
+  privacy     = "closed"
+}
+
+resource "github_team_membership" "pager" {
+  for_each = toset(["lens0021"])
+
+  team_id  = github_team.pager.id
+  username = each.key
+  role     = "maintainer"
+}
+
+resource "github_team_repository" "pager_infra" {
+  team_id    = github_team.pager.id
+  repository = module.infra.name
+  permission = "pull"
+}
