@@ -132,6 +132,36 @@ prometheus.relabel "caddy" {
   }
 }
 
+// Caddy's pprof, also on the admin endpoint. A minute apart keeps it far under
+// the free plan's 50 GB of profiles a month: about 60 KB a scrape, 2.5 GB.
+pyroscope.scrape "caddy" {
+  targets    = [{__address__ = "127.0.0.1:2019", instance = "${name}", service_name = "caddy"}]
+  forward_to = [pyroscope.write.grafana_cloud.receiver]
+
+  scrape_interval = "60s"
+
+  profiling_config {
+    // Caddy never sets a mutex or block profile rate, so these come back empty.
+    profile.mutex {
+      enabled = false
+    }
+    profile.block {
+      enabled = false
+    }
+  }
+}
+pyroscope.write "grafana_cloud" {
+  endpoint {
+    url = "${pyroscope_endpoint}"
+
+    basic_auth {
+      username = "${pyroscope_username}"
+      // The metrics token also carries profiles:write.
+      password = local.file.prometheus_password.content
+    }
+  }
+}
+
 // php-fpm's pool status and opcache, served by Caddy on a loopback port that
 // alternates with the deploy generation like the probe port
 // (femiwiki/docker-mediawiki#1110). Outside a deploy only one of the two ports
