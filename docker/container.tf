@@ -1,7 +1,7 @@
 resource "docker_container" "http" {
   name         = "http-${local.fastcgi_generation}"
   log_driver   = "local"
-  image        = "ghcr.io/femiwiki/femiwiki:2026-10-01T23-31-0fc25b9c"
+  image        = "ghcr.io/femiwiki/femiwiki:2026-10-02T14-18-c7aae8e6"
   command      = ["caddy-run"]
   restart      = "always"
   network_mode = "host"
@@ -79,7 +79,7 @@ resource "docker_container" "http" {
 resource "docker_container" "fastcgi" {
   name         = "fastcgi-${local.fastcgi_generation}"
   log_driver   = "local"
-  image        = "ghcr.io/femiwiki/femiwiki:2026-10-01T23-31-0fc25b9c"
+  image        = "ghcr.io/femiwiki/femiwiki:2026-10-02T14-18-c7aae8e6"
   network_mode = "host"
   restart      = "always"
   memory       = 768
@@ -142,6 +142,7 @@ resource "docker_container" "fastcgi" {
 
       WG_DB_SERVER           = "${data.aws_instances.database.private_ips[0]}:3306"
       WG_DB_USER             = "mediawiki"
+      WG_SESSION_DB_NAME     = "femiwiki_sessions"
       WG_RE_CAPTCHA_SITE_KEY = "6LfiSLArAAAAAKFLIhAJC2wlNY1Nnbm_gNcXRIDh"
 
       SSM_SECRETS = "1"
