@@ -142,6 +142,7 @@ resource "docker_container" "fastcgi" {
 
       WG_DB_SERVER           = "${data.aws_instances.database.private_ips[0]}:3306"
       WG_DB_USER             = "mediawiki"
+      WG_SESSION_DB_NAME     = "femiwiki_sessions"
       WG_RE_CAPTCHA_SITE_KEY = "6LfiSLArAAAAAKFLIhAJC2wlNY1Nnbm_gNcXRIDh"
 
       SSM_SECRETS = "1"
