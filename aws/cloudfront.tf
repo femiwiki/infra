@@ -1,6 +1,6 @@
-# CloudFront in front of femiwiki.com, caching nothing, so that egress to
+# CloudFront in front of femiwiki.com, caching only load.php, so that egress to
 # readers leaves through CloudFront's free tier instead of the box's. Every
-# request still reaches Caddy, and mwcache keeps handling PURGE. See
+# other request still reaches Caddy, and mwcache keeps handling PURGE. See
 # femiwiki/femiwiki#639, whose "Keep it removable" section has the order for
 # turning this on and off.
 
@@ -53,6 +53,28 @@ data "aws_cloudfront_cache_policy" "caching_disabled" {
   name = "Managed-CachingDisabled"
 }
 
+resource "aws_cloudfront_cache_policy" "load_php" {
+  name        = "femiwiki-load-php"
+  min_ttl     = 0
+  default_ttl = 0
+  max_ttl     = 31536000 # the same as Managed-UseOriginCacheControlHeaders-QueryStrings
+
+  parameters_in_cache_key_and_forwarded_to_origin {
+    enable_accept_encoding_gzip   = true
+    enable_accept_encoding_brotli = true
+
+    cookies_config {
+      cookie_behavior = "none"
+    }
+    headers_config {
+      header_behavior = "none"
+    }
+    query_strings_config {
+      query_string_behavior = "all"
+    }
+  }
+}
+
 # CloudFront adds X-Forwarded-For whatever the policy says, and nothing here
 # reads the CloudFront-* headers, which dominated every access log line.
 data "aws_cloudfront_origin_request_policy" "all_viewer" {
@@ -68,7 +90,7 @@ locals {
 
 resource "aws_cloudfront_distribution" "femiwiki_com" {
   enabled         = true
-  comment         = "femiwiki.com, caching nothing"
+  comment         = "femiwiki.com, caching only load.php"
   aliases         = local.cloudfront_aliases
   http_version    = "http2and3"
   is_ipv6_enabled = true
@@ -97,6 +119,17 @@ resource "aws_cloudfront_distribution" "femiwiki_com" {
     allowed_methods          = ["GET", "HEAD", "OPTIONS", "PUT", "POST", "PATCH", "DELETE"]
     cached_methods           = ["GET", "HEAD"]
     cache_policy_id          = data.aws_cloudfront_cache_policy.caching_disabled.id
+    origin_request_policy_id = data.aws_cloudfront_origin_request_policy.all_viewer.id
+    compress                 = true
+  }
+
+  ordered_cache_behavior {
+    path_pattern             = "/load.php"
+    target_origin_id         = "femiwiki"
+    viewer_protocol_policy   = "redirect-to-https"
+    allowed_methods          = ["GET", "HEAD"]
+    cached_methods           = ["GET", "HEAD"]
+    cache_policy_id          = aws_cloudfront_cache_policy.load_php.id
     origin_request_policy_id = data.aws_cloudfront_origin_request_policy.all_viewer.id
     compress                 = true
   }
