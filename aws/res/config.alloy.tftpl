@@ -51,6 +51,7 @@ prometheus.relabel "alloy_check" {
       "process_start_time_seconds",
       "process_resident_memory_bytes",
       "loki_process_custom_rate_limit_refusals_total",
+      "loki_process_custom_php_deprecations_total",
     ], "|")
     action        = "keep"
   }
@@ -301,6 +302,81 @@ loki.process "fastcgi" {
 
     stage.output {
       source = "line"
+    }
+  }
+
+  // A deprecation is logged twice: php-fpm's own line, and MediaWiki's JSON
+  // line on the error channel, which also carries the URL. Since MediaWiki
+  // 1.46 that is about 17,000 lines an hour, nearly all FemiwikiSkin not
+  // declaring `menus`. The php-fpm line is counted by what is deprecated, so
+  // the graph stays exact, and then dropped. The JSON line is kept at one a
+  // minute for each, which is enough to find where one comes from.
+  stage.match {
+    selector = `{docker_container_name=~"fastcgi.*"} |~ "^NOTICE: PHP message: PHP Deprecated: "`
+
+    // The last that matches names it: the message without its caller, else
+    // the deprecated method, else the skin menu
+    stage.regex {
+      expression = `PHP Deprecated: +(?P<deprecation>.*?)(?: \[Called from .*)?(?: in /\S+ on line \d+)?$`
+    }
+    stage.regex {
+      expression = `PHP Deprecated: +Use of (?P<deprecation>\S+) was deprecated`
+    }
+    stage.regex {
+      expression = `PHP Deprecated: .*<br>(?P<deprecation>[^<]*?) is deprecated\.`
+    }
+
+    stage.labels {
+      values = {deprecation = ""}
+    }
+
+    stage.metrics {
+      metric.counter {
+        name        = "php_deprecations_total"
+        description = "PHP Deprecated messages, by what is deprecated"
+        match_all   = true
+        action      = "inc"
+      }
+    }
+  }
+  stage.match {
+    selector            = `{docker_container_name=~"fastcgi.*"} |~ "^NOTICE: PHP message: PHP Deprecated: "`
+    action              = "drop"
+    drop_counter_reason = "php_deprecation_fpm_copy"
+  }
+  stage.match {
+    selector = `{docker_container_name=~"fastcgi.*"} |= "\"channel\":\"error\"" |= "PHP Deprecated: "`
+
+    stage.json {
+      expressions = {deprecation_message = "context.exception.message"}
+    }
+
+    stage.regex {
+      source     = "deprecation_message"
+      expression = `PHP Deprecated: +(?P<deprecation>.*?)(?: \[Called from .*)?(?: in /\S+ on line \d+)?$`
+    }
+    stage.regex {
+      source     = "deprecation_message"
+      expression = `PHP Deprecated: +Use of (?P<deprecation>\S+) was deprecated`
+    }
+    stage.regex {
+      source     = "deprecation_message"
+      expression = `PHP Deprecated: .*<br>(?P<deprecation>[^<]*?) is deprecated\.`
+    }
+
+    stage.labels {
+      values = {deprecation = ""}
+    }
+
+    stage.limit {
+      rate          = 1.0 / 60
+      burst         = 1
+      by_label_name = "deprecation"
+      drop          = true
+    }
+
+    stage.label_drop {
+      values = ["deprecation"]
     }
   }
 
