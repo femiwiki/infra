@@ -121,9 +121,9 @@ resource "docker_container" "fastcgi" {
       PHP_OPCACHE_INTERNED_STRINGS_BUFFER = "96"
 
       PHP_FPM_PM_MAX_CHILDREN      = "16"
-      PHP_FPM_PM_START_SERVERS     = "2"
-      PHP_FPM_PM_MIN_SPARE_SERVERS = "1"
-      PHP_FPM_PM_MAX_SPARE_SERVERS = "3"
+      PHP_FPM_PM_START_SERVERS     = "16" # max_children, so a new generation takes over at full size
+      PHP_FPM_PM_MIN_SPARE_SERVERS = "8"  # php-fpm forks min_spare - idle a second at most; 1 meant one child a second
+      PHP_FPM_PM_MAX_SPARE_SERVERS = "16" # max_children, so the start servers are not reaped before the swap
       PHP_FPM_PM_MAX_REQUESTS      = "200"
 
       PHP_POST_MAX_SIZE       = "10M"
