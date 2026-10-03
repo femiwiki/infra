@@ -12,13 +12,6 @@ data "terraform_remote_state" "healthchecks" {
   }
 }
 
-resource "aws_ssm_parameter" "mysql_backup_healthcheck_url" {
-  region = local.tokyo_region
-  name   = "/mysql/backup/healthcheck-url"
-  type   = "SecureString"
-  value  = data.terraform_remote_state.healthchecks.outputs.mysql_backup_ping_url
-}
-
 locals {
   alloy_hosts = {
     "database-5" = { name = "mariadb-seoul", type = "database", region = local.seoul_region }
@@ -54,7 +47,7 @@ locals {
   })
 
   mysql_backup_install = templatefile("res/install-mysql-backup.sh.tftpl", {
-    parameter_region = local.tokyo_region
+    parameter_region = local.seoul_region
     backup_script    = local.mysql_backup_script
   })
 }
@@ -98,19 +91,6 @@ resource "aws_ssm_association" "mysql_backup" {
     key    = "tag:MysqlBackup"
     values = ["true"]
   }
-}
-
-resource "aws_ssm_parameter" "alloy" {
-  for_each = {
-    loki_password       = var.loki_password
-    prometheus_password = var.prometheus_password
-  }
-
-  region = local.tokyo_region
-
-  name  = "/alloy/${each.key}"
-  type  = "SecureString"
-  value = each.value
 }
 
 locals {
@@ -227,10 +207,7 @@ resource "aws_ssm_document" "alloy_config" {
 resource "aws_ssm_association" "alloy_config" {
   for_each = local.alloy_hosts
 
-  depends_on = [
-    aws_ssm_parameter.alloy,
-    aws_ssm_parameter.alloy_seoul,
-  ]
+  depends_on = [aws_ssm_parameter.alloy_seoul]
 
   region              = each.value.region
   association_name    = "install-alloy-config-${each.key}"
@@ -304,4 +281,11 @@ resource "aws_ssm_document" "update_wiki_schema" {
       }
     }]
   })
+}
+
+resource "aws_ssm_parameter" "mysql_backup_healthcheck_url" {
+  region = local.seoul_region
+  name   = "/mysql/backup/healthcheck-url"
+  type   = "SecureString"
+  value  = data.terraform_remote_state.healthchecks.outputs.mysql_backup_ping_url
 }
