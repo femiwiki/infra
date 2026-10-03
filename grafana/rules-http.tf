@@ -358,14 +358,13 @@ resource "grafana_rule_group" "femiwiki_http" {
     exec_err_state = "OK"
 
     labels = {
-      impact   = "readers"
-      severity = "critical"
+      impact   = "operators"
+      severity = "warning"
     }
 
     annotations = {
-      summary     = "페미위키 일부 문서나 기능이 오류로 열리지 않고 있습니다."
-      description = "최근 1시간 동안 처리되지 않은 오류가 {{ printf \"%.0f\" $values.A.Value }}건 났습니다. 가장 많은 것은 `{{ $labels.class }}` {{ printf \"%.0f\" $values.B.Value }}건입니다. 로그의 요청 id와 주소로 어느 문서인지 찾습니다."
-      logs        = local.explore_urls.exceptions
+      summary = "최근 1시간 동안 방문자에게 오류 페이지로 나간 예외가 {{ printf \"%.0f\" $values.A.Value }}건입니다. 가장 많은 것은 `{{ $labels.class }}` {{ printf \"%.0f\" $values.B.Value }}건입니다. 로그의 요청 id와 주소로 어느 문서나 기능인지 찾습니다."
+      logs    = local.explore_urls.exceptions
     }
 
     data {
