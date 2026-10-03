@@ -49,7 +49,7 @@ locals {
           no_data_state  = "Alerting"
           exec_err_state = "Alerting"
           labels         = { impact = "operators" }
-          annotations    = { summary = "{{ $labels.instance }}: {{ printf \"%.0f\" $values.A.Value }}% of / left" }
+          annotations    = { summary = "{{ $labels.instance }}의 루트 파일시스템(/)에 남은 공간이 {{ printf \"%.0f\" $values.A.Value }}%입니다." }
         },
         {
           name        = "A target stopped reporting"
@@ -69,7 +69,7 @@ locals {
           no_data_state  = "NoData"
           exec_err_state = "Alerting"
           labels         = { impact = "operators" }
-          annotations    = { summary = "{{ $labels.instance }}: {{ printf \"%.0f\" $values.A.Value }} MB available" }
+          annotations    = { summary = "{{ $labels.instance }}에 쓸 수 있는 메모리가 {{ printf \"%.0f\" $values.A.Value }} MB 남았습니다." }
         },
       ]
     }
