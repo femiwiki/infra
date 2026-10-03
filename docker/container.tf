@@ -122,10 +122,13 @@ resource "docker_container" "fastcgi" {
       PHP_POST_MAX_SIZE       = "10M"
       PHP_UPLOAD_MAX_FILESIZE = "10M"
 
+      MEDIAWIKI_SKIP_CRON         = "1"
       MEDIAWIKI_SKIP_IMPORT_SITES = "1"
       MEDIAWIKI_SKIP_INSTALL      = "1"
       MEDIAWIKI_SKIP_UPDATE       = "1"
       MEDIAWIKI_HOTFIX_SNIPPET    = file("../serving/Hotfix.php")
+
+      WG_READ_ONLY = "현재 미디어위키 1.46 업데이트를 진행하고 있습니다. 약 1시간 동안 문서를 편집할 수 없으며, 읽기는 평소처럼 하실 수 있습니다."
 
       FW_PROFILER = "excimer"
       # Every request is instrumented, so nothing slow can be missed, but only
