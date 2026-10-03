@@ -54,7 +54,7 @@ locals {
   })
 
   mysql_backup_install = templatefile("res/install-mysql-backup.sh.tftpl", {
-    parameter_region = local.tokyo_region
+    parameter_region = local.seoul_region
     backup_script    = local.mysql_backup_script
   })
 }
@@ -79,7 +79,7 @@ resource "aws_ssm_document" "mysql_backup" {
 }
 
 resource "aws_ssm_association" "mysql_backup" {
-  depends_on = [aws_ssm_parameter.mysql_backup_healthcheck_url_tokyo]
+  depends_on = [aws_ssm_parameter.mysql_backup_healthcheck_url]
 
   region              = local.seoul_region
   association_name    = "install-mysql-backup"
@@ -306,7 +306,9 @@ resource "aws_ssm_document" "update_wiki_schema" {
   })
 }
 
-moved {
-  from = aws_ssm_parameter.mysql_backup_healthcheck_url
-  to   = aws_ssm_parameter.mysql_backup_healthcheck_url_tokyo
+resource "aws_ssm_parameter" "mysql_backup_healthcheck_url" {
+  region = local.seoul_region
+  name   = "/mysql/backup/healthcheck-url"
+  type   = "SecureString"
+  value  = data.terraform_remote_state.healthchecks.outputs.mysql_backup_ping_url
 }
