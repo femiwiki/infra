@@ -246,3 +246,62 @@ resource "aws_ssm_association" "alloy_config" {
     values = [each.key]
   }
 }
+
+# Steps 2 and 3 of the MediaWiki 1.46 upgrade (femiwiki/femiwiki#645), run by
+# hand with Run Command. Nothing schedules them.
+resource "aws_ssm_document" "copy_wiki_schema" {
+  region          = local.seoul_region
+  name            = "copy-wiki-schema"
+  document_type   = "Command"
+  document_format = "JSON"
+
+  content = jsonencode({
+    schemaVersion = "2.2"
+    description   = "Copy the femiwiki schema into a new schema on the database host."
+    parameters = {
+      target = {
+        type           = "String"
+        description    = "Name of the new schema, such as femiwiki_43."
+        allowedPattern = "^femiwiki_[0-9]+$"
+      }
+    }
+    mainSteps = [{
+      action = "aws:runShellScript"
+      name   = "copyWikiSchema"
+      inputs = {
+        runCommand = split("\n", replace(file("res/copy-wiki-schema.sh"), "__TARGET__", "{{ target }}"))
+      }
+    }]
+  })
+}
+
+resource "aws_ssm_document" "update_wiki_schema" {
+  region          = local.seoul_region
+  name            = "update-wiki-schema"
+  document_type   = "Command"
+  document_format = "JSON"
+
+  content = jsonencode({
+    schemaVersion = "2.2"
+    description   = "Run a femiwiki image's update.php against a schema, on the docker host."
+    parameters = {
+      image = {
+        type           = "String"
+        description    = "Image whose update.php runs, such as ghcr.io/femiwiki/femiwiki:1.46-2026-10-02T23-35-fe1d33c2."
+        allowedPattern = "^ghcr\\.io/femiwiki/femiwiki:[A-Za-z0-9._-]+$"
+      }
+      target = {
+        type           = "String"
+        description    = "Schema to update, such as femiwiki."
+        allowedPattern = "^femiwiki(_[0-9]+)?$"
+      }
+    }
+    mainSteps = [{
+      action = "aws:runShellScript"
+      name   = "updateWikiSchema"
+      inputs = {
+        runCommand = split("\n", replace(replace(file("res/update-wiki-schema.sh"), "__IMAGE__", "{{ image }}"), "__TARGET__", "{{ target }}"))
+      }
+    }]
+  })
+}
