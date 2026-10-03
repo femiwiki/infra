@@ -58,6 +58,10 @@ resource "docker_container" "http" {
       # CloudFront's origin-facing ranges, for trusted_proxies. When AWS changes them:
       # curl -s https://ip-ranges.amazonaws.com/ip-ranges.json | jq -r '.prefixes[] | select(.service == "CLOUDFRONT_ORIGIN_FACING") | .ip_prefix' | sort -uV
       FW_TRUSTED_PROXIES = join(" ", split("\n", trimspace(file("../serving/cloudfront-origin-facing.txt")))),
+
+      # Route 53's health checker ranges, let through the special_pages zone. When AWS changes them:
+      # curl -s https://ip-ranges.amazonaws.com/ip-ranges.json | jq -r '(.prefixes[] | select(.service == "ROUTE53_HEALTHCHECKS") | .ip_prefix), (.ipv6_prefixes[] | select(.service == "ROUTE53_HEALTHCHECKS") | .ipv6_prefix)' | sort -uV
+      FW_ROUTE53_HEALTHCHECKS = join(" ", split("\n", trimspace(file("../serving/route53-healthchecks.txt")))),
     } : "${k}=${v}"
   ]
 
@@ -108,16 +112,18 @@ resource "docker_container" "fastcgi" {
       PHP_FPM_PROCESS_CONTROL_TIMEOUT     = "10s"
       PHP_FPM_REQUEST_TERMINATE_TIMEOUT   = "30"
 
-      PHP_OPCACHE_MEMORY_CONSUMPTION = "256"
+      # Includes the interned buffer below. Each language the l10n cache loads
+      # adds about 0.9 MB of script and 2 MB of strings; see docker-mediawiki#1294.
+      PHP_OPCACHE_MEMORY_CONSUMPTION = "320"
       # 4000 rounded up to 7963 key slots and 5,170 scripts filled them; 10000 is
       # PHP's next size, 16229. Memory was never the ceiling. See femiwiki#587.
       PHP_OPCACHE_MAX_ACCELERATED_FILES   = "10000"
-      PHP_OPCACHE_INTERNED_STRINGS_BUFFER = "48"
+      PHP_OPCACHE_INTERNED_STRINGS_BUFFER = "96"
 
       PHP_FPM_PM_MAX_CHILDREN      = "16"
-      PHP_FPM_PM_START_SERVERS     = "2"
-      PHP_FPM_PM_MIN_SPARE_SERVERS = "1"
-      PHP_FPM_PM_MAX_SPARE_SERVERS = "3"
+      PHP_FPM_PM_START_SERVERS     = "16" # max_children, so a new generation takes over at full size
+      PHP_FPM_PM_MIN_SPARE_SERVERS = "8"  # php-fpm forks min_spare - idle a second at most; 1 meant one child a second
+      PHP_FPM_PM_MAX_SPARE_SERVERS = "16" # max_children, so the start servers are not reaped before the swap
       PHP_FPM_PM_MAX_REQUESTS      = "200"
 
       PHP_POST_MAX_SIZE       = "10M"
