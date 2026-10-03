@@ -12,7 +12,7 @@ data "terraform_remote_state" "healthchecks" {
   }
 }
 
-resource "aws_ssm_parameter" "mysql_backup_healthcheck_url" {
+resource "aws_ssm_parameter" "mysql_backup_healthcheck_url_tokyo" {
   region = local.tokyo_region
   name   = "/mysql/backup/healthcheck-url"
   type   = "SecureString"
@@ -79,7 +79,7 @@ resource "aws_ssm_document" "mysql_backup" {
 }
 
 resource "aws_ssm_association" "mysql_backup" {
-  depends_on = [aws_ssm_parameter.mysql_backup_healthcheck_url]
+  depends_on = [aws_ssm_parameter.mysql_backup_healthcheck_url_tokyo]
 
   region              = local.seoul_region
   association_name    = "install-mysql-backup"
@@ -304,4 +304,9 @@ resource "aws_ssm_document" "update_wiki_schema" {
       }
     }]
   })
+}
+
+moved {
+  from = aws_ssm_parameter.mysql_backup_healthcheck_url
+  to   = aws_ssm_parameter.mysql_backup_healthcheck_url_tokyo
 }
