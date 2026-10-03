@@ -10,10 +10,25 @@
 set -eu
 
 REPO=${FW_REPO:-femiwiki/infra}
-INFRA_DIR=${FW_INFRA_DIR:-$HOME/git/fw/infra}
 SITE=${FW_SITE:-https://femiwiki.com/}
 
 die() { echo "fw-deploy: $*" >&2; exit 2; }
+
+INFRA_DIR=${FW_INFRA_DIR:-}
+[ -n "$INFRA_DIR" ] || die "set FW_INFRA_DIR to a femiwiki/infra checkout"
+git -C "$INFRA_DIR" rev-parse --git-dir >/dev/null 2>&1 ||
+  die "FW_INFRA_DIR=$INFRA_DIR is not a git checkout"
+
+# The given checkout can be stale, so run origin/main's copy of this script.
+# FW_DEPLOY_SELF=1 runs this copy, to test a branch.
+if [ -z "${FW_DEPLOY_SELF:-}" ]; then
+  git -C "$INFRA_DIR" fetch -q origin 2>/dev/null || true
+  latest=$(git -C "$INFRA_DIR" show origin/main:.agents/skills/femiwiki-deploy-watch/fw-deploy 2>/dev/null || true)
+  if [ -n "$latest" ] && [ "$latest" != "$(cat "$0")" ]; then
+    echo "fw-deploy: this copy differs from origin/main; running origin/main's" >&2
+    FW_DEPLOY_SELF=1 exec sh -c "$latest" fw-deploy "$@"
+  fi
+fi
 
 # gh returns the literal string "null" for a missing field, and "null" in a
 # numeric test aborts the script. Every number from gh goes through this.
@@ -257,15 +272,11 @@ cmd_verify() {
 
   echo
   echo "generation:"
-  if [ -d "$INFRA_DIR/.git" ]; then
-    git -C "$INFRA_DIR" fetch -q origin 2>/dev/null || true
-    declared=$(num "$(git -C "$INFRA_DIR" show origin/main:docker/locals.tf 2>/dev/null |
-      awk '/fastcgi_generation[[:space:]]*=/ { gsub(/[^0-9]/, "", $NF); print $NF; exit }')" -1)
-    [ "$declared" -ge 0 ] && echo "  origin/main declares: $declared" ||
-      echo "  could not read origin/main:docker/locals.tf"
-  else
-    echo "  no infra checkout at $INFRA_DIR (set FW_INFRA_DIR)"
-  fi
+  git -C "$INFRA_DIR" fetch -q origin 2>/dev/null || true
+  declared=$(num "$(git -C "$INFRA_DIR" show origin/main:docker/locals.tf 2>/dev/null |
+    awk '/fastcgi_generation[[:space:]]*=/ { gsub(/[^0-9]/, "", $NF); print $NF; exit }')" -1)
+  [ "$declared" -ge 0 ] && echo "  origin/main declares: $declared" ||
+    echo "  could not read origin/main:docker/locals.tf"
   applied_generation
 }
 
