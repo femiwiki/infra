@@ -10,7 +10,8 @@ fastcgi=$(docker ps --quiet --filter name=fastcgi- | head -1)
 env_file=$(mktemp)
 hotfix=$(mktemp)
 trap 'rm -f "$env_file" "$hotfix"' EXIT
-docker exec "$fastcgi" env | grep -E '^(WG_|SSM_SECRETS=|AWS_REGION=|TZ=)' | grep -v '^WG_DB_NAME=' >"$env_file"
+# Inside the window the serving fastcgi is read-only, and update.php has to write.
+docker exec "$fastcgi" env | grep -E '^(WG_|SSM_SECRETS=|AWS_REGION=|TZ=)' | grep -vE '^(WG_DB_NAME|WG_READ_ONLY)=' >"$env_file"
 echo "WG_DB_NAME=$target" >>"$env_file"
 docker exec "$fastcgi" cat /a/Hotfix.php >"$hotfix"
 

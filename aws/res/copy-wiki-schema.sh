@@ -16,3 +16,14 @@ start=$(date +%s)
 echo "Copied femiwiki to $target in $(($(date +%s) - start)) s"
 
 mysql -N -e "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = '$target'"
+
+# 1.43 serves the copy under its own name, which is its wiki ID, and Flow and
+# OAuth match these columns against the wiki ID. See femiwiki/femiwiki#645.
+for col in flow_workflow.workflow_wiki flow_ext_ref.ref_src_wiki flow_wiki_ref.ref_src_wiki \
+  flow_revision.rev_user_wiki flow_revision.rev_mod_user_wiki flow_revision.rev_edit_user_wiki \
+  flow_tree_revision.tree_orig_user_wiki \
+  oauth_registered_consumer.oarc_wiki oauth_accepted_consumer.oaac_wiki; do
+  table=${col%%.*} column=${col#*.}
+  rows=$(mysql -N "$target" -e "SET SESSION sql_log_bin=0; UPDATE \`$table\` SET \`$column\` = '$target' WHERE \`$column\` = 'femiwiki'; SELECT ROW_COUNT();")
+  echo "$col: $rows rows to $target"
+done
