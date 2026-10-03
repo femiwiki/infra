@@ -93,19 +93,6 @@ resource "aws_ssm_association" "mysql_backup" {
   }
 }
 
-resource "aws_ssm_parameter" "alloy" {
-  for_each = {
-    loki_password       = var.loki_password
-    prometheus_password = var.prometheus_password
-  }
-
-  region = local.tokyo_region
-
-  name  = "/alloy/${each.key}"
-  type  = "SecureString"
-  value = each.value
-}
-
 locals {
   swapfile_mib = 1024
 
@@ -220,10 +207,7 @@ resource "aws_ssm_document" "alloy_config" {
 resource "aws_ssm_association" "alloy_config" {
   for_each = local.alloy_hosts
 
-  depends_on = [
-    aws_ssm_parameter.alloy,
-    aws_ssm_parameter.alloy_seoul,
-  ]
+  depends_on = [aws_ssm_parameter.alloy_seoul]
 
   region              = each.value.region
   association_name    = "install-alloy-config-${each.key}"
