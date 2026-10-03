@@ -1,6 +1,5 @@
-# The snapshots and the AMI left in Tokyo, from servers long gone. Imported only
-# so that the next change deletes them on the record (femiwiki/femiwiki#616,
-# femiwiki/femiwiki#617).
+# Left in Tokyo by servers long gone. Imported only so that the next change
+# deletes them on the record.
 locals {
   tokyo_leftover_snapshots = {
     "snap-04fe903f8d9dcf80f" = {
