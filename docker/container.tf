@@ -58,6 +58,10 @@ resource "docker_container" "http" {
       # CloudFront's origin-facing ranges, for trusted_proxies. When AWS changes them:
       # curl -s https://ip-ranges.amazonaws.com/ip-ranges.json | jq -r '.prefixes[] | select(.service == "CLOUDFRONT_ORIGIN_FACING") | .ip_prefix' | sort -uV
       FW_TRUSTED_PROXIES = join(" ", split("\n", trimspace(file("../serving/cloudfront-origin-facing.txt")))),
+
+      # Route 53's health checker ranges, let through the special_pages zone. When AWS changes them:
+      # curl -s https://ip-ranges.amazonaws.com/ip-ranges.json | jq -r '(.prefixes[] | select(.service == "ROUTE53_HEALTHCHECKS") | .ip_prefix), (.ipv6_prefixes[] | select(.service == "ROUTE53_HEALTHCHECKS") | .ipv6_prefix)' | sort -uV
+      FW_ROUTE53_HEALTHCHECKS = join(" ", split("\n", trimspace(file("../serving/route53-healthchecks.txt")))),
     } : "${k}=${v}"
   ]
 
