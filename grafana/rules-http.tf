@@ -1,6 +1,7 @@
 locals {
   explore_exprs = {
-    status = trimspace(file("${path.module}/queries/explore-status.logql"))
+    status     = trimspace(file("${path.module}/queries/explore-status.logql"))
+    exceptions = trimspace(file("${path.module}/queries/explore-uncaught-exceptions.logql"))
   }
 
   explore_urls = {
@@ -28,6 +29,8 @@ locals {
   all_responses        = trimspace(file("${path.module}/queries/all-responses.logql"))
   busiest_network      = trimspace(file("${path.module}/queries/concentrated-refusals.logql"))
   history_refused      = trimspace(file("${path.module}/queries/history-refused.logql"))
+  uncaught_exceptions  = trimspace(file("${path.module}/queries/uncaught-exceptions.logql"))
+  top_exception        = trimspace(file("${path.module}/queries/top-uncaught-exception.logql"))
 }
 
 resource "grafana_rule_group" "femiwiki_http" {
@@ -342,6 +345,73 @@ resource "grafana_rule_group" "femiwiki_http" {
         type       = "threshold"
         expression = "B"
         conditions = [{ evaluator = { type = "gt", params = [0] } }]
+      })
+    }
+  }
+
+  rule {
+    name = "Uncaught exceptions"
+    for  = "5m"
+
+    condition      = "C"
+    no_data_state  = "OK"
+    exec_err_state = "OK"
+
+    labels = {
+      impact   = "operators"
+      severity = "warning"
+    }
+
+    annotations = {
+      summary = "최근 1시간 동안 방문자에게 오류 페이지로 나간 예외가 {{ printf \"%.0f\" $values.A.Value }}건입니다. 가장 많은 것은 `{{ $labels.class }}` {{ printf \"%.0f\" $values.B.Value }}건입니다. 로그의 요청 id와 주소로 어느 문서나 기능인지 찾습니다."
+      logs    = local.explore_urls.exceptions
+    }
+
+    data {
+      ref_id         = "A"
+      datasource_uid = data.grafana_data_source.loki.uid
+      query_type     = "instant"
+      relative_time_range {
+        from = 3600
+        to   = 0
+      }
+      model = jsonencode({
+        refId     = "A"
+        expr      = local.uncaught_exceptions
+        queryType = "instant"
+        instant   = true
+        range     = false
+      })
+    }
+
+    data {
+      ref_id         = "B"
+      datasource_uid = data.grafana_data_source.loki.uid
+      query_type     = "instant"
+      relative_time_range {
+        from = 3600
+        to   = 0
+      }
+      model = jsonencode({
+        refId     = "B"
+        expr      = local.top_exception
+        queryType = "instant"
+        instant   = true
+        range     = false
+      })
+    }
+
+    data {
+      ref_id         = "C"
+      datasource_uid = "__expr__"
+      relative_time_range {
+        from = 0
+        to   = 0
+      }
+      model = jsonencode({
+        refId      = "C"
+        type       = "math"
+        expression = "($A > 5) && ($B > 0)"
       })
     }
   }
