@@ -12,13 +12,6 @@ data "terraform_remote_state" "healthchecks" {
   }
 }
 
-resource "aws_ssm_parameter" "mysql_backup_healthcheck_url_tokyo" {
-  region = local.tokyo_region
-  name   = "/mysql/backup/healthcheck-url"
-  type   = "SecureString"
-  value  = data.terraform_remote_state.healthchecks.outputs.mysql_backup_ping_url
-}
-
 locals {
   alloy_hosts = {
     "database-5" = { name = "mariadb-seoul", type = "database", region = local.seoul_region }
