@@ -261,7 +261,7 @@ resource "aws_ssm_document" "copy_wiki_schema" {
     parameters = {
       target = {
         type           = "String"
-        description    = "Name of the new schema, such as femiwiki_146."
+        description    = "Name of the new schema, such as femiwiki_43."
         allowedPattern = "^femiwiki_[0-9]+$"
       }
     }
