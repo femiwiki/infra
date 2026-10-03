@@ -305,12 +305,8 @@ loki.process "fastcgi" {
     }
   }
 
-  // A deprecation is logged twice: php-fpm's own line, and MediaWiki's JSON
-  // line on the error channel, which also carries the URL. Since MediaWiki
-  // 1.46 that is about 17,000 lines an hour, nearly all FemiwikiSkin not
-  // declaring `menus`. The php-fpm line is counted by what is deprecated, so
-  // the graph stays exact, and then dropped. The JSON line is kept at one a
-  // minute for each, which is enough to find where one comes from.
+  // A deprecation is logged twice: php-fpm's line is counted and dropped, and
+  // MediaWiki's JSON line, which has the URL, is kept at one a minute for each
   stage.match {
     selector = `{docker_container_name=~"fastcgi.*"} |~ "^NOTICE: PHP message: PHP Deprecated: "`
 

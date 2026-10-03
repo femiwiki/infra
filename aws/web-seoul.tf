@@ -19,8 +19,6 @@ resource "aws_instance" "docker_seoul" {
   monitoring                  = false
   user_data_replace_on_change = false
 
-  # Gzipped like database-5's: the Alloy config inside it alone is near the
-  # 16 KiB user_data allows
   user_data_base64 = base64gzip(templatefile("res/user-data-docker-provider.tftpl", {
     alloy_install = local.alloy_install_docker_seoul
   }))
