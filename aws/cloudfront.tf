@@ -1,8 +1,5 @@
-# CloudFront in front of femiwiki.com, caching only load.php, so that egress to
-# readers leaves through CloudFront's free tier instead of the box's. Every
-# other request still reaches Caddy, and mwcache keeps handling PURGE. See
-# femiwiki/femiwiki#639, whose "Keep it removable" section has the order for
-# turning this on and off.
+# CloudFront in front of femiwiki.com, caching only load.php. femiwiki/femiwiki#639
+# has why, and the order for turning it on and off.
 
 # The name CloudFront connects to. Only CloudFront resolves it, so a short TTL
 # costs nothing and lets a new address take over within a minute.
