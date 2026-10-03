@@ -48,3 +48,23 @@ resource "aws_cloudwatch_metric_alarm" "femiwiki_pages" {
   region              = "us-east-1"
 }
 
+
+resource "aws_cloudwatch_metric_alarm" "cloudfront_requests" {
+  alarm_name  = "CloudFront Requests"
+  namespace   = "AWS/CloudFront"
+  metric_name = "Requests"
+  period      = 300
+  statistic   = "Sum"
+  dimensions = {
+    DistributionId = aws_cloudfront_distribution.femiwiki_com.id
+    Region         = "Global"
+  }
+  threshold           = 60000
+  comparison_operator = "GreaterThanThreshold"
+  datapoints_to_alarm = 3
+  evaluation_periods  = 3
+  alarm_actions       = [aws_sns_topic.cloudwatch_alarms_topic_us.arn]
+  ok_actions          = [aws_sns_topic.cloudwatch_alarms_topic_us.arn]
+  treat_missing_data  = "notBreaching"
+  region              = "us-east-1"
+}
