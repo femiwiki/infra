@@ -108,11 +108,13 @@ resource "docker_container" "fastcgi" {
       PHP_FPM_PROCESS_CONTROL_TIMEOUT     = "10s"
       PHP_FPM_REQUEST_TERMINATE_TIMEOUT   = "30"
 
-      PHP_OPCACHE_MEMORY_CONSUMPTION = "256"
+      # Includes the interned buffer below. Each language the l10n cache loads
+      # adds about 0.9 MB of script and 2 MB of strings; see docker-mediawiki#1294.
+      PHP_OPCACHE_MEMORY_CONSUMPTION = "320"
       # 4000 rounded up to 7963 key slots and 5,170 scripts filled them; 10000 is
       # PHP's next size, 16229. Memory was never the ceiling. See femiwiki#587.
       PHP_OPCACHE_MAX_ACCELERATED_FILES   = "10000"
-      PHP_OPCACHE_INTERNED_STRINGS_BUFFER = "48"
+      PHP_OPCACHE_INTERNED_STRINGS_BUFFER = "96"
 
       PHP_FPM_PM_MAX_CHILDREN      = "16"
       PHP_FPM_PM_START_SERVERS     = "2"
