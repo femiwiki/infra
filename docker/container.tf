@@ -51,6 +51,9 @@ resource "docker_container" "http" {
       S3_BUCKET           = "femiwiki-secrets",
       S3_PREFIX           = "caddycerts",
 
+      FW_RATE_LIMIT_S3_HOST   = data.terraform_remote_state.aws.outputs.rate_limit_s3_host,
+      FW_RATE_LIMIT_S3_BUCKET = data.terraform_remote_state.aws.outputs.rate_limit_bucket,
+
       # CloudFront's origin-facing ranges, for trusted_proxies. When AWS changes them:
       # curl -s https://ip-ranges.amazonaws.com/ip-ranges.json | jq -r '.prefixes[] | select(.service == "CLOUDFRONT_ORIGIN_FACING") | .ip_prefix' | sort -uV
       FW_TRUSTED_PROXIES = join(" ", split("\n", trimspace(file("../serving/cloudfront-origin-facing.txt")))),
