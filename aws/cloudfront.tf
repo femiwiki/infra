@@ -1,5 +1,5 @@
-# CloudFront in front of femiwiki.com, caching only load.php. femiwiki/femiwiki#639
-# has why, and the order for turning it on and off.
+# CloudFront in front of femiwiki.com, caching only load.php and favicon.ico.
+# femiwiki/femiwiki#639 has why, and the order for turning it on and off.
 
 # The name CloudFront connects to. Only CloudFront resolves it, so a short TTL
 # costs nothing and lets a new address take over within a minute.
@@ -50,6 +50,10 @@ data "aws_cloudfront_cache_policy" "caching_disabled" {
   name = "Managed-CachingDisabled"
 }
 
+data "aws_cloudfront_cache_policy" "caching_optimized" {
+  name = "Managed-CachingOptimized"
+}
+
 resource "aws_cloudfront_cache_policy" "load_php" {
   name        = "femiwiki-load-php"
   min_ttl     = 0
@@ -87,7 +91,7 @@ locals {
 
 resource "aws_cloudfront_distribution" "femiwiki_com" {
   enabled         = true
-  comment         = "femiwiki.com, caching only load.php"
+  comment         = "femiwiki.com, caching only load.php and favicon.ico"
   aliases         = local.cloudfront_aliases
   http_version    = "http2and3"
   is_ipv6_enabled = true
@@ -127,6 +131,17 @@ resource "aws_cloudfront_distribution" "femiwiki_com" {
     allowed_methods          = ["GET", "HEAD"]
     cached_methods           = ["GET", "HEAD"]
     cache_policy_id          = aws_cloudfront_cache_policy.load_php.id
+    origin_request_policy_id = data.aws_cloudfront_origin_request_policy.all_viewer.id
+    compress                 = true
+  }
+
+  ordered_cache_behavior {
+    path_pattern             = "/favicon.ico"
+    target_origin_id         = "femiwiki"
+    viewer_protocol_policy   = "redirect-to-https"
+    allowed_methods          = ["GET", "HEAD"]
+    cached_methods           = ["GET", "HEAD"]
+    cache_policy_id          = data.aws_cloudfront_cache_policy.caching_optimized.id
     origin_request_policy_id = data.aws_cloudfront_origin_request_policy.all_viewer.id
     compress                 = true
   }
