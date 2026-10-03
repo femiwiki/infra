@@ -177,74 +177,6 @@ resource "grafana_rule_group" "femiwiki_http" {
   }
 
   rule {
-    name = "Uncaught exceptions"
-    for  = "5m"
-
-    condition      = "C"
-    no_data_state  = "OK"
-    exec_err_state = "OK"
-
-    labels = {
-      impact   = "readers"
-      severity = "critical"
-    }
-
-    annotations = {
-      summary     = "페미위키 일부 문서나 기능이 오류로 열리지 않고 있습니다."
-      description = "최근 1시간 동안 처리되지 않은 오류가 {{ printf \"%.0f\" $values.A.Value }}건 났습니다. 가장 많은 것은 `{{ $labels.class }}` {{ printf \"%.0f\" $values.B.Value }}건입니다. 로그의 요청 id와 주소로 어느 문서인지 찾습니다."
-      logs        = local.explore_urls.exceptions
-    }
-
-    data {
-      ref_id         = "A"
-      datasource_uid = data.grafana_data_source.loki.uid
-      query_type     = "instant"
-      relative_time_range {
-        from = 3600
-        to   = 0
-      }
-      model = jsonencode({
-        refId     = "A"
-        expr      = local.uncaught_exceptions
-        queryType = "instant"
-        instant   = true
-        range     = false
-      })
-    }
-
-    data {
-      ref_id         = "B"
-      datasource_uid = data.grafana_data_source.loki.uid
-      query_type     = "instant"
-      relative_time_range {
-        from = 3600
-        to   = 0
-      }
-      model = jsonencode({
-        refId     = "B"
-        expr      = local.top_exception
-        queryType = "instant"
-        instant   = true
-        range     = false
-      })
-    }
-
-    data {
-      ref_id         = "C"
-      datasource_uid = "__expr__"
-      relative_time_range {
-        from = 0
-        to   = 0
-      }
-      model = jsonencode({
-        refId      = "C"
-        type       = "math"
-        expression = "($A > 5) && ($B > 0)"
-      })
-    }
-  }
-
-  rule {
     name            = "One network is being refused far more than the rest"
     for             = "1h"
     keep_firing_for = "1h"
@@ -413,6 +345,74 @@ resource "grafana_rule_group" "femiwiki_http" {
         type       = "threshold"
         expression = "B"
         conditions = [{ evaluator = { type = "gt", params = [0] } }]
+      })
+    }
+  }
+
+  rule {
+    name = "Uncaught exceptions"
+    for  = "5m"
+
+    condition      = "C"
+    no_data_state  = "OK"
+    exec_err_state = "OK"
+
+    labels = {
+      impact   = "readers"
+      severity = "critical"
+    }
+
+    annotations = {
+      summary     = "페미위키 일부 문서나 기능이 오류로 열리지 않고 있습니다."
+      description = "최근 1시간 동안 처리되지 않은 오류가 {{ printf \"%.0f\" $values.A.Value }}건 났습니다. 가장 많은 것은 `{{ $labels.class }}` {{ printf \"%.0f\" $values.B.Value }}건입니다. 로그의 요청 id와 주소로 어느 문서인지 찾습니다."
+      logs        = local.explore_urls.exceptions
+    }
+
+    data {
+      ref_id         = "A"
+      datasource_uid = data.grafana_data_source.loki.uid
+      query_type     = "instant"
+      relative_time_range {
+        from = 3600
+        to   = 0
+      }
+      model = jsonencode({
+        refId     = "A"
+        expr      = local.uncaught_exceptions
+        queryType = "instant"
+        instant   = true
+        range     = false
+      })
+    }
+
+    data {
+      ref_id         = "B"
+      datasource_uid = data.grafana_data_source.loki.uid
+      query_type     = "instant"
+      relative_time_range {
+        from = 3600
+        to   = 0
+      }
+      model = jsonencode({
+        refId     = "B"
+        expr      = local.top_exception
+        queryType = "instant"
+        instant   = true
+        range     = false
+      })
+    }
+
+    data {
+      ref_id         = "C"
+      datasource_uid = "__expr__"
+      relative_time_range {
+        from = 0
+        to   = 0
+      }
+      model = jsonencode({
+        refId      = "C"
+        type       = "math"
+        expression = "($A > 5) && ($B > 0)"
       })
     }
   }
