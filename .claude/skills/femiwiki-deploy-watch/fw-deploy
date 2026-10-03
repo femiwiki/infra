@@ -15,6 +15,17 @@ SITE=${FW_SITE:-https://femiwiki.com/}
 
 die() { echo "fw-deploy: $*" >&2; exit 2; }
 
+# The checkout behind ~/.claude/skills can be stale, so run origin/main's copy.
+# FW_DEPLOY_SELF=1 runs this copy, to test a branch.
+if [ -z "${FW_DEPLOY_SELF:-}" ] && [ -d "$INFRA_DIR/.git" ]; then
+  git -C "$INFRA_DIR" fetch -q origin 2>/dev/null || true
+  latest=$(git -C "$INFRA_DIR" show origin/main:.claude/skills/femiwiki-deploy-watch/fw-deploy 2>/dev/null || true)
+  if [ -n "$latest" ] && [ "$latest" != "$(cat "$0")" ]; then
+    echo "fw-deploy: this copy differs from origin/main; running origin/main's" >&2
+    FW_DEPLOY_SELF=1 exec sh -c "$latest" fw-deploy "$@"
+  fi
+fi
+
 # gh returns the literal string "null" for a missing field, and "null" in a
 # numeric test aborts the script. Every number from gh goes through this.
 num() { # num <value> <fallback>
