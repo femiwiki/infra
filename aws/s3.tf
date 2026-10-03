@@ -1,18 +1,3 @@
-resource "aws_s3_bucket" "digger" {
-  region = local.tokyo_region
-  bucket = "femiwiki-digger-state"
-}
-
-resource "aws_s3_bucket_public_access_block" "digger" {
-  region = local.tokyo_region
-  bucket = aws_s3_bucket.digger.id
-
-  block_public_acls       = true
-  block_public_policy     = true
-  ignore_public_acls      = true
-  restrict_public_buckets = true
-}
-
 #
 # Secrets for MediaWiki run
 #
