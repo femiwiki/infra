@@ -247,9 +247,8 @@ resource "aws_ssm_association" "alloy_config" {
   }
 }
 
-# The MediaWiki 1.46 upgrade copies the schema and runs update.php on the copy
-# while 1.43 is read-only (femiwiki/femiwiki#645). Nothing runs these on a
-# schedule; they are run by hand with Run Command.
+# Steps 2 and 3 of the MediaWiki 1.46 upgrade (femiwiki/femiwiki#645), run by
+# hand with Run Command. Nothing schedules them.
 resource "aws_ssm_document" "copy_wiki_schema" {
   region          = local.seoul_region
   name            = "copy-wiki-schema"
