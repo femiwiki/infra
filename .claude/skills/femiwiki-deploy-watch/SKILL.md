@@ -25,8 +25,15 @@ gate is there. The paths below are relative to a femiwiki/infra checkout, which
 is where this skill lives, so that a change to `.github/workflows/tofu.yml` and
 the skill that describes it can land in one pull request.
 
-The script runs origin/main's copy of itself when the copy it was started from
-differs, because the checkout behind `~/.claude/skills` can be stale. To test a
+Every subcommand needs `FW_INFRA_DIR` set to the femiwiki/infra checkout or
+worktree you are working in, and refuses to run without it:
+
+```sh
+export FW_INFRA_DIR=/path/to/your/infra/worktree
+```
+
+The script fetches that checkout and runs origin/main's copy of itself when the
+copy it was started from differs, because a checkout can be stale. To test a
 branch's copy, set `FW_DEPLOY_SELF=1`.
 
 ## Before asking for an apply, run the preflight
