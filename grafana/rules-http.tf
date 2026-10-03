@@ -2,6 +2,7 @@ locals {
   explore_exprs = {
     status     = trimspace(file("${path.module}/queries/explore-status.logql"))
     exceptions = trimspace(file("${path.module}/queries/explore-uncaught-exceptions.logql"))
+    no_status  = trimspace(file("${path.module}/queries/explore-status-zero.logql"))
   }
 
   explore_urls = {
@@ -31,6 +32,8 @@ locals {
   history_refused      = trimspace(file("${path.module}/queries/history-refused.logql"))
   uncaught_exceptions  = trimspace(file("${path.module}/queries/uncaught-exceptions.logql"))
   top_exception        = trimspace(file("${path.module}/queries/top-uncaught-exception.logql"))
+  status_zero          = trimspace(file("${path.module}/queries/status-zero.logql"))
+  top_status_zero_uri  = trimspace(file("${path.module}/queries/top-status-zero-uri.logql"))
 }
 
 resource "grafana_rule_group" "femiwiki_http" {
@@ -395,6 +398,73 @@ resource "grafana_rule_group" "femiwiki_http" {
       model = jsonencode({
         refId     = "B"
         expr      = local.top_exception
+        queryType = "instant"
+        instant   = true
+        range     = false
+      })
+    }
+
+    data {
+      ref_id         = "C"
+      datasource_uid = "__expr__"
+      relative_time_range {
+        from = 0
+        to   = 0
+      }
+      model = jsonencode({
+        refId      = "C"
+        type       = "math"
+        expression = "($A > 5) && ($B > 0)"
+      })
+    }
+  }
+
+  rule {
+    name = "Responses with no status"
+    for  = "5m"
+
+    condition      = "C"
+    no_data_state  = "OK"
+    exec_err_state = "OK"
+
+    labels = {
+      impact   = "operators"
+      severity = "warning"
+    }
+
+    annotations = {
+      summary = "최근 10분 동안 Caddy가 상태 코드 없이 끝낸 응답이 {{ printf \"%.0f\" $values.A.Value }}건입니다. 가장 많은 주소는 `{{ $labels.uri }}` {{ printf \"%.0f\" $values.B.Value }}건입니다. 핸들러가 헤더를 쓰지 않고 끝났다는 뜻이라 방문자는 빈 200, 곧 빈 화면을 받습니다. caddy-mwcache나 Caddyfile의 최근 변경을 먼저 봅니다."
+      logs    = local.explore_urls.no_status
+    }
+
+    data {
+      ref_id         = "A"
+      datasource_uid = data.grafana_data_source.loki.uid
+      query_type     = "instant"
+      relative_time_range {
+        from = 600
+        to   = 0
+      }
+      model = jsonencode({
+        refId     = "A"
+        expr      = local.status_zero
+        queryType = "instant"
+        instant   = true
+        range     = false
+      })
+    }
+
+    data {
+      ref_id         = "B"
+      datasource_uid = data.grafana_data_source.loki.uid
+      query_type     = "instant"
+      relative_time_range {
+        from = 600
+        to   = 0
+      }
+      model = jsonencode({
+        refId     = "B"
+        expr      = local.top_status_zero_uri
         queryType = "instant"
         instant   = true
         range     = false
