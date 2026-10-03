@@ -1,7 +1,7 @@
 resource "docker_container" "http" {
   name         = "http-${local.fastcgi_generation}"
   log_driver   = "local"
-  image        = "ghcr.io/femiwiki/femiwiki:2026-10-03T01-12-78d29ff8"
+  image        = "ghcr.io/femiwiki/femiwiki:1.46-2026-10-03T02-01-d088106c"
   command      = ["caddy-run"]
   restart      = "always"
   network_mode = "host"
@@ -82,7 +82,7 @@ resource "docker_container" "http" {
 resource "docker_container" "fastcgi" {
   name         = "fastcgi-${local.fastcgi_generation}"
   log_driver   = "local"
-  image        = "ghcr.io/femiwiki/femiwiki:2026-10-03T01-12-78d29ff8"
+  image        = "ghcr.io/femiwiki/femiwiki:1.46-2026-10-03T02-01-d088106c"
   network_mode = "host"
   restart      = "always"
   memory       = 768
@@ -122,13 +122,10 @@ resource "docker_container" "fastcgi" {
       PHP_POST_MAX_SIZE       = "10M"
       PHP_UPLOAD_MAX_FILESIZE = "10M"
 
-      MEDIAWIKI_SKIP_CRON         = "1"
       MEDIAWIKI_SKIP_IMPORT_SITES = "1"
       MEDIAWIKI_SKIP_INSTALL      = "1"
       MEDIAWIKI_SKIP_UPDATE       = "1"
       MEDIAWIKI_HOTFIX_SNIPPET    = file("../serving/Hotfix.php")
-
-      WG_READ_ONLY = "현재 미디어위키 1.46 업데이트를 진행하고 있습니다. 약 1시간 동안 문서를 편집할 수 없으며, 읽기는 평소처럼 하실 수 있습니다."
 
       FW_PROFILER = "excimer"
       # Every request is instrumented, so nothing slow can be missed, but only
@@ -148,7 +145,6 @@ resource "docker_container" "fastcgi" {
 
       WG_DB_SERVER           = "${data.aws_instances.database.private_ips[0]}:3306"
       WG_DB_USER             = "mediawiki"
-      WG_DB_NAME             = "femiwiki_43"
       WG_SESSION_DB_NAME     = "femiwiki_sessions"
       WG_RE_CAPTCHA_SITE_KEY = "6LfiSLArAAAAAKFLIhAJC2wlNY1Nnbm_gNcXRIDh"
 
