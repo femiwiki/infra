@@ -292,8 +292,8 @@ resource "aws_ssm_document" "update_wiki_schema" {
       }
       target = {
         type           = "String"
-        description    = "Schema to update, such as femiwiki_146."
-        allowedPattern = "^femiwiki_[0-9]+$"
+        description    = "Schema to update, such as femiwiki."
+        allowedPattern = "^femiwiki(_[0-9]+)?$"
       }
     }
     mainSteps = [{
