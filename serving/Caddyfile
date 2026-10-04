@@ -356,6 +356,10 @@ femiwiki.com *.femiwiki.com 127.0.0.1:80 localhost:80 {
 			10.20.0.0/16
 			127.0.0.1
 		}
+		# The key holds the host. www serves the same pages, and MediaWiki
+		# sends its PURGEs to $wgInternalServer, 127.0.0.1, so both read and
+		# purge femiwiki.com's entries. See femiwiki/caddy-mwcache#170.
+		host_alias femiwiki.com www.femiwiki.com 127.0.0.1 localhost
 		# Cache-Control for skin icons and other files MediaWiki links with a
 		# version hash, which browsers otherwise revalidate on every page
 		static {
