@@ -4,7 +4,7 @@ locals {
   label_definition = {
     alert = {
       name        = "alert"
-      description = "Opened by a Grafana alert"
+      description = "Opened by an automated alert"
       color       = "ffa500"
     }
 
