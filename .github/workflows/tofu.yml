@@ -205,10 +205,13 @@ jobs:
       !cancelled() && (github.event_name == 'workflow_dispatch'
       || (needs.plan.result == 'success' && github.event.pull_request.head.repo.full_name == github.repository))
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 15
     permissions:
       actions: write
       checks: read
+      contents: read
+      pull-requests: read
+      statuses: read
     outputs:
       workspaces: ${{ steps.pending.outputs.workspaces }}
     steps:
@@ -217,6 +220,21 @@ jobs:
         with:
           step: pending
           workspaces: ${{ inputs.workspace && format('["{0}"]', inputs.workspace) || '' }}
+
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+        if: github.event_name == 'pull_request' && steps.pending.outputs.workspaces != '[]'
+        with:
+          persist-credentials: false
+          sparse-checkout: .github/scripts
+
+      # A failure here fails the gate too, so nothing is applied or merged
+      - name: Only a pull request that can merge once applied
+        if: github.event_name == 'pull_request' && steps.pending.outputs.workspaces != '[]'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.number }}
+        run: .github/scripts/mergeable.sh
 
   # The environment's required reviewers are what starts this job; approving
   # the run is the apply. No concurrency group: a job waiting for approval
@@ -240,9 +258,11 @@ jobs:
     environment: ${{ matrix.workspace }}
     permissions:
       actions: read
+      checks: read
       contents: read
       id-token: write
       pull-requests: write
+      statuses: read
     steps:
       - uses: femiwiki/terraform-github-tacos@cbf29f08f262103fe7e2d650d9a6e60f38b32ffd  # v0.2.3
         id: approver
@@ -253,6 +273,16 @@ jobs:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
         with:
           persist-credentials: false
+
+      # The base can move into a conflict while the approval waits
+      - name: Still a pull request that can merge once applied
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.number }}
+          TIMEOUT: "60"
+        run: .github/scripts/mergeable.sh
 
       - uses: sarisia/actions-status-discord@eb045afee445dc055c18d3d90bd0f244fd062708  # v1.16.0
         with:
