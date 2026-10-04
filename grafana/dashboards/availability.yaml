@@ -207,4 +207,4 @@ panels:
   options:
     mode: markdown
     content: |-
-      [사고 보고서](https://femiwiki.github.io/%EA%B0%80%EC%9A%A9%EC%84%B1.html) · __PUBLIC_LINKS__
+      [경고 목록](https://github.com/femiwiki/infra/issues?q=label%3A%22alert%22) · [지난 가용성 및 사고 보고서](https://femiwiki.github.io/%EA%B0%80%EC%9A%A9%EC%84%B1.html) · __PUBLIC_LINKS__
