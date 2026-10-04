@@ -222,14 +222,14 @@ jobs:
           workspaces: ${{ inputs.workspace && format('["{0}"]', inputs.workspace) || '' }}
 
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' && steps.pending.outputs.workspaces != '[]'
         with:
           persist-credentials: false
           sparse-checkout: .github/scripts
 
       # A failure here fails the gate too, so nothing is applied or merged
       - name: Only a pull request that can merge once applied
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' && steps.pending.outputs.workspaces != '[]'
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
