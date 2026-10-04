@@ -27,6 +27,7 @@ resource "aws_ssm_parameter" "internet_archive" {
 # managed here (femiwiki/femiwiki#597).
 locals {
   secret_parameters = toset([
+    "/mediawiki/google_analytics/credentials",
     "/mediawiki/o_auth_2_private_key",
     "/mediawiki/rc_feeds_discord_url",
     "/mediawiki/re_captcha/secret_key",
