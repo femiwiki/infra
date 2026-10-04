@@ -43,7 +43,7 @@ branch's copy, set `FW_DEPLOY_SELF=1`.
 ```
 
 It prints a verdict word per gate and exits non-zero if any gate fails, so no
-apply can be asked for on a pull request it refused. Both gates exist because
+apply can be asked for on a pull request it refused. The gates exist because
 their prose version was read and not followed.
 
 **Freshness.** The `scope` job refuses a pull request that is behind its base,
@@ -61,6 +61,15 @@ old one still holds the name, and the apply dies on
 pull request raises `local.fastcgi_generation`. The verdict is
 `GENERATION BUMP OK (69 -> 70)`, `GENERATION NOT REQUIRED` or
 `MISSING GENERATION BUMP`; see femiwiki/infra#783 and the failed apply of #806.
+
+**Mergeable.** An apply runs before the merge, so a pull request that cannot
+merge afterwards leaves production ahead of `main`, as #1144 did with a failing
+`lint gate`. The `pending` job of `tofu.yml` runs
+`.github/scripts/mergeable.sh` and fails, before any approval is offered, unless
+the pull request has no conflicts and every required check of its base other
+than `tofu gate` is green; the apply job runs it again after the approval. The
+preflight runs the same script once, without waiting: `MERGEABLE`, `CONFLICTS`,
+`CHECKS FAILING: <names>` or `CHECKS PENDING: <names>`.
 
 ## Read the plan before the apply
 

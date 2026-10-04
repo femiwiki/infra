@@ -160,6 +160,21 @@ $env_hits"
     printf '%s\n' "$triggers" | sed 's/^/    /'
   fi
 
+  # -- gate 3: mergeable once applied (the check tofu.yml runs before offering an approval)
+  if [ "$merged" = true ]; then
+    echo "MERGEABILITY SKIPPED (pull request already merged)"
+  else
+    check=$(git -C "$INFRA_DIR" show origin/main:.github/scripts/mergeable.sh 2>/dev/null ||
+      cat "$INFRA_DIR/.github/scripts/mergeable.sh" 2>/dev/null || true)
+    if [ -z "$check" ]; then
+      echo "MERGEABILITY UNKNOWN (no .github/scripts/mergeable.sh)"
+      fail=1
+    elif ! REPO=$REPO PR=$pr TIMEOUT=0 bash -c "$check"; then
+      echo "  tofu.yml offers no approval until this passes; wait for pending checks, or fix and push"
+      fail=1
+    fi
+  fi
+
   [ "$fail" -eq 0 ] || { echo; echo "PREFLIGHT FAILED - do not ask for an apply"; exit 1; }
   echo
   echo "PREFLIGHT PASSED"
