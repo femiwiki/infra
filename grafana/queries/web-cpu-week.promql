@@ -1,0 +1,1 @@
+100 - avg by (instance) (rate(node_cpu_seconds_total{job="integrations/node_exporter", instance="femiwiki-seoul", mode="idle"}[7d])) * 100

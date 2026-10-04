@@ -140,4 +140,52 @@ resource "grafana_rule_group" "cost" {
       })
     }
   }
+
+  rule {
+    name = "Spot overflow capacity would pay for itself"
+    for  = "1h"
+
+    condition      = "B"
+    no_data_state  = "OK"
+    exec_err_state = "OK"
+
+    labels = {
+      impact   = "operators"
+      severity = "warning"
+    }
+
+    annotations = {
+      summary = "웹 호스트의 최근 7일 평균 CPU가 {{ printf \"%.1f\" $values.A.Value }}%입니다. 32%를 넘으면 php-fpm 스팟 증설(femiwiki/infra#1139)이 경보·AMI 같은 고정비를 넘게 아낄 수 있습니다. 32%는 #1139의 스케일아웃 기준이라, 그 아래에서는 스팟이 거의 켜지지 않습니다. 평균 36%였던 2026-09-29~10-03 부하에서 아끼는 돈은 한 달 약 1.80달러였습니다. 이 값은 호스트 안에서 잰 CPU라 AWS보다 1%p쯤 낮게 나오므로 31%에서 알립니다. #1139을 만들지 다시 검토합니다."
+    }
+
+    data {
+      ref_id         = "A"
+      datasource_uid = data.grafana_data_source.prometheus.uid
+      relative_time_range {
+        from = 604800
+        to   = 0
+      }
+      model = jsonencode({
+        refId   = "A"
+        expr    = trimspace(file("${path.module}/queries/web-cpu-week.promql"))
+        instant = true
+        range   = false
+      })
+    }
+
+    data {
+      ref_id         = "B"
+      datasource_uid = "__expr__"
+      relative_time_range {
+        from = 0
+        to   = 0
+      }
+      model = jsonencode({
+        refId      = "B"
+        type       = "threshold"
+        expression = "A"
+        conditions = [{ evaluator = { type = "gt", params = [31] } }]
+      })
+    }
+  }
 }
