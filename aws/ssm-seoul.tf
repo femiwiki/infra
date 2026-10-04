@@ -36,13 +36,6 @@ locals {
   ])
 }
 
-import {
-  for_each = local.secret_parameters
-
-  to = aws_ssm_parameter.secret_seoul[each.key]
-  id = "${each.key}@${local.seoul_region}"
-}
-
 resource "aws_ssm_parameter" "secret_seoul" {
   for_each = local.secret_parameters
 
