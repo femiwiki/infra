@@ -28,6 +28,7 @@ module "femiwiki_skin" {
   patterns                        = ["main"]
   collaborator                    = local.extension.collaborator
   default_status_checks           = []
+  pages_build_type                = "workflow"
 }
 
 module "unified_extension_for_femiwiki" {
