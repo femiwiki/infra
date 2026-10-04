@@ -2,6 +2,12 @@
 
 locals {
   label_definition = {
+    alert = {
+      name        = "alert"
+      description = "Opened by an automated alert"
+      color       = "ffa500"
+    }
+
     cd = {
       name        = "cd"
       description = "Continuous Deployment"
@@ -335,6 +341,7 @@ locals {
       local.base_label_suite, [
         "operation",
         "monitoring",
+        "alert",
         "disruption",
 
         # Products
