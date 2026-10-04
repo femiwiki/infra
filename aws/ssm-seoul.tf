@@ -27,6 +27,7 @@ resource "aws_ssm_parameter" "internet_archive" {
 # managed here (femiwiki/femiwiki#597).
 locals {
   secret_parameters = toset([
+    "/mediawiki/google_analytics/credentials",
     "/mediawiki/o_auth_2_private_key",
     "/mediawiki/rc_feeds_discord_url",
     "/mediawiki/re_captcha/secret_key",
@@ -34,13 +35,6 @@ locals {
     "/mediawiki/smtp/password",
     "/mysql/users/mediawiki/password",
   ])
-}
-
-import {
-  for_each = local.secret_parameters
-
-  to = aws_ssm_parameter.secret_seoul[each.key]
-  id = "${each.key}@${local.seoul_region}"
 }
 
 resource "aws_ssm_parameter" "secret_seoul" {
