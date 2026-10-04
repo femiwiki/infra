@@ -1,6 +1,7 @@
 locals {
   # Secret name => infra vault item title, the value in the item's password.
   infra_secrets = {
+    AWS_H_CAPTCHA_SECRET_KEY        = "AWS_H_CAPTCHA_SECRET_KEY"
     AWS_INTERNET_ARCHIVE_ACCESS_KEY = "AWS_INTERNET_ARCHIVE_ACCESS_KEY"
     AWS_INTERNET_ARCHIVE_SECRET_KEY = "AWS_INTERNET_ARCHIVE_SECRET_KEY"
     AWS_LOKI_PASSWORD               = "AWS_LOKI_PASSWORD"
