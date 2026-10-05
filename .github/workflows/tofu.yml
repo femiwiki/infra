@@ -111,6 +111,7 @@ jobs:
           TF_VAR_loki_password: ${{ matrix.workspace == 'aws' && secrets.AWS_LOKI_PASSWORD || '' }}
           TF_VAR_internet_archive_access_key: ${{ matrix.workspace == 'aws' && secrets.AWS_INTERNET_ARCHIVE_ACCESS_KEY || '' }}
           TF_VAR_internet_archive_secret_key: ${{ matrix.workspace == 'aws' && secrets.AWS_INTERNET_ARCHIVE_SECRET_KEY || '' }}
+          TF_VAR_h_captcha_secret_key: ${{ matrix.workspace == 'aws' && secrets.AWS_H_CAPTCHA_SECRET_KEY || '' }}
           TF_VAR_state_passphrase: ${{ matrix.workspace == 'aws' && secrets.AWS_STATE_PASSPHRASE || matrix.workspace == 'github' && secrets.TOFU_GITHUB_STATE_PASSPHRASE || '' }}
           OP_SERVICE_ACCOUNT_TOKEN: ${{ matrix.workspace == 'github' && secrets.TOFU_OP_SERVICE_ACCOUNT_TOKEN || '' }}
         with:
@@ -353,6 +354,7 @@ jobs:
           TF_VAR_loki_password: ${{ matrix.workspace == 'aws' && secrets.AWS_LOKI_PASSWORD || '' }}
           TF_VAR_internet_archive_access_key: ${{ matrix.workspace == 'aws' && secrets.AWS_INTERNET_ARCHIVE_ACCESS_KEY || '' }}
           TF_VAR_internet_archive_secret_key: ${{ matrix.workspace == 'aws' && secrets.AWS_INTERNET_ARCHIVE_SECRET_KEY || '' }}
+          TF_VAR_h_captcha_secret_key: ${{ matrix.workspace == 'aws' && secrets.AWS_H_CAPTCHA_SECRET_KEY || '' }}
           TF_VAR_state_passphrase: ${{ matrix.workspace == 'aws' && secrets.AWS_STATE_PASSPHRASE || matrix.workspace == 'github' && secrets.TOFU_GITHUB_STATE_PASSPHRASE || '' }}
           OP_SERVICE_ACCOUNT_TOKEN: ${{ matrix.workspace == 'github' && secrets.TOFU_OP_SERVICE_ACCOUNT_TOKEN || '' }}
         with:
@@ -397,6 +399,7 @@ jobs:
           TF_VAR_loki_password: ${{ matrix.workspace == 'aws' && secrets.AWS_LOKI_PASSWORD || '' }}
           TF_VAR_internet_archive_access_key: ${{ matrix.workspace == 'aws' && secrets.AWS_INTERNET_ARCHIVE_ACCESS_KEY || '' }}
           TF_VAR_internet_archive_secret_key: ${{ matrix.workspace == 'aws' && secrets.AWS_INTERNET_ARCHIVE_SECRET_KEY || '' }}
+          TF_VAR_h_captcha_secret_key: ${{ matrix.workspace == 'aws' && secrets.AWS_H_CAPTCHA_SECRET_KEY || '' }}
           TF_VAR_state_passphrase: ${{ matrix.workspace == 'aws' && secrets.AWS_STATE_PASSPHRASE || matrix.workspace == 'github' && secrets.TOFU_GITHUB_STATE_PASSPHRASE || '' }}
           OP_SERVICE_ACCOUNT_TOKEN: ${{ matrix.workspace == 'github' && secrets.TOFU_OP_SERVICE_ACCOUNT_TOKEN || '' }}
         with:
