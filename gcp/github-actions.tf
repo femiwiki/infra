@@ -18,11 +18,13 @@ resource "google_project_service" "github_actions" {
 resource "google_iam_workload_identity_pool" "github" {
   workload_identity_pool_id = "github"
   display_name              = "GitHub Actions"
+  deletion_policy           = "PREVENT"
 }
 
 resource "google_iam_workload_identity_pool_provider" "infra" {
   workload_identity_pool_id          = google_iam_workload_identity_pool.github.workload_identity_pool_id
   workload_identity_pool_provider_id = "femiwiki-infra"
+  deletion_policy                    = "PREVENT"
   attribute_condition                = "assertion.repository_id == '188597503' && assertion.repository_owner_id == '21275875'"
   attribute_mapping = {
     "google.subject"                = "assertion.sub"
@@ -65,8 +67,9 @@ locals {
 resource "google_service_account" "github_actions" {
   for_each = local.github_actions
 
-  account_id   = each.key
-  display_name = each.value.display_name
+  account_id      = each.key
+  display_name    = each.value.display_name
+  deletion_policy = "PREVENT"
 }
 
 resource "google_project_iam_member" "github_actions" {
