@@ -232,58 +232,6 @@ resource "grafana_rule_group" "femiwiki_http" {
   }
 
   rule {
-    name            = "Page history refused by its own budget"
-    for             = "1h"
-    keep_firing_for = "1h"
-
-    condition      = "B"
-    no_data_state  = "OK"
-    exec_err_state = "OK"
-
-    labels = {
-      impact   = "none"
-      severity = "warning"
-    }
-
-    annotations = {
-      summary = "역사와 정보 요청이 자기 예산에서 거절되고 있습니다. 최근 한 시간에 {{ printf \"%.0f\" $values.A.Value }}건입니다. 거절이 한 망에서만 나오면 그 망이 긁고 있는 것이고, 여러 망에서 나오면 `FW_HISTORY_EVENTS`가 낮은 것입니다."
-      logs    = grafana_dashboard.this["scrapes"].url
-    }
-
-    data {
-      ref_id         = "A"
-      datasource_uid = data.grafana_data_source.loki.uid
-      query_type     = "instant"
-      relative_time_range {
-        from = 3600
-        to   = 0
-      }
-      model = jsonencode({
-        refId     = "A"
-        expr      = local.history_refused
-        queryType = "instant"
-        instant   = true
-        range     = false
-      })
-    }
-
-    data {
-      ref_id         = "B"
-      datasource_uid = "__expr__"
-      relative_time_range {
-        from = 0
-        to   = 0
-      }
-      model = jsonencode({
-        refId      = "B"
-        type       = "threshold"
-        expression = "A"
-        conditions = [{ evaluator = { type = "gt", params = [10] } }]
-      })
-    }
-  }
-
-  rule {
     name = "The wiki is read-only"
     for  = "0m"
 
@@ -482,6 +430,65 @@ resource "grafana_rule_group" "femiwiki_http" {
         refId      = "C"
         type       = "math"
         expression = "($A > 5) && ($B > 0)"
+      })
+    }
+  }
+}
+
+# Reads an hour of the http logs, so evaluating it every minute would read each
+# line sixty times out of Loki's query allowance.
+resource "grafana_rule_group" "femiwiki_history" {
+  name             = "history"
+  folder_uid       = data.grafana_folder.femiwiki.uid
+  interval_seconds = 900
+  rule {
+    name            = "Page history refused by its own budget"
+    for             = "1h"
+    keep_firing_for = "1h"
+
+    condition      = "B"
+    no_data_state  = "OK"
+    exec_err_state = "OK"
+
+    labels = {
+      impact   = "none"
+      severity = "warning"
+    }
+
+    annotations = {
+      summary = "역사와 정보 요청이 자기 예산에서 거절되고 있습니다. 최근 한 시간에 {{ printf \"%.0f\" $values.A.Value }}건입니다. 거절이 한 망에서만 나오면 그 망이 긁고 있는 것이고, 여러 망에서 나오면 `FW_HISTORY_EVENTS`가 낮은 것입니다."
+      logs    = grafana_dashboard.this["scrapes"].url
+    }
+
+    data {
+      ref_id         = "A"
+      datasource_uid = data.grafana_data_source.loki.uid
+      query_type     = "instant"
+      relative_time_range {
+        from = 3600
+        to   = 0
+      }
+      model = jsonencode({
+        refId     = "A"
+        expr      = local.history_refused
+        queryType = "instant"
+        instant   = true
+        range     = false
+      })
+    }
+
+    data {
+      ref_id         = "B"
+      datasource_uid = "__expr__"
+      relative_time_range {
+        from = 0
+        to   = 0
+      }
+      model = jsonencode({
+        refId      = "B"
+        type       = "threshold"
+        expression = "A"
+        conditions = [{ evaluator = { type = "gt", params = [10] } }]
       })
     }
   }

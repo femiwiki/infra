@@ -191,6 +191,14 @@ resource "grafana_rule_group" "femiwiki_jobs" {
       })
     }
   }
+}
+
+# The two dump rules read a day or two of every fastcgi log, which costs Loki's
+# query allowance on each evaluation; an hour late is fine for a twice-yearly job.
+resource "grafana_rule_group" "femiwiki_dumps" {
+  name             = "dumps"
+  folder_uid       = data.grafana_folder.femiwiki.uid
+  interval_seconds = 3600
 
   rule {
     name = "The public dump failed to upload"
