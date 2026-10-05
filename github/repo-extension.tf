@@ -29,6 +29,7 @@ module "femiwiki_skin" {
   collaborator                    = local.extension.collaborator
   default_status_checks           = []
   pages_build_type                = "workflow"
+  kept_branches                   = ["previews"]
 }
 
 module "unified_extension_for_femiwiki" {

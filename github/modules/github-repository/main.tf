@@ -82,6 +82,26 @@ resource "github_branch_protection" "branch_protection" {
   }
 }
 
+resource "github_repository_ruleset" "kept_branches" {
+  count       = length(var.kept_branches) > 0 ? 1 : 0
+  name        = "kept branches"
+  repository  = github_repository.repository.name
+  target      = "branch"
+  enforcement = "active"
+
+  conditions {
+    ref_name {
+      include = [for branch in var.kept_branches : "refs/heads/${branch}"]
+      exclude = []
+    }
+  }
+
+  rules {
+    deletion         = true
+    non_fast_forward = true
+  }
+}
+
 resource "github_team_repository" "team_repository" {
   repository = github_repository.repository.name
   team_id    = "3688706"
