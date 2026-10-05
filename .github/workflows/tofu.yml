@@ -124,6 +124,7 @@ jobs:
           TF_VAR_internet_archive_secret_key: ${{ matrix.workspace == 'aws' && secrets.AWS_INTERNET_ARCHIVE_SECRET_KEY || '' }}
           TF_VAR_h_captcha_secret_key: ${{ matrix.workspace == 'aws' && secrets.AWS_H_CAPTCHA_SECRET_KEY || '' }}
           TF_VAR_state_passphrase: ${{ matrix.workspace == 'aws' && secrets.AWS_STATE_PASSPHRASE || matrix.workspace == 'github' && secrets.TOFU_GITHUB_STATE_PASSPHRASE || matrix.workspace == 'gcp' && secrets.GCP_STATE_PASSPHRASE || '' }}
+          TF_VAR_gcp_state_passphrase: ${{ matrix.workspace == 'aws' && secrets.GCP_STATE_PASSPHRASE || '' }}
           OP_SERVICE_ACCOUNT_TOKEN: ${{ matrix.workspace == 'github' && secrets.TOFU_OP_SERVICE_ACCOUNT_TOKEN || '' }}
         with:
           path: ${{ matrix.workspace }}
@@ -378,6 +379,7 @@ jobs:
           TF_VAR_internet_archive_secret_key: ${{ matrix.workspace == 'aws' && secrets.AWS_INTERNET_ARCHIVE_SECRET_KEY || '' }}
           TF_VAR_h_captcha_secret_key: ${{ matrix.workspace == 'aws' && secrets.AWS_H_CAPTCHA_SECRET_KEY || '' }}
           TF_VAR_state_passphrase: ${{ matrix.workspace == 'aws' && secrets.AWS_STATE_PASSPHRASE || matrix.workspace == 'github' && secrets.TOFU_GITHUB_STATE_PASSPHRASE || matrix.workspace == 'gcp' && secrets.GCP_STATE_PASSPHRASE || '' }}
+          TF_VAR_gcp_state_passphrase: ${{ matrix.workspace == 'aws' && secrets.GCP_STATE_PASSPHRASE || '' }}
           OP_SERVICE_ACCOUNT_TOKEN: ${{ matrix.workspace == 'github' && secrets.TOFU_OP_SERVICE_ACCOUNT_TOKEN || '' }}
         with:
           path: ${{ matrix.workspace }}
@@ -424,6 +426,7 @@ jobs:
           TF_VAR_internet_archive_secret_key: ${{ matrix.workspace == 'aws' && secrets.AWS_INTERNET_ARCHIVE_SECRET_KEY || '' }}
           TF_VAR_h_captcha_secret_key: ${{ matrix.workspace == 'aws' && secrets.AWS_H_CAPTCHA_SECRET_KEY || '' }}
           TF_VAR_state_passphrase: ${{ matrix.workspace == 'aws' && secrets.AWS_STATE_PASSPHRASE || matrix.workspace == 'github' && secrets.TOFU_GITHUB_STATE_PASSPHRASE || matrix.workspace == 'gcp' && secrets.GCP_STATE_PASSPHRASE || '' }}
+          TF_VAR_gcp_state_passphrase: ${{ matrix.workspace == 'aws' && secrets.GCP_STATE_PASSPHRASE || '' }}
           OP_SERVICE_ACCOUNT_TOKEN: ${{ matrix.workspace == 'github' && secrets.TOFU_OP_SERVICE_ACCOUNT_TOKEN || '' }}
         with:
           path: ${{ matrix.workspace }}
