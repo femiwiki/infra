@@ -110,7 +110,9 @@ locals {
 }
 
 locals {
-  prune_keep_hours = 72
+  # Image age is its build time, so this also spares an image pulled for a
+  # deploy whose container is not created yet
+  prune_keep_hours = 24
 
   prune_images = replace(file("res/prune-docker-images.sh"), "__KEEP_HOURS__", local.prune_keep_hours)
 }
@@ -143,7 +145,7 @@ resource "aws_ssm_association" "prune_docker_images" {
   association_name    = "prune-docker-images-${each.key}"
   name                = aws_ssm_document.prune_docker_images[each.key].name
   document_version    = aws_ssm_document.prune_docker_images[each.key].latest_version
-  schedule_expression = "cron(0 18 ? * * *)"
+  schedule_expression = "cron(0 0 0/4 1/1 * ? *)"
   compliance_severity = "MEDIUM"
   max_concurrency     = "1"
   max_errors          = "0"
