@@ -10,10 +10,6 @@ resource "google_service_account" "pageviewinfoga" {
   description  = "Reads femiwiki.com page views from the Google Analytics Data API"
 }
 
-resource "google_service_account_key" "pageviewinfoga" {
-  service_account_id = google_service_account.pageviewinfoga.name
-}
-
 # A pool of its own, so no GitHub subject can ever name the Femiwiki role
 resource "google_iam_workload_identity_pool" "aws_sts" {
   workload_identity_pool_id = "aws-sts"
