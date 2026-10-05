@@ -1,14 +1,14 @@
 # Every request CloudFront answers, cache hits included, kept for 30 days:
 # long enough for every investigation so far, which closed within days.
-resource "aws_s3_bucket" "edge_logs_seoul" {
+resource "aws_s3_bucket" "edge_logs" {
   region           = local.seoul_region
   bucket           = "edge-logs-${data.aws_caller_identity.current.account_id}-${local.seoul_region}-an"
   bucket_namespace = "account-regional"
 }
 
-resource "aws_s3_bucket_public_access_block" "edge_logs_seoul" {
+resource "aws_s3_bucket_public_access_block" "edge_logs" {
   region = local.seoul_region
-  bucket = aws_s3_bucket.edge_logs_seoul.id
+  bucket = aws_s3_bucket.edge_logs.id
 
   block_public_acls       = true
   block_public_policy     = true
@@ -18,9 +18,9 @@ resource "aws_s3_bucket_public_access_block" "edge_logs_seoul" {
 
 # Expiry only: hourly Parquet files are under the 128 KB minimum of the
 # infrequent-access classes, and transitions would cost more than they save.
-resource "aws_s3_bucket_lifecycle_configuration" "edge_logs_seoul" {
+resource "aws_s3_bucket_lifecycle_configuration" "edge_logs" {
   region = local.seoul_region
-  bucket = aws_s3_bucket.edge_logs_seoul.id
+  bucket = aws_s3_bucket.edge_logs.id
 
   rule {
     id     = "expire-cloudfront-logs"
@@ -40,20 +40,20 @@ resource "aws_s3_bucket_lifecycle_configuration" "edge_logs_seoul" {
   }
 }
 
-resource "aws_s3_bucket_policy" "edge_logs_seoul" {
-  depends_on = [aws_s3_bucket_public_access_block.edge_logs_seoul]
+resource "aws_s3_bucket_policy" "edge_logs" {
+  depends_on = [aws_s3_bucket_public_access_block.edge_logs]
 
   region = local.seoul_region
-  bucket = aws_s3_bucket.edge_logs_seoul.id
-  policy = data.aws_iam_policy_document.edge_logs_seoul.json
+  bucket = aws_s3_bucket.edge_logs.id
+  policy = data.aws_iam_policy_document.edge_logs.json
 }
 
-data "aws_iam_policy_document" "edge_logs_seoul" {
+data "aws_iam_policy_document" "edge_logs" {
   statement {
     sid       = "DenyPlainHttp"
     effect    = "Deny"
     actions   = ["s3:*"]
-    resources = [aws_s3_bucket.edge_logs_seoul.arn, "${aws_s3_bucket.edge_logs_seoul.arn}/*"]
+    resources = [aws_s3_bucket.edge_logs.arn, "${aws_s3_bucket.edge_logs.arn}/*"]
 
     principals {
       type        = "*"
@@ -70,7 +70,7 @@ data "aws_iam_policy_document" "edge_logs_seoul" {
   statement {
     sid       = "AWSLogDeliveryWrite"
     actions   = ["s3:PutObject"]
-    resources = ["${aws_s3_bucket.edge_logs_seoul.arn}/cloudfront/*"]
+    resources = ["${aws_s3_bucket.edge_logs.arn}/cloudfront/*"]
 
     principals {
       type        = "Service"
@@ -97,7 +97,7 @@ data "aws_iam_policy_document" "edge_logs_seoul" {
   statement {
     sid       = "AWSLogDeliveryAclCheck"
     actions   = ["s3:GetBucketAcl"]
-    resources = [aws_s3_bucket.edge_logs_seoul.arn]
+    resources = [aws_s3_bucket.edge_logs.arn]
 
     principals {
       type        = "Service"
@@ -125,24 +125,24 @@ resource "aws_cloudwatch_log_delivery_source" "femiwiki_com" {
   resource_arn = aws_cloudfront_distribution.femiwiki_com.arn
 }
 
-resource "aws_cloudwatch_log_delivery_destination" "edge_logs_seoul" {
+resource "aws_cloudwatch_log_delivery_destination" "edge_logs" {
   region        = "us-east-1"
-  name          = "edge-logs-seoul"
+  name          = "edge-logs"
   output_format = "parquet"
 
   delivery_destination_configuration {
-    destination_resource_arn = "${aws_s3_bucket.edge_logs_seoul.arn}/cloudfront"
+    destination_resource_arn = "${aws_s3_bucket.edge_logs.arn}/cloudfront"
   }
 }
 
 # No cs(Cookie): it carries session cookies. x-edge-request-id is the
 # X-Amz-Cf-Id in Caddy's access log, for joining the two.
 resource "aws_cloudwatch_log_delivery" "femiwiki_com" {
-  depends_on = [aws_s3_bucket_policy.edge_logs_seoul]
+  depends_on = [aws_s3_bucket_policy.edge_logs]
 
   region                   = "us-east-1"
   delivery_source_name     = aws_cloudwatch_log_delivery_source.femiwiki_com.name
-  delivery_destination_arn = aws_cloudwatch_log_delivery_destination.edge_logs_seoul.arn
+  delivery_destination_arn = aws_cloudwatch_log_delivery_destination.edge_logs.arn
 
   record_fields = [
     "date",
