@@ -150,17 +150,17 @@ locals {
       interval = 300
       rules = [
         {
-          name           = "Logs are arriving faster than the plan allows"
+          name           = "Logs will pass the plan this month"
           datasource     = data.grafana_data_source.usage.uid
-          expr           = trimspace(file("${path.module}/queries/log-volume-share.promql"))
+          expr           = trimspace(file("${path.module}/queries/log-usage-projection.promql"))
           threshold      = 100
-          window         = 21600
+          window         = 86400
           for            = "30m"
           no_data_state  = "Alerting"
           exec_err_state = "Alerting"
           labels         = { impact = "operators", severity = "warning" }
           annotations = {
-            summary = "최근 6시간 속도가 이어지면 이 달 로그가 포함량의 {{ printf \"%.0f\" $values.A.Value }}%가 됩니다. 넘기면 수집이 끊겨 로그를 세는 감시가 통째로 조용해집니다."
+            summary = "최근 하루 속도가 이어지면 이 달 로그 사용량이 포함량의 {{ printf \"%.0f\" $values.A.Value }}%가 됩니다. 사용량에는 수집뿐 아니라 수집량의 100배를 넘는 조회도 들어갑니다. 넘기면 수집이 끊겨 로그를 세는 감시가 통째로 조용해집니다."
           }
         },
       ]
