@@ -161,7 +161,7 @@ resource "docker_container" "fastcgi" {
   ]
 
   healthcheck {
-    test         = ["CMD-SHELL", "test ! -e /tmp/warming && /usr/local/bin/php /srv/fcgi-check/fcgi-probe.php && /usr/local/bin/php /a/databasez-probe.php"]
+    test         = ["CMD-SHELL", "test ! -e /tmp/warming && /usr/local/bin/php /srv/fcgi-check/fcgi-probe.php && /usr/local/bin/php /srv/fcgi-check/databasez-probe.php"]
     interval     = "10s"
     timeout      = "10s"
     retries      = 3
