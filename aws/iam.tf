@@ -15,6 +15,9 @@ resource "aws_iam_openid_connect_provider" "github_actions" {
   thumbprint_list = ["1b511abead59c6ce207077c0bf0e0043b1382612"]
 }
 
+# Lets IAM principals call sts:GetWebIdentityToken for JWTs that outside services trust
+resource "aws_iam_outbound_web_identity_federation" "this" {}
+
 #
 # IAM Users
 #
