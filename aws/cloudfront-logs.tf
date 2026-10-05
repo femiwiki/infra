@@ -50,6 +50,24 @@ resource "aws_s3_bucket_policy" "edge_logs_seoul" {
 
 data "aws_iam_policy_document" "edge_logs_seoul" {
   statement {
+    sid       = "DenyPlainHttp"
+    effect    = "Deny"
+    actions   = ["s3:*"]
+    resources = [aws_s3_bucket.edge_logs_seoul.arn, "${aws_s3_bucket.edge_logs_seoul.arn}/*"]
+
+    principals {
+      type        = "*"
+      identifiers = ["*"]
+    }
+
+    condition {
+      test     = "Bool"
+      variable = "aws:SecureTransport"
+      values   = ["false"]
+    }
+  }
+
+  statement {
     sid       = "AWSLogDeliveryWrite"
     actions   = ["s3:PutObject"]
     resources = ["${aws_s3_bucket.edge_logs_seoul.arn}/cloudfront/*"]
