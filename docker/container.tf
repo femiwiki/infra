@@ -174,6 +174,22 @@ resource "docker_container" "fastcgi" {
     content = "[www]\nlisten.backlog = 64\n"
   }
 
+  upload {
+    file = "/etc/mediawiki/google-analytics.json"
+    content = jsonencode({
+      universe_domain    = "googleapis.com"
+      type               = "external_account"
+      audience           = data.terraform_remote_state.gcp.outputs.pageviewinfoga_audience
+      subject_token_type = "urn:ietf:params:oauth:token-type:jwt"
+      token_url          = "https://sts.googleapis.com/v1/token"
+      credential_source = {
+        file   = "/run/secrets/google-subject-token"
+        format = { type = "text" }
+      }
+      service_account_impersonation_url = data.terraform_remote_state.gcp.outputs.pageviewinfoga_impersonation_url
+    })
+  }
+
   mounts {
     type      = "volume"
     source    = docker_volume.sitemap.id
