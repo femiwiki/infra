@@ -31,6 +31,12 @@ function demote( string $block ): string {
 	return preg_replace( '/^(=+)([^=].*?)(=+)\h*$/mu', '=$1$2$3=', $block );
 }
 
+/** The blocks, or the one list item they hold as a plain line without its type heading */
+function single( array $blocks ): array {
+	$lines = preg_grep( '/^(=.*=)?\h*$/u', explode( "\n", implode( "\n", $blocks ) ), PREG_GREP_INVERT );
+	return count( $lines ) === 1 && preg_match( '/^\*\h*([^*:#;].*)$/u', reset( $lines ), $m ) ? [ $m[1] ] : $blocks;
+}
+
 /**
  * The page with the post under its day, a ==day== that the table of contents shows, holding a ===time=== per
  * apply, newest first. A day without one gets it above the first section of that day or earlier, an older
@@ -155,7 +161,7 @@ function post( string $repo, int $number, DateTime $at, bool $dryRun ): void {
 	$link = "https://github.com/$repo/pull/$number";
 	// A block is on the page as posted, a level down, or as posted before days grouped the posts
 	$onPage = fn ( $block ) => str_contains( $text, demote( $block ) ) ? demote( $block ) : ( str_contains( $text, $block ) ? $block : null );
-	$new = array_values( array_map( 'demote', array_filter( $blocks, fn ( $block ) => $onPage( $block ) === null ) ) );
+	$new = single( array_values( array_map( 'demote', array_filter( $blocks, fn ( $block ) => $onPage( $block ) === null ) ) ) );
 	// The summary links to the day, since a summary does not link a URL or a repo#number and a time repeats daily
 	if ( preg_match( '/^' . preg_quote( $link, '/' ) . '$/m', $text ) ) {
 		echo "$title: $repo#$number already posted\n";
