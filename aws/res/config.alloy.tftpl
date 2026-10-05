@@ -52,6 +52,8 @@ prometheus.relabel "alloy_check" {
       "process_resident_memory_bytes",
       "loki_process_custom_rate_limit_refusals_total",
       "loki_process_custom_php_deprecations_total",
+      "loki_process_custom_uncaught_exceptions_total",
+      "loki_process_custom_responses_total",
     ], "|")
     action        = "keep"
   }
@@ -353,6 +355,32 @@ loki.process "fastcgi" {
     }
   }
 
+  // Counted here so the Uncaught exceptions rule needs no hour of fastcgi logs
+  stage.match {
+    selector = `{docker_container_name=~"fastcgi.*"} |~ "\"caught_by\":\"entrypoint\"|\"channel\":\"fatal\""`
+
+    stage.json {
+      expressions = {class = "context.exception.class"}
+    }
+
+    stage.labels {
+      values = {class = ""}
+    }
+
+    stage.metrics {
+      metric.counter {
+        name        = "uncaught_exceptions_total"
+        description = "Exceptions that reached the reader as an error page, by class"
+        match_all   = true
+        action      = "inc"
+      }
+    }
+
+    stage.label_drop {
+      values = ["class"]
+    }
+  }
+
   // A deprecation is logged twice: php-fpm's line is counted and dropped, and
   // MediaWiki's JSON line, which has the URL, is kept at one a minute for each
   stage.match {
@@ -472,6 +500,38 @@ loki.process "fastcgi" {
 
     stage.label_drop {
       values = ["zone"]
+    }
+  }
+
+  // From the access log, not Caddy's metrics: those count the skipped static
+  // images and cannot tell the 503 fallback apart
+  stage.match {
+    selector = `{docker_container_name=~"http.*"} |= "\"logger\":\"http.log.access"`
+
+    stage.json {
+      expressions = {status = "status", fallback = "fallback"}
+    }
+
+    stage.regex {
+      source     = "status"
+      expression = `^(?P<status_class>\d)`
+    }
+
+    stage.labels {
+      values = {status_class = "", fallback = ""}
+    }
+
+    stage.metrics {
+      metric.counter {
+        name        = "responses_total"
+        description = "Access log lines by the status's first digit, 0 for none"
+        match_all   = true
+        action      = "inc"
+      }
+    }
+
+    stage.label_drop {
+      values = ["status_class", "fallback"]
     }
   }
 }
