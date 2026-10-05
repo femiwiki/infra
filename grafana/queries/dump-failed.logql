@@ -1,1 +1,1 @@
-sum(count_over_time({docker_container_name=~"fastcgi.*"} |= "publish-dump: failed" [1d])) or vector(0)
+sum(count_over_time({cron_job="publish-dump"} |= "publish-dump: failed" [1d])) or vector(0)
