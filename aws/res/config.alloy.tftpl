@@ -339,6 +339,20 @@ loki.process "fastcgi" {
     }
   }
 
+  // A label of their own lets the rules waiting on the cron jobs' finish lines
+  // read only them: Loki bills a query by the streams it opens
+  stage.match {
+    selector = `{docker_container_name=~"fastcgi.*"} |~ "^(generate-sitemap|publish-dump): "`
+
+    stage.regex {
+      expression = `^(?P<cron_job>generate-sitemap|publish-dump): `
+    }
+
+    stage.labels {
+      values = {cron_job = ""}
+    }
+  }
+
   // A deprecation is logged twice: php-fpm's line is counted and dropped, and
   // MediaWiki's JSON line, which has the URL, is kept at one a minute for each
   stage.match {
