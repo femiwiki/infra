@@ -232,6 +232,7 @@ jobs:
         id: pending
         with:
           step: pending
+          apply-before-merge: "true"
           workspaces: ${{ inputs.workspace && format('["{0}"]', inputs.workspace) || '' }}
 
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
@@ -281,6 +282,7 @@ jobs:
         id: approver
         with:
           step: apply
+          apply-before-merge: "true"
           workspace: ${{ matrix.workspace }}
 
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
@@ -511,11 +513,13 @@ jobs:
     permissions:
       actions: read
       contents: write
+      deployments: read
       pull-requests: write
     steps:
       - uses: femiwiki/terraform-github-tacos@58a1d0aa801b093ae29951ded334ae882a2dac3a  # v0.4.0
         with:
           step: merge
+          apply-before-merge: "true"
 
   log:
     needs: apply
