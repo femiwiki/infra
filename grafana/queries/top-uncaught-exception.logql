@@ -1,1 +1,0 @@
-topk(1, sum by (class) (count_over_time({docker_container_name=~"fastcgi.*"} |~ `"caught_by":"entrypoint"|"channel":"fatal"` | json class="context.exception.class" [1h])))
