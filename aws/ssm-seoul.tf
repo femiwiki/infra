@@ -23,6 +23,14 @@ resource "aws_ssm_parameter" "internet_archive" {
   value  = each.value
 }
 
+# Read by the MediaWiki image's ConfirmEdit (femiwiki/femiwiki#668).
+resource "aws_ssm_parameter" "h_captcha_secret_key" {
+  region = local.seoul_region
+  name   = "/mediawiki/h_captcha/secret_key"
+  type   = "SecureString"
+  value  = var.h_captcha_secret_key
+}
+
 # Written by hand, so the values stay out of the configuration; only the type is
 # managed here (femiwiki/femiwiki#597).
 locals {
