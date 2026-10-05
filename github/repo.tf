@@ -133,6 +133,7 @@ module "femiwiki_github_io" {
     "wikven",
   ]
   default_status_checks = []
+  kept_branches         = ["data"]
 }
 
 module "dot_github" {
