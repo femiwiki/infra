@@ -28,3 +28,9 @@ variable "state_passphrase" {
   type        = string
   sensitive   = true
 }
+
+variable "gcp_state_passphrase" {
+  description = "Decrypts the gcp state, to read its outputs."
+  type        = string
+  sensitive   = true
+}
