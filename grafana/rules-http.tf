@@ -25,15 +25,14 @@ locals {
   dump_failed          = trimspace(file("${path.module}/queries/dump-failed.logql"))
   dump_published       = trimspace(file("${path.module}/queries/dump-published.logql"))
   dump_due             = trimspace(file("${path.module}/queries/dump-due.promql"))
-  successful_responses = trimspace(file("${path.module}/queries/site-down.logql"))
-  server_errors        = trimspace(file("${path.module}/queries/server-errors.logql"))
-  all_responses        = trimspace(file("${path.module}/queries/all-responses.logql"))
+  successful_responses = trimspace(file("${path.module}/queries/site-down.promql"))
+  server_errors        = trimspace(file("${path.module}/queries/server-errors.promql"))
+  all_responses        = trimspace(file("${path.module}/queries/all-responses.promql"))
   busiest_network      = trimspace(file("${path.module}/queries/concentrated-refusals.logql"))
   history_refused      = trimspace(file("${path.module}/queries/history-refused.promql"))
-  uncaught_exceptions  = trimspace(file("${path.module}/queries/uncaught-exceptions.logql"))
-  top_exception        = trimspace(file("${path.module}/queries/top-uncaught-exception.logql"))
-  status_zero          = trimspace(file("${path.module}/queries/status-zero.logql"))
-  top_status_zero_uri  = trimspace(file("${path.module}/queries/top-status-zero-uri.logql"))
+  uncaught_exceptions  = trimspace(file("${path.module}/queries/uncaught-exceptions.promql"))
+  top_exception        = trimspace(file("${path.module}/queries/top-uncaught-exception.promql"))
+  status_zero          = trimspace(file("${path.module}/queries/status-zero.promql"))
 }
 
 resource "grafana_rule_group" "femiwiki_http" {
@@ -64,18 +63,16 @@ resource "grafana_rule_group" "femiwiki_http" {
 
     data {
       ref_id         = "A"
-      datasource_uid = data.grafana_data_source.loki.uid
-      query_type     = "instant"
+      datasource_uid = data.grafana_data_source.prometheus.uid
       relative_time_range {
         from = 300
         to   = 0
       }
       model = jsonencode({
-        refId     = "A"
-        expr      = local.successful_responses
-        queryType = "instant"
-        instant   = true
-        range     = false
+        refId   = "A"
+        expr    = local.successful_responses
+        instant = true
+        range   = false
       })
     }
 
@@ -118,35 +115,31 @@ resource "grafana_rule_group" "femiwiki_http" {
 
     data {
       ref_id         = "A"
-      datasource_uid = data.grafana_data_source.loki.uid
-      query_type     = "instant"
+      datasource_uid = data.grafana_data_source.prometheus.uid
       relative_time_range {
         from = 300
         to   = 0
       }
       model = jsonencode({
-        refId     = "A"
-        expr      = local.server_errors
-        queryType = "instant"
-        instant   = true
-        range     = false
+        refId   = "A"
+        expr    = local.server_errors
+        instant = true
+        range   = false
       })
     }
 
     data {
       ref_id         = "B"
-      datasource_uid = data.grafana_data_source.loki.uid
-      query_type     = "instant"
+      datasource_uid = data.grafana_data_source.prometheus.uid
       relative_time_range {
         from = 300
         to   = 0
       }
       model = jsonencode({
-        refId     = "B"
-        expr      = local.all_responses
-        queryType = "instant"
-        instant   = true
-        range     = false
+        refId   = "B"
+        expr    = local.all_responses
+        instant = true
+        range   = false
       })
     }
 
@@ -320,35 +313,31 @@ resource "grafana_rule_group" "femiwiki_http" {
 
     data {
       ref_id         = "A"
-      datasource_uid = data.grafana_data_source.loki.uid
-      query_type     = "instant"
+      datasource_uid = data.grafana_data_source.prometheus.uid
       relative_time_range {
         from = 3600
         to   = 0
       }
       model = jsonencode({
-        refId     = "A"
-        expr      = local.uncaught_exceptions
-        queryType = "instant"
-        instant   = true
-        range     = false
+        refId   = "A"
+        expr    = local.uncaught_exceptions
+        instant = true
+        range   = false
       })
     }
 
     data {
       ref_id         = "B"
-      datasource_uid = data.grafana_data_source.loki.uid
-      query_type     = "instant"
+      datasource_uid = data.grafana_data_source.prometheus.uid
       relative_time_range {
         from = 3600
         to   = 0
       }
       model = jsonencode({
-        refId     = "B"
-        expr      = local.top_exception
-        queryType = "instant"
-        instant   = true
-        range     = false
+        refId   = "B"
+        expr    = local.top_exception
+        instant = true
+        range   = false
       })
     }
 
@@ -381,41 +370,22 @@ resource "grafana_rule_group" "femiwiki_http" {
     }
 
     annotations = {
-      summary = "최근 10분 동안 Caddy가 상태 코드 없이 끝낸 응답이 {{ printf \"%.0f\" $values.A.Value }}건입니다. 가장 많은 주소는 `{{ $labels.uri }}` {{ printf \"%.0f\" $values.B.Value }}건입니다. 핸들러가 헤더를 쓰지 않고 끝났다는 뜻이라 방문자는 빈 200, 곧 빈 화면을 받습니다. caddy-mwcache나 Caddyfile의 최근 변경을 먼저 봅니다."
+      summary = "최근 10분 동안 Caddy가 상태 코드 없이 끝낸 응답이 {{ printf \"%.0f\" $values.A.Value }}건입니다. 핸들러가 헤더를 쓰지 않고 끝났다는 뜻이라 방문자는 빈 200, 곧 빈 화면을 받습니다. caddy-mwcache나 Caddyfile의 최근 변경을 먼저 봅니다. 어느 주소인지는 로그 링크에서 봅니다."
       logs    = local.explore_urls.no_status
     }
 
     data {
       ref_id         = "A"
-      datasource_uid = data.grafana_data_source.loki.uid
-      query_type     = "instant"
+      datasource_uid = data.grafana_data_source.prometheus.uid
       relative_time_range {
         from = 600
         to   = 0
       }
       model = jsonencode({
-        refId     = "A"
-        expr      = local.status_zero
-        queryType = "instant"
-        instant   = true
-        range     = false
-      })
-    }
-
-    data {
-      ref_id         = "B"
-      datasource_uid = data.grafana_data_source.loki.uid
-      query_type     = "instant"
-      relative_time_range {
-        from = 600
-        to   = 0
-      }
-      model = jsonencode({
-        refId     = "B"
-        expr      = local.top_status_zero_uri
-        queryType = "instant"
-        instant   = true
-        range     = false
+        refId   = "A"
+        expr    = local.status_zero
+        instant = true
+        range   = false
       })
     }
 
@@ -429,7 +399,7 @@ resource "grafana_rule_group" "femiwiki_http" {
       model = jsonencode({
         refId      = "C"
         type       = "math"
-        expression = "($A > 5) && ($B > 0)"
+        expression = "$A > 5"
       })
     }
   }
