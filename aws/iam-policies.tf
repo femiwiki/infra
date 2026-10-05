@@ -396,11 +396,11 @@ data "aws_iam_policy_document" "get_google_subject_token" {
     actions   = ["sts:GetWebIdentityToken"]
     resources = ["*"]
 
-    # The gcp workspace's pool aws and provider femiwiki in project femiwiki-b2dad
+    # The gcp workspace's pool aws-sts and provider femiwiki in project femiwiki-b2dad
     condition {
       test     = "ForAllValues:StringEquals"
       variable = "sts:IdentityTokenAudience"
-      values   = ["https://iam.googleapis.com/projects/611763704636/locations/global/workloadIdentityPools/aws/providers/femiwiki"]
+      values   = ["https://iam.googleapis.com/projects/611763704636/locations/global/workloadIdentityPools/aws-sts/providers/femiwiki"]
     }
 
     # Google accepts RS256 and ES256 only
