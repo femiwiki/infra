@@ -115,9 +115,8 @@ jobs:
       - id: image
         run: echo "image=$(grep -m1 -oE 'ghcr\.io/femiwiki/femiwiki:[^"]+' docker/container.tf)" >> "$GITHUB_OUTPUT"
 
-      # The image is 2.87 GB and holds a 95 MB static binary. Keyed on the tag,
-      # so a new image pays the pull once and every pull request until the next
-      # one restores about 40 MB instead.
+      # The 2.87 GB image is pulled once per tag; later runs restore about
+      # 40 MB of its binary from this cache
       - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v6.1.0
         id: cache
         with:
