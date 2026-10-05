@@ -148,6 +148,11 @@ resource "docker_container" "fastcgi" {
       WG_CDN_SERVERS                 = "127.0.0.1:80"
       WG_INTERNAL_SERVER             = "http://127.0.0.1:80"
       WG_MEMCACHED_SERVERS           = "127.0.0.1:11211"
+      # The C client. The pure-PHP one spends about 14% of a page's CPU on its
+      # sockets (#1073); the pecl keys start cold under pecl/ (#1134)
+      FW_MAIN_CACHE    = "memcached-pecl"
+      FW_PARSER_CACHE  = "memcached-pecl"
+      FW_MESSAGE_CACHE = "memcached-pecl"
       # Used by fcgi-probe.php and databasez-probe.php
       FCGI_URL = "127.0.0.1:${9100 + local.fastcgi_generation % 2}"
 
