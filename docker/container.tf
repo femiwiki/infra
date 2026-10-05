@@ -150,10 +150,10 @@ resource "docker_container" "fastcgi" {
       # Used by fcgi-probe.php and databasez-probe.php
       FCGI_URL = "127.0.0.1:${9100 + local.fastcgi_generation % 2}"
 
-      WG_DB_SERVER           = "${data.aws_instances.database.private_ips[0]}:3306"
-      WG_DB_USER             = "mediawiki"
-      WG_SESSION_DB_NAME     = "femiwiki_sessions"
-      WG_RE_CAPTCHA_SITE_KEY = "6LfiSLArAAAAAKFLIhAJC2wlNY1Nnbm_gNcXRIDh"
+      WG_DB_SERVER          = "${data.aws_instances.database.private_ips[0]}:3306"
+      WG_DB_USER            = "mediawiki"
+      WG_SESSION_DB_NAME    = "femiwiki_sessions"
+      WG_H_CAPTCHA_SITE_KEY = "6cb24780-3282-490c-9b4e-83122cb04cda"
 
       SSM_SECRETS = "1"
       AWS_REGION  = "ap-northeast-2"
