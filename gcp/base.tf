@@ -8,9 +8,17 @@ terraform {
     use_lockfile = true
   }
 
-  # Never rename the key provider or the method: the encrypted state records
-  # their names, and a renamed one cannot read it back.
+  # aws reads this state, and the key provider's name is recorded in it, so it
+  # must not be "state", which aws uses for its own. Never rename "gcp".
   encryption {
+    key_provider "pbkdf2" "gcp" {
+      passphrase = var.state_passphrase
+    }
+
+    method "aes_gcm" "gcp" {
+      keys = key_provider.pbkdf2.gcp
+    }
+
     key_provider "pbkdf2" "state" {
       passphrase = var.state_passphrase
     }
@@ -20,12 +28,16 @@ terraform {
     }
 
     state {
-      method   = method.aes_gcm.state
+      method   = method.aes_gcm.gcp
       enforced = true
+
+      fallback {
+        method = method.aes_gcm.state
+      }
     }
 
     plan {
-      method   = method.aes_gcm.state
+      method   = method.aes_gcm.gcp
       enforced = true
     }
   }
