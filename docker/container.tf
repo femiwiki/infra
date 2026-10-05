@@ -46,6 +46,7 @@ resource "docker_container" "http" {
       FW_LOG_EXCLUDE      = "http.handlers.mwcache",
       FW_CADDYFILE        = file("../serving/Caddyfile"),
       FW_ROBOTS_TXT       = file("../serving/robots.txt"),
+      FW_DEAD_URLS        = join("\n", [for l in split("\n", file("../serving/dead-urls.txt")) : l if trimspace(l) != "" && !startswith(l, "#")]),
       AWS_REGION          = "ap-northeast-1",
       S3_USE_IAM_PROVIDER = "true",
       S3_HOST             = "s3.ap-northeast-1.amazonaws.com",
@@ -161,7 +162,7 @@ resource "docker_container" "fastcgi" {
   ]
 
   healthcheck {
-    test         = ["CMD-SHELL", "test ! -e /tmp/warming && /usr/local/bin/php /srv/fcgi-check/fcgi-probe.php && /usr/local/bin/php /a/databasez-probe.php"]
+    test         = ["CMD-SHELL", "test ! -e /tmp/warming && /usr/local/bin/php /srv/fcgi-check/fcgi-probe.php && /usr/local/bin/php /srv/fcgi-check/databasez-probe.php"]
     interval     = "10s"
     timeout      = "10s"
     retries      = 3
