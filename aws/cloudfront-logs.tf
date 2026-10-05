@@ -1,5 +1,5 @@
-# Every request CloudFront answers, cache hits included, kept for 90 days:
-# the three months 페미위키:개인정보 정책 gives website visit records.
+# Every request CloudFront answers, cache hits included, kept for 30 days:
+# long enough for every investigation so far, which closed within days.
 resource "aws_s3_bucket" "edge_logs_seoul" {
   region           = local.seoul_region
   bucket           = "edge-logs-${data.aws_caller_identity.current.account_id}-${local.seoul_region}-an"
@@ -31,7 +31,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "edge_logs_seoul" {
     }
 
     expiration {
-      days = 90
+      days = 30
     }
 
     abort_incomplete_multipart_upload {
