@@ -58,7 +58,7 @@ panels:
             text: 정상
             index: 0
           '0':
-            text: 장애
+            text: 오류
             index: 1
     overrides: []
   options:
@@ -110,7 +110,7 @@ panels:
             color: green
             index: 0
           '0':
-            text: 장애
+            text: 오류
             color: red
             index: 1
       custom:
