@@ -384,6 +384,39 @@ data "aws_iam_policy_document" "write_mysql_root_password" {
 }
 
 
+resource "aws_iam_policy" "get_google_subject_token" {
+  name        = "GetGoogleSubjectToken"
+  description = "Allows instances to get the JWT that Google exchanges for PageViewInfoGA's access"
+
+  policy = data.aws_iam_policy_document.get_google_subject_token.json
+}
+
+data "aws_iam_policy_document" "get_google_subject_token" {
+  statement {
+    actions   = ["sts:GetWebIdentityToken"]
+    resources = ["*"]
+
+    condition {
+      test     = "ForAllValues:StringEquals"
+      variable = "sts:IdentityTokenAudience"
+      values   = ["https:${data.terraform_remote_state.gcp.outputs.pageviewinfoga_audience}"]
+    }
+
+    # Google accepts RS256 and ES256 only
+    condition {
+      test     = "StringEquals"
+      variable = "sts:SigningAlgorithm"
+      values   = ["RS256"]
+    }
+
+    condition {
+      test     = "NumericLessThanEquals"
+      variable = "sts:DurationSeconds"
+      values   = ["3600"]
+    }
+  }
+}
+
 #
 # Policy documents for inline policies
 #
