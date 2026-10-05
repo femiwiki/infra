@@ -280,24 +280,18 @@ resource "github_repository_file" "status_index" {
   overwrite_on_create = true
 }
 
-resource "github_repository_environment" "infra" {
-  for_each = toset(["aws", "docker", "gcp", "github", "grafana", "healthchecks"])
+# An apply waits in its workspace's environment until a Deployer approves it
+module "tacos" {
+  source = "github.com/femiwiki/terraform-github-tacos?ref=v0.2.3"
 
-  repository  = module.infra.name
-  environment = each.key
-
-  # An apply waits here until someone approves it
-  reviewers {
-    teams = [github_team.deployer.id]
-  }
+  repository     = module.infra.name
+  environments   = ["aws", "docker", "gcp", "github", "grafana", "healthchecks"]
+  reviewer_teams = [github_team.deployer.id]
+  # The provider's default, which these environments were created with
+  can_admins_bypass = true
 }
 
 moved {
-  from = github_repository_environment.infra_docker
-  to   = github_repository_environment.infra["docker"]
-}
-
-moved {
-  from = github_repository_environment.infra_github
-  to   = github_repository_environment.infra["github"]
+  from = github_repository_environment.infra
+  to   = module.tacos.github_repository_environment.this
 }

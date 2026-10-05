@@ -54,7 +54,7 @@ resource "github_actions_environment_secret" "infra" {
   for_each = local.infra_environment_secrets
 
   repository  = module.infra.name
-  environment = github_repository_environment.infra[each.value.environment].environment
+  environment = module.tacos.environments[each.value.environment]
   secret_name = each.key
   value       = data.onepassword_item.infra[each.value.item].password
 }
