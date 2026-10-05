@@ -38,6 +38,19 @@ resource "aws_s3_bucket_lifecycle_configuration" "edge_logs" {
       days_after_initiation = 1
     }
   }
+
+  rule {
+    id     = "expire-athena-results"
+    status = "Enabled"
+
+    filter {
+      prefix = "athena-results/"
+    }
+
+    expiration {
+      days = 7
+    }
+  }
 }
 
 resource "aws_s3_bucket_policy" "edge_logs" {
