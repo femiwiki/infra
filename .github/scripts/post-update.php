@@ -31,10 +31,17 @@ function demote( string $block ): string {
 	return preg_replace( '/^(=+)([^=].*?)(=+)\h*$/mu', '=$1$2$3=', $block );
 }
 
-/** The blocks, or the one list item they hold as a plain line without its type heading */
+/**
+ * The blocks, or the one list item they hold as a plain line without its type heading, led by (보안 패치) when that
+ * was the heading, since a security patch line names only versions
+ */
 function single( array $blocks ): array {
-	$lines = preg_grep( '/^(=.*=)?\h*$/u', explode( "\n", implode( "\n", $blocks ) ), PREG_GREP_INVERT );
-	return count( $lines ) === 1 && preg_match( '/^\*\h*([^*:#;].*)$/u', reset( $lines ), $m ) ? [ $m[1] ] : $blocks;
+	$all = explode( "\n", implode( "\n", $blocks ) );
+	$lines = preg_grep( '/^(=.*=)?\h*$/u', $all, PREG_GREP_INVERT );
+	if ( count( $lines ) !== 1 || !preg_match( '/^\*\h*([^*:#;].*)$/u', reset( $lines ), $m ) ) {
+		return $blocks;
+	}
+	return [ ( preg_grep( '/^=+\h*보안 패치\h*=+\h*$/u', $all ) ? '(보안 패치) ' : '' ) . $m[1] ];
 }
 
 /**
