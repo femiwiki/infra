@@ -103,6 +103,17 @@ resource "github_actions_secret" "alerts_webhook" {
   value       = random_password.alerts_webhook.result
 }
 
+resource "random_password" "gcp_state_passphrase" {
+  length  = 48
+  special = false
+}
+
+resource "github_actions_secret" "gcp_state_passphrase" {
+  repository  = module.infra.name
+  secret_name = "GCP_STATE_PASSPHRASE"
+  value       = random_password.gcp_state_passphrase.result
+}
+
 resource "github_repository_environment" "dot_github_gitlab" {
   repository  = module.dot_github.name
   environment = "gitlab"
