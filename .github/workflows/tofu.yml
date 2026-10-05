@@ -51,7 +51,7 @@ jobs:
           echo "plan=$plan" >> "$GITHUB_OUTPUT"
           [ "$plan" = true ] || echo "This pull request does not change $WORKSPACE/."
 
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         if: steps.scope.outputs.plan == 'true'
         with:
           persist-credentials: false
@@ -234,7 +234,7 @@ jobs:
           step: pending
           workspaces: ${{ inputs.workspace && format('["{0}"]', inputs.workspace) || '' }}
 
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         if: github.event_name == 'pull_request' && steps.pending.outputs.workspaces != '[]'
         with:
           persist-credentials: false
@@ -283,7 +283,7 @@ jobs:
           step: apply
           workspace: ${{ matrix.workspace }}
 
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           persist-credentials: false
 
@@ -578,7 +578,7 @@ jobs:
               core.info(`${workspace}: posted the apply log`);
             }
 
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           persist-credentials: false
           sparse-checkout: .github/actions/collapse-comments
