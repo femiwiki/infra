@@ -1,0 +1,1 @@
+sum(increase(loki_process_custom_rate_limit_refusals_total{zone="history_per_ip"}[1h])) or vector(0)

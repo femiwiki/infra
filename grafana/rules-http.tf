@@ -29,7 +29,7 @@ locals {
   server_errors        = trimspace(file("${path.module}/queries/server-errors.logql"))
   all_responses        = trimspace(file("${path.module}/queries/all-responses.logql"))
   busiest_network      = trimspace(file("${path.module}/queries/concentrated-refusals.logql"))
-  history_refused      = trimspace(file("${path.module}/queries/history-refused.logql"))
+  history_refused      = trimspace(file("${path.module}/queries/history-refused.promql"))
   uncaught_exceptions  = trimspace(file("${path.module}/queries/uncaught-exceptions.logql"))
   top_exception        = trimspace(file("${path.module}/queries/top-uncaught-exception.logql"))
   status_zero          = trimspace(file("${path.module}/queries/status-zero.logql"))
@@ -435,12 +435,11 @@ resource "grafana_rule_group" "femiwiki_http" {
   }
 }
 
-# Reads an hour of the http logs, so evaluating it every minute would read each
-# line sixty times out of Loki's query allowance.
 resource "grafana_rule_group" "femiwiki_history" {
   name             = "history"
   folder_uid       = data.grafana_folder.femiwiki.uid
   interval_seconds = 900
+
   rule {
     name            = "Page history refused by its own budget"
     for             = "1h"
@@ -462,18 +461,16 @@ resource "grafana_rule_group" "femiwiki_history" {
 
     data {
       ref_id         = "A"
-      datasource_uid = data.grafana_data_source.loki.uid
-      query_type     = "instant"
+      datasource_uid = data.grafana_data_source.prometheus.uid
       relative_time_range {
         from = 3600
         to   = 0
       }
       model = jsonencode({
-        refId     = "A"
-        expr      = local.history_refused
-        queryType = "instant"
-        instant   = true
-        range     = false
+        refId   = "A"
+        expr    = local.history_refused
+        instant = true
+        range   = false
       })
     }
 
