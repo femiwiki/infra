@@ -48,4 +48,10 @@ data "aws_iam_policy_document" "infra_gcp" {
     actions   = ["s3:ListBucket"]
     resources = [aws_s3_bucket.tfstate.arn]
   }
+
+  statement {
+    sid       = "OutboundIssuer"
+    actions   = ["iam:GetOutboundWebIdentityFederationInfo"]
+    resources = ["*"]
+  }
 }
