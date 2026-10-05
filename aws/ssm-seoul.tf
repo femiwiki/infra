@@ -31,19 +31,6 @@ resource "aws_ssm_parameter" "h_captcha_secret_key" {
   value  = var.h_captcha_secret_key
 }
 
-# Read by PageViewInfoGA in the MediaWiki image (femiwiki/docker-mediawiki#1282).
-resource "aws_ssm_parameter" "google_analytics_credentials" {
-  region = local.seoul_region
-  name   = "/mediawiki/google_analytics/credentials"
-  type   = "SecureString"
-  value  = data.terraform_remote_state.gcp.outputs.pageviewinfoga_credentials
-}
-
-moved {
-  from = aws_ssm_parameter.secret_seoul["/mediawiki/google_analytics/credentials"]
-  to   = aws_ssm_parameter.google_analytics_credentials
-}
-
 # Written by hand, so the values stay out of the configuration; only the type is
 # managed here (femiwiki/femiwiki#597).
 locals {

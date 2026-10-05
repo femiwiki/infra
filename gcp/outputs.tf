@@ -1,9 +1,3 @@
-output "pageviewinfoga_credentials" {
-  description = "The JSON key of the PageViewInfoGA service account, which aws writes to SSM."
-  value       = base64decode(google_service_account_key.pageviewinfoga.private_key)
-  sensitive   = true
-}
-
 output "pageviewinfoga_audience" {
   description = "The audience of PageViewInfoGA's credential configuration, which aws/ allows the Femiwiki role to request"
   value       = "//iam.googleapis.com/${google_iam_workload_identity_pool_provider.femiwiki.name}"
