@@ -12,6 +12,16 @@ data "terraform_remote_state" "healthchecks" {
   }
 }
 
+data "terraform_remote_state" "gcp" {
+  backend = "s3"
+
+  config = {
+    bucket = aws_s3_bucket.tfstate.bucket
+    key    = "gcp/terraform.tfstate"
+    region = local.tokyo_region
+  }
+}
+
 locals {
   alloy_hosts = {
     "database-5" = { name = "mariadb-seoul", type = "database", region = local.seoul_region }

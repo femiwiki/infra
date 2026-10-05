@@ -21,6 +21,20 @@ terraform {
       keys = key_provider.pbkdf2.state
     }
 
+    key_provider "pbkdf2" "gcp" {
+      passphrase = var.gcp_state_passphrase
+    }
+
+    method "aes_gcm" "gcp" {
+      keys = key_provider.pbkdf2.gcp
+    }
+
+    remote_state_data_sources {
+      remote_state_data_source "gcp" {
+        method = method.aes_gcm.gcp
+      }
+    }
+
     state {
       method   = method.aes_gcm.state
       enforced = true
