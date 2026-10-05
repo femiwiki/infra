@@ -213,6 +213,19 @@ femiwiki.com *.femiwiki.com 127.0.0.1:80 localhost:80 {
 			events {$FW_LOGIN_WALK_EVENTS:60}
 			window {$FW_LOGIN_WALK_WINDOW:10m}
 		}
+		# The login page's language links, site-wide. A crawl walking them sends the login
+		# page itself as Referer, so login_walk misses it. Readers rarely click them.
+		zone login_uselang {
+			match {
+				method GET
+				path /index.php*
+				vars_regexp {query} {$FW_LOGIN_USELANG_QUERY:(?i)(^|&)title=(%ED%8A%B9%EC%88%98|특수|Special)(%3A|:)(%EB%A1%9C%EA%B7%B8%EC%9D%B8|로그인|%EA%B3%84%EC%A0%95%EB%A7%8C%EB%93%A4%EA%B8%B0|계정만들기|UserLogin|CreateAccount)(/[^&]*)?&(.*&)?uselang=|(^|&)uselang=[^&]*&(.*&)?title=(%ED%8A%B9%EC%88%98|특수|Special)(%3A|:)(%EB%A1%9C%EA%B7%B8%EC%9D%B8|로그인|%EA%B3%84%EC%A0%95%EB%A7%8C%EB%93%A4%EA%B8%B0|계정만들기|UserLogin|CreateAccount)(/[^&]*)?(&|$)}
+				not header Cookie *femiwikiUserID=*
+			}
+			key login_uselang
+			events {$FW_LOGIN_USELANG_EVENTS:30}
+			window {$FW_LOGIN_USELANG_WINDOW:10m}
+		}
 		# Anything that calls itself a crawler, counted per agent string. These
 		# are a quarter of the time php-fpm spends, and nearly all of it is
 		# article reads that robots.txt allows, so a budget is the only thing
