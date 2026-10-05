@@ -50,8 +50,8 @@ data "aws_iam_policy_document" "infra_gcp" {
   }
 
   statement {
-    sid       = "OutboundIssuer"
-    actions   = ["iam:GetOutboundWebIdentityFederationInfo"]
-    resources = ["*"]
+    sid       = "AwsOutputs"
+    actions   = ["s3:GetObject"]
+    resources = ["${aws_s3_bucket.tfstate.arn}/aws/terraform.tfstate"]
   }
 }
