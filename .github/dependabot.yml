@@ -70,10 +70,14 @@ updates:
       interval: monthly
     reviewers:
       - 'femiwiki/reviewer'
-    ignore:
-      - dependency-name: '*'
-        update-types:
-          - 'version-update:semver-minor'
-          - 'version-update:semver-patch'
+    groups:
+      actions:
+        patterns:
+          - '*'
+        exclude-patterns:
+          - 'femiwiki/*'
     cooldown:
       default-days: 7
+      # A week guards against a bad third-party release; ours, like tacos, skip it
+      exclude:
+        - 'femiwiki/*'
