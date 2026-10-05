@@ -410,6 +410,16 @@ femiwiki.com *.femiwiki.com 127.0.0.1:80 localhost:80 {
 	@static_image path_regexp ^/(fw-resources|resources|skins)/.+\.(svg|png|jpe?g|gif|ico|webp)$
 	log_skip @static_image
 
+	# Paths that will never serve again, from serving/dead-urls.txt; respond runs
+	# before rewrite, so this answers ahead of every rate limit and PHP (#1185)
+	map {http.request.orig_uri.path} {dead_url} {dead_status} {
+		{$FW_DEAD_URLS}
+		default "" ""
+	}
+	@dead not vars {dead_url} ""
+	log_append @dead dead_url {dead_url}
+	respond @dead "" {dead_status}
+
 	rewrite /w/api.php /api.php
 	rewrite /w/* /index.php
 
