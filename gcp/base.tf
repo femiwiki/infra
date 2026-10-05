@@ -19,6 +19,21 @@ terraform {
       keys = key_provider.pbkdf2.gcp
     }
 
+    # Same names as in aws/base.tf, which the aws state's key metadata is filed under
+    key_provider "pbkdf2" "state" {
+      passphrase = var.aws_state_passphrase
+    }
+
+    method "aes_gcm" "state" {
+      keys = key_provider.pbkdf2.state
+    }
+
+    remote_state_data_sources {
+      remote_state_data_source "aws" {
+        method = method.aes_gcm.state
+      }
+    }
+
     state {
       method   = method.aes_gcm.gcp
       enforced = true
@@ -44,4 +59,14 @@ provider "google" {
 
 locals {
   project = "femiwiki-b2dad"
+}
+
+data "terraform_remote_state" "aws" {
+  backend = "s3"
+
+  config = {
+    bucket = "tfstate-302617221463-ap-northeast-1-an"
+    key    = "aws/terraform.tfstate"
+    region = "ap-northeast-1"
+  }
 }

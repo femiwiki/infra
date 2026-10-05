@@ -3,3 +3,9 @@ variable "state_passphrase" {
   type        = string
   sensitive   = true
 }
+
+variable "aws_state_passphrase" {
+  description = "Decrypts the aws state, to read its outputs"
+  type        = string
+  sensitive   = true
+}
