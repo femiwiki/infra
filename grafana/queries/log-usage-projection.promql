@@ -1,0 +1,7 @@
+# The counter keeps last month's total until ~01:15 UTC on the 1st. A day, not
+# six hours, so one burst of queries is not carried to the month's end.
+100 * (
+  (max(grafanacloud_logs_instance_usage) and on() (day_of_month() > 1 or hour() >= 3) or vector(0))
+  + max(increase(grafanacloud_logs_instance_usage[1d])) / 86400
+    * ((days_in_month() - day_of_month() + 1) * 86400 - time() % 86400)
+) / max(grafanacloud_org_logs_included_usage)
