@@ -162,6 +162,18 @@ femiwiki.com *.femiwiki.com 127.0.0.1:80 localhost:80 {
 			events {$FW_LINK_WALK_EVENTS:150}
 			window {$FW_LINK_WALK_WINDOW:10m}
 		}
+		# Flow post permalinks take 10 to 20 seconds each and are never cached.
+		# Drop the zone along with Flow.
+		zone flow_topics {
+			match {
+				path /index.php*
+				vars_regexp {query} {$FW_FLOW_TOPICS_QUERY:(^|&)(topic_showPostId|topic_postId|topic_revId)=|(^|&)action=single-view(&|$)}
+				not header Cookie *femiwikiUserID=*
+			}
+			key flow_topics
+			events {$FW_FLOW_TOPICS_EVENTS:30}
+			window {$FW_FLOW_TOPICS_WINDOW:10m}
+		}
 		# Sidebar page tools from anyone not logged in, site-wide, on the URI as sent
 		# since /w/ is rewritten first. New item calls our own api.php: two workers.
 		zone page_tools {
