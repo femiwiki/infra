@@ -435,6 +435,7 @@ data "aws_iam_policy_document" "iac" {
   statement {
     actions = [
       "acm:*",
+      "athena:*",
       "autoscaling:*",
       "bcm-data-exports:*",
       "budgets:*",
@@ -444,6 +445,7 @@ data "aws_iam_policy_document" "iac" {
       "ec2:*",
       "elasticloadbalancing:*",
       "events:*",
+      "glue:*",
       "iam:*",
       "lambda:*",
       "logs:*",
