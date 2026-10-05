@@ -38,7 +38,6 @@ locals {
     "/mediawiki/google_analytics/credentials",
     "/mediawiki/o_auth_2_private_key",
     "/mediawiki/rc_feeds_discord_url",
-    "/mediawiki/re_captcha/secret_key",
     "/mediawiki/site_key",
     "/mediawiki/smtp/password",
     "/mysql/users/mediawiki/password",
