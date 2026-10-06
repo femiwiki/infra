@@ -53,6 +53,109 @@ resource "aws_s3_bucket_versioning" "secrets" {
   }
 }
 
+# Caddy's ACME account and certificates, next to the host that reads them
+
+resource "aws_s3_bucket" "caddy_certs" {
+  region           = local.seoul_region
+  bucket           = "caddy-certs-${data.aws_caller_identity.current.account_id}-${local.seoul_region}-an"
+  bucket_namespace = "account-regional"
+}
+
+resource "aws_s3_bucket_public_access_block" "caddy_certs" {
+  region = local.seoul_region
+  bucket = aws_s3_bucket.caddy_certs.id
+
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
+resource "aws_s3_bucket_policy" "caddy_certs" {
+  depends_on = [aws_s3_bucket_public_access_block.caddy_certs]
+
+  region = local.seoul_region
+  bucket = aws_s3_bucket.caddy_certs.bucket
+  policy = data.aws_iam_policy_document.caddy_certs.json
+}
+
+data "aws_iam_policy_document" "caddy_certs" {
+  # Prevent all human users downloading the private keys.
+  statement {
+    effect  = "Deny"
+    actions = ["s3:GetObject"]
+
+    principals {
+      type        = "AWS"
+      identifiers = ["*"]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "aws:PrincipalType"
+      values   = ["User"]
+    }
+
+    resources = ["${local.caddy_certs}/*"]
+  }
+
+  statement {
+    sid     = "DenyPlainHttp"
+    effect  = "Deny"
+    actions = ["s3:*"]
+
+    principals {
+      type        = "AWS"
+      identifiers = ["*"]
+    }
+
+    resources = [
+      local.caddy_certs,
+      "${local.caddy_certs}/*",
+    ]
+
+    condition {
+      test     = "Bool"
+      variable = "aws:SecureTransport"
+      values   = ["false"]
+    }
+  }
+}
+
+resource "aws_s3_bucket_versioning" "caddy_certs" {
+  region = local.seoul_region
+  bucket = aws_s3_bucket.caddy_certs.id
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+
+resource "aws_s3_bucket_lifecycle_configuration" "caddy_certs" {
+  region = local.seoul_region
+  bucket = aws_s3_bucket.caddy_certs.id
+
+  rule {
+    id     = "expire-replaced-certificates"
+    status = "Enabled"
+
+    filter {}
+
+    # Every renewal leaves the old certificate as a version; 30 days keeps it
+    # to restore if a renewal writes something broken.
+    noncurrent_version_expiration {
+      noncurrent_days = 30
+    }
+
+    expiration {
+      expired_object_delete_marker = true
+    }
+
+    abort_incomplete_multipart_upload {
+      days_after_initiation = 1
+    }
+  }
+}
+
 #
 # Database dumps
 #
