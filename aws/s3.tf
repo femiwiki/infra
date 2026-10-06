@@ -5,6 +5,9 @@
 resource "aws_s3_bucket" "secrets" {
   region = local.tokyo_region
   bucket = "femiwiki-secrets"
+
+  # Lets the next change delete it with its old versions (femiwiki/femiwiki#665)
+  force_destroy = true
 }
 
 resource "aws_s3_bucket_public_access_block" "secrets" {
