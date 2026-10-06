@@ -71,6 +71,18 @@ locals {
           labels         = { impact = "operators" }
           annotations    = { summary = "{{ $labels.instance }}에 쓸 수 있는 메모리가 {{ printf \"%.0f\" $values.A.Value }} MB 남았습니다." }
         },
+        {
+          name      = "Security updates not applied"
+          expr      = "sum by (instance) (dnf_security_advisories{job=\"integrations/node_exporter\", severity=~\"Critical|Important\"})"
+          threshold = 0
+          # Long enough for a daily update to have run, short of letting a
+          # release go by unnoticed
+          for            = "2d"
+          no_data_state  = "Alerting"
+          exec_err_state = "Alerting"
+          labels         = { impact = "operators" }
+          annotations    = { summary = "{{ $labels.instance }}에 이틀 넘게 적용하지 않은 보안 권고(Critical, Important)가 {{ printf \"%.0f\" $values.A.Value }}개 있습니다. 개수는 `dnf updateinfo list --security --releasever=latest` 기준입니다. 데이터가 없으면 count-security-advisories 연결(association)이 돌지 않는 것입니다." }
+        },
       ]
     }
 

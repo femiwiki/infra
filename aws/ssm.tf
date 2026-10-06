@@ -195,6 +195,47 @@ resource "aws_ssm_association" "swapfile" {
   }
 }
 
+# Not on the database host yet: it runs MariaDB in 2 GB with no swap, and
+# loading the latest release's metadata beside it is untested there.
+resource "aws_ssm_document" "security_advisories" {
+  for_each = local.app_hosts
+
+  region          = each.value.region
+  name            = "count-security-advisories-${each.key}"
+  document_type   = "Command"
+  document_format = "JSON"
+
+  content = jsonencode({
+    schemaVersion = "2.2"
+    description   = "Count the security advisories the host has not applied, for Alloy to report (femiwiki/femiwiki#613)."
+    mainSteps = [{
+      action = "aws:runShellScript"
+      name   = "countSecurityAdvisories"
+      inputs = {
+        runCommand = split("\n", file("res/count-security-advisories.sh"))
+      }
+    }]
+  })
+}
+
+resource "aws_ssm_association" "security_advisories" {
+  for_each = local.app_hosts
+
+  region              = each.value.region
+  association_name    = "count-security-advisories-${each.key}"
+  name                = aws_ssm_document.security_advisories[each.key].name
+  document_version    = aws_ssm_document.security_advisories[each.key].latest_version
+  schedule_expression = "cron(0 0 0/4 1/1 * ? *)"
+  compliance_severity = "MEDIUM"
+  max_concurrency     = "1"
+  max_errors          = "0"
+
+  targets {
+    key    = "tag:Name"
+    values = [each.key]
+  }
+}
+
 resource "aws_ssm_document" "alloy_config" {
   for_each = local.alloy_hosts
 
