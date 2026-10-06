@@ -18,9 +18,9 @@ resource "aws_bcmdataexports_export" "cost_and_usage" {
 
     destination_configurations {
       s3_destination {
-        s3_bucket = aws_s3_bucket.cost_exports.bucket
+        s3_bucket = aws_s3_bucket.cost_and_usage.bucket
         s3_prefix = "cost-and-usage"
-        s3_region = local.tokyo_region
+        s3_region = local.seoul_region
 
         s3_output_configurations {
           overwrite   = "OVERWRITE_REPORT"
@@ -36,5 +36,5 @@ resource "aws_bcmdataexports_export" "cost_and_usage" {
     }
   }
 
-  depends_on = [aws_s3_bucket_policy.cost_exports]
+  depends_on = [aws_s3_bucket_policy.cost_and_usage]
 }
