@@ -173,10 +173,10 @@ jobs:
             echo "::warning::applied, so the import and moved blocks above can go."
           fi
 
-      - uses: ./.github/actions/collapse-comments
+      - uses: femiwiki/terraform-github-tacos@1da0da4455a96e7d687ea23dafcb982443bb3b2d  # v0.5.0
         if: always() && steps.plan.outcome != 'skipped'
         with:
-          pull-request: ${{ github.event.pull_request.number }}
+          step: collapse
 
       - name: Close the SSM session, which outlives the runner
         if: always() && startsWith(matrix.workspace, 'docker')
@@ -603,11 +603,6 @@ jobs:
               core.info(`${workspace}: posted the apply log`);
             }
 
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      - uses: femiwiki/terraform-github-tacos@1da0da4455a96e7d687ea23dafcb982443bb3b2d  # v0.5.0
         with:
-          persist-credentials: false
-          sparse-checkout: .github/actions/collapse-comments
-
-      - uses: ./.github/actions/collapse-comments
-        with:
-          pull-request: ${{ github.event.pull_request.number }}
+          step: collapse
