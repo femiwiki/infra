@@ -32,6 +32,19 @@ function demote( string $block ): string {
 }
 
 /**
+ * The blocks, or the one list item they hold as a plain line without its type heading, led by (보안 패치) when that
+ * was the heading, since a security patch line names only versions
+ */
+function single( array $blocks ): array {
+	$all = explode( "\n", implode( "\n", $blocks ) );
+	$lines = preg_grep( '/^(=.*=)?\h*$/u', $all, PREG_GREP_INVERT );
+	if ( count( $lines ) !== 1 || !preg_match( '/^\*\h*([^*:#;].*)$/u', reset( $lines ), $m ) ) {
+		return $blocks;
+	}
+	return [ ( preg_grep( '/^=+\h*보안 패치\h*=+\h*$/u', $all ) ? '(보안 패치) ' : '' ) . $m[1] ];
+}
+
+/**
  * The page with the post under its day, a ==day== that the table of contents shows, holding a ===time=== per
  * apply, newest first. A day without one gets it above the first section of that day or earlier, an older
  * ==day time== section included
@@ -155,7 +168,7 @@ function post( string $repo, int $number, DateTime $at, bool $dryRun ): void {
 	$link = "https://github.com/$repo/pull/$number";
 	// A block is on the page as posted, a level down, or as posted before days grouped the posts
 	$onPage = fn ( $block ) => str_contains( $text, demote( $block ) ) ? demote( $block ) : ( str_contains( $text, $block ) ? $block : null );
-	$new = array_values( array_map( 'demote', array_filter( $blocks, fn ( $block ) => $onPage( $block ) === null ) ) );
+	$new = single( array_values( array_map( 'demote', array_filter( $blocks, fn ( $block ) => $onPage( $block ) === null ) ) ) );
 	// The summary links to the day, since a summary does not link a URL or a repo#number and a time repeats daily
 	if ( preg_match( '/^' . preg_quote( $link, '/' ) . '$/m', $text ) ) {
 		echo "$title: $repo#$number already posted\n";

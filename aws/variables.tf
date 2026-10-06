@@ -18,8 +18,19 @@ variable "internet_archive_secret_key" {
   sensitive = true
 }
 
+variable "h_captcha_secret_key" {
+  type      = string
+  sensitive = true
+}
+
 variable "state_passphrase" {
   description = "Encrypts the state and plan files. Losing it loses the state."
+  type        = string
+  sensitive   = true
+}
+
+variable "gcp_state_passphrase" {
+  description = "Decrypts the gcp state, to read its outputs."
   type        = string
   sensitive   = true
 }

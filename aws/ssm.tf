@@ -12,11 +12,14 @@ data "terraform_remote_state" "healthchecks" {
   }
 }
 
-resource "aws_ssm_parameter" "mysql_backup_healthcheck_url" {
-  region = local.tokyo_region
-  name   = "/mysql/backup/healthcheck-url"
-  type   = "SecureString"
-  value  = data.terraform_remote_state.healthchecks.outputs.mysql_backup_ping_url
+data "terraform_remote_state" "gcp" {
+  backend = "s3"
+
+  config = {
+    bucket = aws_s3_bucket.tfstate.bucket
+    key    = "gcp/terraform.tfstate"
+    region = local.tokyo_region
+  }
 }
 
 locals {
@@ -54,7 +57,7 @@ locals {
   })
 
   mysql_backup_install = templatefile("res/install-mysql-backup.sh.tftpl", {
-    parameter_region = local.tokyo_region
+    parameter_region = local.seoul_region
     backup_script    = local.mysql_backup_script
   })
 }
@@ -100,19 +103,6 @@ resource "aws_ssm_association" "mysql_backup" {
   }
 }
 
-resource "aws_ssm_parameter" "alloy" {
-  for_each = {
-    loki_password       = var.loki_password
-    prometheus_password = var.prometheus_password
-  }
-
-  region = local.tokyo_region
-
-  name  = "/alloy/${each.key}"
-  type  = "SecureString"
-  value = each.value
-}
-
 locals {
   swapfile_mib = 1024
 
@@ -120,7 +110,9 @@ locals {
 }
 
 locals {
-  prune_keep_hours = 72
+  # Image age is its build time, so this also spares an image pulled for a
+  # deploy whose container is not created yet
+  prune_keep_hours = 24
 
   prune_images = replace(file("res/prune-docker-images.sh"), "__KEEP_HOURS__", local.prune_keep_hours)
 }
@@ -153,7 +145,7 @@ resource "aws_ssm_association" "prune_docker_images" {
   association_name    = "prune-docker-images-${each.key}"
   name                = aws_ssm_document.prune_docker_images[each.key].name
   document_version    = aws_ssm_document.prune_docker_images[each.key].latest_version
-  schedule_expression = "cron(0 18 ? * * *)"
+  schedule_expression = "cron(0 0 0/4 1/1 * ? *)"
   compliance_severity = "MEDIUM"
   max_concurrency     = "1"
   max_errors          = "0"
@@ -227,10 +219,7 @@ resource "aws_ssm_document" "alloy_config" {
 resource "aws_ssm_association" "alloy_config" {
   for_each = local.alloy_hosts
 
-  depends_on = [
-    aws_ssm_parameter.alloy,
-    aws_ssm_parameter.alloy_seoul,
-  ]
+  depends_on = [aws_ssm_parameter.alloy_seoul]
 
   region              = each.value.region
   association_name    = "install-alloy-config-${each.key}"
@@ -304,4 +293,11 @@ resource "aws_ssm_document" "update_wiki_schema" {
       }
     }]
   })
+}
+
+resource "aws_ssm_parameter" "mysql_backup_healthcheck_url" {
+  region = local.seoul_region
+  name   = "/mysql/backup/healthcheck-url"
+  type   = "SecureString"
+  value  = data.terraform_remote_state.healthchecks.outputs.mysql_backup_ping_url
 }

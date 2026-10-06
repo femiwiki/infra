@@ -2,20 +2,29 @@
 name: tofu
 on:
   pull_request:
+  # Dependabot's own runs get no Actions secrets, so its pull requests plan
+  # when someone who can merge approves them
+  pull_request_review:
+    types: [submitted]
   workflow_dispatch:
     inputs:
       workspace:
         description: The workspace to apply from this branch, once its environment approves.
         required: true
         type: choice
-        options: &workspaces [aws, docker, github, grafana, healthchecks]
+        options: &workspaces [aws, docker, gcp, github, grafana, healthchecks]
 permissions: {}
 jobs:
   plan:
     # No concurrency group on purpose: a cancelled plan fails the gate below,
     # and the gate is the required check.
     name: ${{ matrix.workspace }} plan
-    if: github.event_name == 'pull_request'
+    if: >-
+      (github.event_name == 'pull_request' && github.event.pull_request.user.login != 'dependabot[bot]')
+      || (github.event_name == 'pull_request_review'
+      && github.event.review.state == 'approved'
+      && github.event.pull_request.user.login == 'dependabot[bot]'
+      && contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.review.author_association))
     strategy:
       fail-fast: false
       matrix:
@@ -27,7 +36,7 @@ jobs:
       id-token: write
       pull-requests: write
     steps:
-      - uses: femiwiki/terraform-github-tacos@cfa1a85e553fcbbaa20c2eb4ceb57f75a82d9456  # v0.3.0
+      - uses: femiwiki/terraform-github-tacos@1da0da4455a96e7d687ea23dafcb982443bb3b2d  # v0.5.0
         with:
           step: plan
           workspace: ${{ matrix.workspace }}
@@ -37,7 +46,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
-          PR: ${{ github.event.number }}
+          PR: ${{ github.event.pull_request.number }}
           WORKSPACE: ${{ matrix.workspace }}
         run: |
           plan=true
@@ -51,7 +60,7 @@ jobs:
           echo "plan=$plan" >> "$GITHUB_OUTPUT"
           [ "$plan" = true ] || echo "This pull request does not change $WORKSPACE/."
 
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         if: steps.scope.outputs.plan == 'true'
         with:
           persist-credentials: false
@@ -70,6 +79,16 @@ jobs:
         with:
           instance-tag: ${{ matrix.workspace }}
           region: ap-northeast-2
+
+      - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093  # v3.0.0
+        if: steps.scope.outputs.plan == 'true' && matrix.workspace == 'gcp'
+        id: gcp
+        with:
+          workload_identity_provider: projects/611763704636/locations/global/workloadIdentityPools/github/providers/femiwiki-infra
+          service_account: infra-gcp-plan@femiwiki-b2dad.iam.gserviceaccount.com
+          token_format: access_token
+          create_credentials_file: false
+          export_environment_variables: false
 
       - uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1  # v3.2.0
         if: steps.scope.outputs.plan == 'true' && matrix.workspace == 'github'
@@ -101,17 +120,20 @@ jobs:
           TF_PLAN_COLLAPSE_LENGTH: "100000"  # never collapse the plan
           TF_VAR_docker_host: ${{ steps.daemon.outputs.host }}
           TF_VAR_github_token: ${{ steps.app-token.outputs.token }}
+          GOOGLE_OAUTH_ACCESS_TOKEN: ${{ steps.gcp.outputs.access_token }}
           TF_VAR_grafana_auth: ${{ matrix.workspace == 'grafana' && secrets.GRAFANA_PLAN_TOKEN || '' }}
           TF_VAR_discord_webhook_url: ${{ matrix.workspace == 'grafana' && secrets.GRAFANA_DISCORD_WEBHOOK_URL || '' }}
           TF_VAR_mastodon_token: ${{ matrix.workspace == 'grafana' && secrets.GRAFANA_MASTODON_TOKEN || '' }}
           TF_VAR_alerts_webhook_token: ${{ matrix.workspace == 'grafana' && secrets.GRAFANA_ALERTS_WEBHOOK_TOKEN || '' }}
-          TF_VAR_aws_state_passphrase: ${{ matrix.workspace == 'grafana' && secrets.AWS_STATE_PASSPHRASE || '' }}
+          TF_VAR_aws_state_passphrase: ${{ (matrix.workspace == 'grafana' || matrix.workspace == 'docker' || matrix.workspace == 'gcp') && secrets.AWS_STATE_PASSPHRASE || '' }}
           TF_VAR_healthchecksio_api_key: ${{ matrix.workspace == 'healthchecks' && secrets.HEALTHCHECKSIO_API_KEY || '' }}
           TF_VAR_prometheus_password: ${{ matrix.workspace == 'aws' && secrets.AWS_PROMETHEUS_PASSWORD || '' }}
           TF_VAR_loki_password: ${{ matrix.workspace == 'aws' && secrets.AWS_LOKI_PASSWORD || '' }}
           TF_VAR_internet_archive_access_key: ${{ matrix.workspace == 'aws' && secrets.AWS_INTERNET_ARCHIVE_ACCESS_KEY || '' }}
           TF_VAR_internet_archive_secret_key: ${{ matrix.workspace == 'aws' && secrets.AWS_INTERNET_ARCHIVE_SECRET_KEY || '' }}
-          TF_VAR_state_passphrase: ${{ matrix.workspace == 'aws' && secrets.AWS_STATE_PASSPHRASE || matrix.workspace == 'github' && secrets.TOFU_GITHUB_STATE_PASSPHRASE || '' }}
+          TF_VAR_h_captcha_secret_key: ${{ matrix.workspace == 'aws' && secrets.AWS_H_CAPTCHA_SECRET_KEY || '' }}
+          TF_VAR_state_passphrase: ${{ matrix.workspace == 'aws' && secrets.AWS_STATE_PASSPHRASE || matrix.workspace == 'github' && secrets.TOFU_GITHUB_STATE_PASSPHRASE || matrix.workspace == 'gcp' && secrets.GCP_STATE_PASSPHRASE || '' }}
+          TF_VAR_gcp_state_passphrase: ${{ (matrix.workspace == 'aws' || matrix.workspace == 'docker') && secrets.GCP_STATE_PASSPHRASE || '' }}
           OP_SERVICE_ACCOUNT_TOKEN: ${{ matrix.workspace == 'github' && secrets.TOFU_OP_SERVICE_ACCOUNT_TOKEN || '' }}
         with:
           path: ${{ matrix.workspace }}
@@ -131,7 +153,7 @@ jobs:
             exit 1
           fi
 
-      - uses: femiwiki/terraform-github-tacos@cfa1a85e553fcbbaa20c2eb4ceb57f75a82d9456  # v0.3.0
+      - uses: femiwiki/terraform-github-tacos@1da0da4455a96e7d687ea23dafcb982443bb3b2d  # v0.5.0
         id: changes
         if: steps.scope.outputs.plan == 'true'
         with:
@@ -151,7 +173,7 @@ jobs:
             echo "::warning::applied, so the import and moved blocks above can go."
           fi
 
-      - uses: femiwiki/terraform-github-tacos@cfa1a85e553fcbbaa20c2eb4ceb57f75a82d9456  # v0.3.0
+      - uses: femiwiki/terraform-github-tacos@1da0da4455a96e7d687ea23dafcb982443bb3b2d  # v0.5.0
         if: always() && steps.plan.outcome != 'skipped'
         with:
           step: collapse
@@ -185,14 +207,26 @@ jobs:
   # started, and a required check that has not reported keeps the merge button
   # dead. Nothing reaches main unapplied that way.
   gate:
-    name: ${{ github.event_name == 'pull_request' && 'tofu gate' || 'tofu gate (pull requests only)' }}
+    # An approval's run that plans carries it too, replacing Dependabot's failed gate
+    name: >-
+      ${{ (github.event_name == 'pull_request'
+      || (github.event_name == 'pull_request_review' && needs.plan.result != 'skipped'))
+      && 'tofu gate' || 'tofu gate (pull requests only)' }}
     needs: [plan, pending, apply]
-    if: always() && github.event_name == 'pull_request'
+    if: >-
+      always() && (github.event_name == 'pull_request'
+      || (github.event_name == 'pull_request_review' && needs.plan.result != 'skipped'))
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions: {}
     steps:
-      - uses: femiwiki/terraform-github-tacos@cfa1a85e553fcbbaa20c2eb4ceb57f75a82d9456  # v0.3.0
+      - name: Dependabot's own run plans nothing
+        if: github.event_name == 'pull_request' && github.event.pull_request.user.login == 'dependabot[bot]'
+        run: |
+          echo "::error::Dependabot's runs get no plan secrets. Approve the pull request to plan it."
+          exit 1
+
+      - uses: femiwiki/terraform-github-tacos@1da0da4455a96e7d687ea23dafcb982443bb3b2d  # v0.5.0
         with:
           step: gate
           needs: ${{ toJSON(needs) }}
@@ -205,18 +239,37 @@ jobs:
       !cancelled() && (github.event_name == 'workflow_dispatch'
       || (needs.plan.result == 'success' && github.event.pull_request.head.repo.full_name == github.repository))
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 15
     permissions:
       actions: write
       checks: read
+      contents: read
+      pull-requests: read
+      statuses: read
     outputs:
       workspaces: ${{ steps.pending.outputs.workspaces }}
     steps:
-      - uses: femiwiki/terraform-github-tacos@cfa1a85e553fcbbaa20c2eb4ceb57f75a82d9456  # v0.3.0
+      - uses: femiwiki/terraform-github-tacos@1da0da4455a96e7d687ea23dafcb982443bb3b2d  # v0.5.0
         id: pending
         with:
           step: pending
+          apply-before-merge: "true"
           workspaces: ${{ inputs.workspace && format('["{0}"]', inputs.workspace) || '' }}
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        if: github.event.pull_request && steps.pending.outputs.workspaces != '[]'
+        with:
+          persist-credentials: false
+          sparse-checkout: .github/scripts
+
+      # A failure here fails the gate too, so nothing is applied or merged
+      - name: Only a pull request that can merge once applied
+        if: github.event.pull_request && steps.pending.outputs.workspaces != '[]'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+        run: .github/scripts/mergeable.sh
 
   # The environment's required reviewers are what starts this job; approving
   # the run is the apply. No concurrency group: a job waiting for approval
@@ -240,19 +293,32 @@ jobs:
     environment: ${{ matrix.workspace }}
     permissions:
       actions: read
+      checks: read
       contents: read
       id-token: write
       pull-requests: write
+      statuses: read
     steps:
-      - uses: femiwiki/terraform-github-tacos@cfa1a85e553fcbbaa20c2eb4ceb57f75a82d9456  # v0.3.0
+      - uses: femiwiki/terraform-github-tacos@1da0da4455a96e7d687ea23dafcb982443bb3b2d  # v0.5.0
         id: approver
         with:
           step: apply
+          apply-before-merge: "true"
           workspace: ${{ matrix.workspace }}
 
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           persist-credentials: false
+
+      # The base can move into a conflict while the approval waits
+      - name: Still a pull request that can merge once applied
+        if: github.event.pull_request
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+          TIMEOUT: "60"
+        run: .github/scripts/mergeable.sh
 
       - uses: sarisia/actions-status-discord@eb045afee445dc055c18d3d90bd0f244fd062708  # v1.16.0
         with:
@@ -284,6 +350,16 @@ jobs:
             curl -sf -X POST "http://127.0.0.1:2376/images/create?fromImage=${image%%:*}&tag=${image##*:}" > /dev/null
           done
 
+      - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093  # v3.0.0
+        if: matrix.workspace == 'gcp'
+        id: gcp
+        with:
+          workload_identity_provider: projects/611763704636/locations/global/workloadIdentityPools/github/providers/femiwiki-infra
+          service_account: infra-gcp@femiwiki-b2dad.iam.gserviceaccount.com
+          token_format: access_token
+          create_credentials_file: false
+          export_environment_variables: false
+
       - uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1  # v3.2.0
         if: matrix.workspace == 'github'
         id: app-token
@@ -313,17 +389,20 @@ jobs:
           TF_PLAN_COLLAPSE_LENGTH: "100000"  # never collapse the plan
           TF_VAR_docker_host: ${{ steps.daemon.outputs.host }}
           TF_VAR_github_token: ${{ steps.app-token.outputs.token }}
+          GOOGLE_OAUTH_ACCESS_TOKEN: ${{ steps.gcp.outputs.access_token }}
           TF_VAR_grafana_auth: ${{ matrix.workspace == 'grafana' && secrets.GRAFANA_APPLY_TOKEN || '' }}
           TF_VAR_discord_webhook_url: ${{ matrix.workspace == 'grafana' && secrets.GRAFANA_DISCORD_WEBHOOK_URL || '' }}
           TF_VAR_mastodon_token: ${{ matrix.workspace == 'grafana' && secrets.GRAFANA_MASTODON_TOKEN || '' }}
           TF_VAR_alerts_webhook_token: ${{ matrix.workspace == 'grafana' && secrets.GRAFANA_ALERTS_WEBHOOK_TOKEN || '' }}
-          TF_VAR_aws_state_passphrase: ${{ matrix.workspace == 'grafana' && secrets.AWS_STATE_PASSPHRASE || '' }}
+          TF_VAR_aws_state_passphrase: ${{ (matrix.workspace == 'grafana' || matrix.workspace == 'docker' || matrix.workspace == 'gcp') && secrets.AWS_STATE_PASSPHRASE || '' }}
           TF_VAR_healthchecksio_api_key: ${{ matrix.workspace == 'healthchecks' && secrets.HEALTHCHECKSIO_API_KEY || '' }}
           TF_VAR_prometheus_password: ${{ matrix.workspace == 'aws' && secrets.AWS_PROMETHEUS_PASSWORD || '' }}
           TF_VAR_loki_password: ${{ matrix.workspace == 'aws' && secrets.AWS_LOKI_PASSWORD || '' }}
           TF_VAR_internet_archive_access_key: ${{ matrix.workspace == 'aws' && secrets.AWS_INTERNET_ARCHIVE_ACCESS_KEY || '' }}
           TF_VAR_internet_archive_secret_key: ${{ matrix.workspace == 'aws' && secrets.AWS_INTERNET_ARCHIVE_SECRET_KEY || '' }}
-          TF_VAR_state_passphrase: ${{ matrix.workspace == 'aws' && secrets.AWS_STATE_PASSPHRASE || matrix.workspace == 'github' && secrets.TOFU_GITHUB_STATE_PASSPHRASE || '' }}
+          TF_VAR_h_captcha_secret_key: ${{ matrix.workspace == 'aws' && secrets.AWS_H_CAPTCHA_SECRET_KEY || '' }}
+          TF_VAR_state_passphrase: ${{ matrix.workspace == 'aws' && secrets.AWS_STATE_PASSPHRASE || matrix.workspace == 'github' && secrets.TOFU_GITHUB_STATE_PASSPHRASE || matrix.workspace == 'gcp' && secrets.GCP_STATE_PASSPHRASE || '' }}
+          TF_VAR_gcp_state_passphrase: ${{ (matrix.workspace == 'aws' || matrix.workspace == 'docker') && secrets.GCP_STATE_PASSPHRASE || '' }}
           OP_SERVICE_ACCOUNT_TOKEN: ${{ matrix.workspace == 'github' && secrets.TOFU_OP_SERVICE_ACCOUNT_TOKEN || '' }}
         with:
           path: ${{ matrix.workspace }}
@@ -332,7 +411,7 @@ jobs:
       # A failed post does not fail an apply that has already changed production.
       # The next post carries the note, and the Discord message says it is owed.
       - name: Post the ```wikitext blocks of the applied pull request to the wiki
-        if: github.event_name == 'pull_request'
+        if: github.event.pull_request
         id: post
         continue-on-error: true
         env:
@@ -350,24 +429,27 @@ jobs:
       # comment alone: a newer run's apply compares its plan against that
       # comment, and this one finishing later would overwrite it.
       - uses: dflook/tofu-plan@c7416238983bdd94c5486fb856bb7358f2bcc935  # v3.1.0
-        if: github.event_name == 'pull_request' && steps.apply.outcome == 'success'
+        if: github.event.pull_request && steps.apply.outcome == 'success'
         id: verify
         env:
           GITHUB_TOKEN: ${{ github.token }}
           TF_PLAN_COLLAPSE_LENGTH: "100000"  # never collapse the plan
           TF_VAR_docker_host: ${{ steps.daemon.outputs.host }}
           TF_VAR_github_token: ${{ steps.app-token.outputs.token }}
+          GOOGLE_OAUTH_ACCESS_TOKEN: ${{ steps.gcp.outputs.access_token }}
           TF_VAR_grafana_auth: ${{ matrix.workspace == 'grafana' && secrets.GRAFANA_PLAN_TOKEN || '' }}
           TF_VAR_discord_webhook_url: ${{ matrix.workspace == 'grafana' && secrets.GRAFANA_DISCORD_WEBHOOK_URL || '' }}
           TF_VAR_mastodon_token: ${{ matrix.workspace == 'grafana' && secrets.GRAFANA_MASTODON_TOKEN || '' }}
           TF_VAR_alerts_webhook_token: ${{ matrix.workspace == 'grafana' && secrets.GRAFANA_ALERTS_WEBHOOK_TOKEN || '' }}
-          TF_VAR_aws_state_passphrase: ${{ matrix.workspace == 'grafana' && secrets.AWS_STATE_PASSPHRASE || '' }}
+          TF_VAR_aws_state_passphrase: ${{ (matrix.workspace == 'grafana' || matrix.workspace == 'docker' || matrix.workspace == 'gcp') && secrets.AWS_STATE_PASSPHRASE || '' }}
           TF_VAR_healthchecksio_api_key: ${{ matrix.workspace == 'healthchecks' && secrets.HEALTHCHECKSIO_API_KEY || '' }}
           TF_VAR_prometheus_password: ${{ matrix.workspace == 'aws' && secrets.AWS_PROMETHEUS_PASSWORD || '' }}
           TF_VAR_loki_password: ${{ matrix.workspace == 'aws' && secrets.AWS_LOKI_PASSWORD || '' }}
           TF_VAR_internet_archive_access_key: ${{ matrix.workspace == 'aws' && secrets.AWS_INTERNET_ARCHIVE_ACCESS_KEY || '' }}
           TF_VAR_internet_archive_secret_key: ${{ matrix.workspace == 'aws' && secrets.AWS_INTERNET_ARCHIVE_SECRET_KEY || '' }}
-          TF_VAR_state_passphrase: ${{ matrix.workspace == 'aws' && secrets.AWS_STATE_PASSPHRASE || matrix.workspace == 'github' && secrets.TOFU_GITHUB_STATE_PASSPHRASE || '' }}
+          TF_VAR_h_captcha_secret_key: ${{ matrix.workspace == 'aws' && secrets.AWS_H_CAPTCHA_SECRET_KEY || '' }}
+          TF_VAR_state_passphrase: ${{ matrix.workspace == 'aws' && secrets.AWS_STATE_PASSPHRASE || matrix.workspace == 'github' && secrets.TOFU_GITHUB_STATE_PASSPHRASE || matrix.workspace == 'gcp' && secrets.GCP_STATE_PASSPHRASE || '' }}
+          TF_VAR_gcp_state_passphrase: ${{ (matrix.workspace == 'aws' || matrix.workspace == 'docker') && secrets.GCP_STATE_PASSPHRASE || '' }}
           OP_SERVICE_ACCOUNT_TOKEN: ${{ matrix.workspace == 'github' && secrets.TOFU_OP_SERVICE_ACCOUNT_TOKEN || '' }}
         with:
           path: ${{ matrix.workspace }}
@@ -375,7 +457,7 @@ jobs:
 
       - name: Nothing may be left for a later apply
         id: clean
-        if: github.event_name == 'pull_request' && steps.apply.outcome == 'success'
+        if: github.event.pull_request && steps.apply.outcome == 'success'
         env:
           CHANGES: ${{ steps.verify.outputs.changes }}
           PLAN: ${{ steps.verify.outputs.json_plan_path }}
@@ -452,15 +534,17 @@ jobs:
     permissions:
       actions: read
       contents: write
+      deployments: read
       pull-requests: write
     steps:
-      - uses: femiwiki/terraform-github-tacos@cfa1a85e553fcbbaa20c2eb4ceb57f75a82d9456  # v0.3.0
+      - uses: femiwiki/terraform-github-tacos@1da0da4455a96e7d687ea23dafcb982443bb3b2d  # v0.5.0
         with:
           step: merge
+          apply-before-merge: "true"
 
   log:
     needs: apply
-    if: always() && github.event_name == 'pull_request' && needs.apply.result != 'skipped'
+    if: always() && github.event.pull_request && needs.apply.result != 'skipped'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -519,6 +603,6 @@ jobs:
               core.info(`${workspace}: posted the apply log`);
             }
 
-      - uses: femiwiki/terraform-github-tacos@cfa1a85e553fcbbaa20c2eb4ceb57f75a82d9456  # v0.3.0
+      - uses: femiwiki/terraform-github-tacos@1da0da4455a96e7d687ea23dafcb982443bb3b2d  # v0.5.0
         with:
           step: collapse

@@ -1,8 +1,8 @@
 #!/bin/bash
 set -euo pipefail
 
-# Images a container uses are never touched by prune, and three days leaves
-# yesterday's generation to roll back to.
+# Images a container uses are never touched by prune. An older image to roll
+# back to is pulled again from ghcr.io; see #1215 for why only a day is kept.
 docker image prune --all --force --filter until=__KEEP_HOURS__h
 
 # A replaced container can leave its anonymous volume behind, which for the

@@ -1,0 +1,1 @@
+sum(increase(loki_process_custom_uncaught_exceptions_total[1h])) or vector(0)

@@ -19,9 +19,9 @@ resource "aws_instance" "docker_seoul" {
   monitoring                  = false
   user_data_replace_on_change = false
 
-  user_data = templatefile("res/user-data-docker-provider.tftpl", {
+  user_data_base64 = base64gzip(templatefile("res/user-data-docker-provider.tftpl", {
     alloy_install = local.alloy_install_docker_seoul
-  })
+  }))
 
   vpc_security_group_ids = [
     aws_security_group.web_seoul.id,
@@ -51,6 +51,7 @@ resource "aws_instance" "docker_seoul" {
     ignore_changes = [
       ami,
       user_data,
+      user_data_base64,
     ]
   }
 }

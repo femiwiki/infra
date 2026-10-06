@@ -1,0 +1,1 @@
+100 - avg by (instance) (rate(node_cpu_seconds_total{job="integrations/node_exporter", mode="idle"}[1h])) * 100

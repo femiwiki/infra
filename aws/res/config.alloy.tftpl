@@ -51,6 +51,9 @@ prometheus.relabel "alloy_check" {
       "process_start_time_seconds",
       "process_resident_memory_bytes",
       "loki_process_custom_rate_limit_refusals_total",
+      "loki_process_custom_php_deprecations_total",
+      "loki_process_custom_uncaught_exceptions_total",
+      "loki_process_custom_responses_total",
     ], "|")
     action        = "keep"
   }
@@ -223,6 +226,40 @@ prometheus.relabel "containers" {
   }
 }
 
+prometheus.exporter.memcached "memcached" {
+  address = "127.0.0.1:11211"
+}
+discovery.relabel "memcached" {
+  targets = prometheus.exporter.memcached.memcached.targets
+  rule {
+    target_label = "instance"
+    replacement  = "${name}"
+  }
+  rule {
+    target_label = "job"
+    replacement  = "integrations/memcached"
+  }
+}
+prometheus.scrape "memcached" {
+  targets    = discovery.relabel.memcached.output
+  forward_to = [prometheus.relabel.memcached.receiver]
+
+  scrape_interval = "60s"
+}
+prometheus.relabel "memcached" {
+  forward_to = [prometheus.remote_write.metrics_service.receiver]
+  rule {
+    source_labels = ["__name__"]
+    regex         = "memcached_(up|limit_bytes|current_bytes|current_items|items_evicted_total|items_reclaimed_total|commands_total|slab_items_evicted_time_seconds)"
+    action        = "keep"
+  }
+  rule {
+    source_labels = ["__name__", "command"]
+    regex         = "memcached_commands_total;(delete|incr|decr|cas|touch|flush)"
+    action        = "drop"
+  }
+}
+
 %{ endif ~}
 // Docker. Alloy's discovery.docker does not support the default type
 // https://github.com/grafana/loki/issues/6165#issuecomment-1969418500
@@ -304,6 +341,129 @@ loki.process "fastcgi" {
     }
   }
 
+  // A label of their own lets the rules waiting on the cron jobs' finish lines
+  // read only them: Loki bills a query by the streams it opens
+  stage.match {
+    selector = `{docker_container_name=~"fastcgi.*"} |~ "^(generate-sitemap|publish-dump): "`
+
+    stage.regex {
+      expression = `^(?P<cron_job>generate-sitemap|publish-dump): `
+    }
+
+    stage.labels {
+      values = {cron_job = ""}
+    }
+  }
+
+  // Counted here so the Uncaught exceptions rule needs no hour of fastcgi logs
+  stage.match {
+    selector = `{docker_container_name=~"fastcgi.*"} |~ "\"caught_by\":\"entrypoint\"|\"channel\":\"fatal\""`
+
+    stage.json {
+      expressions = {class = "context.exception.class"}
+    }
+
+    stage.labels {
+      values = {class = ""}
+    }
+
+    stage.metrics {
+      metric.counter {
+        name        = "uncaught_exceptions_total"
+        description = "Exceptions that reached the reader as an error page, by class"
+        match_all   = true
+        action      = "inc"
+      }
+    }
+
+    stage.label_drop {
+      values = ["class"]
+    }
+  }
+
+  // A deprecation is logged twice: php-fpm's line is counted and dropped, and
+  // MediaWiki's JSON line, which has the URL, is kept at one a minute for each
+  stage.match {
+    selector = `{docker_container_name=~"fastcgi.*"} |~ "^NOTICE: PHP message: PHP Deprecated: "`
+
+    // The last that matches names it: the message without its caller, else
+    // the deprecated method, else the skin menu
+    stage.regex {
+      expression = `PHP Deprecated: +(?P<deprecation>.*?)(?: \[Called from .*)?(?: in /\S+ on line \d+)?$`
+    }
+    stage.regex {
+      expression = `PHP Deprecated: +Use of (?P<deprecation>\S+) was deprecated`
+    }
+    stage.regex {
+      expression = `PHP Deprecated: .*<br>(?P<deprecation>[^<]*?) is deprecated\.`
+    }
+
+    stage.labels {
+      values = {deprecation = ""}
+    }
+
+    stage.metrics {
+      metric.counter {
+        name        = "php_deprecations_total"
+        description = "PHP Deprecated messages, by what is deprecated"
+        match_all   = true
+        action      = "inc"
+      }
+    }
+  }
+  stage.match {
+    selector            = `{docker_container_name=~"fastcgi.*"} |~ "^NOTICE: PHP message: PHP Deprecated: "`
+    action              = "drop"
+    drop_counter_reason = "php_deprecation_fpm_copy"
+  }
+  // php-fpm's own access log repeats what Caddy's says about the same request
+  stage.match {
+    selector            = `{docker_container_name=~"fastcgi.*"} |~ "^127\\.0\\.0\\.1 - "`
+    action              = "drop"
+    drop_counter_reason = "fpm_access_log"
+  }
+  // A key read twice in one request; nothing is done about it
+  stage.match {
+    selector            = `{docker_container_name=~"fastcgi.*"} |= "\"channel\":\"memcached\"" |= "Duplicate get(): "`
+    action              = "drop"
+    drop_counter_reason = "memcached_duplicate_get"
+  }
+  stage.match {
+    selector = `{docker_container_name=~"fastcgi.*"} |= "\"channel\":\"error\"" |= "PHP Deprecated: "`
+
+    stage.json {
+      expressions = {deprecation_message = "context.exception.message"}
+    }
+
+    stage.regex {
+      source     = "deprecation_message"
+      expression = `PHP Deprecated: +(?P<deprecation>.*?)(?: \[Called from .*)?(?: in /\S+ on line \d+)?$`
+    }
+    stage.regex {
+      source     = "deprecation_message"
+      expression = `PHP Deprecated: +Use of (?P<deprecation>\S+) was deprecated`
+    }
+    stage.regex {
+      source     = "deprecation_message"
+      expression = `PHP Deprecated: .*<br>(?P<deprecation>[^<]*?) is deprecated\.`
+    }
+
+    stage.labels {
+      values = {deprecation = ""}
+    }
+
+    stage.limit {
+      rate          = 1.0 / 60
+      burst         = 1
+      by_label_name = "deprecation"
+      drop          = true
+    }
+
+    stage.label_drop {
+      values = ["deprecation"]
+    }
+  }
+
   // A refused request is logged twice: the rate limiter's own line, and the
   // access log line for the 429. The first carries the zone but only the
   // connection address, which behind CloudFront is an edge (femiwiki#639). The
@@ -352,6 +512,44 @@ loki.process "fastcgi" {
 
     stage.label_drop {
       values = ["zone"]
+    }
+  }
+  // The counter above is all that reads it
+  stage.match {
+    selector            = `{docker_container_name=~"http.*"} |= "\"logger\":\"http.handlers.rate_limit\"" |= "rate limit exceeded"`
+    action              = "drop"
+    drop_counter_reason = "rate_limit_counted"
+  }
+
+  // From the access log, not Caddy's metrics: those count the skipped static
+  // images and cannot tell the 503 fallback apart
+  stage.match {
+    selector = `{docker_container_name=~"http.*"} |= "\"logger\":\"http.log.access"`
+
+    stage.json {
+      expressions = {status = "status", fallback = "fallback"}
+    }
+
+    stage.regex {
+      source     = "status"
+      expression = `^(?P<status_class>\d)`
+    }
+
+    stage.labels {
+      values = {status_class = "", fallback = ""}
+    }
+
+    stage.metrics {
+      metric.counter {
+        name        = "responses_total"
+        description = "Access log lines by the status's first digit, 0 for none"
+        match_all   = true
+        action      = "inc"
+      }
+    }
+
+    stage.label_drop {
+      values = ["status_class", "fallback"]
     }
   }
 }

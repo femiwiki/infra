@@ -96,3 +96,9 @@ variable "archived" {
   type        = bool
   default     = false
 }
+
+variable "kept_branches" {
+  description = "Branches besides the protected ones that nobody may delete or force-push, such as a branch Pages serves from. Pushes that add commits still pass."
+  type        = list(string)
+  default     = []
+}

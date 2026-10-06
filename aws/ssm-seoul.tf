@@ -23,24 +23,24 @@ resource "aws_ssm_parameter" "internet_archive" {
   value  = each.value
 }
 
+# Read by the MediaWiki image's ConfirmEdit (femiwiki/femiwiki#668).
+resource "aws_ssm_parameter" "h_captcha_secret_key" {
+  region = local.seoul_region
+  name   = "/mediawiki/h_captcha/secret_key"
+  type   = "SecureString"
+  value  = var.h_captcha_secret_key
+}
+
 # Written by hand, so the values stay out of the configuration; only the type is
 # managed here (femiwiki/femiwiki#597).
 locals {
   secret_parameters = toset([
     "/mediawiki/o_auth_2_private_key",
     "/mediawiki/rc_feeds_discord_url",
-    "/mediawiki/re_captcha/secret_key",
     "/mediawiki/site_key",
     "/mediawiki/smtp/password",
     "/mysql/users/mediawiki/password",
   ])
-}
-
-import {
-  for_each = local.secret_parameters
-
-  to = aws_ssm_parameter.secret_seoul[each.key]
-  id = "${each.key}@${local.seoul_region}"
 }
 
 resource "aws_ssm_parameter" "secret_seoul" {

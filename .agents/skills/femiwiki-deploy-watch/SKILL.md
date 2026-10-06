@@ -19,20 +19,31 @@ docker-mediawiki PR merged
 ```
 
 The three checks that have been skipped before are a script, not prose:
-`.claude/skills/femiwiki-deploy-watch/fw-deploy`, with the subcommands
+`.agents/skills/femiwiki-deploy-watch/fw-deploy`, with the subcommands
 `preflight`, `watch-apply` and `verify`. Run it; the prose below is only why each
 gate is there. The paths below are relative to a femiwiki/infra checkout, which
 is where this skill lives, so that a change to `.github/workflows/tofu.yml` and
 the skill that describes it can land in one pull request.
 
+Every subcommand needs `FW_INFRA_DIR` set to the femiwiki/infra checkout or
+worktree you are working in, and refuses to run without it:
+
+```sh
+export FW_INFRA_DIR=/path/to/your/infra/worktree
+```
+
+The script fetches that checkout and runs origin/main's copy of itself when the
+copy it was started from differs, because a checkout can be stale. To test a
+branch's copy, set `FW_DEPLOY_SELF=1`.
+
 ## Before asking for an apply, run the preflight
 
 ```sh
-.claude/skills/femiwiki-deploy-watch/fw-deploy preflight <pr>
+.agents/skills/femiwiki-deploy-watch/fw-deploy preflight <pr>
 ```
 
 It prints a verdict word per gate and exits non-zero if any gate fails, so no
-apply can be asked for on a pull request it refused. Both gates exist because
+apply can be asked for on a pull request it refused. The gates exist because
 their prose version was read and not followed.
 
 **Freshness.** The `scope` job refuses a pull request that is behind its base,
@@ -50,6 +61,15 @@ old one still holds the name, and the apply dies on
 pull request raises `local.fastcgi_generation`. The verdict is
 `GENERATION BUMP OK (69 -> 70)`, `GENERATION NOT REQUIRED` or
 `MISSING GENERATION BUMP`; see femiwiki/infra#783 and the failed apply of #806.
+
+**Mergeable.** An apply runs before the merge, so a pull request that cannot
+merge afterwards leaves production ahead of `main`, as #1144 did with a failing
+`lint gate`. The `pending` job of `tofu.yml` runs
+`.github/scripts/mergeable.sh` and fails, before any approval is offered, unless
+the pull request has no conflicts and every required check of its base other
+than `tofu gate` is green; the apply job runs it again after the approval. The
+preflight runs the same script once, without waiting: `MERGEABLE`, `CONFLICTS`,
+`CHECKS FAILING: <names>` or `CHECKS PENDING: <names>`.
 
 ## Read the plan before the apply
 
@@ -69,8 +89,8 @@ A bump should be `2 to add, 2 to destroy` with the generation going **up**.
 ## Watching the chain
 
 ```sh
-.claude/skills/femiwiki-deploy-watch/fw-deploy watch-apply <pr>
-.claude/skills/femiwiki-deploy-watch/fw-deploy watch-apply <pr> --run-id <id>
+.agents/skills/femiwiki-deploy-watch/fw-deploy watch-apply <pr>
+.agents/skills/femiwiki-deploy-watch/fw-deploy watch-apply <pr> --run-id <id>
 ```
 
 It waits, then prints the per-job conclusions and the run conclusion, exiting
@@ -122,7 +142,7 @@ is removed; see femiwiki/femiwiki#590.
 ## Verify afterwards
 
 ```sh
-.claude/skills/femiwiki-deploy-watch/fw-deploy verify [probes]
+.agents/skills/femiwiki-deploy-watch/fw-deploy verify [probes]
 ```
 
 It prints the declared generation from `origin/main:docker/locals.tf` and the

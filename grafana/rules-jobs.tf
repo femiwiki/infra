@@ -191,6 +191,12 @@ resource "grafana_rule_group" "femiwiki_jobs" {
       })
     }
   }
+}
+
+resource "grafana_rule_group" "femiwiki_dumps" {
+  name             = "dumps"
+  folder_uid       = data.grafana_folder.femiwiki.uid
+  interval_seconds = 300
 
   rule {
     name = "The public dump failed to upload"

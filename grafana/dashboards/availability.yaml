@@ -58,7 +58,7 @@ panels:
             text: 정상
             index: 0
           '0':
-            text: 장애
+            text: 오류
             index: 1
     overrides: []
   options:
@@ -110,7 +110,7 @@ panels:
             color: green
             index: 0
           '0':
-            text: 장애
+            text: 오류
             color: red
             index: 1
       custom:
@@ -198,13 +198,25 @@ panels:
       sum(increase(caddy_http_request_duration_seconds_count{job="integrations/caddy"}[$__range]))
 - id: 3
   type: text
-  title: 링크
+  title: 대시보드
   gridPos:
     h: 3
-    w: 18
+    w: 9
     x: 6
     'y': 5
   options:
     mode: markdown
     content: |-
-      [사고 보고서](https://femiwiki.github.io/%EA%B0%80%EC%9A%A9%EC%84%B1.html) · __PUBLIC_LINKS__
+      __PUBLIC_LINKS__
+- id: 5
+  type: text
+  title: 사고 소식
+  gridPos:
+    h: 3
+    w: 9
+    x: 15
+    'y': 5
+  options:
+    mode: markdown
+    content: |-
+      [경고 목록](https://github.com/femiwiki/infra/issues?q=label%3A%22alert%22) · [지난 가용성 및 사고 보고서](https://femiwiki.github.io/%EA%B0%80%EC%9A%A9%EC%84%B1.html) · [마스토돈](https://mastodon.social/@femiwiki_status)

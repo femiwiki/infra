@@ -1,0 +1,7 @@
+# Paths answered in Caddy before PHP, as map rows: ~<regexp on the decoded path> <id> <status>.
+# Drop an entry with fewer than 14 hits in 14 days; the query is in #1185.
+
+# Image URLs published 2024-07 to 2025-04 (femiwiki/docker-mediawiki#1336)
+~^/img_auth\.php/ img_auth 410
+# Korean titles decoded as Latin-1 and encoded again: a Latin-1 letter, then a C1 control
+~^/w/.*[\x{C0}-\x{EF}][\x{80}-\x{9F}] mojibake 404

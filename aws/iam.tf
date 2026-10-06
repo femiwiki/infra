@@ -15,6 +15,9 @@ resource "aws_iam_openid_connect_provider" "github_actions" {
   thumbprint_list = ["1b511abead59c6ce207077c0bf0e0043b1382612"]
 }
 
+# Lets IAM principals call sts:GetWebIdentityToken for JWTs that outside services trust
+resource "aws_iam_outbound_web_identity_federation" "this" {}
+
 #
 # IAM Users
 #
@@ -191,6 +194,11 @@ resource "aws_iam_role_policy_attachment" "femiwiki_share_rate_limit_state" {
 resource "aws_iam_role_policy_attachment" "femiwiki_read_secret_parameters" {
   role       = aws_iam_role.femiwiki.name
   policy_arn = aws_iam_policy.read_secret_parameters.arn
+}
+
+resource "aws_iam_role_policy_attachment" "femiwiki_get_google_subject_token" {
+  role       = aws_iam_role.femiwiki.name
+  policy_arn = aws_iam_policy.get_google_subject_token.arn
 }
 
 resource "aws_iam_role_policy_attachment" "femiwiki_upload_backup" {

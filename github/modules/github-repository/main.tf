@@ -4,6 +4,7 @@ resource "github_repository" "repository" {
   homepage_url              = var.homepage_url
   has_issues                = true
   allow_auto_merge          = true
+  allow_update_branch       = true
   delete_branch_on_merge    = var.delete_branch_on_merge
   auto_init                 = true
   archive_on_destroy        = true
@@ -78,6 +79,26 @@ resource "github_branch_protection" "branch_protection" {
       require_code_owner_reviews      = required_pull_request_reviews.value["require_code_owner_reviews"]
       required_approving_review_count = required_pull_request_reviews.value["required_approving_review_count"]
     }
+  }
+}
+
+resource "github_repository_ruleset" "kept_branches" {
+  count       = length(var.kept_branches) > 0 ? 1 : 0
+  name        = "kept branches"
+  repository  = github_repository.repository.name
+  target      = "branch"
+  enforcement = "active"
+
+  conditions {
+    ref_name {
+      include = [for branch in var.kept_branches : "refs/heads/${branch}"]
+      exclude = []
+    }
+  }
+
+  rules {
+    deletion         = true
+    non_fast_forward = true
   }
 }
 

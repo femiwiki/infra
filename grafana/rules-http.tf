@@ -1,6 +1,8 @@
 locals {
   explore_exprs = {
-    status = trimspace(file("${path.module}/queries/explore-status.logql"))
+    status     = trimspace(file("${path.module}/queries/explore-status.logql"))
+    exceptions = trimspace(file("${path.module}/queries/explore-uncaught-exceptions.logql"))
+    no_status  = trimspace(file("${path.module}/queries/explore-status-zero.logql"))
   }
 
   explore_urls = {
@@ -23,11 +25,14 @@ locals {
   dump_failed          = trimspace(file("${path.module}/queries/dump-failed.logql"))
   dump_published       = trimspace(file("${path.module}/queries/dump-published.logql"))
   dump_due             = trimspace(file("${path.module}/queries/dump-due.promql"))
-  successful_responses = trimspace(file("${path.module}/queries/site-down.logql"))
-  server_errors        = trimspace(file("${path.module}/queries/server-errors.logql"))
-  all_responses        = trimspace(file("${path.module}/queries/all-responses.logql"))
+  successful_responses = trimspace(file("${path.module}/queries/site-down.promql"))
+  server_errors        = trimspace(file("${path.module}/queries/server-errors.promql"))
+  all_responses        = trimspace(file("${path.module}/queries/all-responses.promql"))
   busiest_network      = trimspace(file("${path.module}/queries/concentrated-refusals.logql"))
-  history_refused      = trimspace(file("${path.module}/queries/history-refused.logql"))
+  history_refused      = trimspace(file("${path.module}/queries/history-refused.promql"))
+  uncaught_exceptions  = trimspace(file("${path.module}/queries/uncaught-exceptions.promql"))
+  top_exception        = trimspace(file("${path.module}/queries/top-uncaught-exception.promql"))
+  status_zero          = trimspace(file("${path.module}/queries/status-zero.promql"))
 }
 
 resource "grafana_rule_group" "femiwiki_http" {
@@ -58,18 +63,16 @@ resource "grafana_rule_group" "femiwiki_http" {
 
     data {
       ref_id         = "A"
-      datasource_uid = data.grafana_data_source.loki.uid
-      query_type     = "instant"
+      datasource_uid = data.grafana_data_source.prometheus.uid
       relative_time_range {
         from = 300
         to   = 0
       }
       model = jsonencode({
-        refId     = "A"
-        expr      = local.successful_responses
-        queryType = "instant"
-        instant   = true
-        range     = false
+        refId   = "A"
+        expr    = local.successful_responses
+        instant = true
+        range   = false
       })
     }
 
@@ -112,35 +115,31 @@ resource "grafana_rule_group" "femiwiki_http" {
 
     data {
       ref_id         = "A"
-      datasource_uid = data.grafana_data_source.loki.uid
-      query_type     = "instant"
+      datasource_uid = data.grafana_data_source.prometheus.uid
       relative_time_range {
         from = 300
         to   = 0
       }
       model = jsonencode({
-        refId     = "A"
-        expr      = local.server_errors
-        queryType = "instant"
-        instant   = true
-        range     = false
+        refId   = "A"
+        expr    = local.server_errors
+        instant = true
+        range   = false
       })
     }
 
     data {
       ref_id         = "B"
-      datasource_uid = data.grafana_data_source.loki.uid
-      query_type     = "instant"
+      datasource_uid = data.grafana_data_source.prometheus.uid
       relative_time_range {
         from = 300
         to   = 0
       }
       model = jsonencode({
-        refId     = "B"
-        expr      = local.all_responses
-        queryType = "instant"
-        instant   = true
-        range     = false
+        refId   = "B"
+        expr    = local.all_responses
+        instant = true
+        range   = false
       })
     }
 
@@ -226,58 +225,6 @@ resource "grafana_rule_group" "femiwiki_http" {
   }
 
   rule {
-    name            = "Page history refused by its own budget"
-    for             = "1h"
-    keep_firing_for = "1h"
-
-    condition      = "B"
-    no_data_state  = "OK"
-    exec_err_state = "OK"
-
-    labels = {
-      impact   = "none"
-      severity = "warning"
-    }
-
-    annotations = {
-      summary = "역사와 정보 요청이 자기 예산에서 거절되고 있습니다. 최근 한 시간에 {{ printf \"%.0f\" $values.A.Value }}건입니다. 거절이 한 망에서만 나오면 그 망이 긁고 있는 것이고, 여러 망에서 나오면 `FW_HISTORY_EVENTS`가 낮은 것입니다."
-      logs    = grafana_dashboard.this["scrapes"].url
-    }
-
-    data {
-      ref_id         = "A"
-      datasource_uid = data.grafana_data_source.loki.uid
-      query_type     = "instant"
-      relative_time_range {
-        from = 3600
-        to   = 0
-      }
-      model = jsonencode({
-        refId     = "A"
-        expr      = local.history_refused
-        queryType = "instant"
-        instant   = true
-        range     = false
-      })
-    }
-
-    data {
-      ref_id         = "B"
-      datasource_uid = "__expr__"
-      relative_time_range {
-        from = 0
-        to   = 0
-      }
-      model = jsonencode({
-        refId      = "B"
-        type       = "threshold"
-        expression = "A"
-        conditions = [{ evaluator = { type = "gt", params = [10] } }]
-      })
-    }
-  }
-
-  rule {
     name = "The wiki is read-only"
     for  = "0m"
 
@@ -342,6 +289,173 @@ resource "grafana_rule_group" "femiwiki_http" {
         type       = "threshold"
         expression = "B"
         conditions = [{ evaluator = { type = "gt", params = [0] } }]
+      })
+    }
+  }
+
+  rule {
+    name = "Uncaught exceptions"
+    for  = "5m"
+
+    condition      = "C"
+    no_data_state  = "OK"
+    exec_err_state = "OK"
+
+    labels = {
+      impact   = "operators"
+      severity = "warning"
+    }
+
+    annotations = {
+      summary = "최근 1시간 동안 방문자에게 오류 페이지로 나간 예외가 {{ printf \"%.0f\" $values.A.Value }}건입니다. 가장 많은 것은 `{{ $labels.class }}` {{ printf \"%.0f\" $values.B.Value }}건입니다. 로그의 요청 id와 주소로 어느 문서나 기능인지 찾습니다."
+      logs    = local.explore_urls.exceptions
+    }
+
+    data {
+      ref_id         = "A"
+      datasource_uid = data.grafana_data_source.prometheus.uid
+      relative_time_range {
+        from = 3600
+        to   = 0
+      }
+      model = jsonencode({
+        refId   = "A"
+        expr    = local.uncaught_exceptions
+        instant = true
+        range   = false
+      })
+    }
+
+    data {
+      ref_id         = "B"
+      datasource_uid = data.grafana_data_source.prometheus.uid
+      relative_time_range {
+        from = 3600
+        to   = 0
+      }
+      model = jsonencode({
+        refId   = "B"
+        expr    = local.top_exception
+        instant = true
+        range   = false
+      })
+    }
+
+    data {
+      ref_id         = "C"
+      datasource_uid = "__expr__"
+      relative_time_range {
+        from = 0
+        to   = 0
+      }
+      model = jsonencode({
+        refId      = "C"
+        type       = "math"
+        expression = "($A > 5) && ($B > 0)"
+      })
+    }
+  }
+
+  rule {
+    name = "Responses with no status"
+    for  = "5m"
+
+    condition      = "C"
+    no_data_state  = "OK"
+    exec_err_state = "OK"
+
+    labels = {
+      impact   = "operators"
+      severity = "warning"
+    }
+
+    annotations = {
+      summary = "최근 10분 동안 Caddy가 상태 코드 없이 끝낸 응답이 {{ printf \"%.0f\" $values.A.Value }}건입니다. 핸들러가 헤더를 쓰지 않고 끝났다는 뜻이라 방문자는 빈 200, 곧 빈 화면을 받습니다. caddy-mwcache나 Caddyfile의 최근 변경을 먼저 봅니다. 어느 주소인지는 로그 링크에서 봅니다."
+      logs    = local.explore_urls.no_status
+    }
+
+    data {
+      ref_id         = "A"
+      datasource_uid = data.grafana_data_source.prometheus.uid
+      relative_time_range {
+        from = 600
+        to   = 0
+      }
+      model = jsonencode({
+        refId   = "A"
+        expr    = local.status_zero
+        instant = true
+        range   = false
+      })
+    }
+
+    data {
+      ref_id         = "C"
+      datasource_uid = "__expr__"
+      relative_time_range {
+        from = 0
+        to   = 0
+      }
+      model = jsonencode({
+        refId      = "C"
+        type       = "math"
+        expression = "$A > 5"
+      })
+    }
+  }
+}
+
+resource "grafana_rule_group" "femiwiki_history" {
+  name             = "history"
+  folder_uid       = data.grafana_folder.femiwiki.uid
+  interval_seconds = 900
+
+  rule {
+    name            = "Page history refused by its own budget"
+    for             = "1h"
+    keep_firing_for = "1h"
+
+    condition      = "B"
+    no_data_state  = "OK"
+    exec_err_state = "OK"
+
+    labels = {
+      impact   = "none"
+      severity = "warning"
+    }
+
+    annotations = {
+      summary = "역사와 정보 요청이 자기 예산에서 거절되고 있습니다. 최근 한 시간에 {{ printf \"%.0f\" $values.A.Value }}건입니다. 거절이 한 망에서만 나오면 그 망이 긁고 있는 것이고, 여러 망에서 나오면 `FW_HISTORY_EVENTS`가 낮은 것입니다."
+      logs    = grafana_dashboard.this["scrapes"].url
+    }
+
+    data {
+      ref_id         = "A"
+      datasource_uid = data.grafana_data_source.prometheus.uid
+      relative_time_range {
+        from = 3600
+        to   = 0
+      }
+      model = jsonencode({
+        refId   = "A"
+        expr    = local.history_refused
+        instant = true
+        range   = false
+      })
+    }
+
+    data {
+      ref_id         = "B"
+      datasource_uid = "__expr__"
+      relative_time_range {
+        from = 0
+        to   = 0
+      }
+      model = jsonencode({
+        refId      = "B"
+        type       = "threshold"
+        expression = "A"
+        conditions = [{ evaluator = { type = "gt", params = [10] } }]
       })
     }
   }

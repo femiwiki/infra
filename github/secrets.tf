@@ -1,6 +1,7 @@
 locals {
   # Secret name => infra vault item title, the value in the item's password.
   infra_secrets = {
+    AWS_H_CAPTCHA_SECRET_KEY        = "AWS_H_CAPTCHA_SECRET_KEY"
     AWS_INTERNET_ARCHIVE_ACCESS_KEY = "AWS_INTERNET_ARCHIVE_ACCESS_KEY"
     AWS_INTERNET_ARCHIVE_SECRET_KEY = "AWS_INTERNET_ARCHIVE_SECRET_KEY"
     AWS_LOKI_PASSWORD               = "AWS_LOKI_PASSWORD"
@@ -53,7 +54,7 @@ resource "github_actions_environment_secret" "infra" {
   for_each = local.infra_environment_secrets
 
   repository  = module.infra.name
-  environment = github_repository_environment.infra[each.value.environment].environment
+  environment = module.tacos.environments[each.value.environment]
   secret_name = each.key
   value       = data.onepassword_item.infra[each.value.item].password
 }
@@ -100,6 +101,17 @@ resource "github_actions_secret" "alerts_webhook" {
   repository  = each.value
   secret_name = each.key
   value       = random_password.alerts_webhook.result
+}
+
+resource "random_password" "gcp_state_passphrase" {
+  length  = 48
+  special = false
+}
+
+resource "github_actions_secret" "gcp_state_passphrase" {
+  repository  = module.infra.name
+  secret_name = "GCP_STATE_PASSPHRASE"
+  value       = random_password.gcp_state_passphrase.result
 }
 
 resource "github_repository_environment" "dot_github_gitlab" {

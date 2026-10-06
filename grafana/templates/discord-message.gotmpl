@@ -2,7 +2,7 @@
 {{ range .Alerts }}{{ if eq .Status "resolved" }}해제됐습니다. 아래 숫자는 해제 시점에 다시 잰 값입니다.
 {{ end }}{{ .Annotations.summary }}
 {{ if .Annotations.description }}{{ .Annotations.description }}
-{{ end }}시작 {{ .StartsAt.Format "2006-01-02 15:04" }} UTC{{ if eq .Status "resolved" }}, 해제 {{ .EndsAt.Format "2006-01-02 15:04" }} UTC{{ end }}
+{{ end }}시작 <t:{{ .StartsAt.Unix }}:f>{{ if eq .Status "resolved" }}, 해제 <t:{{ .EndsAt.Unix }}:f>{{ end }}
 {{ if .Annotations.logs }}[최근 상태 보기]({{ .Annotations.logs }}){{ end }}
 {{ end }}
 {{ with index .Alerts 0 }}-# id {{ printf "%.8s" .Fingerprint }}{{ end }}
