@@ -120,6 +120,7 @@ resource "aws_iam_policy" "amazon_s3_access" {
 #   https://github.com/hashicorp/terraform/issues/27282
 locals {
   secrets       = aws_s3_bucket.secrets.arn
+  caddy_certs   = aws_s3_bucket.caddy_certs.arn
   backups       = aws_s3_bucket.backups.arn
   backups_seoul = aws_s3_bucket.backups_seoul.arn
   uploads_seoul = aws_s3_bucket.uploads_seoul.arn
@@ -204,10 +205,11 @@ resource "aws_iam_policy" "access_caddycerts" {
   policy = data.aws_iam_policy_document.access_caddycerts.json
 }
 
+# Both buckets until the http container has moved to caddy_certs (femiwiki/femiwiki#665).
 data "aws_iam_policy_document" "access_caddycerts" {
   statement {
     actions   = ["s3:ListBucket"]
-    resources = [local.secrets]
+    resources = [local.secrets, local.caddy_certs]
   }
   statement {
     actions = [
@@ -215,7 +217,7 @@ data "aws_iam_policy_document" "access_caddycerts" {
       "s3:PutObject",
       "s3:DeleteObject",
     ]
-    resources = ["${local.secrets}/caddycerts/*"]
+    resources = ["${local.secrets}/caddycerts/*", "${local.caddy_certs}/caddycerts/*"]
   }
 }
 
