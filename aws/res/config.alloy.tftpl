@@ -416,6 +416,18 @@ loki.process "fastcgi" {
     action              = "drop"
     drop_counter_reason = "php_deprecation_fpm_copy"
   }
+  // php-fpm's own access log repeats what Caddy's says about the same request
+  stage.match {
+    selector            = `{docker_container_name=~"fastcgi.*"} |~ "^127\\.0\\.0\\.1 - "`
+    action              = "drop"
+    drop_counter_reason = "fpm_access_log"
+  }
+  // A key read twice in one request; nothing is done about it
+  stage.match {
+    selector            = `{docker_container_name=~"fastcgi.*"} |= "\"channel\":\"memcached\"" |= "Duplicate get(): "`
+    action              = "drop"
+    drop_counter_reason = "memcached_duplicate_get"
+  }
   stage.match {
     selector = `{docker_container_name=~"fastcgi.*"} |= "\"channel\":\"error\"" |= "PHP Deprecated: "`
 
@@ -501,6 +513,12 @@ loki.process "fastcgi" {
     stage.label_drop {
       values = ["zone"]
     }
+  }
+  // The counter above is all that reads it
+  stage.match {
+    selector            = `{docker_container_name=~"http.*"} |= "\"logger\":\"http.handlers.rate_limit\"" |= "rate limit exceeded"`
+    action              = "drop"
+    drop_counter_reason = "rate_limit_counted"
   }
 
   // From the access log, not Caddy's metrics: those count the skipped static
