@@ -24,6 +24,7 @@ module "infra" {
     "lint gate",
     "tofu gate",
   ]
+  default_status_checks = []
   topics = [
     "terraform",
   ]
