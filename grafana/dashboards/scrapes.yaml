@@ -27,9 +27,9 @@ panels:
   title: 예산에 걸려 거절된 요청
   description: |-
     Caddy의 요금 제한이 거절한 요청을 존별로 셉니다. expensive는 로그인하지 않은 모두가 나눠 쓰는 예산이고, botlike_expensive는 그중 봇 서명에 걸린 것, crawlers는 스스로 봇이라 밝힌 것입니다. 어느 존이 물었는지가 손잡이를 고르는 기준입니다.
-  datasource: &loki
-    type: loki
-    uid: __LOKI_UID__
+  datasource:
+    type: prometheus
+    uid: __PROM_UID__
   gridPos:
     h: 9
     w: 24
@@ -56,16 +56,20 @@ panels:
       sort: desc
   targets:
   - refId: A
-    datasource: *loki
+    datasource:
+      type: prometheus
+      uid: __PROM_UID__
     expr: |-
-      sum by (zone) (count_over_time({docker_container_name=~"http.*"} |= "rate limit exceeded" | json | __error__="" [$__auto]))
+      sum by (zone) (increase(loki_process_custom_rate_limit_refusals_total[$__rate_interval]))
     legendFormat: '{{zone}}'
 - id: 2
   type: table
   title: 가장 많이 거절된 주소
   description: |-
     화면에 보이는 기간 전체를 셉니다. 한 주소가 크게 앞서면 한 대가 긁는 것이고, 비슷한 값이 수백 개면 주소를 바꿔 가며 긁는 것입니다. 후자는 예산을 키워도 소용이 없습니다.
-  datasource: *loki
+  datasource: &loki
+    type: loki
+    uid: __LOKI_UID__
   gridPos:
     h: 9
     w: 12
