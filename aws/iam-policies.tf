@@ -184,20 +184,6 @@ data "aws_iam_policy_document" "route53" {
   }
 }
 
-resource "aws_iam_policy" "download_secrets" {
-  name        = "DownloadSecrets"
-  description = "Allows to download secrets"
-
-  policy = data.aws_iam_policy_document.download_secrets.json
-}
-
-data "aws_iam_policy_document" "download_secrets" {
-  statement {
-    actions   = ["s3:GetObject"]
-    resources = ["${local.secrets}/*"]
-  }
-}
-
 resource "aws_iam_policy" "access_caddycerts" {
   name        = "AccessCaddycerts"
   description = "Allows to read and write caddycerts"
@@ -205,11 +191,10 @@ resource "aws_iam_policy" "access_caddycerts" {
   policy = data.aws_iam_policy_document.access_caddycerts.json
 }
 
-# Both buckets until the http container has moved to caddy_certs (femiwiki/femiwiki#665).
 data "aws_iam_policy_document" "access_caddycerts" {
   statement {
     actions   = ["s3:ListBucket"]
-    resources = [local.secrets, local.caddy_certs]
+    resources = [local.caddy_certs]
   }
   statement {
     actions = [
@@ -217,7 +202,7 @@ data "aws_iam_policy_document" "access_caddycerts" {
       "s3:PutObject",
       "s3:DeleteObject",
     ]
-    resources = ["${local.secrets}/caddycerts/*", "${local.caddy_certs}/caddycerts/*"]
+    resources = ["${local.caddy_certs}/caddycerts/*"]
   }
 }
 
