@@ -183,7 +183,7 @@ jobs:
 
   gate:
     name: lint gate
-    needs: [tflint, shellcheck, rumdl, yamllint, parallel-lint, taplo, caddyfile, long-comments, extensions]
+    needs: [tflint, shellcheck, rumdl, yamllint, parallel-lint, taplo, caddyfile, long-comments, shared-lint]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -201,20 +201,7 @@ jobs:
           fi
           echo "All green."
 
-  extensions:
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
+  shared-lint:
+    uses: femiwiki/.github/.github/workflows/shared-lint.yml@243836c393e62e7887baad11dd1619dcc1bb0fac
     permissions:
       contents: read
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
-        with:
-          persist-credentials: false
-
-      - name: GitHub Actions files end in .yml, other YAML files in .yaml
-        run: |
-          wrong=$(
-            git ls-files '.github/*.yaml' 'action.yaml' '*/action.yaml'
-            git ls-files '*.yml' ':!.github/*' ':!action.yml' ':!*/action.yml'
-          )
-          if [ -n "$wrong" ]; then echo "$wrong"; exit 1; fi
