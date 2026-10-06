@@ -23,10 +23,15 @@ data "terraform_remote_state" "gcp" {
 }
 
 locals {
-  alloy_hosts = {
-    "database-5" = { name = "mariadb-seoul", type = "database", region = local.seoul_region }
-    "docker"     = { name = "femiwiki-seoul", type = "app", region = local.seoul_region }
-  }
+  alloy_hosts = merge(
+    {
+      for id in local.database_hosts :
+      "database-${id}" => { name = "mariadb-seoul", type = "database", region = local.seoul_region }
+    },
+    {
+      "docker" = { name = "femiwiki-seoul", type = "app", region = local.seoul_region }
+    },
+  )
 
   alloy_grafana = {
     prometheus_endpoint = "https://prometheus-prod-49-prod-ap-northeast-0.grafana.net/api/prom/push"
