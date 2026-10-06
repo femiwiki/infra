@@ -1,31 +1,12 @@
 # Femiwiki Infra
 
-[![Github checks Status]][github checks link] [![Terraform Badge]][Terraform Cloud Link]
+[![Github checks Status]][github checks link]
 
-페미위키의 AWS 인프라가 정의되어있는 테라폼 코드입니다.
+페미위키의 인프라가 정의되어 있는 테라폼 코드입니다. 워크스페이스는 `aws/`, `docker/`, `gcp/`, `github/`, `grafana/`, `healthchecks/`이고, 모두 [OpenTofu]로 돌리며 상태는 S3에 있습니다.
 
-## Prerequisites
+## 적용하기
 
-- Terraform (`aws/`, `github/`), [OpenTofu] (`docker/`, `grafana/`)
-- [Terraform Cloud] 계정
-
-## Instructions
-
-```bash
-# https://app.terraform.io/app/settings/tokens 에서 본인의 토큰을 확인한 뒤
-# ~/.terraformrc 에 아래와 같이 테라폼 토큰 세팅
-#
-#     credentials "app.terraform.io" {
-#       token = "xxxxxxxxxxxxxx.atlasv1.xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-#     }
-
-terraform init
-terraform plan
-```
-
-## `docker/` 적용하기
-
-`docker/`는 Terraform Cloud를 쓰지 않습니다. 상태는 S3에 있고, 도커 데몬은 엣지 박스의 루프백에만 열려 있어서 SSM 터널로 붙습니다. PR을 열면 `.github/workflows/tofu.yml`이 plan을 코멘트로 답니다. plan에 바뀌는 것이 있으면 같은 실행의 `<워크스페이스> apply` 잡이 그 이름의 GitHub 환경에서 승인을 기다리고, 실행 화면의 Review deployments에서 승인하면 그 plan을 적용합니다. 이미지 bump PR도 같은 흐름입니다. 커밋을 새로 푸시하면 이전 실행의 승인 대기는 취소되고 새 실행이 다시 승인을 기다립니다.
+어느 워크스페이스든 PR로 적용합니다. plan, 승인, 적용, 머지는 [terraform-github-tacos]가 맡고, 머지하기 전에 적용하는 흐름은 그 문서의 [Apply-before-merge]에 있습니다. `docker/`의 도커 데몬은 엣지 박스의 루프백에만 열려 있어서 SSM 터널로 붙습니다. PR을 열면 `.github/workflows/tofu.yml`이 plan을 코멘트로 답니다. plan에 바뀌는 것이 있으면 같은 실행의 `<워크스페이스> apply` 잡이 그 이름의 GitHub 환경에서 승인을 기다리고, 실행 화면의 Review deployments에서 승인하면 그 plan을 적용합니다. 이미지 bump PR도 같은 흐름입니다. 커밋을 새로 푸시하면 이전 실행의 승인 대기는 취소되고 새 실행이 다시 승인을 기다립니다.
 
 결과는 [dflook/tofu-apply]가 plan 코멘트 맨 아래 상태 줄에 씁니다. 🟠는 적용하는 중, ✅는 적용했음, ❌는 적용하지 않았거나 실패했음입니다. 워크플로 실행 로그는 시간이 지나면 지워지므로, 적용이 끝나면 워크스페이스마다 apply 로그를 PR 코멘트로 남깁니다.
 
@@ -73,9 +54,8 @@ tofu -chdir=docker apply
 
 [github checks status]: https://badgen.net/github/checks/femiwiki/infra
 [github checks link]: https://github.com/femiwiki/infra/actions
-[Terraform Badge]: https://badgen.net/badge/icon/terraform?label&icon=https://unpkg.com/badgen-icons@0.12.0/icons/terraform.svg
-[Terraform Cloud Link]: https://app.terraform.io/app/femiwiki/workspaces
-[Terraform Cloud]: https://app.terraform.io
 [Session Manager 플러그인]: https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-install-plugin.html
 [OpenTofu]: https://opentofu.org
+[terraform-github-tacos]: https://github.com/femiwiki/terraform-github-tacos
+[Apply-before-merge]: https://femiwiki.github.io/terraform-github-tacos/Apply-before-merge
 [dflook/tofu-apply]: https://github.com/dflook/terraform-github-actions/tree/main/tofu-apply
