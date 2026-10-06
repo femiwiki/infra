@@ -2,6 +2,10 @@
 name: tofu
 on:
   pull_request:
+  # Dependabot's own runs get no Actions secrets, so its pull requests plan
+  # when someone who can merge approves them
+  pull_request_review:
+    types: [submitted]
   workflow_dispatch:
     inputs:
       workspace:
@@ -15,7 +19,12 @@ jobs:
     # No concurrency group on purpose: a cancelled plan fails the gate below,
     # and the gate is the required check.
     name: ${{ matrix.workspace }} plan
-    if: github.event_name == 'pull_request'
+    if: >-
+      (github.event_name == 'pull_request' && github.event.pull_request.user.login != 'dependabot[bot]')
+      || (github.event_name == 'pull_request_review'
+      && github.event.review.state == 'approved'
+      && github.event.pull_request.user.login == 'dependabot[bot]'
+      && contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.review.author_association))
     strategy:
       fail-fast: false
       matrix:
@@ -27,7 +36,7 @@ jobs:
       id-token: write
       pull-requests: write
     steps:
-      - uses: femiwiki/terraform-github-tacos@58a1d0aa801b093ae29951ded334ae882a2dac3a  # v0.4.0
+      - uses: femiwiki/terraform-github-tacos@1da0da4455a96e7d687ea23dafcb982443bb3b2d  # v0.5.0
         with:
           step: plan
           workspace: ${{ matrix.workspace }}
@@ -37,7 +46,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
-          PR: ${{ github.event.number }}
+          PR: ${{ github.event.pull_request.number }}
           WORKSPACE: ${{ matrix.workspace }}
         run: |
           plan=true
@@ -144,7 +153,7 @@ jobs:
             exit 1
           fi
 
-      - uses: femiwiki/terraform-github-tacos@58a1d0aa801b093ae29951ded334ae882a2dac3a  # v0.4.0
+      - uses: femiwiki/terraform-github-tacos@1da0da4455a96e7d687ea23dafcb982443bb3b2d  # v0.5.0
         id: changes
         if: steps.scope.outputs.plan == 'true'
         with:
@@ -167,7 +176,7 @@ jobs:
       - uses: ./.github/actions/collapse-comments
         if: always() && steps.plan.outcome != 'skipped'
         with:
-          pull-request: ${{ github.event.number }}
+          pull-request: ${{ github.event.pull_request.number }}
 
       - name: Close the SSM session, which outlives the runner
         if: always() && startsWith(matrix.workspace, 'docker')
@@ -198,14 +207,26 @@ jobs:
   # started, and a required check that has not reported keeps the merge button
   # dead. Nothing reaches main unapplied that way.
   gate:
-    name: ${{ github.event_name == 'pull_request' && 'tofu gate' || 'tofu gate (pull requests only)' }}
+    # An approval's run that plans carries it too, replacing Dependabot's failed gate
+    name: >-
+      ${{ (github.event_name == 'pull_request'
+      || (github.event_name == 'pull_request_review' && needs.plan.result != 'skipped'))
+      && 'tofu gate' || 'tofu gate (pull requests only)' }}
     needs: [plan, pending, apply]
-    if: always() && github.event_name == 'pull_request'
+    if: >-
+      always() && (github.event_name == 'pull_request'
+      || (github.event_name == 'pull_request_review' && needs.plan.result != 'skipped'))
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions: {}
     steps:
-      - uses: femiwiki/terraform-github-tacos@58a1d0aa801b093ae29951ded334ae882a2dac3a  # v0.4.0
+      - name: Dependabot's own run plans nothing
+        if: github.event_name == 'pull_request' && github.event.pull_request.user.login == 'dependabot[bot]'
+        run: |
+          echo "::error::Dependabot's runs get no plan secrets. Approve the pull request to plan it."
+          exit 1
+
+      - uses: femiwiki/terraform-github-tacos@1da0da4455a96e7d687ea23dafcb982443bb3b2d  # v0.5.0
         with:
           step: gate
           needs: ${{ toJSON(needs) }}
@@ -228,7 +249,7 @@ jobs:
     outputs:
       workspaces: ${{ steps.pending.outputs.workspaces }}
     steps:
-      - uses: femiwiki/terraform-github-tacos@58a1d0aa801b093ae29951ded334ae882a2dac3a  # v0.4.0
+      - uses: femiwiki/terraform-github-tacos@1da0da4455a96e7d687ea23dafcb982443bb3b2d  # v0.5.0
         id: pending
         with:
           step: pending
@@ -236,18 +257,18 @@ jobs:
           workspaces: ${{ inputs.workspace && format('["{0}"]', inputs.workspace) || '' }}
 
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
-        if: github.event_name == 'pull_request' && steps.pending.outputs.workspaces != '[]'
+        if: github.event.pull_request && steps.pending.outputs.workspaces != '[]'
         with:
           persist-credentials: false
           sparse-checkout: .github/scripts
 
       # A failure here fails the gate too, so nothing is applied or merged
       - name: Only a pull request that can merge once applied
-        if: github.event_name == 'pull_request' && steps.pending.outputs.workspaces != '[]'
+        if: github.event.pull_request && steps.pending.outputs.workspaces != '[]'
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
-          PR: ${{ github.event.number }}
+          PR: ${{ github.event.pull_request.number }}
         run: .github/scripts/mergeable.sh
 
   # The environment's required reviewers are what starts this job; approving
@@ -278,7 +299,7 @@ jobs:
       pull-requests: write
       statuses: read
     steps:
-      - uses: femiwiki/terraform-github-tacos@58a1d0aa801b093ae29951ded334ae882a2dac3a  # v0.4.0
+      - uses: femiwiki/terraform-github-tacos@1da0da4455a96e7d687ea23dafcb982443bb3b2d  # v0.5.0
         id: approver
         with:
           step: apply
@@ -291,11 +312,11 @@ jobs:
 
       # The base can move into a conflict while the approval waits
       - name: Still a pull request that can merge once applied
-        if: github.event_name == 'pull_request'
+        if: github.event.pull_request
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
-          PR: ${{ github.event.number }}
+          PR: ${{ github.event.pull_request.number }}
           TIMEOUT: "60"
         run: .github/scripts/mergeable.sh
 
@@ -390,7 +411,7 @@ jobs:
       # A failed post does not fail an apply that has already changed production.
       # The next post carries the note, and the Discord message says it is owed.
       - name: Post the ```wikitext blocks of the applied pull request to the wiki
-        if: github.event_name == 'pull_request'
+        if: github.event.pull_request
         id: post
         continue-on-error: true
         env:
@@ -408,7 +429,7 @@ jobs:
       # comment alone: a newer run's apply compares its plan against that
       # comment, and this one finishing later would overwrite it.
       - uses: dflook/tofu-plan@c7416238983bdd94c5486fb856bb7358f2bcc935  # v3.1.0
-        if: github.event_name == 'pull_request' && steps.apply.outcome == 'success'
+        if: github.event.pull_request && steps.apply.outcome == 'success'
         id: verify
         env:
           GITHUB_TOKEN: ${{ github.token }}
@@ -436,7 +457,7 @@ jobs:
 
       - name: Nothing may be left for a later apply
         id: clean
-        if: github.event_name == 'pull_request' && steps.apply.outcome == 'success'
+        if: github.event.pull_request && steps.apply.outcome == 'success'
         env:
           CHANGES: ${{ steps.verify.outputs.changes }}
           PLAN: ${{ steps.verify.outputs.json_plan_path }}
@@ -516,14 +537,14 @@ jobs:
       deployments: read
       pull-requests: write
     steps:
-      - uses: femiwiki/terraform-github-tacos@58a1d0aa801b093ae29951ded334ae882a2dac3a  # v0.4.0
+      - uses: femiwiki/terraform-github-tacos@1da0da4455a96e7d687ea23dafcb982443bb3b2d  # v0.5.0
         with:
           step: merge
           apply-before-merge: "true"
 
   log:
     needs: apply
-    if: always() && github.event_name == 'pull_request' && needs.apply.result != 'skipped'
+    if: always() && github.event.pull_request && needs.apply.result != 'skipped'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
