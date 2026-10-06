@@ -240,10 +240,16 @@ resource "aws_s3_bucket_public_access_block" "cost_exports" {
   restrict_public_buckets = true
 }
 
+# Both the Tokyo bucket and the Seoul one that replaces it (femiwiki/femiwiki#667)
 data "aws_iam_policy_document" "cost_exports_bucket" {
+  for_each = {
+    cost_exports   = aws_s3_bucket.cost_exports.arn
+    cost_and_usage = aws_s3_bucket.cost_and_usage.arn
+  }
+
   statement {
     actions   = ["s3:GetBucketPolicy", "s3:PutObject"]
-    resources = [aws_s3_bucket.cost_exports.arn, "${aws_s3_bucket.cost_exports.arn}/*"]
+    resources = [each.value, "${each.value}/*"]
 
     principals {
       type        = "Service"
@@ -265,12 +271,74 @@ data "aws_iam_policy_document" "cost_exports_bucket" {
       ]
     }
   }
+
+  statement {
+    sid     = "DenyPlainHttp"
+    effect  = "Deny"
+    actions = ["s3:*"]
+
+    principals {
+      type        = "AWS"
+      identifiers = ["*"]
+    }
+
+    resources = [each.value, "${each.value}/*"]
+
+    condition {
+      test     = "Bool"
+      variable = "aws:SecureTransport"
+      values   = ["false"]
+    }
+  }
 }
 
 resource "aws_s3_bucket_policy" "cost_exports" {
   region = local.tokyo_region
   bucket = aws_s3_bucket.cost_exports.id
-  policy = data.aws_iam_policy_document.cost_exports_bucket.json
+  policy = data.aws_iam_policy_document.cost_exports_bucket["cost_exports"].json
+}
+
+# The Data Export's monthly line items, read by femiwiki.github.io's collect job
+
+resource "aws_s3_bucket" "cost_and_usage" {
+  region           = local.seoul_region
+  bucket           = "cost-exports-${data.aws_caller_identity.current.account_id}-${local.seoul_region}-an"
+  bucket_namespace = "account-regional"
+}
+
+resource "aws_s3_bucket_public_access_block" "cost_and_usage" {
+  region = local.seoul_region
+  bucket = aws_s3_bucket.cost_and_usage.id
+
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
+resource "aws_s3_bucket_policy" "cost_and_usage" {
+  depends_on = [aws_s3_bucket_public_access_block.cost_and_usage]
+
+  region = local.seoul_region
+  bucket = aws_s3_bucket.cost_and_usage.id
+  policy = data.aws_iam_policy_document.cost_exports_bucket["cost_and_usage"].json
+}
+
+# No expiration: the collect job re-reads every month the export has written.
+resource "aws_s3_bucket_lifecycle_configuration" "cost_and_usage" {
+  region = local.seoul_region
+  bucket = aws_s3_bucket.cost_and_usage.id
+
+  rule {
+    id     = "abort-incomplete-uploads"
+    status = "Enabled"
+
+    filter {}
+
+    abort_incomplete_multipart_upload {
+      days_after_initiation = 7
+    }
+  }
 }
 
 resource "aws_s3_bucket" "rate_limit" {
