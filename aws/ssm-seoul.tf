@@ -55,32 +55,3 @@ resource "aws_ssm_parameter" "secret_seoul" {
     ignore_changes = [value]
   }
 }
-
-# Copied from Tokyo with the rest, though nothing reads them. Imported only so
-# that the next change deletes them on the record (femiwiki/femiwiki#598).
-locals {
-  unread_parameters = toset([
-    "/mediawiki/firebase_key",
-    "/mediawiki/upgrade_key",
-  ])
-}
-
-import {
-  for_each = local.unread_parameters
-
-  to = aws_ssm_parameter.unread_seoul[each.key]
-  id = "${each.key}@${local.seoul_region}"
-}
-
-resource "aws_ssm_parameter" "unread_seoul" {
-  for_each = local.unread_parameters
-
-  region = local.seoul_region
-  name   = each.key
-  type   = "String"
-  value  = "placeholder"
-
-  lifecycle {
-    ignore_changes = [value]
-  }
-}
