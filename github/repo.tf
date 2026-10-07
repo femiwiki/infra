@@ -258,6 +258,20 @@ module "terraform-provider-mediawiki" {
   default_status_checks           = []
 }
 
+module "fedifeeds" {
+  source      = "./modules/github-repository"
+  name        = "FediFeeds"
+  description = "MediaWiki extension to follow wiki pages and categories from the Fediverse"
+  topics = [
+    "activitypub",
+    "fediverse",
+    "mediawiki",
+    "mediawiki-extension",
+  ]
+  required_status_checks_contexts = ["required"]
+  default_status_checks           = []
+}
+
 module "status" {
   source           = "./modules/github-repository"
   name             = "status"
