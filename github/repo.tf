@@ -270,6 +270,8 @@ module "fedifeeds" {
   ]
   required_status_checks_contexts = ["required"]
   default_status_checks           = []
+  pages_build_type                = "workflow"
+  homepage_url                    = "https://femiwiki.github.io/FediFeeds/"
 }
 
 module "status" {
