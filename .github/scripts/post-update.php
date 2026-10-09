@@ -26,22 +26,66 @@ function blocks( string $body ): array {
 	return array_values( array_filter( array_map( 'trim', $found[1] ), 'strlen' ) );
 }
 
-/** A block one heading level down, since it goes under a time that is itself under a day */
+/** A block one heading level down, as posts before the category layout put it on the page */
 function demote( string $block ): string {
 	return preg_replace( '/^(=+)([^=].*?)(=+)\h*$/mu', '=$1$2$3=', $block );
 }
 
-/**
- * The blocks, or the one list item they hold as a plain line without its type heading, led by (보안 패치) when that
- * was the heading, since a security patch line names only versions
- */
-function single( array $blocks ): array {
-	$all = explode( "\n", implode( "\n", $blocks ) );
-	$lines = preg_grep( '/^(=.*=)?\h*$/u', $all, PREG_GREP_INVERT );
-	if ( count( $lines ) !== 1 || !preg_match( '/^\*\h*([^*:#;].*)$/u', reset( $lines ), $m ) ) {
-		return $blocks;
+/** The categories of femiwiki/femiwiki coding-conventions.md, in the order the page lists them */
+const CATEGORIES = [ '추가', '수정', '성능 개선', '보안 패치', '내부 변화', '버그' ];
+const TYPES = [ 'feat' => '추가', 'fix' => '수정', 'perf' => '성능 개선' ];
+
+/** The category a heading names: a type's Korean name, a Korean heading as written, and 내부 변화 for any other type */
+function category( string $heading ): string {
+	return TYPES[$heading] ?? ( preg_match( '/^[A-Za-z][A-Za-z -]*$/', $heading ) ? '내부 변화' : $heading );
+}
+
+/** The lines of the blocks as [category, line] pairs, a line's own (분류) prefix winning over its heading */
+function items( array $blocks ): array {
+	$items = [];
+	$category = null;
+	foreach ( explode( "\n", implode( "\n", $blocks ) ) as $line ) {
+		if ( preg_match( '/^=+\h*(.*?)\h*=+\h*$/u', $line, $m ) ) {
+			$category = category( $m[1] );
+		} elseif ( trim( $line ) !== '' ) {
+			$line = preg_replace( '/^\*\h*/u', '', trim( $line ) );
+			$items[] = preg_match( '/^\((' . implode( '|', CATEGORIES ) . ')\)\h*(.*)$/u', $line, $m )
+				? [ $m[1], $m[2] ]
+				: [ $category, $line ];
+		}
 	}
-	return [ ( preg_grep( '/^=+\h*보안 패치\h*=+\h*$/u', $all ) ? '(보안 패치) ' : '' ) . $m[1] ];
+	return $items;
+}
+
+/** Where a category goes on the page: a line without one first, then CATEGORIES, then any other heading */
+function rank( ?string $category ): int {
+	if ( $category === null ) {
+		return -1;
+	}
+	$i = array_search( $category, CATEGORIES, true );
+	return $i === false ? count( CATEGORIES ) : $i;
+}
+
+/**
+ * One item as a plain line, 2-4 items or one category as *(분류) lines, and 5 or more items across 2 or more
+ * categories as a section per category
+ */
+function layout( array $items ): string {
+	usort( $items, fn ( $a, $b ) => rank( $a[0] ) <=> rank( $b[0] ) );
+	$prefixed = fn ( $item ) => ( $item[0] === null ? '' : "($item[0]) " ) . $item[1];
+	if ( count( $items ) === 1 ) {
+		return $prefixed( $items[0] );
+	}
+	$categories = array_unique( array_column( $items, 0 ) );
+	if ( count( $items ) < 5 || count( $categories ) < 2 ) {
+		return implode( "\n", array_map( fn ( $item ) => '*' . $prefixed( $item ), $items ) );
+	}
+	$sections = [];
+	foreach ( $categories as $category ) {
+		$lines = array_map( fn ( $item ) => "*$item[1]", array_filter( $items, fn ( $item ) => $item[0] === $category ) );
+		$sections[] = ( $category === null ? '' : "====$category====\n\n" ) . implode( "\n", $lines );
+	}
+	return implode( "\n\n", $sections );
 }
 
 /**
@@ -49,10 +93,10 @@ function single( array $blocks ): array {
  * apply, newest first. A day without one gets it above the first section of that day or earlier, an older
  * ==day time== section included
  */
-function insert( string $text, DateTimeInterface $at, string $link, array $blocks ): string {
+function insert( string $text, DateTimeInterface $at, string $link, string $note ): string {
 	$day = $at->format( 'n월 j일' );
 	$time = $at->format( 'H:i' );
-	$post = "===$time===\n\n$link\n\n" . implode( "\n\n", $blocks ) . "\n\n";
+	$post = "===$time===\n\n$link\n\n$note\n\n";
 	$sections = preg_split( '/^(?===[^=])/mu', $text );
 	for ( $i = str_starts_with( $text, '==' ) ? 0 : 1; $i < count( $sections ); $i++ ) {
 		if ( !preg_match( '/^==\s*(\d+)월\s*(\d+)일(\s+\d+:\d+)?\s*==/u', $sections[$i], $m )
@@ -168,14 +212,19 @@ function post( string $repo, int $number, DateTime $at, bool $dryRun ): void {
 	$link = "https://github.com/$repo/pull/$number";
 	// A block is on the page as posted, a level down, or as posted before days grouped the posts
 	$onPage = fn ( $block ) => str_contains( $text, demote( $block ) ) ? demote( $block ) : ( str_contains( $text, $block ) ? $block : null );
-	$new = single( array_values( array_map( 'demote', array_filter( $blocks, fn ( $block ) => $onPage( $block ) === null ) ) ) );
+	$new = array_values( array_filter( $blocks, fn ( $block ) => $onPage( $block ) === null ) );
 	// The summary links to the day, since a summary does not link a URL or a repo#number and a time repeats daily
 	if ( preg_match( '/^' . preg_quote( $link, '/' ) . '$/m', $text ) ) {
 		echo "$title: $repo#$number already posted\n";
 		return;
 	} elseif ( $new ) {
-		$merged = insert( $text, $at, $link, $new );
-		$summary = '/* ' . sectionOf( $merged, $new[0] ) . ' */ 배포된 변경 사항 추가';
+		$items = items( $new );
+		if ( in_array( null, array_column( $items, 0 ), true ) ) {
+			echo "::warning::$repo#$number has a line under no category heading and without a (분류) prefix\n";
+		}
+		$note = layout( $items );
+		$merged = insert( $text, $at, $link, $note );
+		$summary = '/* ' . sectionOf( $merged, $note ) . ' */ 배포된 변경 사항 추가';
 	} else {
 		$merged = linkUnder( $text, $onPage( $blocks[0] ), $link );
 		$summary = '/* ' . sectionOf( $merged, $onPage( $blocks[0] ) ) . ' */ 배포 풀 리퀘스트 링크 추가';
