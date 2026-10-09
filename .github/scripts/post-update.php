@@ -51,6 +51,9 @@ function items( array $blocks ): array {
 			$line = preg_replace( '/^\*\h*/u', '', trim( $line ) );
 			// A bot bump line names the extension and commit it came with, which the linked PR already tells
 			$line = preg_replace( '/\h*\([\w-]+\h+[0-9a-f]{7,40}\)(?=\h*(\[|$))/u', '', $line );
+			// A line is a noun phrase that ends with a bare link, so no period and no #N label
+			$line = preg_replace( '/\[(https:\/\/\S+)\h+#\d+\]/u', '[$1]', $line );
+			$line = preg_replace( '/\.(?=\h*(\[https:\/\/\S+\])?$)/u', '', $line );
 			$items[] = preg_match( '/^\((' . implode( '|', CATEGORIES ) . ')\)\h*(.*)$/u', $line, $m )
 				? [ $m[1], $m[2] ]
 				: [ $category, $line ];
