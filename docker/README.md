@@ -42,7 +42,8 @@ image back from a branch, without waiting for a pull request's checks:
 git switch -c rollback-<N+1> origin/main
 git revert --no-commit <the bump's commit>   # the previous image tag
 hcledit attribute set locals.fastcgi_generation <N+1> -f docker/locals.tf -u
-git commit -m 'revert: roll docker back to <previous tag>'
+git commit -a -m 'revert: roll docker back to <previous tag>'
+git show HEAD:docker/locals.tf | grep fastcgi_generation   # must say <N+1>
 git push -u origin rollback-<N+1>
 gh workflow run tofu.yml -R femiwiki/infra --ref rollback-<N+1> -f workspace=docker
 ```
