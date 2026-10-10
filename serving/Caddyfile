@@ -342,6 +342,8 @@ femiwiki.com *.femiwiki.com 127.0.0.1:80 localhost:80 {
 		# ports this long before a 502 or the fallback below (#1121)
 		lb_try_duration {$FW_LB_TRY_DURATION:10s}
 		health_uri /healthz.php
+		# Named, as a health check has no request root and would ask Caddy's cwd
+		root /srv/docroot
 		health_interval 1s
 		health_timeout 10s
 		health_fails 3
