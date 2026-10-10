@@ -144,6 +144,13 @@ resource "docker_container" "fastcgi" {
       # one, so 3 keeps the ordinary traffic out of the directory
       FW_PROFILER_THRESHOLD = "3"
 
+      # Script hosts of the report-only Content-Security-Policy. See femiwiki#680.
+      FW_CSP_SCRIPT_SRC = join(",", [
+        "*.googletagmanager.com", # The Google tag from PageViewInfoGA
+        "cdn.jsdelivr.net",       # WidgetBot's crate for the discord-widget gadget
+        "www.gstatic.com",        # 위젯:구글 통계 and 위젯:인기있는 문서
+      ])
+
       WG_BOUNCE_HANDLER_INTERNAL_IPS = "10.20.0.0/16"
       WG_CDN_SERVERS                 = "127.0.0.1:80"
       WG_INTERNAL_SERVER             = "http://127.0.0.1:80"
