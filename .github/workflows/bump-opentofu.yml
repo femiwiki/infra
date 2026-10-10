@@ -1,0 +1,64 @@
+---
+name: bump opentofu
+on:
+  schedule:
+    - cron: "0 0 * * *"
+  workflow_dispatch:
+permissions: {}
+concurrency:
+  group: bump-opentofu
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Find the latest OpenTofu release
+        id: version
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          latest=$(gh api repos/opentofu/opentofu/releases/latest --jq .tag_name)
+          latest=${latest#v}
+          mapfile -t files < <(git grep -l -E '^  required_version = "[0-9]+\.[0-9]+\.[0-9]+"$' -- '*.tf')
+          current=$(sed -n -E 's/^  required_version = "(.*)"$/\1/p' "${files[@]}" | sort -u)
+          echo "current: $current, latest: $latest"
+          if [ "$current" = "$latest" ]; then
+            echo "bump=false" >> "$GITHUB_OUTPUT"
+          else
+            sed -i -E "s/^  required_version = \"[0-9.]+\"$/  required_version = \"$latest\"/" "${files[@]}"
+            echo "bump=true" >> "$GITHUB_OUTPUT"
+            echo "latest=$latest" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: peter-murray/workflow-application-token-action@dad2b81e50ce3edeb5f3b7ffbd79f731368bd668  # v5.1.1
+        if: steps.version.outputs.bump == 'true'
+        id: token
+        with:
+          application_id: ${{ vars.PAT_APPLICATION_ID }}
+          application_private_key: ${{ secrets.PAT_APPLICATION_PRIVATE_KEY }}
+
+      - name: Open or update the pull request
+        if: steps.version.outputs.bump == 'true'
+        env:
+          GH_TOKEN: ${{ steps.token.outputs.token }}
+          LATEST: ${{ steps.version.outputs.latest }}
+          BRANCH: bump-opentofu
+        run: |
+          title="build: bump OpenTofu to $LATEST"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git switch -c "$BRANCH"
+          git commit -a -q -m "$title"
+          git push -q --force "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "HEAD:refs/heads/$BRANCH"
+          body="[Release notes](https://github.com/opentofu/opentofu/releases/tag/v$LATEST)"
+          if [ -n "$(gh pr list --head "$BRANCH" --state open --json number --jq '.[].number')" ]; then
+            gh pr edit "$BRANCH" --title "$title" --body "$body"
+          else
+            gh pr create --head "$BRANCH" --title "$title" --body "$body"
+          fi

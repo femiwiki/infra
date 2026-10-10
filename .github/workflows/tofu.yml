@@ -36,7 +36,7 @@ jobs:
       id-token: write
       pull-requests: write
     steps:
-      - uses: femiwiki/terraform-github-tacos@1da0da4455a96e7d687ea23dafcb982443bb3b2d  # v0.5.0
+      - uses: femiwiki/terraform-github-tacos@93b689a4ba03ba94ae09694ba7bd4cf89a0d2d5e  # v0.6.1
         with:
           step: plan
           workspace: ${{ matrix.workspace }}
@@ -153,7 +153,7 @@ jobs:
             exit 1
           fi
 
-      - uses: femiwiki/terraform-github-tacos@1da0da4455a96e7d687ea23dafcb982443bb3b2d  # v0.5.0
+      - uses: femiwiki/terraform-github-tacos@93b689a4ba03ba94ae09694ba7bd4cf89a0d2d5e  # v0.6.1
         id: changes
         if: steps.scope.outputs.plan == 'true'
         with:
@@ -173,10 +173,10 @@ jobs:
             echo "::warning::applied, so the import and moved blocks above can go."
           fi
 
-      - uses: ./.github/actions/collapse-comments
+      - uses: femiwiki/terraform-github-tacos@93b689a4ba03ba94ae09694ba7bd4cf89a0d2d5e  # v0.6.1
         if: always() && steps.plan.outcome != 'skipped'
         with:
-          pull-request: ${{ github.event.pull_request.number }}
+          step: collapse
 
       - name: Close the SSM session, which outlives the runner
         if: always() && startsWith(matrix.workspace, 'docker')
@@ -226,7 +226,7 @@ jobs:
           echo "::error::Dependabot's runs get no plan secrets. Approve the pull request to plan it."
           exit 1
 
-      - uses: femiwiki/terraform-github-tacos@1da0da4455a96e7d687ea23dafcb982443bb3b2d  # v0.5.0
+      - uses: femiwiki/terraform-github-tacos@93b689a4ba03ba94ae09694ba7bd4cf89a0d2d5e  # v0.6.1
         with:
           step: gate
           needs: ${{ toJSON(needs) }}
@@ -249,7 +249,7 @@ jobs:
     outputs:
       workspaces: ${{ steps.pending.outputs.workspaces }}
     steps:
-      - uses: femiwiki/terraform-github-tacos@1da0da4455a96e7d687ea23dafcb982443bb3b2d  # v0.5.0
+      - uses: femiwiki/terraform-github-tacos@93b689a4ba03ba94ae09694ba7bd4cf89a0d2d5e  # v0.6.1
         id: pending
         with:
           step: pending
@@ -299,7 +299,7 @@ jobs:
       pull-requests: write
       statuses: read
     steps:
-      - uses: femiwiki/terraform-github-tacos@1da0da4455a96e7d687ea23dafcb982443bb3b2d  # v0.5.0
+      - uses: femiwiki/terraform-github-tacos@93b689a4ba03ba94ae09694ba7bd4cf89a0d2d5e  # v0.6.1
         id: approver
         with:
           step: apply
@@ -537,7 +537,7 @@ jobs:
       deployments: read
       pull-requests: write
     steps:
-      - uses: femiwiki/terraform-github-tacos@1da0da4455a96e7d687ea23dafcb982443bb3b2d  # v0.5.0
+      - uses: femiwiki/terraform-github-tacos@93b689a4ba03ba94ae09694ba7bd4cf89a0d2d5e  # v0.6.1
         with:
           step: merge
           apply-before-merge: "true"
@@ -603,11 +603,6 @@ jobs:
               core.info(`${workspace}: posted the apply log`);
             }
 
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      - uses: femiwiki/terraform-github-tacos@93b689a4ba03ba94ae09694ba7bd4cf89a0d2d5e  # v0.6.1
         with:
-          persist-credentials: false
-          sparse-checkout: .github/actions/collapse-comments
-
-      - uses: ./.github/actions/collapse-comments
-        with:
-          pull-request: ${{ github.event.pull_request.number }}
+          step: collapse

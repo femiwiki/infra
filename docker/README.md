@@ -11,10 +11,8 @@ The serving configuration is not here: `FW_CADDYFILE`, `FW_ROBOTS_TXT` and
 `MEDIAWIKI_HOTFIX_SNIPPET` render `../serving`, which is why a change there
 needs `fastcgi_generation` moved with it (femiwiki/infra#783).
 
-`AWS_REGION` and `S3_HOST` in the `http` container still name `ap-northeast-1`.
-They address `femiwiki-secrets`, which holds the ACME account and certificates
-under `caddycerts/`, and that bucket is in Tokyo. It is the reason
-`ap-northeast-1` is not empty even with no instance in it.
+The `http` container keeps the ACME account and certificates under
+`caddycerts/` in the `caddy_certs` bucket of `aws/`, in the same region.
 
 This host runs cron. `backupbot` is in no root: the dump runs on the database
 host from a systemd timer, to `backups-302617221463-ap-northeast-2-an`.
