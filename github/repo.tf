@@ -24,6 +24,7 @@ module "infra" {
     "lint gate",
     "tofu gate",
   ]
+  default_status_checks = []
   topics = [
     "terraform",
   ]
@@ -255,6 +256,22 @@ module "terraform-provider-mediawiki" {
   ]
   required_status_checks_contexts = ["required"]
   default_status_checks           = []
+}
+
+module "fedifeeds" {
+  source      = "./modules/github-repository"
+  name        = "FediFeeds"
+  description = "MediaWiki extension to follow wiki pages and categories from the Fediverse"
+  topics = [
+    "activitypub",
+    "fediverse",
+    "mediawiki",
+    "mediawiki-extension",
+  ]
+  required_status_checks_contexts = ["required"]
+  default_status_checks           = []
+  pages_build_type                = "workflow"
+  homepage_url                    = "https://femiwiki.github.io/FediFeeds/"
 }
 
 module "status" {

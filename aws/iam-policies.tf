@@ -119,7 +119,7 @@ resource "aws_iam_policy" "amazon_s3_access" {
 #   https://github.com/hashicorp/terraform/issues/27171#issuecomment-740249394
 #   https://github.com/hashicorp/terraform/issues/27282
 locals {
-  secrets       = aws_s3_bucket.secrets.arn
+  caddy_certs   = aws_s3_bucket.caddy_certs.arn
   backups       = aws_s3_bucket.backups.arn
   backups_seoul = aws_s3_bucket.backups_seoul.arn
   uploads_seoul = aws_s3_bucket.uploads_seoul.arn
@@ -183,20 +183,6 @@ data "aws_iam_policy_document" "route53" {
   }
 }
 
-resource "aws_iam_policy" "download_secrets" {
-  name        = "DownloadSecrets"
-  description = "Allows to download secrets"
-
-  policy = data.aws_iam_policy_document.download_secrets.json
-}
-
-data "aws_iam_policy_document" "download_secrets" {
-  statement {
-    actions   = ["s3:GetObject"]
-    resources = ["${local.secrets}/*"]
-  }
-}
-
 resource "aws_iam_policy" "access_caddycerts" {
   name        = "AccessCaddycerts"
   description = "Allows to read and write caddycerts"
@@ -207,7 +193,7 @@ resource "aws_iam_policy" "access_caddycerts" {
 data "aws_iam_policy_document" "access_caddycerts" {
   statement {
     actions   = ["s3:ListBucket"]
-    resources = [local.secrets]
+    resources = [local.caddy_certs]
   }
   statement {
     actions = [
@@ -215,7 +201,7 @@ data "aws_iam_policy_document" "access_caddycerts" {
       "s3:PutObject",
       "s3:DeleteObject",
     ]
-    resources = ["${local.secrets}/caddycerts/*"]
+    resources = ["${local.caddy_certs}/caddycerts/*"]
   }
 }
 
@@ -458,9 +444,15 @@ data "aws_iam_policy_document" "femiwiki_github_io" {
     resources = ["*"]
   }
 
+  # Both buckets until bill-from-export.sh reads the Seoul one (femiwiki/femiwiki#667).
   statement {
-    actions   = ["s3:GetObject", "s3:ListBucket"]
-    resources = [aws_s3_bucket.cost_exports.arn, "${aws_s3_bucket.cost_exports.arn}/*"]
+    actions = ["s3:GetObject", "s3:ListBucket"]
+    resources = [
+      aws_s3_bucket.cost_and_usage.arn,
+      "${aws_s3_bucket.cost_and_usage.arn}/*",
+      aws_s3_bucket.cost_exports.arn,
+      "${aws_s3_bucket.cost_exports.arn}/*",
+    ]
   }
 }
 
