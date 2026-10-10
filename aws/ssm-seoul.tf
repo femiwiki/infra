@@ -35,10 +35,12 @@ resource "aws_ssm_parameter" "h_captcha_secret_key" {
 # managed here (femiwiki/femiwiki#597).
 locals {
   secret_parameters = toset([
+    "/mediawiki/bounce_handler/token",
     "/mediawiki/o_auth_2_private_key",
     "/mediawiki/rc_feeds_discord_url",
     "/mediawiki/site_key",
     "/mediawiki/smtp/password",
+    "/mediawiki/verp_secret",
     "/mysql/users/mediawiki/password",
   ])
 }
