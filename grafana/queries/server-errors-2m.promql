@@ -1,0 +1,1 @@
+sum(increase(loki_process_custom_responses_total{status_class="5", fallback!="true"}[2m])) or vector(0)
