@@ -78,12 +78,26 @@ femiwiki.com *.femiwiki.com 127.0.0.1:80 localhost:80 {
 			match {
 				path /index.php* /api.php*
 				not header Cookie *femiwiki*
+				not vars_regexp {query} (^|&)action=cspreport(&|$)
 			}
 			key {client_ip}
 			ipv4_prefix 24
 			ipv6_prefix 64
 			events {$FW_DYNAMIC_EVENTS:300}
 			window {$FW_DYNAMIC_WINDOW:10m}
+		}
+		# Browsers' CSP violation reports, per /24 in a budget of their own so they spend
+		# none of the reader's. A reader never sees the answer; a refusal drops a report.
+		zone csp_report {
+			match {
+				path /api.php*
+				vars_regexp {query} (^|&)action=cspreport(&|$)
+			}
+			key {client_ip}
+			ipv4_prefix 24
+			ipv6_prefix 64
+			events {$FW_CSP_REPORT_EVENTS:120}
+			window {$FW_CSP_REPORT_WINDOW:10m}
 		}
 		# Diffs and old revisions from anyone not logged in, counted across the
 		# whole site. A crawler spread over enough /24s stays under the zone
