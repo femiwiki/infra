@@ -68,7 +68,7 @@ femiwiki.com *.femiwiki.com 127.0.0.1:80 localhost:80 {
 	tls {
 		dns route53
 	}
-	root * /srv/femiwiki.com
+	root * /srv/docroot
 	# Requests that reach php-fpm without a session, per /24. Cache hits never
 	# get here, and the login and signup pages set a session cookie on first
 	# view, so a room full of people joining an edit-a-thon counts once each.
@@ -345,6 +345,8 @@ femiwiki.com *.femiwiki.com 127.0.0.1:80 localhost:80 {
 		health_interval 1s
 		health_timeout 10s
 		health_fails 3
+		# No index.php fallback: a path that is not a file is a 404, not the main page
+		try_files {path} {path}/index.php
 	}
 	# When no port passes /healthz.php, send reads to any php-fpm that answers
 	# instead of a 503. A deploy drains one port only once the other is
@@ -360,6 +362,7 @@ femiwiki.com *.femiwiki.com 127.0.0.1:80 localhost:80 {
 			rewrite /w/api.php /api.php
 			rewrite /w/* /index.php
 			php_fastcgi 127.0.0.1:9000 127.0.0.1:9001 {
+				try_files {path} {path}/index.php
 				response_buffers {$FW_RESPONSE_BUFFERS:1MB}
 				env REMOTE_ADDR {client_ip}
 				lb_policy round_robin
@@ -482,8 +485,9 @@ femiwiki.com *.femiwiki.com 127.0.0.1:80 localhost:80 {
 	rewrite @favicon /fw-resources/favicons/favicon-32.png
 	header @favicon >Cache-Control "public, s-maxage=31536000, max-age=31536000, must-revalidate"
 
-	# 404 rather than 403: there is no reason to confirm the installer is there
-	respond /mw-config* 404
+	# Code under the asset directories is never a page; only its files are served
+	@asset_code path_regexp (?i)^/(resources|skins|extensions)/(.*/)?(\.[^/]*|[^/]*\.php)(/|$)
+	respond @asset_code 404
 }
 
 # php-fpm's status page and opcache for Alloy on the host. infra alternates
