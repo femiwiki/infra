@@ -176,6 +176,12 @@ locals {
       color       = "c5def5"
     }
 
+    mw1_47 = {
+      name        = "mw1.47"
+      description = "MediaWiki 1.47"
+      color       = "c5def5"
+    }
+
     note = {
       name        = "글쓰기"
       description = "공지사항이나 블로그 글로 문서화해야하는 이슈"
@@ -303,6 +309,7 @@ locals {
         "mw1_43",
         "mw1_44",
         "mw1_45",
+        "mw1_47",
         "ve",
         "restbase",
         "wikibase",
@@ -332,6 +339,7 @@ locals {
         "mw1_43",
         "mw1_44",
         "mw1_45",
+        "mw1_47",
 
         "femiwiki_discussion_needed",
       ]
@@ -366,8 +374,8 @@ locals {
     tweetbot   = local.base_label_suite
     rankingbot = local.base_label_suite
 
-    FemiwikiSkin                = concat(local.ext_label_suite, ["femiwiki_discussion_needed", "ve", "search", "mw1_35", "mw1_36", "mw1_37", "mw1_39", "mw1_42", "mw1_43", "mw1_44", "mw1_45"])
-    UnifiedExtensionForFemiwiki = concat(local.ext_label_suite, ["wikibase", "mw1_35", "mw1_36", "mw1_37", "mw1_39", "mw1_42", "mw1_43", "mw1_44", "mw1_45"])
+    FemiwikiSkin                = concat(local.ext_label_suite, ["femiwiki_discussion_needed", "ve", "search", "mw1_35", "mw1_36", "mw1_37", "mw1_39", "mw1_42", "mw1_43", "mw1_44", "mw1_45", "mw1_47"])
+    UnifiedExtensionForFemiwiki = concat(local.ext_label_suite, ["wikibase", "mw1_35", "mw1_36", "mw1_37", "mw1_39", "mw1_42", "mw1_43", "mw1_44", "mw1_45", "mw1_47"])
   }
 
   // Flattening nested structures
