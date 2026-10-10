@@ -14,23 +14,49 @@ data "aws_ami" "amazon_linux_2_arm64_seoul" {
   }
 }
 
-resource "aws_ebs_volume" "persistent_data_mysql_5" {
+locals {
+  database_hosts   = toset(["5"])
+  database_primary = "5"
+}
+
+moved {
+  from = aws_ebs_volume.persistent_data_mysql_5
+  to   = aws_ebs_volume.database["5"]
+}
+
+moved {
+  from = aws_volume_attachment.persistent_data_mysql_5
+  to   = aws_volume_attachment.database["5"]
+}
+
+moved {
+  from = aws_instance.database_5
+  to   = aws_instance.database["5"]
+}
+
+resource "aws_ebs_volume" "database" {
+  for_each = local.database_hosts
+
   region            = local.seoul_region
   availability_zone = local.seoul_az
   type              = "gp3"
   size              = 32
 
-  tags = { Name = "MariaDB data directory for server_id = 5" }
+  tags = { Name = "MariaDB data directory for server_id = ${each.key}" }
 }
 
-resource "aws_volume_attachment" "persistent_data_mysql_5" {
+resource "aws_volume_attachment" "database" {
+  for_each = local.database_hosts
+
   region      = local.seoul_region
   device_name = "/dev/sdf"
-  volume_id   = aws_ebs_volume.persistent_data_mysql_5.id
-  instance_id = aws_instance.database_5.id
+  volume_id   = aws_ebs_volume.database[each.key].id
+  instance_id = aws_instance.database[each.key].id
 }
 
-resource "aws_instance" "database_5" {
+resource "aws_instance" "database" {
+  for_each = local.database_hosts
+
   region                      = local.seoul_region
   ami                         = data.aws_ami.amazon_linux_2_arm64_seoul.image_id
   availability_zone           = local.seoul_az
@@ -44,11 +70,11 @@ resource "aws_instance" "database_5" {
   user_data_replace_on_change = false
 
   user_data_base64 = base64gzip(templatefile("res/user-data-mariadb.sh.tftpl", {
-    mysql_server_id = "5"
+    mysql_server_id = each.key
     region          = local.seoul_region
     backups_bucket  = aws_s3_bucket.backups_seoul.bucket
 
-    alloy_install = local.alloy_install["database-5"]
+    alloy_install = local.alloy_install["database-${each.key}"]
   }))
 
   vpc_security_group_ids = [
@@ -72,8 +98,8 @@ resource "aws_instance" "database_5" {
   }
 
   tags = {
-    Name        = "database-5"
-    MysqlBackup = "true"
+    Name        = "database-${each.key}"
+    MysqlBackup = tostring(each.key == local.database_primary)
   }
 
   lifecycle {
