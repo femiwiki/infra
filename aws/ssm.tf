@@ -195,8 +195,6 @@ resource "aws_ssm_association" "swapfile" {
   }
 }
 
-# Not on the database host yet: it runs MariaDB in 2 GB with no swap, and
-# loading the latest release's metadata beside it is untested there.
 resource "aws_ssm_document" "security_advisories" {
   for_each = local.app_hosts
 

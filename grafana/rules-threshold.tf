@@ -72,12 +72,10 @@ locals {
           annotations    = { summary = "{{ $labels.instance }}에 쓸 수 있는 메모리가 {{ printf \"%.0f\" $values.A.Value }} MB 남았습니다." }
         },
         {
-          name      = "Security updates not applied"
-          expr      = "sum by (instance) (dnf_security_advisories{job=\"integrations/node_exporter\", severity=~\"Critical|Important\"})"
-          threshold = 0
-          # Long enough for a daily update to have run, short of letting a
-          # release go by unnoticed
-          for            = "2d"
+          name           = "Security updates not applied"
+          expr           = "sum by (instance) (dnf_security_advisories{job=\"integrations/node_exporter\", severity=~\"Critical|Important\"})"
+          threshold      = 0
+          for            = "2d" # a daily dnf-automatic run plus a day of slack
           no_data_state  = "Alerting"
           exec_err_state = "Alerting"
           labels         = { impact = "operators" }
