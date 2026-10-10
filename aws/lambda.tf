@@ -190,3 +190,65 @@ resource "aws_lambda_permission" "sns_discord" {
   principal     = "sns.amazonaws.com"
   source_arn    = aws_sns_topic.cloudwatch_alarms_topic_us.arn
 }
+
+resource "aws_lambda_function" "bounce_handler" {
+  function_name = "bounce-handler"
+  description   = "Hands SES permanent bounces to MediaWiki's BounceHandler API. Code: femiwiki/lambda."
+  role          = aws_iam_role.bounce_handler.arn
+  runtime       = "python3.13"
+  architectures = ["arm64"]
+  handler       = "lambda_function.lambda_handler"
+  filename      = "${path.module}/res/lambda-placeholder.zip"
+  timeout       = 30
+  memory_size   = 128
+
+  lifecycle {
+    ignore_changes = [filename, source_code_hash, environment]
+  }
+
+  depends_on = [aws_cloudwatch_log_group.bounce_handler]
+}
+
+resource "aws_cloudwatch_log_group" "bounce_handler" {
+  name              = "/aws/lambda/bounce-handler"
+  retention_in_days = 14
+}
+
+resource "aws_iam_role" "bounce_handler" {
+  name               = "bounce-handler"
+  description        = "Execution role for the bounce-handler Lambda function."
+  assume_role_policy = data.aws_iam_policy_document.lambda_assume_role.json
+}
+
+resource "aws_iam_role_policy" "bounce_handler" {
+  name   = "BounceHandler"
+  role   = aws_iam_role.bounce_handler.name
+  policy = data.aws_iam_policy_document.bounce_handler.json
+}
+
+data "aws_iam_policy_document" "bounce_handler" {
+  statement {
+    actions   = ["logs:CreateLogStream", "logs:PutLogEvents"]
+    resources = ["${aws_cloudwatch_log_group.bounce_handler.arn}:*"]
+  }
+
+  statement {
+    actions   = ["ssm:GetParameter"]
+    resources = [aws_ssm_parameter.secret_seoul["/mediawiki/bounce_handler/token"].arn]
+  }
+}
+
+resource "aws_sns_topic_subscription" "bounce_handler" {
+  region    = "us-east-1"
+  topic_arn = aws_sns_topic.ses_bounces.arn
+  protocol  = "lambda"
+  endpoint  = aws_lambda_function.bounce_handler.arn
+}
+
+resource "aws_lambda_permission" "bounce_handler" {
+  statement_id  = "AllowSNS"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.bounce_handler.function_name
+  principal     = "sns.amazonaws.com"
+  source_arn    = aws_sns_topic.ses_bounces.arn
+}
