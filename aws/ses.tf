@@ -8,11 +8,6 @@ resource "aws_ses_domain_dkim" "femiwiki_com" {
   region = "us-east-1"
 }
 
-resource "aws_ses_email_identity" "admin" {
-  email  = "admin@femiwiki.com"
-  region = "us-east-1"
-}
-
 # ref femiwiki/femiwiki#365 ("AWS SES Return-Path domain configuration")
 resource "aws_ses_domain_mail_from" "femiwiki_com" {
   domain           = aws_ses_domain_identity.femiwiki_com.domain
@@ -47,11 +42,9 @@ data "aws_iam_policy_document" "ses_bounces" {
   }
 }
 
-# The address identity's settings win over the domain's for mail from admin@.
 resource "aws_ses_identity_notification_topic" "bounce" {
   for_each = {
     domain = aws_ses_domain_identity.femiwiki_com.domain
-    admin  = aws_ses_email_identity.admin.email
   }
 
   region            = "us-east-1"
