@@ -64,6 +64,72 @@ resource "aws_lambda_permission" "mastodon_discord" {
   source_arn    = aws_cloudwatch_event_rule.mastodon_discord.arn
 }
 
+resource "aws_lambda_function" "mastodon_boost" {
+  function_name = "mastodon-boost"
+  description   = "Boosts mentions of the wiki's Mastodon status account from trusted accounts. Code: femiwiki/lambda."
+  role          = aws_iam_role.mastodon_boost.arn
+  runtime       = "python3.13"
+  architectures = ["arm64"]
+  handler       = "lambda_function.lambda_handler"
+  filename      = "${path.module}/res/lambda-placeholder.zip"
+  timeout       = 30
+  memory_size   = 128
+
+  lifecycle {
+    ignore_changes = [filename, source_code_hash, environment]
+  }
+
+  depends_on = [aws_cloudwatch_log_group.mastodon_boost]
+}
+
+resource "aws_cloudwatch_log_group" "mastodon_boost" {
+  name              = "/aws/lambda/mastodon-boost"
+  retention_in_days = 14
+}
+
+resource "aws_iam_role" "mastodon_boost" {
+  name               = "mastodon-boost"
+  description        = "Execution role for the mastodon-boost Lambda function."
+  assume_role_policy = data.aws_iam_policy_document.lambda_assume_role.json
+}
+
+resource "aws_iam_role_policy" "mastodon_boost" {
+  name   = "MastodonBoost"
+  role   = aws_iam_role.mastodon_boost.name
+  policy = data.aws_iam_policy_document.mastodon_boost.json
+}
+
+data "aws_iam_policy_document" "mastodon_boost" {
+  statement {
+    actions   = ["logs:CreateLogStream", "logs:PutLogEvents"]
+    resources = ["${aws_cloudwatch_log_group.mastodon_boost.arn}:*"]
+  }
+
+  statement {
+    actions   = ["ssm:GetParameter", "ssm:PutParameter"]
+    resources = ["arn:aws:ssm:${local.seoul_region}:${data.aws_caller_identity.current.account_id}:parameter/mastodon-boost/cursor"]
+  }
+}
+
+resource "aws_cloudwatch_event_rule" "mastodon_boost" {
+  name                = "mastodon-boost"
+  description         = "Runs the mastodon-boost Lambda function every minute."
+  schedule_expression = "rate(1 minute)"
+}
+
+resource "aws_cloudwatch_event_target" "mastodon_boost" {
+  rule = aws_cloudwatch_event_rule.mastodon_boost.name
+  arn  = aws_lambda_function.mastodon_boost.arn
+}
+
+resource "aws_lambda_permission" "mastodon_boost" {
+  statement_id  = "AllowEventBridge"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.mastodon_boost.function_name
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.mastodon_boost.arn
+}
+
 resource "aws_lambda_function" "grafana_github" {
   function_name = "grafana-github"
   description   = "Opens a GitHub issue per Grafana alert rule that only operators need to act on. Code: femiwiki/lambda."
