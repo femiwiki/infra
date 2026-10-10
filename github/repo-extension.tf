@@ -32,6 +32,13 @@ module "femiwiki_skin" {
   kept_branches                   = ["previews"]
 }
 
+# Holds the 2026 design renewal off femiwiki.com until v6.0.0 (femiwiki/femiwiki#683)
+resource "github_actions_variable" "femiwiki_skin_downstream_bump_paused" {
+  repository    = module.femiwiki_skin.name
+  variable_name = "DOWNSTREAM_BUMP_PAUSED"
+  value         = "true"
+}
+
 module "unified_extension_for_femiwiki" {
   source                          = "./modules/github-repository"
   name                            = "UnifiedExtensionForFemiwiki"
