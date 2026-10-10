@@ -36,29 +36,17 @@ jobs:
       id-token: write
       pull-requests: write
     steps:
-      - uses: femiwiki/terraform-github-tacos@93b689a4ba03ba94ae09694ba7bd4cf89a0d2d5e  # v0.6.1
+      - uses: femiwiki/terraform-github-tacos@8f1256319e23cb0a8266768b04255c953a84c559  # v0.7.0
+        id: scope
         with:
           step: plan
           workspace: ${{ matrix.workspace }}
-
-      - name: Only a pull request that changes this workspace
-        id: scope
-        env:
-          GH_TOKEN: ${{ github.token }}
-          REPO: ${{ github.repository }}
-          PR: ${{ github.event.pull_request.number }}
-          WORKSPACE: ${{ matrix.workspace }}
-        run: |
-          plan=true
           # serving/ holds the Caddyfile, Hotfix.php and robots.txt that every
           # docker workspace renders into container environment variables, so a
           # change there has to reach all of them, not just one region's.
-          shared=
-          case "$WORKSPACE" in docker*) shared="|^serving/" ;; esac
-          gh api "repos/$REPO/pulls/$PR/files" --paginate --jq '.[].filename' \
-            | grep -qE "^($WORKSPACE/|\.github/(workflows/tofu\.yml$|actions/)$shared)" || plan=false
-          echo "plan=$plan" >> "$GITHUB_OUTPUT"
-          [ "$plan" = true ] || echo "This pull request does not change $WORKSPACE/."
+          shared-paths: |
+            .github/actions/**
+            ${{ startsWith(matrix.workspace, 'docker') && 'serving/**' || '' }}
 
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         if: steps.scope.outputs.plan == 'true'
@@ -153,7 +141,7 @@ jobs:
             exit 1
           fi
 
-      - uses: femiwiki/terraform-github-tacos@93b689a4ba03ba94ae09694ba7bd4cf89a0d2d5e  # v0.6.1
+      - uses: femiwiki/terraform-github-tacos@8f1256319e23cb0a8266768b04255c953a84c559  # v0.7.0
         id: changes
         if: steps.scope.outputs.plan == 'true'
         with:
@@ -173,7 +161,7 @@ jobs:
             echo "::warning::applied, so the import and moved blocks above can go."
           fi
 
-      - uses: femiwiki/terraform-github-tacos@93b689a4ba03ba94ae09694ba7bd4cf89a0d2d5e  # v0.6.1
+      - uses: femiwiki/terraform-github-tacos@8f1256319e23cb0a8266768b04255c953a84c559  # v0.7.0
         if: always() && steps.plan.outcome != 'skipped'
         with:
           step: collapse
@@ -226,7 +214,7 @@ jobs:
           echo "::error::Dependabot's runs get no plan secrets. Approve the pull request to plan it."
           exit 1
 
-      - uses: femiwiki/terraform-github-tacos@93b689a4ba03ba94ae09694ba7bd4cf89a0d2d5e  # v0.6.1
+      - uses: femiwiki/terraform-github-tacos@8f1256319e23cb0a8266768b04255c953a84c559  # v0.7.0
         with:
           step: gate
           needs: ${{ toJSON(needs) }}
@@ -249,7 +237,7 @@ jobs:
     outputs:
       workspaces: ${{ steps.pending.outputs.workspaces }}
     steps:
-      - uses: femiwiki/terraform-github-tacos@93b689a4ba03ba94ae09694ba7bd4cf89a0d2d5e  # v0.6.1
+      - uses: femiwiki/terraform-github-tacos@8f1256319e23cb0a8266768b04255c953a84c559  # v0.7.0
         id: pending
         with:
           step: pending
@@ -299,7 +287,7 @@ jobs:
       pull-requests: write
       statuses: read
     steps:
-      - uses: femiwiki/terraform-github-tacos@93b689a4ba03ba94ae09694ba7bd4cf89a0d2d5e  # v0.6.1
+      - uses: femiwiki/terraform-github-tacos@8f1256319e23cb0a8266768b04255c953a84c559  # v0.7.0
         id: approver
         with:
           step: apply
@@ -537,7 +525,7 @@ jobs:
       deployments: read
       pull-requests: write
     steps:
-      - uses: femiwiki/terraform-github-tacos@93b689a4ba03ba94ae09694ba7bd4cf89a0d2d5e  # v0.6.1
+      - uses: femiwiki/terraform-github-tacos@8f1256319e23cb0a8266768b04255c953a84c559  # v0.7.0
         with:
           step: merge
           apply-before-merge: "true"
@@ -603,6 +591,6 @@ jobs:
               core.info(`${workspace}: posted the apply log`);
             }
 
-      - uses: femiwiki/terraform-github-tacos@93b689a4ba03ba94ae09694ba7bd4cf89a0d2d5e  # v0.6.1
+      - uses: femiwiki/terraform-github-tacos@8f1256319e23cb0a8266768b04255c953a84c559  # v0.7.0
         with:
           step: collapse
