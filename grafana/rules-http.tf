@@ -28,6 +28,8 @@ locals {
   successful_responses = trimspace(file("${path.module}/queries/site-down.promql"))
   server_errors        = trimspace(file("${path.module}/queries/server-errors.promql"))
   all_responses        = trimspace(file("${path.module}/queries/all-responses.promql"))
+  server_errors_2m     = trimspace(file("${path.module}/queries/server-errors-2m.promql"))
+  all_responses_2m     = trimspace(file("${path.module}/queries/all-responses-2m.promql"))
   busiest_network      = trimspace(file("${path.module}/queries/concentrated-refusals.logql"))
   history_refused      = trimspace(file("${path.module}/queries/history-refused.promql"))
   uncaught_exceptions  = trimspace(file("${path.module}/queries/uncaught-exceptions.promql"))
@@ -168,6 +170,86 @@ resource "grafana_rule_group" "femiwiki_http" {
         refId      = "D"
         type       = "math"
         expression = "($C > 10) && ($A > 50)"
+      })
+    }
+  }
+
+  rule {
+    name = "Most requests are failing"
+    for  = "1m"
+
+    condition      = "D"
+    no_data_state  = "OK"
+    exec_err_state = "OK"
+
+    labels = {
+      impact   = "readers"
+      severity = "critical"
+    }
+
+    annotations = {
+      summary          = "페미위키 요청 상당수가 오류로 끝나고 있습니다. 페이지가 안 열리면 잠시 뒤 다시 시도해 주세요."
+      description      = "최근 2분 동안 응답의 {{ printf \"%.0f\" $values.C.Value }}%가 5xx입니다. 5xx는 {{ printf \"%.0f\" $values.A.Value }}건입니다."
+      logs             = local.explore_urls.status
+      __dashboardUid__ = grafana_dashboard.availability.uid
+      __panelId__      = "1"
+    }
+
+    data {
+      ref_id         = "A"
+      datasource_uid = data.grafana_data_source.prometheus.uid
+      relative_time_range {
+        from = 120
+        to   = 0
+      }
+      model = jsonencode({
+        refId   = "A"
+        expr    = local.server_errors_2m
+        instant = true
+        range   = false
+      })
+    }
+
+    data {
+      ref_id         = "B"
+      datasource_uid = data.grafana_data_source.prometheus.uid
+      relative_time_range {
+        from = 120
+        to   = 0
+      }
+      model = jsonencode({
+        refId   = "B"
+        expr    = local.all_responses_2m
+        instant = true
+        range   = false
+      })
+    }
+
+    data {
+      ref_id         = "C"
+      datasource_uid = "__expr__"
+      relative_time_range {
+        from = 0
+        to   = 0
+      }
+      model = jsonencode({
+        refId      = "C"
+        type       = "math"
+        expression = "100 * $A / $B"
+      })
+    }
+
+    data {
+      ref_id         = "D"
+      datasource_uid = "__expr__"
+      relative_time_range {
+        from = 0
+        to   = 0
+      }
+      model = jsonencode({
+        refId      = "D"
+        type       = "math"
+        expression = "($C > 30) && ($A > 20)" # the week to 2026-10-11: outages 36-84%, all else under 3%
       })
     }
   }
