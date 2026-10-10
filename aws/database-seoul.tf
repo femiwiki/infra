@@ -15,11 +15,7 @@ data "aws_ami" "amazon_linux_2_arm64_seoul" {
 }
 
 locals {
-  # Replaced rather than patched: the next id replicates, then takes over.
-  # See femiwiki/femiwiki#578.
-  database_hosts = toset(["5"])
-
-  # The host the wiki writes to and the nightly dump reads
+  database_hosts   = toset(["5"])
   database_primary = "5"
 }
 
