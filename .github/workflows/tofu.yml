@@ -30,7 +30,7 @@ jobs:
       matrix:
         workspace: *workspaces
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: ${{ startsWith(matrix.workspace, 'docker') && 15 || 10 }}
     permissions:
       contents: read
       id-token: write
@@ -139,6 +139,37 @@ jobs:
             echo "::error::these would be replaced under the name they run as, so the apply fails: $same. Bump fastcgi_generation."
             exit 1
           fi
+
+      # LocalSettings.php and the hotfix as the new php-fpm will load them, so a
+      # constant or class the image lacks fails here rather than on every page (#1281)
+      - name: The new fastcgi container loads its settings
+        if: steps.scope.outputs.plan == 'true' && startsWith(matrix.workspace, 'docker')
+        env:
+          PLAN_JSON: ${{ steps.plan.outputs.json_plan_path }}
+        run: |
+          after=$(jq -c 'first(.resource_changes[]
+            | select(.type == "docker_container" and .name == "fastcgi" and (.change.actions | index("create"))))
+            | .change.after' "$PLAN_JSON")
+          if [ -z "$after" ]; then
+            echo "fastcgi is not replaced, so nothing new loads."
+            exit 0
+          fi
+          if [ "$(jq -r '.env | type' <<< "$after")" != array ]; then
+            echo "::error::the plan does not know the new fastcgi container's env, so its settings cannot be loaded."
+            exit 1
+          fi
+          image=$(jq -r .image <<< "$after")
+          args=()
+          while IFS= read -r -d '' kv; do
+            args+=(-e "$kv")
+          done < <(jq -j '.env[] + "\u0000"' <<< "$after")
+          docker pull -q "$image" > /dev/null
+          # shellcheck disable=SC2016
+          docker run --rm --network none "${args[@]}" --entrypoint bash "$image" -c '
+            [ -z "${MEDIAWIKI_HOTFIX_SNIPPET:-}" ] || printf "%s\n" "$MEDIAWIKI_HOTFIX_SNIPPET" > /etc/mediawiki/Hotfix.php
+            exec php /srv/femiwiki.com/maintenance/run.php getConfiguration \
+              --conf /etc/mediawiki/LocalSettings.php --settings wgVersion --format json
+          '
 
       - uses: femiwiki/terraform-github-tacos@8f1256319e23cb0a8266768b04255c953a84c559  # v0.7.0
         id: changes
