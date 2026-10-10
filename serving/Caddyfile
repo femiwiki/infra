@@ -362,8 +362,8 @@ femiwiki.com *.femiwiki.com 127.0.0.1:80 localhost:80 {
 			use_iam_provider true
 		}
 	}
-	# 429.html and 429.json are built from MediaWiki's own messages by 429.php;
-	# the page is English, the browser fetches its own language from the json
+	# 429.html is built by 429.php in the image: English, with the Korean text
+	# inline for a browser that asks for Korean
 	handle_errors 429 {
 		rewrite * /429.html
 		file_server {
