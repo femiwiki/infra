@@ -41,9 +41,8 @@ jobs:
         with:
           step: plan
           workspace: ${{ matrix.workspace }}
-          # serving/ holds the Caddyfile, Hotfix.php and robots.txt that every
-          # docker workspace renders into container environment variables, so a
-          # change there has to reach all of them, not just one region's.
+          # Every docker workspace renders serving/ (Caddyfile, Hotfix.php,
+          # robots.txt) into its containers, so a change there plans them all.
           shared-paths: |
             .github/actions/**
             ${{ startsWith(matrix.workspace, 'docker') && 'serving/**' || '' }}
