@@ -425,6 +425,7 @@ data "aws_iam_policy_document" "github_lambda" {
       aws_lambda_function.mastodon_discord.arn,
       aws_lambda_function.grafana_github.arn,
       aws_lambda_function.sns_discord.arn,
+      aws_lambda_function.bounce_handler.arn,
     ]
   }
 }
