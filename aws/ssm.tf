@@ -115,11 +115,11 @@ locals {
 }
 
 locals {
-  # Image age is its build time, so this also spares an image pulled for a
-  # deploy whose container is not created yet
-  prune_keep_hours = 24
+  # The image just pulled for a deploy is the newest, so it is kept even before
+  # its container exists
+  prune_keep_recent = 3
 
-  prune_images = replace(file("res/prune-docker-images.sh"), "__KEEP_HOURS__", local.prune_keep_hours)
+  prune_images = replace(file("res/prune-docker-images.sh"), "__KEEP_RECENT__", local.prune_keep_recent)
 }
 
 resource "aws_ssm_document" "prune_docker_images" {
@@ -132,7 +132,7 @@ resource "aws_ssm_document" "prune_docker_images" {
 
   content = jsonencode({
     schemaVersion = "2.2"
-    description   = "Remove the docker images and anonymous volumes no container uses, so deploys stop filling the root volume."
+    description   = "Keep the newest docker images and those containers use, and remove the rest with any orphaned anonymous volumes, so deploys stop filling the root volume."
     mainSteps = [{
       action = "aws:runShellScript"
       name   = "pruneDockerImages"

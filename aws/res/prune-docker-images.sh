@@ -1,9 +1,16 @@
 #!/bin/bash
 set -euo pipefail
 
-# Images a container uses are never touched by prune. An older image to roll
-# back to is pulled again from ghcr.io; see #1215 for why only a day is kept.
-docker image prune --all --force --filter until=__KEEP_HOURS__h
+# Keep the newest tags of each repository. rm refuses an image a container
+# uses, so the running one and a rollback target stay whatever their age.
+for repository in $(docker image ls | awk 'NR > 1 && $1 != "<none>" { print $1 }' | sort -u); do
+  docker image ls "$repository" |
+    awk -v keep=__KEEP_RECENT__ 'NR > 1 + keep && $2 != "<none>" { print $1 ":" $2 }' |
+    while read -r image; do
+      docker image rm "$image" || true
+    done
+done
+docker image prune --force
 
 # A replaced container can leave its anonymous volume behind, which for the
 # fastcgi image is a localisation cache that grew to 1.8 GB. Only anonymous
