@@ -56,8 +56,7 @@ resource "docker_container" "http" {
       FW_RATE_LIMIT_S3_HOST   = data.terraform_remote_state.aws.outputs.rate_limit_s3_host,
       FW_RATE_LIMIT_S3_BUCKET = data.terraform_remote_state.aws.outputs.rate_limit_bucket,
 
-      # CloudFront's origin-facing ranges, for trusted_proxies. When AWS changes them:
-      # curl -s https://ip-ranges.amazonaws.com/ip-ranges.json | jq -r '.prefixes[] | select(.service == "CLOUDFRONT_ORIGIN_FACING") | .ip_prefix' | sort -uV
+      # Used only when Caddy cannot fetch CloudFront's ranges from AWS at start
       FW_TRUSTED_PROXIES = join(" ", split("\n", trimspace(file("../serving/cloudfront-origin-facing.txt")))),
 
       # Route 53's health checker ranges, let through the special_pages zone. When AWS changes them:
