@@ -19,7 +19,9 @@
 	# straight to the box keeps its connection address. See femiwiki#639.
 	servers {
 		metrics
-		trusted_proxies static {$FW_TRUSTED_PROXIES}
+		trusted_proxies cloudfront {
+			fallback {$FW_TRUSTED_PROXIES}
+		}
 		trusted_proxies_strict
 	}
 }
