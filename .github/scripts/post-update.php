@@ -40,13 +40,16 @@ function category( string $heading ): string {
 	return TYPES[$heading] ?? ( preg_match( '/^[A-Za-z][A-Za-z -]*$/', $heading ) ? '내부 변화' : $heading );
 }
 
-/** The lines of the blocks as [category, line] pairs, a line's own (분류) prefix winning over its heading */
+/** The lines of the blocks as [category, line, sub-items] triples, a line's own (분류) prefix winning over its heading */
 function items( array $blocks ): array {
 	$items = [];
 	$category = null;
 	foreach ( explode( "\n", implode( "\n", $blocks ) ) as $line ) {
 		if ( preg_match( '/^=+\h*(.*?)\h*=+\h*$/u', $line, $m ) ) {
 			$category = category( $m[1] );
+		} elseif ( $items && preg_match( '/^\*\*/u', trim( $line ) ) ) {
+			// A sub-item stays under the line above it rather than counting as a line of its own
+			$items[count( $items ) - 1][2][] = trim( $line );
 		} elseif ( trim( $line ) !== '' ) {
 			$line = preg_replace( '/^\*\h*/u', '', trim( $line ) );
 			// A bot bump line names the extension and commit it came with, which the linked PR already tells
@@ -55,8 +58,8 @@ function items( array $blocks ): array {
 			$line = preg_replace( '/\[(https:\/\/\S+)\h+#\d+\]/u', '[$1]', $line );
 			$line = preg_replace( '/\.(?=\h*(\[https:\/\/\S+\])?$)/u', '', $line );
 			$items[] = preg_match( '/^\((' . implode( '|', CATEGORIES ) . ')\)\h*(.*)$/u', $line, $m )
-				? [ $m[1], $m[2] ]
-				: [ $category, $line ];
+				? [ $m[1], $m[2], [] ]
+				: [ $category, $line, [] ];
 		}
 	}
 	return $items;
@@ -77,8 +80,9 @@ function rank( ?string $category ): int {
  */
 function layout( array $items ): string {
 	usort( $items, fn ( $a, $b ) => rank( $a[0] ) <=> rank( $b[0] ) );
-	$prefixed = fn ( $item ) => ( $item[0] === null ? '' : "($item[0]) " ) . $item[1];
-	if ( count( $items ) === 1 ) {
+	$subs = fn ( $item ) => implode( '', array_map( fn ( $sub ) => "\n$sub", $item[2] ) );
+	$prefixed = fn ( $item ) => ( $item[0] === null ? '' : "($item[0]) " ) . $item[1] . $subs( $item );
+	if ( count( $items ) === 1 && !$items[0][2] ) {
 		return $prefixed( $items[0] );
 	}
 	$categories = array_unique( array_column( $items, 0 ) );
@@ -87,7 +91,7 @@ function layout( array $items ): string {
 	}
 	$sections = [];
 	foreach ( $categories as $category ) {
-		$lines = array_map( fn ( $item ) => "*$item[1]", array_filter( $items, fn ( $item ) => $item[0] === $category ) );
+		$lines = array_map( fn ( $item ) => "*$item[1]" . $subs( $item ), array_filter( $items, fn ( $item ) => $item[0] === $category ) );
 		$sections[] = ( $category === null ? '' : "====$category====\n\n" ) . implode( "\n", $lines );
 	}
 	return implode( "\n\n", $sections );
