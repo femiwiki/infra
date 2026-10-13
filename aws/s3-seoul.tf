@@ -69,6 +69,26 @@ data "aws_iam_policy_document" "uploads_seoul" {
       for prefix in local.uploads_public_prefixes : "${aws_s3_bucket.uploads_seoul.arn}/${prefix}"
     ]
   }
+
+  statement {
+    sid     = "CloudFrontReadOfThePublicZones"
+    actions = ["s3:GetObject"]
+
+    principals {
+      type        = "Service"
+      identifiers = ["cloudfront.amazonaws.com"]
+    }
+
+    resources = [
+      for prefix in local.uploads_public_prefixes : "${aws_s3_bucket.uploads_seoul.arn}/${prefix}"
+    ]
+
+    condition {
+      test     = "StringEquals"
+      variable = "AWS:SourceArn"
+      values   = [aws_cloudfront_distribution.uploads.arn]
+    }
+  }
 }
 
 # The stash is transient and nothing has ever emptied it: the Tokyo temp bucket
