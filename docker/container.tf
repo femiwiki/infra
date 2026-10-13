@@ -134,6 +134,9 @@ resource "docker_container" "fastcgi" {
       MEDIAWIKI_SKIP_UPDATE       = "1"
       MEDIAWIKI_HOTFIX_SNIPPET    = file("../serving/Hotfix.php")
 
+      FW_JOB_TYPES_OFF_DEFAULT_QUEUE = ""
+      FW_JOB_SLOW_TYPES              = ""
+
       FW_PROFILER = "excimer"
       # Every request is instrumented, so nothing slow can be missed, but only
       # the ones past the threshold are written. Excimer samples on a timer, so
