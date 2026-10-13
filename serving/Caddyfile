@@ -299,8 +299,6 @@ femiwiki.com *.femiwiki.com 127.0.0.1:80 localhost:80 {
 				path /api.php*
 				vars_regexp {query} {$FW_API_QUERY:(^|&)action=flow(&|$)|(^|&)inprop=watchers|(^|&)prop=linkshere}
 				not header Cookie *femiwikiUserID=*
-				# The Flow to wikitext export; drop once Flow is converted.
-				not header User-Agent FemiwikiFlowExport/*
 				import botlike
 			}
 			key botlike_api
