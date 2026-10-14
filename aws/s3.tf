@@ -163,9 +163,7 @@ resource "aws_s3_bucket_public_access_block" "backups" {
 # Terraform state
 #
 
-# State moves from tfstate (Tokyo) to state (Seoul) one root at a time, so the
-# roles grant both buckets until every backend reads Seoul. See
-# femiwiki/femiwiki#666.
+# Roles grant both buckets until every backend reads state (femiwiki/femiwiki#666).
 locals {
   tfstate_buckets = [aws_s3_bucket.tfstate.arn, aws_s3_bucket.state.arn]
 }
