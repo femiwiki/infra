@@ -8,8 +8,18 @@ terraform {
     use_lockfile = true
   }
 
-  # Only to read the aws outputs; this state itself stays unencrypted.
   encryption {
+    # "grafana" is this state's and is never renamed.
+    key_provider "pbkdf2" "grafana" {
+      passphrase = var.state_passphrase
+    }
+
+    method "aes_gcm" "grafana" {
+      keys = key_provider.pbkdf2.grafana
+    }
+
+    method "unencrypted" "migrate" {}
+
     # Same names as in aws/base.tf, which the stored key metadata is filed under.
     key_provider "pbkdf2" "state" {
       passphrase = var.aws_state_passphrase
@@ -22,6 +32,22 @@ terraform {
     remote_state_data_sources {
       remote_state_data_source "aws" {
         method = method.aes_gcm.state
+      }
+    }
+
+    state {
+      method = method.aes_gcm.grafana
+
+      fallback {
+        method = method.unencrypted.migrate
+      }
+    }
+
+    plan {
+      method = method.aes_gcm.grafana
+
+      fallback {
+        method = method.unencrypted.migrate
       }
     }
   }
