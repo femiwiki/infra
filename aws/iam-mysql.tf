@@ -40,19 +40,19 @@ data "aws_iam_policy_document" "infra_mysql" {
   statement {
     sid       = "State"
     actions   = ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"]
-    resources = ["${aws_s3_bucket.tfstate.arn}/mysql/terraform.tfstate*"]
+    resources = [for b in local.tfstate_buckets : "${b}/mysql/terraform.tfstate*"]
   }
 
   statement {
     sid       = "ReadAwsOutputs"
     actions   = ["s3:GetObject"]
-    resources = ["${aws_s3_bucket.tfstate.arn}/aws/terraform.tfstate"]
+    resources = [for b in local.tfstate_buckets : "${b}/aws/terraform.tfstate"]
   }
 
   statement {
     sid       = "StateBucket"
     actions   = ["s3:ListBucket"]
-    resources = [aws_s3_bucket.tfstate.arn]
+    resources = local.tfstate_buckets
   }
 
   statement {
