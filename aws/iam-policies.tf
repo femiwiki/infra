@@ -511,7 +511,7 @@ data "aws_iam_policy_document" "iac" {
 data "aws_iam_policy_document" "infra_grafana" {
   statement {
     actions   = ["s3:ListBucket"]
-    resources = [aws_s3_bucket.tfstate.arn]
+    resources = local.tfstate_buckets
 
     condition {
       test     = "StringLike"
@@ -526,20 +526,20 @@ data "aws_iam_policy_document" "infra_grafana" {
       "s3:PutObject",
       "s3:DeleteObject",
     ]
-    resources = ["${aws_s3_bucket.tfstate.arn}/grafana/*"]
+    resources = [for b in local.tfstate_buckets : "${b}/grafana/*"]
   }
 
   # For the grafana-github function URL in the aws outputs.
   statement {
     actions   = ["s3:GetObject"]
-    resources = ["${aws_s3_bucket.tfstate.arn}/aws/terraform.tfstate"]
+    resources = [for b in local.tfstate_buckets : "${b}/aws/terraform.tfstate"]
   }
 }
 
 data "aws_iam_policy_document" "infra_healthchecks" {
   statement {
     actions   = ["s3:ListBucket"]
-    resources = [aws_s3_bucket.tfstate.arn]
+    resources = local.tfstate_buckets
 
     condition {
       test     = "StringLike"
@@ -554,7 +554,7 @@ data "aws_iam_policy_document" "infra_healthchecks" {
       "s3:PutObject",
       "s3:DeleteObject",
     ]
-    resources = ["${aws_s3_bucket.tfstate.arn}/healthchecks/*"]
+    resources = [for b in local.tfstate_buckets : "${b}/healthchecks/*"]
   }
 }
 

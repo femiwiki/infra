@@ -81,7 +81,7 @@ data "aws_iam_policy_document" "infra_aws_plan" {
   statement {
     sid       = "StateLock"
     actions   = ["s3:PutObject", "s3:DeleteObject"]
-    resources = ["${aws_s3_bucket.tfstate.arn}/aws/terraform.tfstate.tflock"]
+    resources = [for b in local.tfstate_buckets : "${b}/aws/terraform.tfstate.tflock"]
   }
 
   # ReadOnlyAccess leaves out BCM Data Exports.

@@ -40,25 +40,25 @@ data "aws_iam_policy_document" "infra_docker" {
   statement {
     sid       = "State"
     actions   = ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"]
-    resources = ["${aws_s3_bucket.tfstate.arn}/docker/terraform.tfstate*"]
+    resources = [for b in local.tfstate_buckets : "${b}/docker/terraform.tfstate*"]
   }
 
   statement {
     sid       = "ReadAwsOutputs"
     actions   = ["s3:GetObject"]
-    resources = ["${aws_s3_bucket.tfstate.arn}/aws/terraform.tfstate"]
+    resources = [for b in local.tfstate_buckets : "${b}/aws/terraform.tfstate"]
   }
 
   statement {
     sid       = "ReadGcpOutputs"
     actions   = ["s3:GetObject"]
-    resources = ["${aws_s3_bucket.tfstate.arn}/gcp/terraform.tfstate"]
+    resources = [for b in local.tfstate_buckets : "${b}/gcp/terraform.tfstate"]
   }
 
   statement {
     sid       = "StateBucket"
     actions   = ["s3:ListBucket"]
-    resources = [aws_s3_bucket.tfstate.arn]
+    resources = local.tfstate_buckets
   }
 
   statement {
