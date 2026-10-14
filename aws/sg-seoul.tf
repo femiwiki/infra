@@ -124,3 +124,34 @@ resource "aws_vpc_security_group_ingress_rule" "instance_connect_seoul" {
   to_port           = 22
   cidr_ipv4         = "13.209.1.56/29"
 }
+
+# Empty, so anything launched without a group gets no network access (#1277)
+import {
+  to = aws_default_security_group.vpc
+  id = "sg-054ba860b1515c724"
+}
+
+resource "aws_default_security_group" "vpc" {
+  region  = local.seoul_region
+  vpc_id  = aws_vpc.seoul.id
+  ingress = []
+  egress  = []
+}
+
+# The region's default VPC, which nothing uses
+data "aws_vpc" "default" {
+  region  = local.seoul_region
+  default = true
+}
+
+import {
+  to = aws_default_security_group.default_vpc
+  id = "sg-40f2a829"
+}
+
+resource "aws_default_security_group" "default_vpc" {
+  region  = local.seoul_region
+  vpc_id  = data.aws_vpc.default.id
+  ingress = []
+  egress  = []
+}
