@@ -40,18 +40,18 @@ data "aws_iam_policy_document" "infra_gcp" {
   statement {
     sid       = "State"
     actions   = ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"]
-    resources = ["${aws_s3_bucket.tfstate.arn}/gcp/terraform.tfstate*"]
+    resources = [for b in local.tfstate_buckets : "${b}/gcp/terraform.tfstate*"]
   }
 
   statement {
     sid       = "StateBucket"
     actions   = ["s3:ListBucket"]
-    resources = [aws_s3_bucket.tfstate.arn]
+    resources = local.tfstate_buckets
   }
 
   statement {
     sid       = "AwsOutputs"
     actions   = ["s3:GetObject"]
-    resources = ["${aws_s3_bucket.tfstate.arn}/aws/terraform.tfstate"]
+    resources = [for b in local.tfstate_buckets : "${b}/aws/terraform.tfstate"]
   }
 }
