@@ -163,6 +163,11 @@ resource "aws_s3_bucket_public_access_block" "backups" {
 # Terraform state
 #
 
+# Roles grant both buckets until every backend reads state (femiwiki/femiwiki#666).
+locals {
+  tfstate_buckets = [aws_s3_bucket.tfstate.arn, aws_s3_bucket.state.arn]
+}
+
 resource "aws_s3_bucket" "tfstate" {
   region           = local.tokyo_region
   bucket           = "tfstate-${data.aws_caller_identity.current.account_id}-${local.tokyo_region}-an"
@@ -201,6 +206,94 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "tfstate" {
 resource "aws_s3_bucket_lifecycle_configuration" "tfstate" {
   region = local.tokyo_region
   bucket = aws_s3_bucket.tfstate.id
+
+  dynamic "rule" {
+    for_each = ["grafana"]
+
+    content {
+      status = "Enabled"
+      id     = "Expire the ${rule.value} state lock's old versions"
+
+      filter {
+        prefix = "${rule.value}/terraform.tfstate.tflock"
+      }
+
+      noncurrent_version_expiration {
+        noncurrent_days = 1
+      }
+
+      expiration {
+        expired_object_delete_marker = true
+      }
+    }
+  }
+}
+
+resource "aws_s3_bucket" "state" {
+  region           = local.seoul_region
+  bucket           = "tfstate-${data.aws_caller_identity.current.account_id}-${local.seoul_region}-an"
+  bucket_namespace = "account-regional"
+}
+
+resource "aws_s3_bucket_public_access_block" "state" {
+  region = local.seoul_region
+  bucket = aws_s3_bucket.state.id
+
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
+resource "aws_s3_bucket_policy" "state" {
+  region = local.seoul_region
+  bucket = aws_s3_bucket.state.id
+  policy = data.aws_iam_policy_document.state_bucket.json
+}
+
+data "aws_iam_policy_document" "state_bucket" {
+  statement {
+    sid     = "DenyPlainHttp"
+    effect  = "Deny"
+    actions = ["s3:*"]
+
+    principals {
+      type        = "AWS"
+      identifiers = ["*"]
+    }
+
+    resources = [aws_s3_bucket.state.arn, "${aws_s3_bucket.state.arn}/*"]
+
+    condition {
+      test     = "Bool"
+      variable = "aws:SecureTransport"
+      values   = ["false"]
+    }
+  }
+}
+
+resource "aws_s3_bucket_versioning" "state" {
+  region = local.seoul_region
+  bucket = aws_s3_bucket.state.id
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "state" {
+  region = local.seoul_region
+  bucket = aws_s3_bucket.state.id
+
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm = "AES256"
+    }
+  }
+}
+
+resource "aws_s3_bucket_lifecycle_configuration" "state" {
+  region = local.seoul_region
+  bucket = aws_s3_bucket.state.id
 
   dynamic "rule" {
     for_each = ["grafana"]
