@@ -44,9 +44,12 @@ data "aws_iam_policy_document" "infra_mysql" {
   }
 
   statement {
-    sid       = "ReadAwsOutputs"
-    actions   = ["s3:GetObject"]
-    resources = [for b in local.tfstate_buckets : "${b}/aws/terraform.tfstate"]
+    sid     = "ReadPasswords"
+    actions = ["ssm:GetParameter"]
+    resources = [
+      for user in ["tofu", "mediawiki"] :
+      "arn:aws:ssm:${local.seoul_region}:${data.aws_caller_identity.current.account_id}:parameter/mysql/users/${user}/password"
+    ]
   }
 
   statement {
