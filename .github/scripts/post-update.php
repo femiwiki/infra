@@ -7,12 +7,21 @@
 // Environment: GH_TOKEN, WIKI_DEPLOY_BOT_USER, WIKI_DEPLOY_BOT_PASSWORD (the last two not needed with --dry-run),
 // and APPLIED_AT to head a late post with an earlier time: a time in Asia/Seoul, or empty for when the PR merged
 
-const WIKI_API = 'https://femiwiki.com/api.php';
+define( 'WIKI_API', getenv( 'WIKI_API' ) ?: 'https://femiwiki.com/api.php' );
 
+/** Exit 1, and on Actions say on the run which pull request to post again with the post update workflow */
 function fail( string $message ): never {
+	global $repo, $number;
 	fwrite( STDERR, "$message\n" );
+	if ( getenv( 'GITHUB_ACTIONS' ) && isset( $number ) ) {
+		$workflow = getenv( 'GITHUB_SERVER_URL' ) . "/$repo/actions/workflows/post-update.yml";
+		echo "::error::the update note of #$number was not posted: " . strtok( $message, "\n" ) . "\n";
+		file_put_contents( getenv( 'GITHUB_STEP_SUMMARY' ) ?: '/dev/null', "The update note of #$number was not posted: "
+			. strtok( $message, "\n" ) . ". Once the wiki takes edits, run [post update]($workflow) with `pr` $number.\n", FILE_APPEND );
+	}
 	exit( 1 );
 }
+set_exception_handler( fn ( Throwable $e ) => fail( $e->getMessage() ) );
 
 function gh( string $path ): array {
 	$json = shell_exec( 'gh api ' . escapeshellarg( $path ) );
@@ -154,7 +163,8 @@ function wiki( array $params ): array {
 		CURLOPT_USERAGENT => 'femiwiki/infra post-update',
 		CURLOPT_POSTFIELDS => http_build_query( $params + [ 'format' => 'json', 'formatversion' => 2 ] ),
 	] );
-	$result = json_decode( curl_exec( $ch ) ?: fail( WIKI_API . ': ' . curl_error( $ch ) ), true );
+	$result = json_decode( curl_exec( $ch ) ?: fail( WIKI_API . ': ' . curl_error( $ch ) ), true )
+		?? fail( WIKI_API . ': HTTP ' . curl_getinfo( $ch, CURLINFO_RESPONSE_CODE ) . ', not JSON' );
 	if ( isset( $result['error'] ) ) {
 		fail( WIKI_API . ': ' . $result['error']['info'] );
 	}
