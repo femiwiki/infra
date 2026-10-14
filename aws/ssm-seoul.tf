@@ -57,3 +57,17 @@ resource "aws_ssm_parameter" "secret_seoul" {
     ignore_changes = [value]
   }
 }
+
+resource "random_password" "mysql_tofu" {
+  length  = 32
+  special = false
+}
+
+# Read by the mysql workspace to log in, and by a new database host to create
+# the account.
+resource "aws_ssm_parameter" "mysql_tofu_password" {
+  region = local.seoul_region
+  name   = "/mysql/users/tofu/password"
+  type   = "SecureString"
+  value  = random_password.mysql_tofu.result
+}
