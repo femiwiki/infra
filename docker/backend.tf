@@ -8,8 +8,19 @@ terraform {
     use_lockfile = true
   }
 
-  # Only to read the aws and gcp outputs, under aws/base.tf's and gcp/base.tf's names
+  # The aws and gcp key names are theirs, under which their states file the key
+  # metadata. "docker" is this state's and is never renamed.
   encryption {
+    key_provider "pbkdf2" "docker" {
+      passphrase = var.state_passphrase
+    }
+
+    method "aes_gcm" "docker" {
+      keys = key_provider.pbkdf2.docker
+    }
+
+    method "unencrypted" "migrate" {}
+
     key_provider "pbkdf2" "state" {
       passphrase = var.aws_state_passphrase
     }
@@ -33,6 +44,22 @@ terraform {
 
       remote_state_data_source "gcp" {
         method = method.aes_gcm.gcp
+      }
+    }
+
+    state {
+      method = method.aes_gcm.docker
+
+      fallback {
+        method = method.unencrypted.migrate
+      }
+    }
+
+    plan {
+      method = method.aes_gcm.docker
+
+      fallback {
+        method = method.unencrypted.migrate
       }
     }
   }
