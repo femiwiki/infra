@@ -322,8 +322,6 @@ jobs:
         with:
           step: apply
           apply-before-merge: "true"
-          # A plan from a branch behind main matches its own re-plan, so
-          # applying it undoes what main applied since (#1298)
           require-up-to-date: "true"
           workspace: ${{ matrix.workspace }}
 
