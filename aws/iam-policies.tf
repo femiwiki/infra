@@ -467,6 +467,7 @@ data "aws_iam_policy_document" "iac" {
       "bcm-data-exports:*",
       "budgets:*",
       "cloudfront:*",
+      "cloudtrail:*",
       "cloudwatch:*",
       "cur:*",
       "ec2:*",
