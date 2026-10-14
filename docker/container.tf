@@ -43,7 +43,6 @@ resource "docker_container" "http" {
       FW_EXPENSIVE_EVENTS    = "60",
       FW_EXPENSIVE_IP_EVENTS = "15",
 
-      FW_LOG_EXCLUDE      = "http.handlers.mwcache",
       FW_CADDYFILE        = file("../serving/Caddyfile"),
       FW_ROBOTS_TXT       = file("../serving/robots.txt"),
       FW_DEAD_URLS        = join("\n", [for l in split("\n", file("../serving/dead-urls.txt")) : l if trimspace(l) != "" && !startswith(l, "#")]),
