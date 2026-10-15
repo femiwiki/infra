@@ -153,6 +153,12 @@ resource "docker_container" "fastcgi" {
         "www.gstatic.com",        # 위젯:구글 통계 and 위젯:인기있는 문서
       ])
 
+      # MediaWiki globals LocalSettings applies after its defaults. See femiwiki#691.
+      FW_SETTINGS = jsonencode({
+        # Naver Search Advisor's public HTML tag key for femiwiki@naver.com
+        wgNaverSiteVerificationKey = "8e17c8c264cfe03530591213361fe53c765056d3"
+      })
+
       WG_BOUNCE_HANDLER_INTERNAL_IPS = "10.20.0.0/16"
       WG_CDN_SERVERS                 = "127.0.0.1:80"
       WG_INTERNAL_SERVER             = "http://127.0.0.1:80"
