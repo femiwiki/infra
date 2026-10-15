@@ -461,6 +461,7 @@ data "aws_iam_policy_document" "femiwiki_github_io" {
 data "aws_iam_policy_document" "iac" {
   statement {
     actions = [
+      "access-analyzer:*",
       "acm:*",
       "athena:*",
       "autoscaling:*",
