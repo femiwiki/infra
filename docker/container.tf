@@ -1,7 +1,7 @@
 resource "docker_container" "http" {
   name         = "http-${local.fastcgi_generation}"
   log_driver   = "local"
-  image        = "ghcr.io/femiwiki/femiwiki:2026-10-14T21-10-ce857ec1"
+  image        = "ghcr.io/femiwiki/femiwiki:2026-10-15T16-19-4e53103f"
   command      = ["caddy-run"]
   restart      = "always"
   network_mode = "host"
@@ -87,7 +87,7 @@ resource "docker_container" "http" {
 resource "docker_container" "fastcgi" {
   name         = "fastcgi-${local.fastcgi_generation}"
   log_driver   = "local"
-  image        = "ghcr.io/femiwiki/femiwiki:2026-10-14T21-10-ce857ec1"
+  image        = "ghcr.io/femiwiki/femiwiki:2026-10-15T16-19-4e53103f"
   network_mode = "host"
   restart      = "always"
   memory       = 768
@@ -152,6 +152,12 @@ resource "docker_container" "fastcgi" {
         "cdn.jsdelivr.net",       # WidgetBot's crate for the discord-widget gadget
         "www.gstatic.com",        # 위젯:구글 통계 and 위젯:인기있는 문서
       ])
+
+      # MediaWiki globals LocalSettings applies after its defaults. See femiwiki#691.
+      FW_SETTINGS = jsonencode({
+        # Naver Search Advisor's public HTML tag key for femiwiki@naver.com
+        wgNaverSiteVerificationKey = "8e17c8c264cfe03530591213361fe53c765056d3"
+      })
 
       WG_BOUNCE_HANDLER_INTERNAL_IPS = "10.20.0.0/16"
       WG_CDN_SERVERS                 = "127.0.0.1:80"
