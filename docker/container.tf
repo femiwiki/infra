@@ -244,10 +244,31 @@ resource "docker_container" "memcached" {
     value = "true"
   }
 
+  healthcheck {
+    test     = terraform_data.memcached_healthcheck.input.test
+    interval = terraform_data.memcached_healthcheck.input.interval
+    timeout  = terraform_data.memcached_healthcheck.input.timeout
+    retries  = terraform_data.memcached_healthcheck.input.retries
+  }
+
   ulimit {
     hard = 65536
     name = "nofile"
     soft = 32768
+  }
+
+  lifecycle {
+    replace_triggered_by = [terraform_data.memcached_healthcheck]
+  }
+}
+
+# The provider plans a changed healthcheck as an in-place update that never reaches the container
+resource "terraform_data" "memcached_healthcheck" {
+  input = {
+    test     = ["CMD-SHELL", "printf 'version\\r\\n' | nc -w 2 127.0.0.1 11211 | grep -q '^VERSION'"]
+    interval = "30s"
+    timeout  = "5s"
+    retries  = 3
   }
 }
 
