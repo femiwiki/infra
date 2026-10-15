@@ -136,7 +136,7 @@ resource "grafana_rule_group" "femiwiki_jobs" {
     }
 
     annotations = {
-      summary = "검색엔진이 읽는 방식 그대로 사이트맵 색인을 가져오는 데 실패했습니다. robots.txt가 가리키는 주소가 XML이 아니거나 목록이 비어 있다는 뜻입니다. 작업이 파일을 만들어도 그 경로를 내주지 않으면 이렇게 됩니다."
+      summary = "검색엔진이 읽는 방식 그대로 사이트맵 색인을 가져오는 데 실패했습니다. robots.txt가 가리키는 주소가 XML이 아니거나 목록이 비어 있다는 뜻입니다. `$wgSitemapApiConfig`가 꺼지거나 site/v1 경로가 빠지면 이렇게 됩니다."
     }
 
     data {
@@ -152,7 +152,7 @@ resource "grafana_rule_group" "femiwiki_jobs" {
         source        = "url"
         format        = "table"
         parser        = "backend"
-        url           = "https://femiwiki.com/sitemap/sitemap-index-femiwiki.xml"
+        url           = "https://femiwiki.com/rest.php/site/v1/sitemap/0"
         url_options   = { method = "GET" }
         root_selector = "sitemapindex.sitemap"
 
