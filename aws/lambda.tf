@@ -271,6 +271,20 @@ resource "aws_lambda_permission" "sns_discord_seoul" {
   source_arn    = aws_sns_topic.cloudwatch_alarms.arn
 }
 
+resource "aws_sns_topic_subscription" "sns_discord_ok" {
+  topic_arn = aws_sns_topic.cloudwatch_ok.arn
+  protocol  = "lambda"
+  endpoint  = aws_lambda_function.sns_discord.arn
+}
+
+resource "aws_lambda_permission" "sns_discord_ok" {
+  statement_id  = "AllowSNSOk"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.sns_discord.function_name
+  principal     = "sns.amazonaws.com"
+  source_arn    = aws_sns_topic.cloudwatch_ok.arn
+}
+
 resource "aws_lambda_function" "bounce_handler" {
   function_name = "bounce-handler"
   description   = "Hands SES permanent bounces to MediaWiki's BounceHandler API. Code: femiwiki/lambda."
