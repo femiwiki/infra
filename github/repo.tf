@@ -299,7 +299,7 @@ resource "github_repository_file" "status_index" {
 
 # An apply waits in its workspace's environment until a Deployer approves it
 module "tacos" {
-  source = "github.com/femiwiki/terraform-github-tacos?ref=v0.2.3"
+  source = "github.com/femiwiki/terraform-github-tacos?ref=v0.5.0"
 
   repository     = module.infra.name
   environments   = ["aws", "docker", "gcp", "github", "grafana", "healthchecks", "mariadb"]
