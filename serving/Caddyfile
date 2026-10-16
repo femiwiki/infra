@@ -276,15 +276,12 @@ femiwiki.com *.femiwiki.com 127.0.0.1:80 localhost:80 {
 			events {$FW_CRAWLER_LEAN_EVENTS:10}
 			window {$FW_CRAWLER_LEAN_WINDOW:10m}
 		}
-		# Searches, diffs, old revisions and page history from a faked browser.
-		# One bucket for all of them, so a reader the signature misreads is
-		# refused only while crawlers are spending it, where a 403 refused them
-		# always. A plain article read arrives here rewritten to /index.php
-		# with no query and never counts. See femiwiki#523 and #586.
+		# Diffs, old revisions and history from a faked browser, site-wide. Search is
+		# left to search_per_ip: the signature misreads some readers' browsers (#1254).
 		zone botlike_expensive {
 			match {
 				path /index.php*
-				vars_regexp {query} {$FW_EXPENSIVE_QUERY:(^|&)(search|diff|direction|oldid)=|(^|&)action=(history|info)(&|$)}
+				vars_regexp {query} {$FW_EXPENSIVE_QUERY:(^|&)(diff|direction|oldid)=|(^|&)action=(history|info)(&|$)}
 				not header Cookie *femiwikiUserID=*
 				import botlike
 			}
