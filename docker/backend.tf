@@ -19,8 +19,6 @@ terraform {
       keys = key_provider.pbkdf2.docker
     }
 
-    method "unencrypted" "migrate" {}
-
     key_provider "pbkdf2" "state" {
       passphrase = var.aws_state_passphrase
     }
@@ -48,19 +46,13 @@ terraform {
     }
 
     state {
-      method = method.aes_gcm.docker
-
-      fallback {
-        method = method.unencrypted.migrate
-      }
+      method   = method.aes_gcm.docker
+      enforced = true
     }
 
     plan {
-      method = method.aes_gcm.docker
-
-      fallback {
-        method = method.unencrypted.migrate
-      }
+      method   = method.aes_gcm.docker
+      enforced = true
     }
   }
 
