@@ -181,6 +181,16 @@ GRANT RELOAD, PROCESS ON *.* TO '$MEDIAWIKI_USER'@'%';
 GRANT ALL PRIVILEGES ON femiwiki.* TO '$MEDIAWIKI_USER'@'%';
 SQL
 
+  # The account the mariadb workspace logs in as, over an SSM port forward that
+  # arrives on 127.0.0.1.
+  TOFU_PASSWORD="$(aws ssm get-parameter --name /mysql/users/tofu/password --with-decryption --query Parameter.Value --output text)"
+  mysql -uroot <<SQL
+CREATE USER 'tofu'@'127.0.0.1' IDENTIFIED BY '$TOFU_PASSWORD';
+GRANT RELOAD, PROCESS, CREATE USER ON *.* TO 'tofu'@'127.0.0.1' WITH GRANT OPTION;
+GRANT ALL PRIVILEGES ON femiwiki.* TO 'tofu'@'127.0.0.1' WITH GRANT OPTION;
+GRANT SELECT ON mysql.* TO 'tofu'@'127.0.0.1';
+SQL
+
   #
   # Restore the newest backup, so that replacing this host is the restore. Only
   # a fresh volume reaches here, so there is nothing to overwrite.
