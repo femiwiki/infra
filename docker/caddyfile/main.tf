@@ -25,6 +25,7 @@ locals {
     ["MWO인증", "OAuth", "MWOAuth"],
     ["파일경로", "그림경로", "FilePath"],
     ["넘겨주기", "Redirect"],
+    ["내언어", "MyLanguage"],
     ["로그아웃", "사용자로그아웃", "UserLogout", "Logout"],
   ]
 

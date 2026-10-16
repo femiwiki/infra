@@ -127,15 +127,8 @@ femiwiki.com *.femiwiki.com 127.0.0.1:80 localhost:80 {
 			events {$FW_EXPENSIVE_IP_EVENTS:100}
 			window {$FW_EXPENSIVE_IP_WINDOW:10m}
 		}
-		# A reader searching is not a crawler following links, and sharing one
-		# bucket with them meant the wiki stopped answering searches for hours:
-		# with a scrape running, two logged-out searches in three were refused
-		# and one in nine returned results. Counted per /24, the busiest network
-		# searching was a person at fifteen an hour, ten of them inside one ten
-		# minute window, and every other /24 sat at four or below, so thirty
-		# leaves a person three times the room they use while a scraper working
-		# out of one network still runs out. A search that also carries the bot
-		# signature keeps its shared cap in botlike_expensive below.
+		# Searches from anyone not logged in, per /24: the busiest person searched 15 an
+		# hour, so 30 leaves room while a scraper in one network runs out. See #1254.
 		zone search_per_ip {
 			import search_requests
 			key {client_ip}
