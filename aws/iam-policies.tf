@@ -356,17 +356,6 @@ data "aws_iam_policy_document" "write_mysql_root_password" {
     actions   = ["ssm:PutParameter"]
     resources = [for region in local.parameter_store_regions : "arn:aws:ssm:${region}:${data.aws_caller_identity.current.account_id}:parameter/mysql/servers/*/root/password"]
   }
-
-  statement {
-    actions   = ["kms:Encrypt", "kms:GenerateDataKey"]
-    resources = ["*"]
-
-    condition {
-      test     = "StringEquals"
-      variable = "kms:ViaService"
-      values   = ["ssm.${local.tokyo_region}.amazonaws.com"]
-    }
-  }
 }
 
 
