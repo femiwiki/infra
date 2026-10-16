@@ -68,3 +68,21 @@ resource "aws_cloudwatch_metric_alarm" "cloudfront_requests" {
   treat_missing_data  = "notBreaching"
   region              = "us-east-1"
 }
+
+# One alarm for every function in Seoul, to stay within the 10 free alarms. Six
+# clean hours before OK caps a flapping function at a few notifications a day.
+resource "aws_cloudwatch_metric_alarm" "lambda_errors" {
+  alarm_name          = "Lambda Errors"
+  alarm_description   = "서울 리전의 Lambda 함수가 실패했습니다. 어느 함수인지는 CloudWatch 로그에서 확인해 주세요."
+  namespace           = "AWS/Lambda"
+  metric_name         = "Errors"
+  period              = 3600
+  statistic           = "Sum"
+  threshold           = 0
+  comparison_operator = "GreaterThanThreshold"
+  datapoints_to_alarm = 1
+  evaluation_periods  = 6
+  alarm_actions       = [aws_sns_topic.cloudwatch_alarms.arn]
+  ok_actions          = [aws_sns_topic.cloudwatch_alarms.arn]
+  treat_missing_data  = "notBreaching"
+}
