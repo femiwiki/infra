@@ -17,6 +17,8 @@ run "special_pages" {
         "/w/%ED%8A%B9%EC%88%98:MWO%EC%9D%B8%EC%A6%9D%2Fauthorize",
         "/w/Special:MathShowImage?hash=x",
         "/w/특수:사용자로그아웃",
+        "/w/특수:내언어/페미위키:초보자_도움말",
+        "/w/%ED%8A%B9%EC%88%98:%EB%82%B4%EC%96%B8%EC%96%B4/%EC%97%AC%EC%84%B1%ED%98%90%EC%98%A4",
       ] : uri if !can(regex(output.special_exempt_uri, uri))
     ]) == 0
     error_message = "A page readers or logins need would be rate limited."
