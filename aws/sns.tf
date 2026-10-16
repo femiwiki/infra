@@ -10,6 +10,12 @@ resource "aws_sns_topic" "cloudwatch_alarms" {
   policy = data.aws_iam_policy_document.sns_default_policy.json
 }
 
+# Recoveries in Seoul, to Discord only: nobody needs a mail that all is well.
+resource "aws_sns_topic" "cloudwatch_ok" {
+  name   = "cloudwatch-ok"
+  policy = data.aws_iam_policy_document.sns_default_policy.json
+}
+
 # Stays pending until the link in the confirmation mail is clicked. Terraform
 # cannot delete a pending subscription; AWS drops it after three days.
 resource "aws_sns_topic_subscription" "cloudwatch_alarms_email" {

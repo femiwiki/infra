@@ -83,6 +83,6 @@ resource "aws_cloudwatch_metric_alarm" "lambda_errors" {
   datapoints_to_alarm = 1
   evaluation_periods  = 6
   alarm_actions       = [aws_sns_topic.cloudwatch_alarms.arn]
-  ok_actions          = [aws_sns_topic.cloudwatch_alarms.arn]
+  ok_actions          = [aws_sns_topic.cloudwatch_ok.arn]
   treat_missing_data  = "notBreaching"
 }
