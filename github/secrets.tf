@@ -116,14 +116,14 @@ resource "github_actions_secret" "gcp_state_passphrase" {
 }
 
 resource "random_password" "state_passphrase" {
-  for_each = toset(["docker", "grafana", "mysql"])
+  for_each = toset(["docker", "grafana", "mariadb"])
 
   length  = 48
   special = false
 }
 
 resource "github_actions_secret" "state_passphrase" {
-  for_each = toset(["docker", "grafana", "mysql"])
+  for_each = toset(["docker", "grafana", "mariadb"])
 
   repository  = module.infra.name
   secret_name = "${upper(each.key)}_STATE_PASSPHRASE"
