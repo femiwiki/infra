@@ -185,6 +185,44 @@ jobs:
               --conf /etc/mediawiki/LocalSettings.php --settings wgVersion --format json
           '
 
+      # A setting nothing declares is read by nothing; not a gate, as it breaks no page (#820)
+      - name: Every setting the hotfix assigns is declared
+        if: steps.scope.outputs.plan == 'true' && startsWith(matrix.workspace, 'docker')
+        continue-on-error: true
+        env:
+          PLAN_JSON: ${{ steps.plan.outputs.json_plan_path }}
+          CHECKER: https://raw.githubusercontent.com/femiwiki/docker-mediawiki/49728f3390255b125415b0d25869ebf6da8ece32/.github/scripts/CheckConfigKeys.php
+        run: |
+          after=$(jq -c 'first(.resource_changes[]
+            | select(.type == "docker_container" and .name == "fastcgi" and (.change.actions | index("create"))))
+            | .change.after' "$PLAN_JSON")
+          if [ -z "$after" ]; then
+            echo "fastcgi is not replaced, so the hotfix is unchanged."
+            exit 0
+          fi
+          image=$(jq -r .image <<< "$after")
+          args=()
+          while IFS= read -r -d '' kv; do
+            args+=(-e "$kv")
+          done < <(jq -j '.env[] + "\u0000"' <<< "$after")
+          curl -sSfL "$CHECKER" -o "$RUNNER_TEMP/CheckConfigKeys.php"
+          # shellcheck disable=SC2016
+          if ! out=$(docker run --rm --network none "${args[@]}" \
+            -v "$RUNNER_TEMP/CheckConfigKeys.php:/tmp/CheckConfigKeys.php:ro" --entrypoint bash "$image" -c '
+              [ -z "${MEDIAWIKI_HOTFIX_SNIPPET:-}" ] || printf "%s\n" "$MEDIAWIKI_HOTFIX_SNIPPET" > /etc/mediawiki/Hotfix.php
+              exec php /tmp/CheckConfigKeys.php --conf /etc/mediawiki/LocalSettings.php /etc/mediawiki/Hotfix.php
+            ' 2>&1); then
+            echo "$out"
+            unknown=$(grep -o '^\$wg[A-Za-z0-9_]*' <<< "$out" | paste -sd ' ')
+            if [ -n "$unknown" ]; then
+              echo "::warning file=serving/Hotfix.php::nothing declares $unknown, so nothing reads it."
+            else
+              echo "::warning file=serving/Hotfix.php::the setting check could not run."
+            fi
+            exit 1
+          fi
+          echo "$out"
+
       - uses: femiwiki/terraform-github-tacos@7a2c2a88035e6e07e6a72c08ad44ea82381a6daf  # v0.8.0
         id: changes
         if: steps.scope.outputs.plan == 'true'
