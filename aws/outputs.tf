@@ -34,7 +34,7 @@ output "femiwiki_role_arn" {
 }
 
 output "mysql_tofu_password" {
-  description = "The password of the MariaDB account the mysql workspace logs in as"
+  description = "The password of the MariaDB account the mariadb workspace logs in as"
   value       = aws_ssm_parameter.mysql_tofu_password.value
   sensitive   = true
 }

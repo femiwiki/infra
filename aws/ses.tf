@@ -52,3 +52,23 @@ resource "aws_ses_identity_notification_topic" "bounce" {
   notification_type = "Bounce"
   topic_arn         = aws_sns_topic.ses_bounces.arn
 }
+
+# SES keeps mailing feedback unless both bounces and complaints have a topic.
+# bounce-handler logs complaints as skipped; the Complaint Rate alarm watches them.
+resource "aws_ses_identity_notification_topic" "complaint" {
+  region            = "us-east-1"
+  identity          = aws_ses_domain_identity.femiwiki_com.domain
+  notification_type = "Complaint"
+  topic_arn         = aws_sns_topic.ses_bounces.arn
+}
+
+resource "aws_sesv2_email_identity_feedback_attributes" "femiwiki_com" {
+  region                   = "us-east-1"
+  email_identity           = aws_ses_domain_identity.femiwiki_com.domain
+  email_forwarding_enabled = false
+
+  depends_on = [
+    aws_ses_identity_notification_topic.bounce,
+    aws_ses_identity_notification_topic.complaint,
+  ]
+}

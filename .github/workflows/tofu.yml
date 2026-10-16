@@ -12,7 +12,7 @@ on:
         description: The workspace to apply from this branch, once its environment approves.
         required: true
         type: choice
-        options: &workspaces [aws, docker, gcp, github, grafana, healthchecks]
+        options: &workspaces [aws, docker, gcp, github, grafana, healthchecks, mariadb]
 permissions: {}
 jobs:
   plan:
@@ -60,12 +60,24 @@ jobs:
           role-to-assume: arn:aws:iam::302617221463:role/infra-${{ matrix.workspace }}${{ matrix.workspace == 'aws' && '-plan' || '' }}
           aws-region: ap-northeast-1
 
-      - uses: ./.github/actions/docker-daemon
+      - uses: ./.github/actions/ssm-port-forward
         if: steps.scope.outputs.plan == 'true' && startsWith(matrix.workspace, 'docker')
         id: daemon
         with:
           instance-tag: ${{ matrix.workspace }}
           region: ap-northeast-2
+          port: 2376
+          probe: 'curl -sf --max-time 3 "http://$HOST:$PORT/_ping"'
+
+      # A server greets first, so four bytes back mean MariaDB answered
+      - uses: ./.github/actions/ssm-port-forward
+        if: steps.scope.outputs.plan == 'true' && matrix.workspace == 'mariadb'
+        id: mariadb
+        with:
+          instance-tag: database-5
+          region: ap-northeast-2
+          port: 3306
+          probe: '[ "$(timeout 3 head -c 4 < "/dev/tcp/$HOST/$PORT" | wc -c)" = 4 ]'
 
       - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093  # v3.0.0
         if: steps.scope.outputs.plan == 'true' && matrix.workspace == 'gcp'
@@ -105,21 +117,22 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
           TF_PLAN_COLLAPSE_LENGTH: "100000"  # never collapse the plan
-          TF_VAR_docker_host: ${{ steps.daemon.outputs.host }}
+          TF_VAR_docker_host: ${{ steps.daemon.outputs.address && format('tcp://{0}', steps.daemon.outputs.address) || '' }}
+          TF_VAR_mariadb_endpoint: ${{ steps.mariadb.outputs.address }}
           TF_VAR_github_token: ${{ steps.app-token.outputs.token }}
           GOOGLE_OAUTH_ACCESS_TOKEN: ${{ steps.gcp.outputs.access_token }}
           TF_VAR_grafana_auth: ${{ matrix.workspace == 'grafana' && secrets.GRAFANA_PLAN_TOKEN || '' }}
           TF_VAR_discord_webhook_url: ${{ matrix.workspace == 'grafana' && secrets.GRAFANA_DISCORD_WEBHOOK_URL || '' }}
           TF_VAR_mastodon_token: ${{ matrix.workspace == 'grafana' && secrets.GRAFANA_MASTODON_TOKEN || '' }}
           TF_VAR_alerts_webhook_token: ${{ matrix.workspace == 'grafana' && secrets.GRAFANA_ALERTS_WEBHOOK_TOKEN || '' }}
-          TF_VAR_aws_state_passphrase: ${{ (matrix.workspace == 'grafana' || matrix.workspace == 'docker' || matrix.workspace == 'gcp') && secrets.AWS_STATE_PASSPHRASE || '' }}
+          TF_VAR_aws_state_passphrase: ${{ (matrix.workspace == 'grafana' || matrix.workspace == 'docker' || matrix.workspace == 'gcp' || matrix.workspace == 'mariadb') && secrets.AWS_STATE_PASSPHRASE || '' }}
           TF_VAR_healthchecksio_api_key: ${{ matrix.workspace == 'healthchecks' && secrets.HEALTHCHECKSIO_API_KEY || '' }}
           TF_VAR_prometheus_password: ${{ matrix.workspace == 'aws' && secrets.AWS_PROMETHEUS_PASSWORD || '' }}
           TF_VAR_loki_password: ${{ matrix.workspace == 'aws' && secrets.AWS_LOKI_PASSWORD || '' }}
           TF_VAR_internet_archive_access_key: ${{ matrix.workspace == 'aws' && secrets.AWS_INTERNET_ARCHIVE_ACCESS_KEY || '' }}
           TF_VAR_internet_archive_secret_key: ${{ matrix.workspace == 'aws' && secrets.AWS_INTERNET_ARCHIVE_SECRET_KEY || '' }}
           TF_VAR_h_captcha_secret_key: ${{ matrix.workspace == 'aws' && secrets.AWS_H_CAPTCHA_SECRET_KEY || '' }}
-          TF_VAR_state_passphrase: ${{ matrix.workspace == 'aws' && secrets.AWS_STATE_PASSPHRASE || matrix.workspace == 'github' && secrets.TOFU_GITHUB_STATE_PASSPHRASE || matrix.workspace == 'gcp' && secrets.GCP_STATE_PASSPHRASE || '' }}
+          TF_VAR_state_passphrase: ${{ matrix.workspace == 'aws' && secrets.AWS_STATE_PASSPHRASE || matrix.workspace == 'github' && secrets.TOFU_GITHUB_STATE_PASSPHRASE || matrix.workspace == 'gcp' && secrets.GCP_STATE_PASSPHRASE || matrix.workspace == 'docker' && secrets.DOCKER_STATE_PASSPHRASE || matrix.workspace == 'grafana' && secrets.GRAFANA_STATE_PASSPHRASE || matrix.workspace == 'mariadb' && secrets.MARIADB_STATE_PASSPHRASE || '' }}
           TF_VAR_gcp_state_passphrase: ${{ (matrix.workspace == 'aws' || matrix.workspace == 'docker') && secrets.GCP_STATE_PASSPHRASE || '' }}
           OP_SERVICE_ACCOUNT_TOKEN: ${{ matrix.workspace == 'github' && secrets.TOFU_OP_SERVICE_ACCOUNT_TOKEN || '' }}
         with:
@@ -197,7 +210,7 @@ jobs:
           step: collapse
 
       - name: Close the SSM session, which outlives the runner
-        if: always() && startsWith(matrix.workspace, 'docker')
+        if: always() && (startsWith(matrix.workspace, 'docker') || matrix.workspace == 'mariadb')
         env:
           AWS_REGION: ap-northeast-2
         run: |
@@ -322,6 +335,7 @@ jobs:
         with:
           step: apply
           apply-before-merge: "true"
+          require-up-to-date: "true"
           workspace: ${{ matrix.workspace }}
 
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
@@ -352,12 +366,24 @@ jobs:
           role-to-assume: arn:aws:iam::302617221463:role/infra-${{ matrix.workspace }}
           aws-region: ap-northeast-1
 
-      - uses: ./.github/actions/docker-daemon
+      - uses: ./.github/actions/ssm-port-forward
         if: startsWith(matrix.workspace, 'docker')
         id: daemon
         with:
           instance-tag: ${{ matrix.workspace }}
           region: ap-northeast-2
+          port: 2376
+          probe: 'curl -sf --max-time 3 "http://$HOST:$PORT/_ping"'
+
+      # A server greets first, so four bytes back mean MariaDB answered
+      - uses: ./.github/actions/ssm-port-forward
+        if: matrix.workspace == 'mariadb'
+        id: mariadb
+        with:
+          instance-tag: database-5
+          region: ap-northeast-2
+          port: 3306
+          probe: '[ "$(timeout 3 head -c 4 < "/dev/tcp/$HOST/$PORT" | wc -c)" = 4 ]'
 
       - name: Pull the images the plan will start
         if: startsWith(matrix.workspace, 'docker')
@@ -405,21 +431,22 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
           TF_PLAN_COLLAPSE_LENGTH: "100000"  # never collapse the plan
-          TF_VAR_docker_host: ${{ steps.daemon.outputs.host }}
+          TF_VAR_docker_host: ${{ steps.daemon.outputs.address && format('tcp://{0}', steps.daemon.outputs.address) || '' }}
+          TF_VAR_mariadb_endpoint: ${{ steps.mariadb.outputs.address }}
           TF_VAR_github_token: ${{ steps.app-token.outputs.token }}
           GOOGLE_OAUTH_ACCESS_TOKEN: ${{ steps.gcp.outputs.access_token }}
           TF_VAR_grafana_auth: ${{ matrix.workspace == 'grafana' && secrets.GRAFANA_APPLY_TOKEN || '' }}
           TF_VAR_discord_webhook_url: ${{ matrix.workspace == 'grafana' && secrets.GRAFANA_DISCORD_WEBHOOK_URL || '' }}
           TF_VAR_mastodon_token: ${{ matrix.workspace == 'grafana' && secrets.GRAFANA_MASTODON_TOKEN || '' }}
           TF_VAR_alerts_webhook_token: ${{ matrix.workspace == 'grafana' && secrets.GRAFANA_ALERTS_WEBHOOK_TOKEN || '' }}
-          TF_VAR_aws_state_passphrase: ${{ (matrix.workspace == 'grafana' || matrix.workspace == 'docker' || matrix.workspace == 'gcp') && secrets.AWS_STATE_PASSPHRASE || '' }}
+          TF_VAR_aws_state_passphrase: ${{ (matrix.workspace == 'grafana' || matrix.workspace == 'docker' || matrix.workspace == 'gcp' || matrix.workspace == 'mariadb') && secrets.AWS_STATE_PASSPHRASE || '' }}
           TF_VAR_healthchecksio_api_key: ${{ matrix.workspace == 'healthchecks' && secrets.HEALTHCHECKSIO_API_KEY || '' }}
           TF_VAR_prometheus_password: ${{ matrix.workspace == 'aws' && secrets.AWS_PROMETHEUS_PASSWORD || '' }}
           TF_VAR_loki_password: ${{ matrix.workspace == 'aws' && secrets.AWS_LOKI_PASSWORD || '' }}
           TF_VAR_internet_archive_access_key: ${{ matrix.workspace == 'aws' && secrets.AWS_INTERNET_ARCHIVE_ACCESS_KEY || '' }}
           TF_VAR_internet_archive_secret_key: ${{ matrix.workspace == 'aws' && secrets.AWS_INTERNET_ARCHIVE_SECRET_KEY || '' }}
           TF_VAR_h_captcha_secret_key: ${{ matrix.workspace == 'aws' && secrets.AWS_H_CAPTCHA_SECRET_KEY || '' }}
-          TF_VAR_state_passphrase: ${{ matrix.workspace == 'aws' && secrets.AWS_STATE_PASSPHRASE || matrix.workspace == 'github' && secrets.TOFU_GITHUB_STATE_PASSPHRASE || matrix.workspace == 'gcp' && secrets.GCP_STATE_PASSPHRASE || '' }}
+          TF_VAR_state_passphrase: ${{ matrix.workspace == 'aws' && secrets.AWS_STATE_PASSPHRASE || matrix.workspace == 'github' && secrets.TOFU_GITHUB_STATE_PASSPHRASE || matrix.workspace == 'gcp' && secrets.GCP_STATE_PASSPHRASE || matrix.workspace == 'docker' && secrets.DOCKER_STATE_PASSPHRASE || matrix.workspace == 'grafana' && secrets.GRAFANA_STATE_PASSPHRASE || matrix.workspace == 'mariadb' && secrets.MARIADB_STATE_PASSPHRASE || '' }}
           TF_VAR_gcp_state_passphrase: ${{ (matrix.workspace == 'aws' || matrix.workspace == 'docker') && secrets.GCP_STATE_PASSPHRASE || '' }}
           OP_SERVICE_ACCOUNT_TOKEN: ${{ matrix.workspace == 'github' && secrets.TOFU_OP_SERVICE_ACCOUNT_TOKEN || '' }}
         with:
@@ -452,21 +479,22 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
           TF_PLAN_COLLAPSE_LENGTH: "100000"  # never collapse the plan
-          TF_VAR_docker_host: ${{ steps.daemon.outputs.host }}
+          TF_VAR_docker_host: ${{ steps.daemon.outputs.address && format('tcp://{0}', steps.daemon.outputs.address) || '' }}
+          TF_VAR_mariadb_endpoint: ${{ steps.mariadb.outputs.address }}
           TF_VAR_github_token: ${{ steps.app-token.outputs.token }}
           GOOGLE_OAUTH_ACCESS_TOKEN: ${{ steps.gcp.outputs.access_token }}
           TF_VAR_grafana_auth: ${{ matrix.workspace == 'grafana' && secrets.GRAFANA_PLAN_TOKEN || '' }}
           TF_VAR_discord_webhook_url: ${{ matrix.workspace == 'grafana' && secrets.GRAFANA_DISCORD_WEBHOOK_URL || '' }}
           TF_VAR_mastodon_token: ${{ matrix.workspace == 'grafana' && secrets.GRAFANA_MASTODON_TOKEN || '' }}
           TF_VAR_alerts_webhook_token: ${{ matrix.workspace == 'grafana' && secrets.GRAFANA_ALERTS_WEBHOOK_TOKEN || '' }}
-          TF_VAR_aws_state_passphrase: ${{ (matrix.workspace == 'grafana' || matrix.workspace == 'docker' || matrix.workspace == 'gcp') && secrets.AWS_STATE_PASSPHRASE || '' }}
+          TF_VAR_aws_state_passphrase: ${{ (matrix.workspace == 'grafana' || matrix.workspace == 'docker' || matrix.workspace == 'gcp' || matrix.workspace == 'mariadb') && secrets.AWS_STATE_PASSPHRASE || '' }}
           TF_VAR_healthchecksio_api_key: ${{ matrix.workspace == 'healthchecks' && secrets.HEALTHCHECKSIO_API_KEY || '' }}
           TF_VAR_prometheus_password: ${{ matrix.workspace == 'aws' && secrets.AWS_PROMETHEUS_PASSWORD || '' }}
           TF_VAR_loki_password: ${{ matrix.workspace == 'aws' && secrets.AWS_LOKI_PASSWORD || '' }}
           TF_VAR_internet_archive_access_key: ${{ matrix.workspace == 'aws' && secrets.AWS_INTERNET_ARCHIVE_ACCESS_KEY || '' }}
           TF_VAR_internet_archive_secret_key: ${{ matrix.workspace == 'aws' && secrets.AWS_INTERNET_ARCHIVE_SECRET_KEY || '' }}
           TF_VAR_h_captcha_secret_key: ${{ matrix.workspace == 'aws' && secrets.AWS_H_CAPTCHA_SECRET_KEY || '' }}
-          TF_VAR_state_passphrase: ${{ matrix.workspace == 'aws' && secrets.AWS_STATE_PASSPHRASE || matrix.workspace == 'github' && secrets.TOFU_GITHUB_STATE_PASSPHRASE || matrix.workspace == 'gcp' && secrets.GCP_STATE_PASSPHRASE || '' }}
+          TF_VAR_state_passphrase: ${{ matrix.workspace == 'aws' && secrets.AWS_STATE_PASSPHRASE || matrix.workspace == 'github' && secrets.TOFU_GITHUB_STATE_PASSPHRASE || matrix.workspace == 'gcp' && secrets.GCP_STATE_PASSPHRASE || matrix.workspace == 'docker' && secrets.DOCKER_STATE_PASSPHRASE || matrix.workspace == 'grafana' && secrets.GRAFANA_STATE_PASSPHRASE || matrix.workspace == 'mariadb' && secrets.MARIADB_STATE_PASSPHRASE || '' }}
           TF_VAR_gcp_state_passphrase: ${{ (matrix.workspace == 'aws' || matrix.workspace == 'docker') && secrets.GCP_STATE_PASSPHRASE || '' }}
           OP_SERVICE_ACCOUNT_TOKEN: ${{ matrix.workspace == 'github' && secrets.TOFU_OP_SERVICE_ACCOUNT_TOKEN || '' }}
         with:
@@ -533,7 +561,7 @@ jobs:
           description: ${{ steps.outcome.outputs.description }}
 
       - name: Close the SSM session, which outlives the runner
-        if: always() && startsWith(matrix.workspace, 'docker')
+        if: always() && (startsWith(matrix.workspace, 'docker') || matrix.workspace == 'mariadb')
         env:
           AWS_REGION: ap-northeast-2
         run: |
