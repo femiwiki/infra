@@ -121,7 +121,7 @@ resource "aws_iam_policy" "amazon_s3_access" {
 locals {
   caddy_certs   = aws_s3_bucket.caddy_certs.arn
   backups       = aws_s3_bucket.backups.arn
-  backups_seoul = aws_s3_bucket.backups_seoul.arn
+  backups_seoul = module.backups_seoul.s3_bucket_arn
   uploads_seoul = aws_s3_bucket.uploads_seoul.arn
   rate_limit    = module.rate_limit.s3_bucket_arn
 }
