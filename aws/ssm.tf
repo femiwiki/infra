@@ -6,9 +6,9 @@ data "terraform_remote_state" "healthchecks" {
   backend = "s3"
 
   config = {
-    bucket = aws_s3_bucket.tfstate.bucket
+    bucket = aws_s3_bucket.state.bucket
     key    = "healthchecks/terraform.tfstate"
-    region = local.tokyo_region
+    region = aws_s3_bucket.state.region
   }
 }
 
