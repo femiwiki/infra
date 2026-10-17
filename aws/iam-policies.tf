@@ -122,7 +122,7 @@ locals {
   caddy_certs   = module.caddy_certs.s3_bucket_arn
   backups       = aws_s3_bucket.backups.arn
   backups_seoul = module.backups_seoul.s3_bucket_arn
-  uploads_seoul = aws_s3_bucket.uploads_seoul.arn
+  uploads_seoul = module.uploads_seoul.s3_bucket_arn
   rate_limit    = module.rate_limit.s3_bucket_arn
 }
 

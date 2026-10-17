@@ -16,14 +16,14 @@ resource "aws_accessanalyzer_analyzer" "external_tokyo" {
   type          = "ACCOUNT"
 }
 
-# Public by policy on purpose: see aws_s3_bucket_policy.uploads_seoul.
+# Public by policy on purpose: see module.uploads_seoul.
 resource "aws_accessanalyzer_archive_rule" "uploads" {
   analyzer_name = aws_accessanalyzer_analyzer.external.analyzer_name
   rule_name     = "uploads"
 
   filter {
     criteria = "resource"
-    eq       = [aws_s3_bucket.uploads_seoul.arn]
+    eq       = [module.uploads_seoul.s3_bucket_arn]
   }
 }
 

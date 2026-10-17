@@ -10,48 +10,68 @@ locals {
   )
 }
 
-resource "aws_s3_bucket" "uploads_seoul" {
+module "uploads_seoul" {
+  source           = "terraform-aws-modules/s3-bucket/aws"
+  version          = "5.17.0"
   region           = local.seoul_region
   bucket           = "uploads-${data.aws_caller_identity.current.account_id}-${local.seoul_region}-an"
   bucket_namespace = "account-regional"
-}
 
-# Extension:AWS puts every object with an ACL, public-read unless the zone
-# carries a .htsecure file, and that is not configurable: see
-# AmazonS3FileBackend.php's putObject. A bucket created today defaults to
-# BucketOwnerEnforced, which refuses an ACL outright with
-# AccessControlListNotSupported, so ownership has to accept them.
-resource "aws_s3_bucket_ownership_controls" "uploads_seoul" {
-  region = local.seoul_region
-  bucket = aws_s3_bucket.uploads_seoul.id
+  # Extension:AWS puts every object with an ACL (AmazonS3FileBackend.php's putObject),
+  # which the BucketOwnerEnforced default refuses, so ownership has to accept them.
+  control_object_ownership = true
+  object_ownership         = "BucketOwnerPreferred"
 
-  rule {
-    object_ownership = "BucketOwnerPreferred"
-  }
-}
-
-# block_public_acls has to be off for the same reason: it rejects a PUT that
-# carries a public ACL. ignore_public_acls stays on and is load-bearing rather
-# than decorative, because the extension asks for public-read on deleted/ too;
-# ignoring the ACL leaves the bucket policy as the only thing granting public
-# read, and it does not list deleted/ or temp/. The Tokyo deleted bucket keeps
-# them private the same way.
-resource "aws_s3_bucket_public_access_block" "uploads_seoul" {
-  region = local.seoul_region
-  bucket = aws_s3_bucket.uploads_seoul.id
-
+  # A public-read ACL comes even on deleted/, so ignore_public_acls leaves the
+  # policy, which lists neither deleted/ nor temp/, as the only public grant.
   block_public_acls       = false
   ignore_public_acls      = true
   block_public_policy     = false
   restrict_public_buckets = false
+
+  attach_policy = true
+  policy        = data.aws_iam_policy_document.uploads_seoul.json
+
+  # MediaWiki expires a stash entry in hours, and nothing else empties temp/:
+  # the Tokyo temp bucket holds 18,504 objects and 5.25 GiB.
+  lifecycle_rule = [
+    {
+      id         = "expire-the-upload-stash"
+      enabled    = true
+      filter     = { prefix = "temp/" }
+      expiration = { days = 7 }
+    },
+    {
+      id                                     = "abort-incomplete-multipart-uploads"
+      enabled                                = true
+      abort_incomplete_multipart_upload_days = 7
+    },
+  ]
 }
 
-resource "aws_s3_bucket_policy" "uploads_seoul" {
-  depends_on = [aws_s3_bucket_public_access_block.uploads_seoul]
+moved {
+  from = aws_s3_bucket.uploads_seoul
+  to   = module.uploads_seoul.aws_s3_bucket.this[0]
+}
 
-  region = local.seoul_region
-  bucket = aws_s3_bucket.uploads_seoul.bucket
-  policy = data.aws_iam_policy_document.uploads_seoul.json
+moved {
+  from = aws_s3_bucket_ownership_controls.uploads_seoul
+  to   = module.uploads_seoul.aws_s3_bucket_ownership_controls.this[0]
+}
+
+moved {
+  from = aws_s3_bucket_public_access_block.uploads_seoul
+  to   = module.uploads_seoul.aws_s3_bucket_public_access_block.this[0]
+}
+
+moved {
+  from = aws_s3_bucket_policy.uploads_seoul
+  to   = module.uploads_seoul.aws_s3_bucket_policy.this[0]
+}
+
+moved {
+  from = aws_s3_bucket_lifecycle_configuration.uploads_seoul
+  to   = module.uploads_seoul.aws_s3_bucket_lifecycle_configuration.this[0]
 }
 
 data "aws_iam_policy_document" "uploads_seoul" {
@@ -65,29 +85,8 @@ data "aws_iam_policy_document" "uploads_seoul" {
     }
 
     resources = [
-      for prefix in local.uploads_public_prefixes : "${aws_s3_bucket.uploads_seoul.arn}/${prefix}"
+      for prefix in local.uploads_public_prefixes : "${module.uploads_seoul.s3_bucket_arn}/${prefix}"
     ]
-  }
-}
-
-# The stash is transient and nothing has ever emptied it: the Tokyo temp bucket
-# holds 18,504 objects and 5.25 GiB. MediaWiki expires a stash entry in hours,
-# so seven days is far past anything it will ask for.
-resource "aws_s3_bucket_lifecycle_configuration" "uploads_seoul" {
-  region = local.seoul_region
-  bucket = aws_s3_bucket.uploads_seoul.id
-
-  rule {
-    id     = "expire-the-upload-stash"
-    status = "Enabled"
-
-    filter {
-      prefix = "temp/"
-    }
-
-    expiration {
-      days = 7
-    }
   }
 }
 
