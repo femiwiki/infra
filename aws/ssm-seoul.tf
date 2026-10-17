@@ -71,3 +71,29 @@ resource "aws_ssm_parameter" "mysql_tofu_password" {
   type   = "SecureString"
   value  = random_password.mysql_tofu.result
 }
+
+resource "random_password" "mariadb_repl" {
+  length  = 32
+  special = false
+}
+
+# For the mariadb workspace and for a new host that replicates the primary.
+resource "aws_ssm_parameter" "mariadb_repl_password" {
+  region = local.seoul_region
+  name   = "/mariadb/users/repl/password"
+  type   = "SecureString"
+  value  = random_password.mariadb_repl.result
+}
+
+# The next database host's server_id, raised by the replacement workflow so no
+# id comes back: a replica skips events that carry its own id.
+resource "aws_ssm_parameter" "mariadb_next_server_id" {
+  region = local.seoul_region
+  name   = "/mariadb/server-id/next"
+  type   = "String"
+  value  = "6"
+
+  lifecycle {
+    ignore_changes = [value]
+  }
+}
