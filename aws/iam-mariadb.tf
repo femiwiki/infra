@@ -61,13 +61,23 @@ data "aws_iam_policy_document" "infra_mariadb" {
     resources = ["*"]
   }
 
+  # By role, so a host the swap launches is reachable too.
   statement {
-    sid     = "MariadbPortForward"
-    actions = ["ssm:StartSession"]
-    resources = concat(
-      [for instance in aws_instance.database : instance.arn],
-      ["arn:aws:ssm:${local.seoul_region}::document/AWS-StartPortForwardingSession"],
-    )
+    sid       = "MariadbPortForward"
+    actions   = ["ssm:StartSession"]
+    resources = ["arn:aws:ec2:${local.seoul_region}:${data.aws_caller_identity.current.account_id}:instance/*"]
+
+    condition {
+      test     = "StringEquals"
+      variable = "ssm:resourceTag/Role"
+      values   = ["database"]
+    }
+  }
+
+  statement {
+    sid       = "MariadbPortForwardDocument"
+    actions   = ["ssm:StartSession"]
+    resources = ["arn:aws:ssm:${local.seoul_region}::document/AWS-StartPortForwardingSession"]
   }
 
   statement {
