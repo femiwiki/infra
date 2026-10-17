@@ -71,6 +71,7 @@ resource "aws_instance" "database" {
 
   user_data_base64 = base64gzip(templatefile("res/user-data-mariadb.sh.tftpl", {
     mysql_server_id = each.key
+    primary_host    = ""
     region          = local.seoul_region
     backups_bucket  = module.backups_seoul.s3_bucket_id
 
