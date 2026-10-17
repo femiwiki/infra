@@ -27,7 +27,7 @@ resource "mysql_grant" "backup_global" {
   user       = mysql_user.backup.user
   host       = mysql_user.backup.host
   database   = "*"
-  privileges = ["RELOAD", "PROCESS"]
+  privileges = ["RELOAD", "PROCESS", "BINLOG MONITOR"]
 }
 
 resource "mysql_grant" "backup_femiwiki" {
@@ -35,6 +35,21 @@ resource "mysql_grant" "backup_femiwiki" {
   host       = mysql_user.backup.host
   database   = "femiwiki"
   privileges = ["SELECT", "SHOW VIEW", "TRIGGER"]
+}
+
+# Replicas attach from anywhere in the VPC; skip_name_resolve matches this by IP.
+resource "mysql_user" "repl" {
+  user                = "repl"
+  host                = "10.20.%"
+  password_wo         = data.terraform_remote_state.aws.outputs.mariadb_repl_password
+  password_wo_version = 1
+}
+
+resource "mysql_grant" "repl" {
+  user       = mysql_user.repl.user
+  host       = mysql_user.repl.host
+  database   = "*"
+  privileges = ["REPLICATION SLAVE"]
 }
 
 import {
