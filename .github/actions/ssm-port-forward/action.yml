@@ -5,8 +5,10 @@ description: >-
   127.0.0.1, and relays it on the docker bridge gateway so a container action
   can reach it too.
 inputs:
-  instance-tag:
-    description: The Name tag of the instance whose port to reach.
+  filters:
+    description: >-
+      The describe-instances filters, space-separated, that pick the one
+      running instance whose port to reach.
     required: true
   region:
     description: The region that instance is in.
@@ -56,15 +58,15 @@ runs:
       id: forward
       shell: bash
       env:
-        INSTANCE_TAG: ${{ inputs.instance-tag }}
+        FILTERS: ${{ inputs.filters }}
         AWS_REGION: ${{ inputs.region }}
         PORT: ${{ inputs.port }}
         PROBE: ${{ inputs.probe }}
       run: |
         instance=$(aws ec2 describe-instances \
-          --filters "Name=tag:Name,Values=$INSTANCE_TAG" Name=instance-state-name,Values=running \
+          --filters $FILTERS Name=instance-state-name,Values=running \
           --query 'Reservations[].Instances[].InstanceId' --output text)
-        [ -n "$instance" ] || { echo "::error::no running instance tagged $INSTANCE_TAG in $AWS_REGION"; exit 1; }
+        [ -n "$instance" ] || { echo "::error::no running instance matches $FILTERS in $AWS_REGION"; exit 1; }
         nohup aws ssm start-session --target "$instance" \
           --document-name AWS-StartPortForwardingSession \
           --parameters "portNumber=$PORT,localPortNumber=$PORT" > /tmp/ssm-session.log 2>&1 &
