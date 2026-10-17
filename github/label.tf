@@ -80,6 +80,12 @@ locals {
       color       = "d4c5f9"
     }
 
+    good_first_issue = {
+      name        = "good first issue"
+      description = "Left for first-time contributors; Claude does not take it"
+      color       = "7057ff"
+    }
+
     help_wanted = {
       name        = "help wanted"
       description = "Extra attention is needed"
@@ -316,6 +322,7 @@ locals {
 
         # etc
         "femiwiki_discussion_needed",
+        "good_first_issue",
       ]
     )
 
@@ -367,14 +374,14 @@ locals {
     caddy-mwcache       = local.base_label_suite
     caddy-cloudfront-ip = local.base_label_suite
     FediFeeds           = local.ext_label_suite
-    legunto             = local.base_label_suite
+    legunto             = concat(local.base_label_suite, ["good_first_issue"])
     OOUIFemiwikiTheme   = local.ext_label_suite
     remote-gadgets      = concat(local.base_label_suite, ["search", "windows", "mw1_38", "mw1_39", "mw1_40", "mw1_41", "mw1_42"])
 
     tweetbot   = local.base_label_suite
     rankingbot = local.base_label_suite
 
-    FemiwikiSkin                = concat(local.ext_label_suite, ["femiwiki_discussion_needed", "ve", "search", "mw1_35", "mw1_36", "mw1_37", "mw1_39", "mw1_42", "mw1_43", "mw1_44", "mw1_45", "mw1_47"])
+    FemiwikiSkin                = concat(local.ext_label_suite, ["good_first_issue", "femiwiki_discussion_needed", "ve", "search", "mw1_35", "mw1_36", "mw1_37", "mw1_39", "mw1_42", "mw1_43", "mw1_44", "mw1_45", "mw1_47"])
     UnifiedExtensionForFemiwiki = concat(local.ext_label_suite, ["wikibase", "mw1_35", "mw1_36", "mw1_37", "mw1_39", "mw1_42", "mw1_43", "mw1_44", "mw1_45", "mw1_47"])
   }
 
@@ -388,6 +395,12 @@ locals {
       }
     ]
   ])
+}
+
+# legunto already had GitHub's default "good first issue" label.
+import {
+  to = github_issue_label.femiwiki["legunto.good_first_issue"]
+  id = "legunto:good first issue"
 }
 
 resource "github_issue_label" "femiwiki" {
