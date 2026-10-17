@@ -23,31 +23,6 @@ module "caddy_certs" {
   ]
 }
 
-moved {
-  from = aws_s3_bucket.caddy_certs
-  to   = module.caddy_certs.aws_s3_bucket.this[0]
-}
-
-moved {
-  from = aws_s3_bucket_public_access_block.caddy_certs
-  to   = module.caddy_certs.aws_s3_bucket_public_access_block.this[0]
-}
-
-moved {
-  from = aws_s3_bucket_policy.caddy_certs
-  to   = module.caddy_certs.aws_s3_bucket_policy.this[0]
-}
-
-moved {
-  from = aws_s3_bucket_versioning.caddy_certs
-  to   = module.caddy_certs.aws_s3_bucket_versioning.this[0]
-}
-
-moved {
-  from = aws_s3_bucket_lifecycle_configuration.caddy_certs
-  to   = module.caddy_certs.aws_s3_bucket_lifecycle_configuration.this[0]
-}
-
 data "aws_iam_policy_document" "caddy_certs" {
   # Prevent all human users downloading the private keys.
   statement {
@@ -217,36 +192,6 @@ module "state" {
       expiration                    = { expired_object_delete_marker = true }
     }
   ]
-}
-
-moved {
-  from = aws_s3_bucket.state
-  to   = module.state.aws_s3_bucket.this[0]
-}
-
-moved {
-  from = aws_s3_bucket_public_access_block.state
-  to   = module.state.aws_s3_bucket_public_access_block.this[0]
-}
-
-moved {
-  from = aws_s3_bucket_policy.state
-  to   = module.state.aws_s3_bucket_policy.this[0]
-}
-
-moved {
-  from = aws_s3_bucket_versioning.state
-  to   = module.state.aws_s3_bucket_versioning.this[0]
-}
-
-moved {
-  from = aws_s3_bucket_server_side_encryption_configuration.state
-  to   = module.state.aws_s3_bucket_server_side_encryption_configuration.this[0]
-}
-
-moved {
-  from = aws_s3_bucket_lifecycle_configuration.state
-  to   = module.state.aws_s3_bucket_lifecycle_configuration.this[0]
 }
 
 resource "aws_s3_bucket" "cost_exports" {

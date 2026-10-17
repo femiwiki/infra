@@ -28,26 +28,6 @@ module "edge_logs" {
   ]
 }
 
-moved {
-  from = aws_s3_bucket.edge_logs
-  to   = module.edge_logs.aws_s3_bucket.this[0]
-}
-
-moved {
-  from = aws_s3_bucket_public_access_block.edge_logs
-  to   = module.edge_logs.aws_s3_bucket_public_access_block.this[0]
-}
-
-moved {
-  from = aws_s3_bucket_lifecycle_configuration.edge_logs
-  to   = module.edge_logs.aws_s3_bucket_lifecycle_configuration.this[0]
-}
-
-moved {
-  from = aws_s3_bucket_policy.edge_logs
-  to   = module.edge_logs.aws_s3_bucket_policy.this[0]
-}
-
 data "aws_iam_policy_document" "edge_logs" {
   statement {
     sid       = "AWSLogDeliveryWrite"

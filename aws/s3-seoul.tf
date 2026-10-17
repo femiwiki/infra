@@ -49,31 +49,6 @@ module "uploads_seoul" {
   ]
 }
 
-moved {
-  from = aws_s3_bucket.uploads_seoul
-  to   = module.uploads_seoul.aws_s3_bucket.this[0]
-}
-
-moved {
-  from = aws_s3_bucket_ownership_controls.uploads_seoul
-  to   = module.uploads_seoul.aws_s3_bucket_ownership_controls.this[0]
-}
-
-moved {
-  from = aws_s3_bucket_public_access_block.uploads_seoul
-  to   = module.uploads_seoul.aws_s3_bucket_public_access_block.this[0]
-}
-
-moved {
-  from = aws_s3_bucket_policy.uploads_seoul
-  to   = module.uploads_seoul.aws_s3_bucket_policy.this[0]
-}
-
-moved {
-  from = aws_s3_bucket_lifecycle_configuration.uploads_seoul
-  to   = module.uploads_seoul.aws_s3_bucket_lifecycle_configuration.this[0]
-}
-
 data "aws_iam_policy_document" "uploads_seoul" {
   statement {
     sid     = "PublicReadOfThePublicZones"
@@ -115,17 +90,3 @@ module "backups_seoul" {
   attach_deny_insecure_transport_policy = true
 }
 
-moved {
-  from = aws_s3_bucket.backups_seoul
-  to   = module.backups_seoul.aws_s3_bucket.this[0]
-}
-
-moved {
-  from = aws_s3_bucket_lifecycle_configuration.backups_seoul
-  to   = module.backups_seoul.aws_s3_bucket_lifecycle_configuration.this[0]
-}
-
-moved {
-  from = aws_s3_bucket_public_access_block.backups_seoul
-  to   = module.backups_seoul.aws_s3_bucket_public_access_block.this[0]
-}
