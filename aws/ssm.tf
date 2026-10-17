@@ -16,9 +16,9 @@ data "terraform_remote_state" "gcp" {
   backend = "s3"
 
   config = {
-    bucket = aws_s3_bucket.tfstate.bucket
+    bucket = module.state.s3_bucket_id
     key    = "gcp/terraform.tfstate"
-    region = local.tokyo_region
+    region = module.state.s3_bucket_region
   }
 }
 
