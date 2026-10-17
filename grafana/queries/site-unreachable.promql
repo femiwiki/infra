@@ -1,0 +1,1 @@
+sum(increase(probe_all_success_sum[5m])) / sum(increase(probe_all_success_count[5m])) or vector(1)

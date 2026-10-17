@@ -7,6 +7,14 @@ variable "grafana_auth" {
   ephemeral = true
 }
 
+variable "grafana_cloud_auth" {
+  description = "Cloud access policy token that reads stacks and manages access policies"
+  type        = string
+  sensitive   = true
+  # Read-only in the plan job, read-write in the apply job, like grafana_auth
+  ephemeral = true
+}
+
 variable "discord_webhook_url" {
   description = "Webhook the Discord contact points post to"
   type        = string

@@ -123,6 +123,7 @@ jobs:
           TF_VAR_github_token: ${{ steps.app-token.outputs.token }}
           GOOGLE_OAUTH_ACCESS_TOKEN: ${{ steps.gcp.outputs.access_token }}
           TF_VAR_grafana_auth: ${{ matrix.workspace == 'grafana' && secrets.GRAFANA_PLAN_TOKEN || '' }}
+          TF_VAR_grafana_cloud_auth: ${{ matrix.workspace == 'grafana' && secrets.GRAFANA_CLOUD_PLAN_TOKEN || '' }}
           TF_VAR_discord_webhook_url: ${{ matrix.workspace == 'grafana' && secrets.GRAFANA_DISCORD_WEBHOOK_URL || '' }}
           TF_VAR_mastodon_token: ${{ matrix.workspace == 'grafana' && secrets.GRAFANA_MASTODON_TOKEN || '' }}
           TF_VAR_alerts_webhook_token: ${{ matrix.workspace == 'grafana' && secrets.GRAFANA_ALERTS_WEBHOOK_TOKEN || '' }}
@@ -493,6 +494,7 @@ jobs:
           TF_VAR_github_token: ${{ steps.app-token.outputs.token }}
           GOOGLE_OAUTH_ACCESS_TOKEN: ${{ steps.gcp.outputs.access_token }}
           TF_VAR_grafana_auth: ${{ matrix.workspace == 'grafana' && secrets.GRAFANA_APPLY_TOKEN || '' }}
+          TF_VAR_grafana_cloud_auth: ${{ matrix.workspace == 'grafana' && secrets.GRAFANA_CLOUD_APPLY_TOKEN || '' }}
           TF_VAR_discord_webhook_url: ${{ matrix.workspace == 'grafana' && secrets.GRAFANA_DISCORD_WEBHOOK_URL || '' }}
           TF_VAR_mastodon_token: ${{ matrix.workspace == 'grafana' && secrets.GRAFANA_MASTODON_TOKEN || '' }}
           TF_VAR_alerts_webhook_token: ${{ matrix.workspace == 'grafana' && secrets.GRAFANA_ALERTS_WEBHOOK_TOKEN || '' }}
@@ -542,6 +544,7 @@ jobs:
           TF_VAR_github_token: ${{ steps.app-token.outputs.token }}
           GOOGLE_OAUTH_ACCESS_TOKEN: ${{ steps.gcp.outputs.access_token }}
           TF_VAR_grafana_auth: ${{ matrix.workspace == 'grafana' && secrets.GRAFANA_PLAN_TOKEN || '' }}
+          TF_VAR_grafana_cloud_auth: ${{ matrix.workspace == 'grafana' && secrets.GRAFANA_CLOUD_PLAN_TOKEN || '' }}
           TF_VAR_discord_webhook_url: ${{ matrix.workspace == 'grafana' && secrets.GRAFANA_DISCORD_WEBHOOK_URL || '' }}
           TF_VAR_mastodon_token: ${{ matrix.workspace == 'grafana' && secrets.GRAFANA_MASTODON_TOKEN || '' }}
           TF_VAR_alerts_webhook_token: ${{ matrix.workspace == 'grafana' && secrets.GRAFANA_ALERTS_WEBHOOK_TOKEN || '' }}
