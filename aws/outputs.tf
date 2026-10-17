@@ -5,12 +5,12 @@ output "grafana_github_url" {
 
 output "rate_limit_bucket" {
   description = "Where Caddy shares its rate limit counters"
-  value       = aws_s3_bucket.rate_limit.bucket
+  value       = module.rate_limit.s3_bucket_id
 }
 
 output "rate_limit_s3_host" {
   description = "The S3 endpoint of the rate limit bucket's region"
-  value       = "s3.${aws_s3_bucket.rate_limit.region}.amazonaws.com"
+  value       = "s3.${module.rate_limit.s3_bucket_region}.amazonaws.com"
 }
 
 output "caddy_certs_bucket" {

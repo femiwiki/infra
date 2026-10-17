@@ -123,7 +123,7 @@ locals {
   backups       = aws_s3_bucket.backups.arn
   backups_seoul = aws_s3_bucket.backups_seoul.arn
   uploads_seoul = aws_s3_bucket.uploads_seoul.arn
-  rate_limit    = aws_s3_bucket.rate_limit.arn
+  rate_limit    = module.rate_limit.s3_bucket_arn
 }
 
 data "aws_iam_policy_document" "amazon_s3_access" {
