@@ -337,7 +337,7 @@ resource "aws_s3_bucket_public_access_block" "cost_exports" {
 data "aws_iam_policy_document" "cost_exports_bucket" {
   for_each = {
     cost_exports   = aws_s3_bucket.cost_exports.arn
-    cost_and_usage = aws_s3_bucket.cost_and_usage.arn
+    cost_and_usage = module.cost_and_usage.s3_bucket_arn
   }
 
   statement {
@@ -391,49 +391,6 @@ resource "aws_s3_bucket_policy" "cost_exports" {
   policy = data.aws_iam_policy_document.cost_exports_bucket["cost_exports"].json
 }
 
-# The Data Export's monthly line items, read by femiwiki.github.io's collect job
-
-resource "aws_s3_bucket" "cost_and_usage" {
-  region           = local.seoul_region
-  bucket           = "cost-exports-${data.aws_caller_identity.current.account_id}-${local.seoul_region}-an"
-  bucket_namespace = "account-regional"
-}
-
-resource "aws_s3_bucket_public_access_block" "cost_and_usage" {
-  region = local.seoul_region
-  bucket = aws_s3_bucket.cost_and_usage.id
-
-  block_public_acls       = true
-  block_public_policy     = true
-  ignore_public_acls      = true
-  restrict_public_buckets = true
-}
-
-resource "aws_s3_bucket_policy" "cost_and_usage" {
-  depends_on = [aws_s3_bucket_public_access_block.cost_and_usage]
-
-  region = local.seoul_region
-  bucket = aws_s3_bucket.cost_and_usage.id
-  policy = data.aws_iam_policy_document.cost_exports_bucket["cost_and_usage"].json
-}
-
-# No expiration: the collect job re-reads every month the export has written.
-resource "aws_s3_bucket_lifecycle_configuration" "cost_and_usage" {
-  region = local.seoul_region
-  bucket = aws_s3_bucket.cost_and_usage.id
-
-  rule {
-    id     = "abort-incomplete-uploads"
-    status = "Enabled"
-
-    filter {}
-
-    abort_incomplete_multipart_upload {
-      days_after_initiation = 7
-    }
-  }
-}
-
 module "rate_limit" {
   source                                = "terraform-aws-modules/s3-bucket/aws"
   version                               = "5.17.0"
@@ -469,4 +426,42 @@ moved {
 moved {
   from = aws_s3_bucket_policy.rate_limit
   to   = module.rate_limit.aws_s3_bucket_policy.this[0]
+}
+
+# The Data Export's monthly line items, read by femiwiki.github.io's collect job
+module "cost_and_usage" {
+  source           = "terraform-aws-modules/s3-bucket/aws"
+  version          = "5.17.0"
+  region           = local.seoul_region
+  bucket           = "cost-exports-${data.aws_caller_identity.current.account_id}-${local.seoul_region}-an"
+  bucket_namespace = "account-regional"
+  attach_policy    = true
+  policy           = data.aws_iam_policy_document.cost_exports_bucket["cost_and_usage"].json
+  lifecycle_rule = [
+    {
+      id                                     = "abort-incomplete-uploads"
+      enabled                                = true
+      abort_incomplete_multipart_upload_days = 7
+    },
+  ]
+}
+
+moved {
+  from = aws_s3_bucket.cost_and_usage
+  to   = module.cost_and_usage.aws_s3_bucket.this[0]
+}
+
+moved {
+  from = aws_s3_bucket_public_access_block.cost_and_usage
+  to   = module.cost_and_usage.aws_s3_bucket_public_access_block.this[0]
+}
+
+moved {
+  from = aws_s3_bucket_policy.cost_and_usage
+  to   = module.cost_and_usage.aws_s3_bucket_policy.this[0]
+}
+
+moved {
+  from = aws_s3_bucket_lifecycle_configuration.cost_and_usage
+  to   = module.cost_and_usage.aws_s3_bucket_lifecycle_configuration.this[0]
 }
