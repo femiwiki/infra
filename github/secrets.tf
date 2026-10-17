@@ -7,6 +7,7 @@ locals {
     AWS_LOKI_PASSWORD               = "AWS_LOKI_PASSWORD"
     AWS_PROMETHEUS_PASSWORD         = "AWS_PROMETHEUS_PASSWORD"
     AWS_STATE_PASSPHRASE            = "AWS_STATE_PASSPHRASE"
+    GRAFANA_CLOUD_PLAN_TOKEN        = "GRAFANA_CLOUD_PLAN_TOKEN"
     GRAFANA_DISCORD_WEBHOOK_URL     = "GRAFANA_DISCORD_WEBHOOK_URL"
     GRAFANA_MASTODON_TOKEN          = "GRAFANA_MASTODON_TOKEN"
     GRAFANA_PLAN_TOKEN              = "GRAFANA_PLAN_TOKEN"
@@ -28,7 +29,8 @@ locals {
 
   # Read by no plan, so they sit behind the environment's reviewers (#982).
   infra_environment_secrets = {
-    GRAFANA_APPLY_TOKEN = { environment = "grafana", item = "GRAFANA_APPLY_TOKEN" }
+    GRAFANA_APPLY_TOKEN       = { environment = "grafana", item = "GRAFANA_APPLY_TOKEN" }
+    GRAFANA_CLOUD_APPLY_TOKEN = { environment = "grafana", item = "GRAFANA_CLOUD_APPLY_TOKEN" }
   }
 }
 
