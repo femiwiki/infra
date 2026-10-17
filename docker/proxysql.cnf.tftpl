@@ -1,0 +1,28 @@
+datadir="/var/lib/proxysql"
+
+admin_variables=
+{
+  # Loopback only; the database replacement workflow reaches it over an SSM port forward
+  mysql_ifaces="127.0.0.1:6032"
+}
+
+mysql_variables=
+{
+  interfaces="127.0.0.1:6033"
+  # MediaWiki reads the server from the handshake
+  server_version="10.11.14-MariaDB"
+  # The workflow takes the server offline and back itself
+  monitor_enabled=false
+  # How long a query waits for a server to come back before it fails
+  connect_timeout_server_max=30000
+}
+
+mysql_servers=
+(
+  { address="${database_address}", port=3306, hostgroup=0 }
+)
+
+mysql_users=
+(
+  { username="mediawiki", password="${mediawiki_password}", default_hostgroup=0 }
+)
