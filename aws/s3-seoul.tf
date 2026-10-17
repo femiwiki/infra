@@ -113,6 +113,7 @@ module "backups_seoul" {
       abort_incomplete_multipart_upload_days = 1
     },
   ]
+  attach_deny_insecure_transport_policy = true
 }
 
 moved {
