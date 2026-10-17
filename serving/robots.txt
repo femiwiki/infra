@@ -39,3 +39,5 @@ Disallow: /index.php?hidelinks=1&hidetrans=1&title=
 Disallow: /*&mobileaction=toggle_view_mobile
 
 sitemap:https://femiwiki.com/rest.php/site/v1/sitemap/0
+
+#DaumWebMasterTool:066fe95408594c059e1ec6bcb224a69a111c359dc253e8c2230088a1d589c91d:vYXLWHUThEpl8+ynMNCRJQ==
