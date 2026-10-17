@@ -2,9 +2,9 @@ terraform {
   required_version = "1.13.1"
 
   backend "s3" {
-    bucket       = "tfstate-302617221463-ap-northeast-1-an"
+    bucket       = "tfstate-302617221463-ap-northeast-2-an"
     key          = "grafana/terraform.tfstate"
-    region       = "ap-northeast-1"
+    region       = "ap-northeast-2"
     use_lockfile = true
   }
 
