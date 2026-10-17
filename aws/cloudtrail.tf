@@ -36,26 +36,6 @@ module "trail" {
   ]
 }
 
-moved {
-  from = aws_s3_bucket.trail
-  to   = module.trail.aws_s3_bucket.this[0]
-}
-
-moved {
-  from = aws_s3_bucket_public_access_block.trail
-  to   = module.trail.aws_s3_bucket_public_access_block.this[0]
-}
-
-moved {
-  from = aws_s3_bucket_lifecycle_configuration.trail
-  to   = module.trail.aws_s3_bucket_lifecycle_configuration.this[0]
-}
-
-moved {
-  from = aws_s3_bucket_policy.trail
-  to   = module.trail.aws_s3_bucket_policy.this[0]
-}
-
 data "aws_iam_policy_document" "trail" {
   statement {
     sid       = "AWSCloudTrailAclCheck"
