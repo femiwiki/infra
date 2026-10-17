@@ -156,6 +156,24 @@ module "legunto" {
   default_status_checks           = []
 }
 
+module "maintenance" {
+  source                = "./modules/github-repository"
+  name                  = "maintenance"
+  description           = ":wrench: 페미위키 점검 페이지"
+  homepage_url          = "https://femiwiki.github.io/maintenance/"
+  pages_build_type      = "workflow"
+  default_status_checks = []
+  topics = [
+    "website",
+  ]
+}
+
+# Brings the archived repository back; archived = false unarchives it on apply
+import {
+  to = module.maintenance.github_repository.repository
+  id = "maintenance"
+}
+
 module "caddy_mwcache" {
   source      = "./modules/github-repository"
   name        = "caddy-mwcache"
