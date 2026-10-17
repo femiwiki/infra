@@ -76,18 +76,13 @@ provider "docker" {
   host = var.docker_host
 }
 
-data "aws_instances" "database" {
-  instance_tags        = { Name = "database-5" }
-  instance_state_names = ["running"]
-}
-
 data "terraform_remote_state" "aws" {
   backend = "s3"
 
   config = {
-    bucket = "tfstate-302617221463-ap-northeast-1-an"
+    bucket = "tfstate-302617221463-ap-northeast-2-an"
     key    = "aws/terraform.tfstate"
-    region = "ap-northeast-1"
+    region = "ap-northeast-2"
   }
 }
 

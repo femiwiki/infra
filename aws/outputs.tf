@@ -28,6 +28,11 @@ output "outbound_issuer" {
   value       = aws_iam_outbound_web_identity_federation.this.issuer_identifier
 }
 
+output "database_address" {
+  description = "The address the primary database answers at, whichever host holds it"
+  value       = one(aws_network_interface.database.private_ips)
+}
+
 output "femiwiki_role_arn" {
   description = "The role of the wiki's instances"
   value       = aws_iam_role.femiwiki.arn
