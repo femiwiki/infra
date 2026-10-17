@@ -1,27 +1,51 @@
 # Caddy's ACME account and certificates, next to the host that reads them
 
-resource "aws_s3_bucket" "caddy_certs" {
-  region           = local.seoul_region
-  bucket           = "caddy-certs-${data.aws_caller_identity.current.account_id}-${local.seoul_region}-an"
-  bucket_namespace = "account-regional"
+module "caddy_certs" {
+  source                                = "terraform-aws-modules/s3-bucket/aws"
+  version                               = "5.17.0"
+  region                                = local.seoul_region
+  bucket                                = "caddy-certs-${data.aws_caller_identity.current.account_id}-${local.seoul_region}-an"
+  bucket_namespace                      = "account-regional"
+  attach_deny_insecure_transport_policy = true
+  attach_policy                         = true
+  policy                                = data.aws_iam_policy_document.caddy_certs.json
+  versioning                            = { enabled = true }
+  lifecycle_rule = [
+    {
+      id      = "expire-replaced-certificates"
+      enabled = true
+      # Every renewal leaves the old certificate as a version; 30 days keeps it
+      # to restore if a renewal writes something broken.
+      noncurrent_version_expiration          = { days = 30 }
+      expiration                             = { expired_object_delete_marker = true }
+      abort_incomplete_multipart_upload_days = 1
+    },
+  ]
 }
 
-resource "aws_s3_bucket_public_access_block" "caddy_certs" {
-  region = local.seoul_region
-  bucket = aws_s3_bucket.caddy_certs.id
-
-  block_public_acls       = true
-  block_public_policy     = true
-  ignore_public_acls      = true
-  restrict_public_buckets = true
+moved {
+  from = aws_s3_bucket.caddy_certs
+  to   = module.caddy_certs.aws_s3_bucket.this[0]
 }
 
-resource "aws_s3_bucket_policy" "caddy_certs" {
-  depends_on = [aws_s3_bucket_public_access_block.caddy_certs]
+moved {
+  from = aws_s3_bucket_public_access_block.caddy_certs
+  to   = module.caddy_certs.aws_s3_bucket_public_access_block.this[0]
+}
 
-  region = local.seoul_region
-  bucket = aws_s3_bucket.caddy_certs.bucket
-  policy = data.aws_iam_policy_document.caddy_certs.json
+moved {
+  from = aws_s3_bucket_policy.caddy_certs
+  to   = module.caddy_certs.aws_s3_bucket_policy.this[0]
+}
+
+moved {
+  from = aws_s3_bucket_versioning.caddy_certs
+  to   = module.caddy_certs.aws_s3_bucket_versioning.this[0]
+}
+
+moved {
+  from = aws_s3_bucket_lifecycle_configuration.caddy_certs
+  to   = module.caddy_certs.aws_s3_bucket_lifecycle_configuration.this[0]
 }
 
 data "aws_iam_policy_document" "caddy_certs" {
@@ -42,62 +66,6 @@ data "aws_iam_policy_document" "caddy_certs" {
     }
 
     resources = ["${local.caddy_certs}/*"]
-  }
-
-  statement {
-    sid     = "DenyPlainHttp"
-    effect  = "Deny"
-    actions = ["s3:*"]
-
-    principals {
-      type        = "AWS"
-      identifiers = ["*"]
-    }
-
-    resources = [
-      local.caddy_certs,
-      "${local.caddy_certs}/*",
-    ]
-
-    condition {
-      test     = "Bool"
-      variable = "aws:SecureTransport"
-      values   = ["false"]
-    }
-  }
-}
-
-resource "aws_s3_bucket_versioning" "caddy_certs" {
-  region = local.seoul_region
-  bucket = aws_s3_bucket.caddy_certs.id
-  versioning_configuration {
-    status = "Enabled"
-  }
-}
-
-resource "aws_s3_bucket_lifecycle_configuration" "caddy_certs" {
-  region = local.seoul_region
-  bucket = aws_s3_bucket.caddy_certs.id
-
-  rule {
-    id     = "expire-replaced-certificates"
-    status = "Enabled"
-
-    filter {}
-
-    # Every renewal leaves the old certificate as a version; 30 days keeps it
-    # to restore if a renewal writes something broken.
-    noncurrent_version_expiration {
-      noncurrent_days = 30
-    }
-
-    expiration {
-      expired_object_delete_marker = true
-    }
-
-    abort_incomplete_multipart_upload {
-      days_after_initiation = 1
-    }
   }
 }
 

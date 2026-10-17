@@ -15,12 +15,12 @@ output "rate_limit_s3_host" {
 
 output "caddy_certs_bucket" {
   description = "Where Caddy keeps its ACME account and certificates"
-  value       = aws_s3_bucket.caddy_certs.bucket
+  value       = module.caddy_certs.s3_bucket_id
 }
 
 output "caddy_certs_s3_host" {
   description = "The S3 endpoint of the Caddy certificates bucket's region"
-  value       = "s3.${aws_s3_bucket.caddy_certs.region}.amazonaws.com"
+  value       = "s3.${module.caddy_certs.s3_bucket_region}.amazonaws.com"
 }
 
 output "outbound_issuer" {
