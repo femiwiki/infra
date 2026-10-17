@@ -65,9 +65,7 @@ resource "aws_iam_group_policy_attachment" "readonly_mfa" {
 }
 
 
-#
 # IAM Roles
-#
 module "github_lambda" {
   source             = "terraform-aws-modules/iam/aws//modules/iam-role"
   version            = "6.8.2"
