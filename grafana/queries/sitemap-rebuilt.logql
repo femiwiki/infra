@@ -1,1 +1,0 @@
-sum(count_over_time({cron_job="generate-sitemap"} |= "generate-sitemap: done" [8h])) or vector(0)

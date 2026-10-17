@@ -341,13 +341,13 @@ loki.process "fastcgi" {
     }
   }
 
-  // A label of their own lets the rules waiting on the cron jobs' finish lines
+  // A label of their own lets the rules waiting on publish-dump's finish line
   // read only them: Loki bills a query by the streams it opens
   stage.match {
-    selector = `{docker_container_name=~"fastcgi.*"} |~ "^(generate-sitemap|publish-dump): "`
+    selector = `{docker_container_name=~"fastcgi.*"} |~ "^publish-dump: "`
 
     stage.regex {
-      expression = `^(?P<cron_job>generate-sitemap|publish-dump): `
+      expression = `^(?P<cron_job>publish-dump): `
     }
 
     stage.labels {

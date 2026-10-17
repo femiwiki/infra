@@ -68,13 +68,6 @@ resource "docker_container" "http" {
     } : "${k}=${v}"
   ]
 
-  mounts {
-    type      = "volume"
-    source    = docker_volume.sitemap.id
-    target    = "/srv/femiwiki.com/sitemap"
-    read_only = true
-  }
-
   ulimit {
     hard = 65536
     name = "nofile"
@@ -211,13 +204,6 @@ resource "docker_container" "fastcgi" {
       }
       service_account_impersonation_url = data.terraform_remote_state.gcp.outputs.pageviewinfoga_impersonation_url
     })
-  }
-
-  mounts {
-    type      = "volume"
-    source    = docker_volume.sitemap.id
-    target    = "/srv/femiwiki.com/sitemap"
-    read_only = false
   }
 
   mounts {
