@@ -168,12 +168,6 @@ module "maintenance" {
   ]
 }
 
-# Brings the archived repository back; archived = false unarchives it on apply
-import {
-  to = module.maintenance.github_repository.repository
-  id = "maintenance"
-}
-
 module "caddy_mwcache" {
   source      = "./modules/github-repository"
   name        = "caddy-mwcache"
