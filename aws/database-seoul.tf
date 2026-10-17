@@ -72,7 +72,7 @@ resource "aws_instance" "database" {
   user_data_base64 = base64gzip(templatefile("res/user-data-mariadb.sh.tftpl", {
     mysql_server_id = each.key
     region          = local.seoul_region
-    backups_bucket  = aws_s3_bucket.backups_seoul.bucket
+    backups_bucket  = module.backups_seoul.s3_bucket_id
 
     alloy_install = local.alloy_install["database-${each.key}"]
   }))
