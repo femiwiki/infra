@@ -68,73 +68,49 @@ resource "aws_iam_group_policy_attachment" "readonly_mfa" {
 #
 # IAM Roles
 #
-resource "aws_iam_role" "github_lambda" {
+module "github_lambda" {
+  source             = "terraform-aws-modules/iam/aws//modules/iam-role"
+  version            = "6.8.2"
   name               = "github-lambda"
+  use_name_prefix    = false
   description        = "Allows GitHub Actions workflows of femiwiki/lambda to deploy its functions."
-  assume_role_policy = data.aws_iam_policy_document.github_lambda_assume_role.json
+  enable_github_oidc = true
+  oidc_subjects = [
+    "femiwiki/lambda:ref:refs/heads/main",
+  ]
 }
 
-data "aws_iam_policy_document" "github_lambda_assume_role" {
-  statement {
-    actions = ["sts:AssumeRoleWithWebIdentity"]
-
-    principals {
-      type        = "Federated"
-      identifiers = [aws_iam_openid_connect_provider.github_actions.arn]
-    }
-
-    condition {
-      test     = "StringEquals"
-      variable = "token.actions.githubusercontent.com:aud"
-      values   = ["sts.amazonaws.com"]
-    }
-
-    condition {
-      test     = "StringEquals"
-      variable = "token.actions.githubusercontent.com:sub"
-      values   = ["repo:femiwiki/lambda:ref:refs/heads/main"]
-    }
-  }
+moved {
+  from = aws_iam_role.github_lambda
+  to   = module.github_lambda.aws_iam_role.this[0]
 }
 
 resource "aws_iam_role_policy" "github_lambda" {
   name   = "GithubLambda"
-  role   = aws_iam_role.github_lambda.name
+  role   = module.github_lambda.name
   policy = data.aws_iam_policy_document.github_lambda.json
 }
 
-resource "aws_iam_role" "femiwiki_github_io" {
+module "femiwiki_github_io" {
+  source             = "terraform-aws-modules/iam/aws//modules/iam-role"
+  version            = "6.8.2"
   name               = "femiwiki-github-io"
+  use_name_prefix    = false
   description        = "Allows GitHub Actions workflows of femiwiki/femiwiki.github.io to read what the site publishes."
-  assume_role_policy = data.aws_iam_policy_document.femiwiki_github_io_assume_role.json
+  enable_github_oidc = true
+  oidc_subjects = [
+    "femiwiki@21275875/femiwiki.github.io@1377892969:ref:refs/heads/main",
+  ]
 }
 
-data "aws_iam_policy_document" "femiwiki_github_io_assume_role" {
-  statement {
-    actions = ["sts:AssumeRoleWithWebIdentity"]
-
-    principals {
-      type        = "Federated"
-      identifiers = [aws_iam_openid_connect_provider.github_actions.arn]
-    }
-
-    condition {
-      test     = "StringEquals"
-      variable = "token.actions.githubusercontent.com:aud"
-      values   = ["sts.amazonaws.com"]
-    }
-
-    condition {
-      test     = "StringEquals"
-      variable = "token.actions.githubusercontent.com:sub"
-      values   = ["repo:femiwiki@21275875/femiwiki.github.io@1377892969:ref:refs/heads/main"]
-    }
-  }
+moved {
+  from = aws_iam_role.femiwiki_github_io
+  to   = module.femiwiki_github_io.aws_iam_role.this[0]
 }
 
 resource "aws_iam_role_policy" "femiwiki_github_io" {
   name   = "FemiwikiGithubIo"
-  role   = aws_iam_role.femiwiki_github_io.name
+  role   = module.femiwiki_github_io.name
   policy = data.aws_iam_policy_document.femiwiki_github_io.json
 }
 
@@ -259,78 +235,50 @@ resource "aws_iam_role_policy_attachment" "read_alloy_parameters" {
   policy_arn = aws_iam_policy.read_alloy_parameters.arn
 }
 
-resource "aws_iam_role" "infra_grafana" {
+module "infra_grafana" {
+  source             = "terraform-aws-modules/iam/aws//modules/iam-role"
+  version            = "6.8.2"
   name               = "infra-grafana"
+  use_name_prefix    = false
   description        = "Allows GitHub Actions workflows of femiwiki/infra to keep the grafana workspace's state in S3."
-  assume_role_policy = data.aws_iam_policy_document.infra_grafana_assume_role.json
+  enable_github_oidc = true
+  oidc_subjects = [
+    "femiwiki@21275875/infra@188597503:pull_request",
+    "femiwiki@21275875/infra@188597503:environment:grafana",
+  ]
 }
 
-data "aws_iam_policy_document" "infra_grafana_assume_role" {
-  statement {
-    actions = ["sts:AssumeRoleWithWebIdentity"]
-
-    principals {
-      type        = "Federated"
-      identifiers = [aws_iam_openid_connect_provider.github_actions.arn]
-    }
-
-    condition {
-      test     = "StringEquals"
-      variable = "token.actions.githubusercontent.com:aud"
-      values   = ["sts.amazonaws.com"]
-    }
-
-    condition {
-      test     = "StringEquals"
-      variable = "token.actions.githubusercontent.com:sub"
-      values = [
-        "repo:femiwiki@21275875/infra@188597503:pull_request",
-        "repo:femiwiki@21275875/infra@188597503:environment:grafana",
-      ]
-    }
-  }
+moved {
+  from = aws_iam_role.infra_grafana
+  to   = module.infra_grafana.aws_iam_role.this[0]
 }
 
 resource "aws_iam_role_policy" "infra_grafana" {
   name   = "InfraGrafana"
-  role   = aws_iam_role.infra_grafana.name
+  role   = module.infra_grafana.name
   policy = data.aws_iam_policy_document.infra_grafana.json
 }
 
-resource "aws_iam_role" "infra_healthchecks" {
+module "infra_healthchecks" {
+  source             = "terraform-aws-modules/iam/aws//modules/iam-role"
+  version            = "6.8.2"
   name               = "infra-healthchecks"
+  use_name_prefix    = false
   description        = "Allows GitHub Actions workflows of femiwiki/infra to keep the healthchecks workspace's state in S3."
-  assume_role_policy = data.aws_iam_policy_document.infra_healthchecks_assume_role.json
+  enable_github_oidc = true
+  oidc_subjects = [
+    "femiwiki@21275875/infra@188597503:pull_request",
+    "femiwiki@21275875/infra@188597503:environment:healthchecks",
+  ]
 }
 
-data "aws_iam_policy_document" "infra_healthchecks_assume_role" {
-  statement {
-    actions = ["sts:AssumeRoleWithWebIdentity"]
-
-    principals {
-      type        = "Federated"
-      identifiers = [aws_iam_openid_connect_provider.github_actions.arn]
-    }
-
-    condition {
-      test     = "StringEquals"
-      variable = "token.actions.githubusercontent.com:aud"
-      values   = ["sts.amazonaws.com"]
-    }
-
-    condition {
-      test     = "StringEquals"
-      variable = "token.actions.githubusercontent.com:sub"
-      values = [
-        "repo:femiwiki@21275875/infra@188597503:pull_request",
-        "repo:femiwiki@21275875/infra@188597503:environment:healthchecks",
-      ]
-    }
-  }
+moved {
+  from = aws_iam_role.infra_healthchecks
+  to   = module.infra_healthchecks.aws_iam_role.this[0]
 }
 
 resource "aws_iam_role_policy" "infra_healthchecks" {
   name   = "InfraHealthchecks"
-  role   = aws_iam_role.infra_healthchecks.name
+  role   = module.infra_healthchecks.name
   policy = data.aws_iam_policy_document.infra_healthchecks.json
 }
