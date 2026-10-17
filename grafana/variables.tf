@@ -2,6 +2,9 @@ variable "grafana_auth" {
   description = "Service account token with alerting provisioning rights"
   type        = string
   sensitive   = true
+  # The plan job reads with one token and the apply job writes with another,
+  # so the saved plan the apply job runs must not hold it
+  ephemeral = true
 }
 
 variable "discord_webhook_url" {

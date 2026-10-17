@@ -194,6 +194,16 @@ jobs:
           plan-json: ${{ steps.plan.outputs.json_plan_path }}
           plan-text: ${{ steps.plan.outputs.text_plan_path }}
 
+      # Applied as is, so a value read differently each time cannot fail the apply.
+      # Each root's plan block encrypts it; healthchecks has none and plans again.
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
+        if: steps.changes.outputs.apply == 'true' && matrix.workspace != 'healthchecks'
+        with:
+          name: plan-${{ matrix.workspace }}
+          path: ${{ steps.plan.outputs.plan_path }}
+          if-no-files-found: error
+          retention-days: 1
+
       # With nothing left to import or move, such a block has done its job
       - name: Leftover import and moved blocks
         if: steps.changes.outputs.apply == 'false'
@@ -426,6 +436,13 @@ jobs:
         with:
           workspace: ${{ matrix.workspace }}
 
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333  # v8.0.2
+        if: github.event.pull_request && matrix.workspace != 'healthchecks'
+        id: saved
+        with:
+          name: plan-${{ matrix.workspace }}
+          path: saved-plan
+
       - uses: dflook/tofu-apply@e3e5dfc8f935d4b152c767801046f63abf8a77d3  # v3.1.0
         id: apply
         env:
@@ -452,6 +469,7 @@ jobs:
         with:
           path: ${{ matrix.workspace }}
           auto_approve: ${{ github.event_name == 'workflow_dispatch' }}
+          plan_path: ${{ steps.saved.outcome == 'success' && 'saved-plan/plan.tfplan' || '' }}
 
       # A failed post does not fail an apply that has already changed production.
       # The next post carries the note, and the Discord message says it is owed.

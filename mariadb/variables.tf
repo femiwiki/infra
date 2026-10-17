@@ -1,6 +1,9 @@
 variable "mariadb_endpoint" {
   description = "host:port of the primary MariaDB, forwarded over SSM"
   type        = string
+  # Each job forwards its own port, so the saved plan the apply job runs must
+  # not hold it
+  ephemeral = true
 }
 
 variable "state_passphrase" {
