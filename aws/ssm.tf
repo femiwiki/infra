@@ -23,15 +23,11 @@ data "terraform_remote_state" "gcp" {
 }
 
 locals {
-  alloy_hosts = merge(
-    {
-      for id in local.database_hosts :
-      "database-${id}" => { name = "mariadb-seoul", type = "database", region = local.seoul_region }
-    },
-    {
-      "docker" = { name = "femiwiki-seoul", type = "app", region = local.seoul_region }
-    },
-  )
+  # Database hosts come and go with the swap, so they are found by role.
+  alloy_hosts = {
+    "database" = { name = "mariadb-seoul", type = "database", region = local.seoul_region, tag = "Role" }
+    "docker"   = { name = "femiwiki-seoul", type = "app", region = local.seoul_region, tag = "Name" }
+  }
 
   alloy_grafana = {
     prometheus_endpoint = "https://prometheus-prod-49-prod-ap-northeast-0.grafana.net/api/prom/push"
@@ -221,6 +217,16 @@ resource "aws_ssm_document" "alloy_config" {
   })
 }
 
+moved {
+  from = aws_ssm_document.alloy_config["database-5"]
+  to   = aws_ssm_document.alloy_config["database"]
+}
+
+moved {
+  from = aws_ssm_association.alloy_config["database-5"]
+  to   = aws_ssm_association.alloy_config["database"]
+}
+
 resource "aws_ssm_association" "alloy_config" {
   for_each = local.alloy_hosts
 
@@ -236,7 +242,7 @@ resource "aws_ssm_association" "alloy_config" {
   max_errors          = "0"
 
   targets {
-    key    = "tag:Name"
+    key    = "tag:${each.value.tag}"
     values = [each.key]
   }
 }
