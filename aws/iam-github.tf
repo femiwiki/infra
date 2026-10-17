@@ -44,6 +44,12 @@ data "aws_iam_policy_document" "infra_github" {
   }
 
   statement {
+    sid       = "ReadGrafanaOutputs"
+    actions   = ["s3:GetObject"]
+    resources = [for b in local.tfstate_buckets : "${b}/grafana/terraform.tfstate"]
+  }
+
+  statement {
     sid       = "StateBucket"
     actions   = ["s3:ListBucket"]
     resources = local.tfstate_buckets
