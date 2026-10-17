@@ -2,6 +2,8 @@ variable "github_token" {
   description = "An installation token for the app that owns this root, minted per run."
   type        = string
   sensitive   = true
+  # Minted per job, so the saved plan the apply job runs must not hold it
+  ephemeral = true
 }
 
 variable "state_passphrase" {

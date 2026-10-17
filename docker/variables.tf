@@ -1,6 +1,9 @@
 variable "docker_host" {
   type    = string
   default = "tcp://127.0.0.1:2376"
+  # Each job forwards its own port, so the saved plan the apply job runs must
+  # not hold it
+  ephemeral = true
 }
 
 variable "state_passphrase" {
