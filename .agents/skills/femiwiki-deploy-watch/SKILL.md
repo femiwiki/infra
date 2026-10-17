@@ -147,7 +147,7 @@ is removed; see femiwiki/femiwiki#590.
 ```
 
 It prints the declared generation from `origin/main:docker/locals.tf` and the
-`fastcgi-A -> fastcgi-B` line from the newest successful apply run's log, and
+`fastcgi-A -> fastcgi-B` line from the log of the docker apply job that finished last, and
 says `ROLLBACK` when B is lower than A. A rollback has happened because a plan
 saying `fastcgi-60 -> fastcgi-59` went unread.
 
