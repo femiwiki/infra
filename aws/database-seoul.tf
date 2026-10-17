@@ -75,7 +75,7 @@ resource "aws_instance" "database" {
     region          = local.seoul_region
     backups_bucket  = module.backups_seoul.s3_bucket_id
 
-    alloy_install = local.alloy_install["database-${each.key}"]
+    alloy_install = local.alloy_install["database"]
   }))
 
   vpc_security_group_ids = [
@@ -100,6 +100,7 @@ resource "aws_instance" "database" {
 
   tags = {
     Name        = "database-${each.key}"
+    Role        = "database"
     MysqlBackup = tostring(each.key == local.database_primary)
   }
 
@@ -110,5 +111,111 @@ resource "aws_instance" "database" {
       user_data,
       user_data_base64,
     ]
+  }
+}
+
+# The address the app and replicas reach the primary at. The swap moves it to
+# the promoted host; this attachment is only the first one.
+resource "aws_network_interface" "database" {
+  region          = local.seoul_region
+  subnet_id       = aws_subnet.seoul.id
+  private_ips     = [cidrhost(aws_subnet.seoul.cidr_block, 10)]
+  security_groups = [aws_security_group.database_seoul.id]
+
+  tags = { Name = "database primary" }
+}
+
+resource "aws_network_interface_attachment" "database" {
+  region               = local.seoul_region
+  instance_id          = aws_instance.database[local.database_primary].id
+  network_interface_id = aws_network_interface.database.id
+  device_index         = 1
+}
+
+# Every host this launches is a replica of whoever holds the interface above.
+resource "aws_launch_template" "database" {
+  region        = local.seoul_region
+  name          = "database"
+  image_id      = "resolve:ssm:/aws/service/ami-amazon-linux-latest/al2023-ami-minimal-kernel-6.1-arm64"
+  instance_type = "t4g.small"
+  ebs_optimized = true
+
+  user_data = base64gzip(templatefile("res/user-data-mariadb.sh.tftpl", {
+    mysql_server_id = ""
+    primary_host    = one(aws_network_interface.database.private_ips)
+    region          = local.seoul_region
+    backups_bucket  = module.backups_seoul.s3_bucket_id
+
+    alloy_install = local.alloy_install["database"]
+  }))
+
+  iam_instance_profile {
+    name = aws_iam_instance_profile.database.name
+  }
+
+  vpc_security_group_ids = [
+    aws_security_group.database_seoul.id,
+    aws_security_group.instance_connect_seoul.id,
+  ]
+
+  block_device_mappings {
+    device_name = "/dev/xvda"
+    ebs {
+      delete_on_termination = true
+      volume_size           = 32
+      volume_type           = "gp3"
+    }
+  }
+
+  block_device_mappings {
+    device_name = "/dev/sdf"
+    ebs {
+      delete_on_termination = true
+      encrypted             = true
+      volume_size           = 32
+      volume_type           = "gp3"
+    }
+  }
+
+  credit_specification {
+    cpu_credits = "unlimited"
+  }
+
+  metadata_options {
+    instance_metadata_tags = "enabled"
+    http_tokens            = "required"
+  }
+
+  tag_specifications {
+    resource_type = "instance"
+    tags = {
+      Name        = "database"
+      Role        = "database"
+      MysqlBackup = "false"
+    }
+  }
+
+  tag_specifications {
+    resource_type = "volume"
+    tags          = { Name = "database" }
+  }
+}
+
+# Empty until the swap workflow raises it for a replacement.
+resource "aws_autoscaling_group" "database" {
+  region              = local.seoul_region
+  name                = "database"
+  min_size            = 0
+  max_size            = 2
+  desired_capacity    = 0
+  vpc_zone_identifier = [aws_subnet.seoul.id]
+
+  launch_template {
+    id      = aws_launch_template.database.id
+    version = aws_launch_template.database.latest_version
+  }
+
+  lifecycle {
+    ignore_changes = [desired_capacity]
   }
 }

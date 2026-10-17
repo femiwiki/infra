@@ -5,85 +5,62 @@ locals {
 }
 
 resource "aws_cloudtrail" "management_events" {
-  depends_on = [aws_s3_bucket_policy.trail]
+  depends_on = [module.trail]
 
   region                        = local.seoul_region
   name                          = local.trail_name
-  s3_bucket_name                = aws_s3_bucket.trail.id
+  s3_bucket_name                = module.trail.s3_bucket_id
   is_multi_region_trail         = true
   include_global_service_events = true
   enable_log_file_validation    = true
 }
 
-resource "aws_s3_bucket" "trail" {
-  region           = local.seoul_region
-  bucket           = "trail-${data.aws_caller_identity.current.account_id}-${local.seoul_region}-an"
-  bucket_namespace = "account-regional"
+module "trail" {
+  source                                = "terraform-aws-modules/s3-bucket/aws"
+  version                               = "5.17.0"
+  region                                = local.seoul_region
+  bucket                                = "trail-${data.aws_caller_identity.current.account_id}-${local.seoul_region}-an"
+  bucket_namespace                      = "account-regional"
+  attach_deny_insecure_transport_policy = true
+  attach_policy                         = true
+  policy                                = data.aws_iam_policy_document.trail.json
+  # Expiry only: the log files are a few KB, and a transition costs more than it
+  # saves.
+  lifecycle_rule = [
+    {
+      id                                     = "expire-after-a-year"
+      enabled                                = true
+      expiration                             = { days = 365 }
+      abort_incomplete_multipart_upload_days = 1
+    },
+  ]
 }
 
-resource "aws_s3_bucket_public_access_block" "trail" {
-  region = local.seoul_region
-  bucket = aws_s3_bucket.trail.id
-
-  block_public_acls       = true
-  block_public_policy     = true
-  ignore_public_acls      = true
-  restrict_public_buckets = true
+moved {
+  from = aws_s3_bucket.trail
+  to   = module.trail.aws_s3_bucket.this[0]
 }
 
-# Expiry only: the log files are a few KB, and a transition costs more than it
-# saves.
-resource "aws_s3_bucket_lifecycle_configuration" "trail" {
-  region = local.seoul_region
-  bucket = aws_s3_bucket.trail.id
-
-  rule {
-    id     = "expire-after-a-year"
-    status = "Enabled"
-
-    filter {}
-
-    expiration {
-      days = 365
-    }
-
-    abort_incomplete_multipart_upload {
-      days_after_initiation = 1
-    }
-  }
+moved {
+  from = aws_s3_bucket_public_access_block.trail
+  to   = module.trail.aws_s3_bucket_public_access_block.this[0]
 }
 
-resource "aws_s3_bucket_policy" "trail" {
-  depends_on = [aws_s3_bucket_public_access_block.trail]
+moved {
+  from = aws_s3_bucket_lifecycle_configuration.trail
+  to   = module.trail.aws_s3_bucket_lifecycle_configuration.this[0]
+}
 
-  region = local.seoul_region
-  bucket = aws_s3_bucket.trail.id
-  policy = data.aws_iam_policy_document.trail.json
+moved {
+  from = aws_s3_bucket_policy.trail
+  to   = module.trail.aws_s3_bucket_policy.this[0]
 }
 
 data "aws_iam_policy_document" "trail" {
   statement {
-    sid       = "DenyPlainHttp"
-    effect    = "Deny"
-    actions   = ["s3:*"]
-    resources = [aws_s3_bucket.trail.arn, "${aws_s3_bucket.trail.arn}/*"]
-
-    principals {
-      type        = "*"
-      identifiers = ["*"]
-    }
-
-    condition {
-      test     = "Bool"
-      variable = "aws:SecureTransport"
-      values   = ["false"]
-    }
-  }
-
-  statement {
     sid       = "AWSCloudTrailAclCheck"
     actions   = ["s3:GetBucketAcl"]
-    resources = [aws_s3_bucket.trail.arn]
+    resources = [module.trail.s3_bucket_arn]
 
     principals {
       type        = "Service"
@@ -100,7 +77,7 @@ data "aws_iam_policy_document" "trail" {
   statement {
     sid       = "AWSCloudTrailWrite"
     actions   = ["s3:PutObject"]
-    resources = ["${aws_s3_bucket.trail.arn}/AWSLogs/${data.aws_caller_identity.current.account_id}/*"]
+    resources = ["${module.trail.s3_bucket_arn}/AWSLogs/${data.aws_caller_identity.current.account_id}/*"]
 
     principals {
       type        = "Service"
