@@ -153,6 +153,20 @@ jobs:
             exit 1
           fi
 
+  tofu-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: dflook/tofu-test@8b602df142b55fcec9378664b78e98645e4078e0  # v3.1.0
+        with:
+          path: docker/caddyfile
+
   long-comments:
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -183,7 +197,7 @@ jobs:
 
   gate:
     name: lint gate
-    needs: [tflint, shellcheck, rumdl, yamllint, parallel-lint, taplo, caddyfile, long-comments, shared-lint]
+    needs: [tflint, shellcheck, rumdl, yamllint, parallel-lint, taplo, caddyfile, tofu-test, long-comments, shared-lint]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 5

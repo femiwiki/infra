@@ -1,7 +1,11 @@
+module "caddyfile" {
+  source = "./caddyfile"
+}
+
 resource "docker_container" "http" {
   name         = "http-${local.fastcgi_generation}"
   log_driver   = "local"
-  image        = "ghcr.io/femiwiki/femiwiki:2026-10-14T20-05-0c4aeef6"
+  image        = "ghcr.io/femiwiki/femiwiki:2026-10-17T00-43-efcb7c71"
   command      = ["caddy-run"]
   restart      = "always"
   network_mode = "host"
@@ -43,7 +47,7 @@ resource "docker_container" "http" {
       FW_EXPENSIVE_EVENTS    = "60",
       FW_EXPENSIVE_IP_EVENTS = "15",
 
-      FW_CADDYFILE        = file("../serving/Caddyfile"),
+      FW_CADDYFILE        = module.caddyfile.text,
       FW_ROBOTS_TXT       = file("../serving/robots.txt"),
       FW_DEAD_URLS        = join("\n", [for l in split("\n", file("../serving/dead-urls.txt")) : l if trimspace(l) != "" && !startswith(l, "#")]),
       AWS_REGION          = "ap-northeast-2",
@@ -86,7 +90,7 @@ resource "docker_container" "http" {
 resource "docker_container" "fastcgi" {
   name         = "fastcgi-${local.fastcgi_generation}"
   log_driver   = "local"
-  image        = "ghcr.io/femiwiki/femiwiki:2026-10-14T20-05-0c4aeef6"
+  image        = "ghcr.io/femiwiki/femiwiki:2026-10-17T00-43-efcb7c71"
   network_mode = "host"
   restart      = "always"
   memory       = 768
@@ -151,6 +155,12 @@ resource "docker_container" "fastcgi" {
         "cdn.jsdelivr.net",       # WidgetBot's crate for the discord-widget gadget
         "www.gstatic.com",        # 위젯:구글 통계 and 위젯:인기있는 문서
       ])
+
+      # MediaWiki globals LocalSettings applies after its defaults. See femiwiki#691.
+      FW_SETTINGS = jsonencode({
+        # Naver Search Advisor's public HTML tag key for femiwiki@naver.com
+        wgNaverSiteVerificationKey = "8e17c8c264cfe03530591213361fe53c765056d3"
+      })
 
       WG_BOUNCE_HANDLER_INTERNAL_IPS = "10.20.0.0/16"
       WG_CDN_SERVERS                 = "127.0.0.1:80"
@@ -243,10 +253,31 @@ resource "docker_container" "memcached" {
     value = "true"
   }
 
+  healthcheck {
+    test     = terraform_data.memcached_healthcheck.input.test
+    interval = terraform_data.memcached_healthcheck.input.interval
+    timeout  = terraform_data.memcached_healthcheck.input.timeout
+    retries  = terraform_data.memcached_healthcheck.input.retries
+  }
+
   ulimit {
     hard = 65536
     name = "nofile"
     soft = 32768
+  }
+
+  lifecycle {
+    replace_triggered_by = [terraform_data.memcached_healthcheck]
+  }
+}
+
+# The provider plans a changed healthcheck as an in-place update that never reaches the container
+resource "terraform_data" "memcached_healthcheck" {
+  input = {
+    test     = ["CMD-SHELL", "printf 'version\\r\\n' | nc -w 2 127.0.0.1 11211 | grep -q '^VERSION'"]
+    interval = "30s"
+    timeout  = "5s"
+    retries  = 3
   }
 }
 

@@ -1,10 +1,10 @@
-resource "aws_iam_role" "infra_mysql" {
-  name               = "infra-mysql"
-  description        = "Allows GitHub Actions workflows of femiwiki/infra to plan and apply the mysql workspace."
-  assume_role_policy = data.aws_iam_policy_document.infra_mysql_assume_role.json
+resource "aws_iam_role" "infra_mariadb" {
+  name               = "infra-mariadb"
+  description        = "Allows GitHub Actions workflows of femiwiki/infra to plan and apply the mariadb workspace."
+  assume_role_policy = data.aws_iam_policy_document.infra_mariadb_assume_role.json
 }
 
-data "aws_iam_policy_document" "infra_mysql_assume_role" {
+data "aws_iam_policy_document" "infra_mariadb_assume_role" {
   statement {
     actions = ["sts:AssumeRoleWithWebIdentity"]
 
@@ -24,23 +24,23 @@ data "aws_iam_policy_document" "infra_mysql_assume_role" {
       variable = "token.actions.githubusercontent.com:sub"
       values = [
         "repo:femiwiki@21275875/infra@188597503:pull_request",
-        "repo:femiwiki@21275875/infra@188597503:environment:mysql",
+        "repo:femiwiki@21275875/infra@188597503:environment:mariadb",
       ]
     }
   }
 }
 
-resource "aws_iam_role_policy" "infra_mysql" {
-  name   = "InfraMysql"
-  role   = aws_iam_role.infra_mysql.name
-  policy = data.aws_iam_policy_document.infra_mysql.json
+resource "aws_iam_role_policy" "infra_mariadb" {
+  name   = "InfraMariadb"
+  role   = aws_iam_role.infra_mariadb.name
+  policy = data.aws_iam_policy_document.infra_mariadb.json
 }
 
-data "aws_iam_policy_document" "infra_mysql" {
+data "aws_iam_policy_document" "infra_mariadb" {
   statement {
     sid       = "State"
     actions   = ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"]
-    resources = [for b in local.tfstate_buckets : "${b}/mysql/terraform.tfstate*"]
+    resources = [for b in local.tfstate_buckets : "${b}/mariadb/terraform.tfstate*"]
   }
 
   statement {

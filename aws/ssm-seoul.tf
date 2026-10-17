@@ -63,7 +63,7 @@ resource "random_password" "mysql_tofu" {
   special = false
 }
 
-# Read by the mysql workspace to log in, and by a new database host to create
+# Read by the mariadb workspace to log in, and by a new database host to create
 # the account.
 resource "aws_ssm_parameter" "mysql_tofu_password" {
   region = local.seoul_region
