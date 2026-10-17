@@ -25,7 +25,7 @@ resource "aws_glue_catalog_table" "cloudfront" {
     "projection.hour.type"      = "integer"
     "projection.hour.range"     = "0,23"
     "projection.hour.digits"    = "2"
-    "storage.location.template" = "s3://${aws_s3_bucket.edge_logs.id}/cloudfront/year=$${year}/month=$${month}/day=$${day}/hour=$${hour}/"
+    "storage.location.template" = "s3://${module.edge_logs.s3_bucket_id}/cloudfront/year=$${year}/month=$${month}/day=$${day}/hour=$${hour}/"
   }
 
   dynamic "partition_keys" {
@@ -38,7 +38,7 @@ resource "aws_glue_catalog_table" "cloudfront" {
   }
 
   storage_descriptor {
-    location      = "s3://${aws_s3_bucket.edge_logs.id}/cloudfront/"
+    location      = "s3://${module.edge_logs.s3_bucket_id}/cloudfront/"
     input_format  = "org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat"
     output_format = "org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat"
 
@@ -68,7 +68,7 @@ resource "aws_athena_workgroup" "logs" {
     bytes_scanned_cutoff_per_query = 1073741824
 
     result_configuration {
-      output_location = "s3://${aws_s3_bucket.edge_logs.id}/athena-results/"
+      output_location = "s3://${module.edge_logs.s3_bucket_id}/athena-results/"
 
       encryption_configuration {
         encryption_option = "SSE_S3"
