@@ -21,7 +21,6 @@ locals {
     }))}&schemaVersion=1"
   }
 
-  sitemap_rebuilt      = trimspace(file("${path.module}/queries/sitemap-rebuilt.logql"))
   dump_failed          = trimspace(file("${path.module}/queries/dump-failed.logql"))
   dump_published       = trimspace(file("${path.module}/queries/dump-published.logql"))
   dump_due             = trimspace(file("${path.module}/queries/dump-due.promql"))

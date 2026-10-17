@@ -73,56 +73,6 @@ resource "grafana_rule_group" "femiwiki_jobs" {
   }
 
   rule {
-    name = "The sitemap has not been rebuilt"
-    for  = "30m"
-
-    condition      = "B"
-    no_data_state  = "OK"
-    exec_err_state = "OK"
-
-    labels = {
-      impact   = "operators"
-      severity = "warning"
-    }
-
-    annotations = {
-      summary = "사이트맵이 여덟 시간 넘게 다시 만들어지지 않았습니다. `generate-sitemap`은 네 시간마다 돌고 끝나면 로그에 한 줄을 남기는데, 그 줄이 두 번 연속 없습니다. cron이 데이터베이스에 닿지 못하면 이렇게 되고, 그동안 robots.txt는 갱신을 멈춘 사이트맵을 계속 가리킵니다."
-    }
-
-    data {
-      ref_id         = "A"
-      datasource_uid = data.grafana_data_source.loki.uid
-      query_type     = "instant"
-      relative_time_range {
-        from = 28800
-        to   = 0
-      }
-      model = jsonencode({
-        refId     = "A"
-        expr      = local.sitemap_rebuilt
-        queryType = "instant"
-        instant   = true
-        range     = false
-      })
-    }
-
-    data {
-      ref_id         = "B"
-      datasource_uid = "__expr__"
-      relative_time_range {
-        from = 0
-        to   = 0
-      }
-      model = jsonencode({
-        refId      = "B"
-        type       = "threshold"
-        expression = "A"
-        conditions = [{ evaluator = { type = "lt", params = [1] } }]
-      })
-    }
-  }
-
-  rule {
     name = "The sitemap cannot be read"
     for  = "30m"
 
