@@ -27,7 +27,7 @@ resource "mysql_grant" "backup_global" {
   user       = mysql_user.backup.user
   host       = mysql_user.backup.host
   database   = "*"
-  privileges = ["RELOAD", "PROCESS", "BINLOG MONITOR"]
+  privileges = ["RELOAD", "PROCESS"]
 }
 
 resource "mysql_grant" "backup_femiwiki" {
