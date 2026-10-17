@@ -16,7 +16,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: terraform-linters/setup-tflint@1cf010d3c7aef302051ccdb68c14c5dc2efa34ef  # v6.3.1
+      - uses: terraform-linters/setup-tflint@6ffdbaa3be476b3431f7275c26966ef32ff60337  # v6.3.2
         with:
           tflint_version: latest
 
@@ -46,7 +46,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240  # 2.37.2
+      - uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962  # 2.40.0
         with:
           php-version: "8.3"
           tools: parallel-lint:1.4.0
