@@ -165,7 +165,7 @@ resource "aws_s3_bucket_public_access_block" "backups" {
 
 # Roles grant both buckets until every backend reads state (femiwiki/femiwiki#666).
 locals {
-  tfstate_buckets = [aws_s3_bucket.tfstate.arn, aws_s3_bucket.state.arn]
+  tfstate_buckets = [aws_s3_bucket.tfstate.arn, module.state.s3_bucket_arn]
 }
 
 resource "aws_s3_bucket" "tfstate" {
@@ -229,92 +229,56 @@ resource "aws_s3_bucket_lifecycle_configuration" "tfstate" {
   }
 }
 
-resource "aws_s3_bucket" "state" {
-  region           = local.seoul_region
-  bucket           = "tfstate-${data.aws_caller_identity.current.account_id}-${local.seoul_region}-an"
-  bucket_namespace = "account-regional"
-}
-
-resource "aws_s3_bucket_public_access_block" "state" {
-  region = local.seoul_region
-  bucket = aws_s3_bucket.state.id
-
-  block_public_acls       = true
-  block_public_policy     = true
-  ignore_public_acls      = true
-  restrict_public_buckets = true
-}
-
-resource "aws_s3_bucket_policy" "state" {
-  region = local.seoul_region
-  bucket = aws_s3_bucket.state.id
-  policy = data.aws_iam_policy_document.state_bucket.json
-}
-
-data "aws_iam_policy_document" "state_bucket" {
-  statement {
-    sid     = "DenyPlainHttp"
-    effect  = "Deny"
-    actions = ["s3:*"]
-
-    principals {
-      type        = "AWS"
-      identifiers = ["*"]
-    }
-
-    resources = [aws_s3_bucket.state.arn, "${aws_s3_bucket.state.arn}/*"]
-
-    condition {
-      test     = "Bool"
-      variable = "aws:SecureTransport"
-      values   = ["false"]
-    }
+module "state" {
+  source                                = "terraform-aws-modules/s3-bucket/aws"
+  version                               = "5.17.0"
+  region                                = local.seoul_region
+  bucket                                = "tfstate-${data.aws_caller_identity.current.account_id}-${local.seoul_region}-an"
+  bucket_namespace                      = "account-regional"
+  attach_deny_insecure_transport_policy = true
+  versioning                            = { enabled = true }
+  server_side_encryption_configuration = {
+    rule = { apply_server_side_encryption_by_default = { sse_algorithm = "AES256" } }
   }
-}
-
-resource "aws_s3_bucket_versioning" "state" {
-  region = local.seoul_region
-  bucket = aws_s3_bucket.state.id
-  versioning_configuration {
-    status = "Enabled"
-  }
-}
-
-resource "aws_s3_bucket_server_side_encryption_configuration" "state" {
-  region = local.seoul_region
-  bucket = aws_s3_bucket.state.id
-
-  rule {
-    apply_server_side_encryption_by_default {
-      sse_algorithm = "AES256"
+  lifecycle_rule = [
+    for workspace in ["grafana"] : {
+      id                            = "Expire the ${workspace} state lock's old versions"
+      enabled                       = true
+      filter                        = { prefix = "${workspace}/terraform.tfstate.tflock" }
+      noncurrent_version_expiration = { days = 1 }
+      expiration                    = { expired_object_delete_marker = true }
     }
-  }
+  ]
 }
 
-resource "aws_s3_bucket_lifecycle_configuration" "state" {
-  region = local.seoul_region
-  bucket = aws_s3_bucket.state.id
+moved {
+  from = aws_s3_bucket.state
+  to   = module.state.aws_s3_bucket.this[0]
+}
 
-  dynamic "rule" {
-    for_each = ["grafana"]
+moved {
+  from = aws_s3_bucket_public_access_block.state
+  to   = module.state.aws_s3_bucket_public_access_block.this[0]
+}
 
-    content {
-      status = "Enabled"
-      id     = "Expire the ${rule.value} state lock's old versions"
+moved {
+  from = aws_s3_bucket_policy.state
+  to   = module.state.aws_s3_bucket_policy.this[0]
+}
 
-      filter {
-        prefix = "${rule.value}/terraform.tfstate.tflock"
-      }
+moved {
+  from = aws_s3_bucket_versioning.state
+  to   = module.state.aws_s3_bucket_versioning.this[0]
+}
 
-      noncurrent_version_expiration {
-        noncurrent_days = 1
-      }
+moved {
+  from = aws_s3_bucket_server_side_encryption_configuration.state
+  to   = module.state.aws_s3_bucket_server_side_encryption_configuration.this[0]
+}
 
-      expiration {
-        expired_object_delete_marker = true
-      }
-    }
-  }
+moved {
+  from = aws_s3_bucket_lifecycle_configuration.state
+  to   = module.state.aws_s3_bucket_lifecycle_configuration.this[0]
 }
 
 resource "aws_s3_bucket" "cost_exports" {
