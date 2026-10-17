@@ -434,70 +434,39 @@ resource "aws_s3_bucket_lifecycle_configuration" "cost_and_usage" {
   }
 }
 
-resource "aws_s3_bucket" "rate_limit" {
-  region           = local.seoul_region
-  bucket           = "rate-limit-${data.aws_caller_identity.current.account_id}-${local.seoul_region}-an"
-  bucket_namespace = "account-regional"
+module "rate_limit" {
+  source                                = "terraform-aws-modules/s3-bucket/aws"
+  version                               = "5.17.0"
+  region                                = local.seoul_region
+  bucket                                = "rate-limit-${data.aws_caller_identity.current.account_id}-${local.seoul_region}-an"
+  bucket_namespace                      = "account-regional"
+  attach_deny_insecure_transport_policy = true
+  lifecycle_rule = [
+    {
+      id                                     = "expire-states-of-gone-containers"
+      enabled                                = true
+      expiration                             = { days = 1 }
+      abort_incomplete_multipart_upload_days = 1
+    },
+  ]
 }
 
-resource "aws_s3_bucket_public_access_block" "rate_limit" {
-  region = local.seoul_region
-  bucket = aws_s3_bucket.rate_limit.id
-
-  block_public_acls       = true
-  block_public_policy     = true
-  ignore_public_acls      = true
-  restrict_public_buckets = true
+moved {
+  from = aws_s3_bucket.rate_limit
+  to   = module.rate_limit.aws_s3_bucket.this[0]
 }
 
-resource "aws_s3_bucket_lifecycle_configuration" "rate_limit" {
-  region = local.seoul_region
-  bucket = aws_s3_bucket.rate_limit.id
-
-  rule {
-    id     = "expire-states-of-gone-containers"
-    status = "Enabled"
-
-    filter {}
-
-    expiration {
-      days = 1
-    }
-
-    abort_incomplete_multipart_upload {
-      days_after_initiation = 1
-    }
-  }
+moved {
+  from = aws_s3_bucket_public_access_block.rate_limit
+  to   = module.rate_limit.aws_s3_bucket_public_access_block.this[0]
 }
 
-resource "aws_s3_bucket_policy" "rate_limit" {
-  depends_on = [aws_s3_bucket_public_access_block.rate_limit]
-
-  region = local.seoul_region
-  bucket = aws_s3_bucket.rate_limit.bucket
-  policy = data.aws_iam_policy_document.rate_limit.json
+moved {
+  from = aws_s3_bucket_lifecycle_configuration.rate_limit
+  to   = module.rate_limit.aws_s3_bucket_lifecycle_configuration.this[0]
 }
 
-data "aws_iam_policy_document" "rate_limit" {
-  statement {
-    sid     = "DenyPlainHttp"
-    effect  = "Deny"
-    actions = ["s3:*"]
-
-    principals {
-      type        = "AWS"
-      identifiers = ["*"]
-    }
-
-    resources = [
-      aws_s3_bucket.rate_limit.arn,
-      "${aws_s3_bucket.rate_limit.arn}/*",
-    ]
-
-    condition {
-      test     = "Bool"
-      variable = "aws:SecureTransport"
-      values   = ["false"]
-    }
-  }
+moved {
+  from = aws_s3_bucket_policy.rate_limit
+  to   = module.rate_limit.aws_s3_bucket_policy.this[0]
 }
