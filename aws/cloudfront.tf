@@ -117,6 +117,10 @@ locals {
   # caching disabled. A crawler's 403 or the fallback's 503 must not reach the
   # next reader of the same URL.
   cloudfront_uncached_errors = [400, 403, 404, 405, 414, 416, 500, 501, 502, 503, 504]
+
+  # Answered with femiwiki/maintenance's page under the same code. MediaWiki's
+  # own 404 and 500 pages say more, and a 429 cannot be replaced at all.
+  cloudfront_maintenance_errors = [502, 503, 504]
 }
 
 resource "aws_cloudfront_distribution" "femiwiki_com" {
@@ -141,6 +145,19 @@ resource "aws_cloudfront_distribution" "femiwiki_com" {
       # The most CloudFront allows without a quota increase; php-fpm and
       # Caddy's queue can take longer than the default 30
       origin_read_timeout = 60
+    }
+  }
+
+  # GitHub Pages of femiwiki/maintenance, away from the origin it stands in for
+  origin {
+    origin_id   = "maintenance"
+    domain_name = "femiwiki.github.io"
+
+    custom_origin_config {
+      http_port              = 80
+      https_port             = 443
+      origin_protocol_policy = "https-only"
+      origin_ssl_protocols   = ["TLSv1.2"]
     }
   }
 
@@ -187,12 +204,26 @@ resource "aws_cloudfront_distribution" "femiwiki_com" {
     compress                 = true
   }
 
+  # No origin request policy, so Pages gets its own name as Host. Uncached, or
+  # the URL that failed would keep the error page for the page's TTL.
+  ordered_cache_behavior {
+    path_pattern           = "/maintenance/*"
+    target_origin_id       = "maintenance"
+    viewer_protocol_policy = "redirect-to-https"
+    allowed_methods        = ["GET", "HEAD"]
+    cached_methods         = ["GET", "HEAD"]
+    cache_policy_id        = data.aws_cloudfront_cache_policy.caching_disabled.id
+    compress               = true
+  }
+
   dynamic "custom_error_response" {
     for_each = toset(local.cloudfront_uncached_errors)
 
     content {
       error_code            = custom_error_response.value
       error_caching_min_ttl = 0
+      response_page_path    = contains(local.cloudfront_maintenance_errors, custom_error_response.value) ? "/maintenance/index.html" : null
+      response_code         = contains(local.cloudfront_maintenance_errors, custom_error_response.value) ? tostring(custom_error_response.value) : null
     }
   }
 
