@@ -64,7 +64,7 @@ jobs:
         if: steps.scope.outputs.plan == 'true' && startsWith(matrix.workspace, 'docker')
         id: daemon
         with:
-          instance-tag: ${{ matrix.workspace }}
+          filters: Name=tag:Name,Values=${{ matrix.workspace }}
           region: ap-northeast-2
           port: 2376
           probe: 'curl -sf --max-time 3 "http://$HOST:$PORT/_ping"'
@@ -74,7 +74,8 @@ jobs:
         if: steps.scope.outputs.plan == 'true' && matrix.workspace == 'mariadb'
         id: mariadb
         with:
-          instance-tag: database-5
+          # Whichever host holds the primary's interface as its second one
+          filters: Name=tag:Role,Values=database Name=network-interface.attachment.device-index,Values=1
           region: ap-northeast-2
           port: 3306
           probe: '[ "$(timeout 3 head -c 4 < "/dev/tcp/$HOST/$PORT" | wc -c)" = 4 ]'
@@ -380,7 +381,7 @@ jobs:
         if: startsWith(matrix.workspace, 'docker')
         id: daemon
         with:
-          instance-tag: ${{ matrix.workspace }}
+          filters: Name=tag:Name,Values=${{ matrix.workspace }}
           region: ap-northeast-2
           port: 2376
           probe: 'curl -sf --max-time 3 "http://$HOST:$PORT/_ping"'
@@ -390,7 +391,8 @@ jobs:
         if: matrix.workspace == 'mariadb'
         id: mariadb
         with:
-          instance-tag: database-5
+          # Whichever host holds the primary's interface as its second one
+          filters: Name=tag:Role,Values=database Name=network-interface.attachment.device-index,Values=1
           region: ap-northeast-2
           port: 3306
           probe: '[ "$(timeout 3 head -c 4 < "/dev/tcp/$HOST/$PORT" | wc -c)" = 4 ]'
