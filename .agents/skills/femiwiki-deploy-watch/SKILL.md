@@ -20,10 +20,11 @@ docker-mediawiki PR merged
 
 The three checks that have been skipped before are a script, not prose:
 `.agents/skills/femiwiki-deploy-watch/fw-deploy`, with the subcommands
-`preflight`, `watch-apply` and `verify`. Run it; the prose below is only why each
-gate is there. The paths below are relative to a femiwiki/infra checkout, which
-is where this skill lives, so that a change to `.github/workflows/tofu.yml` and
-the skill that describes it can land in one pull request.
+`preflight`, `watch-apply` and `verify`. Run it; the prose below is only why
+each gate is there. The paths below are relative to a femiwiki/infra checkout,
+which is where this skill lives, so that a change to
+`.github/workflows/tofu.yml` and the skill that describes it can land in one
+pull request.
 
 Every subcommand needs `FW_INFRA_DIR` set to the femiwiki/infra checkout or
 worktree you are working in, and refuses to run without it:
@@ -124,8 +125,8 @@ will time out. Changes under `dockers/femiwiki/` go straight there.
 ## Probing the swap
 
 Start the probe when the apply job is actually running, not when the deployment
-is approved; a queued job can sit for many minutes and a fixed-length probe expires
-before the swap.
+is approved; a queued job can sit for many minutes and a fixed-length probe
+expires before the swap.
 
 ```sh
 until [ "$(gh api repos/femiwiki/infra/actions/runs/$id/jobs \
