@@ -392,6 +392,23 @@ femiwiki.com *.femiwiki.com 127.0.0.1:80 localhost:80 {
 		# No index.php fallback: a path that is not a file is a 404, not the main page
 		try_files {path} {path}/index.php
 	}
+	# MediaWiki's REST router reads REQUEST_URI, which php_fastcgi sets to the URI as
+	# sent, so FediFeeds' rewrites hand it the rewritten one, saved before try_files (#1459)
+	handle /rest.php/fedifeeds/* {
+		vars fw_rest_uri {http.request.uri}
+		php_fastcgi 127.0.0.1:9000 127.0.0.1:9001 {
+			env REQUEST_URI {vars.fw_rest_uri}
+			env REMOTE_ADDR {client_ip}
+			lb_policy round_robin
+			lb_try_duration {$FW_LB_TRY_DURATION:10s}
+			health_uri /healthz.php
+			root /srv/docroot
+			health_interval 1s
+			health_timeout 10s
+			health_fails 3
+			try_files {path} {path}/index.php
+		}
+	}
 	# When no port passes /healthz.php, send reads to any php-fpm that answers
 	# instead of a 503. A deploy drains one port only once the other is
 	# healthy, so it never gets here; a drain file left behind, as on
