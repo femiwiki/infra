@@ -430,7 +430,6 @@ data "aws_iam_policy_document" "femiwiki_github_io" {
       "ec2:DescribeInstances",
       "invoicing:GetInvoicePDF",
       "invoicing:ListInvoiceSummaries",
-      "route53:ListHealthChecks",
     ]
     resources = ["*"]
   }
