@@ -9,11 +9,18 @@ on:
 permissions: {}
 concurrency:
   group: update-branches
+  cancel-in-progress: true
 jobs:
   update:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
+      # Merges come in bursts, and each update plans every open pull request
+      # again, so a later merge cancels this run while it waits
+      - name: Wait for the merges that follow
+        if: github.event_name != 'schedule'
+        run: sleep 180
+
       - name: The application token is what makes the checks run again
         id: secret
         env:
