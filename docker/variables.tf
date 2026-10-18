@@ -23,3 +23,9 @@ variable "gcp_state_passphrase" {
   type        = string
   sensitive   = true
 }
+
+variable "proxysql_enabled" {
+  description = "Whether the wiki reaches the database through ProxySQL, as the database replacement workflow has it during a swap"
+  type        = bool
+  default     = false
+}

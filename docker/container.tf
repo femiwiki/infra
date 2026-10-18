@@ -167,7 +167,7 @@ resource "docker_container" "fastcgi" {
       # Used by fcgi-probe.php and databasez-probe.php
       FCGI_URL = "127.0.0.1:${9100 + local.fastcgi_generation % 2}"
 
-      WG_DB_SERVER          = "${data.terraform_remote_state.aws.outputs.database_address}:3306"
+      WG_DB_SERVER          = var.proxysql_enabled ? "127.0.0.1:6033" : "${data.terraform_remote_state.aws.outputs.database_address}:3306"
       WG_DB_USER            = "mediawiki"
       WG_SESSION_DB_NAME    = "femiwiki_sessions"
       WG_H_CAPTCHA_SITE_KEY = "6cb24780-3282-490c-9b4e-83122cb04cda"
@@ -221,6 +221,38 @@ resource "docker_container" "fastcgi" {
   labels {
     label = "autoheal"
     value = "true"
+  }
+
+  # Turned off, the old generation leaves before ProxySQL does
+  depends_on = [docker_container.proxysql]
+}
+
+# Parks the wiki's queries while the database replacement workflow promotes a
+# replica, so no write fails. It runs only while the switch is on.
+resource "docker_container" "proxysql" {
+  count = var.proxysql_enabled ? 1 : 0
+
+  name         = "proxysql"
+  log_driver   = "local"
+  image        = "proxysql/proxysql:3.0.11"
+  network_mode = "host"
+  restart      = "always"
+  memory       = 128
+  memory_swap  = 256
+
+  # Read on every start, since the container keeps no database of its own
+  upload {
+    file = "/etc/proxysql.cnf"
+    content = templatefile("proxysql.cnf.tftpl", {
+      database_address   = data.terraform_remote_state.aws.outputs.database_address
+      mediawiki_password = data.terraform_remote_state.aws.outputs.mysql_mediawiki_password
+    })
+  }
+
+  ulimit {
+    hard = 65536
+    name = "nofile"
+    soft = 32768
   }
 }
 
