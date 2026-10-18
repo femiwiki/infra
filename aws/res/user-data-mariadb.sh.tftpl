@@ -87,6 +87,9 @@ EOF
 # for the engine change, because a security update becomes dnf update. See
 # femiwiki/femiwiki#491.
 dnf install -y mariadb1011-server
+# A replacement leaves the id empty and takes the counter's, so no id comes back.
+SERVER_ID="${mysql_server_id}"
+[ -n "$SERVER_ID" ] || SERVER_ID="$(aws ssm get-parameter --region ${region} --name /mariadb/server-id/next --query Parameter.Value --output text)"
 # zz-, because /etc/my.cnf.d is read in alphabetical order and the package's
 # own mariadb-server.cnf sets datadir=/var/lib/mysql. Named femiwiki.cnf this
 # file was read first and lost: mariadb-prepare-db-dir then took /var/lib/mysql
@@ -105,8 +108,9 @@ max_connections=90 # default to 151
 # DNS round trip. See femiwiki/femiwiki#491.
 skip_name_resolve=ON
 
-server_id=${mysql_server_id}
 log_bin=mysql-bin
+# A replica keeps what it applies in its own binlog, so it can be promoted.
+log_slave_updates=ON
 
 # MariaDB never expires a binary log by default, where MySQL 8 drops one after
 # 30 days, so inheriting the default would fill this volume and stop the wiki.
@@ -128,6 +132,11 @@ join_buffer_size=1M # default to 256K
 max_heap_table_size=32M # default to 16M
 tmp_table_size=32M # defaults to 16M
 EOF
+printf '[mysqld]\nserver_id=%s\n' "$SERVER_ID" > /etc/my.cnf.d/zz-femiwiki-server-id.cnf
+# The swap workflow deletes this file when it promotes the host.
+if [ -n "${primary_host}" ]; then
+  printf '[mysqld]\nread_only=ON\n' > /etc/my.cnf.d/zz-femiwiki-replica.cnf
+fi
 mkdir -p /etc/systemd/system/mariadb.service.d
 cat <<'UNIT' > /etc/systemd/system/mariadb.service.d/10-datadir-mount.conf
 [Unit]
@@ -166,7 +175,7 @@ if [ ! -d /var/lib/mysql/data/mysql ]; then
   mysql -uroot <<SQL
 ALTER USER 'root'@'localhost' IDENTIFIED VIA unix_socket OR mysql_native_password USING PASSWORD('$ROOT_PASSWORD');
 SQL
-  aws ssm put-parameter --name /mysql/servers/${mysql_server_id}/root/password \
+  aws ssm put-parameter --name /mysql/servers/$SERVER_ID/root/password \
     --type SecureString --value "$ROOT_PASSWORD" --overwrite > /dev/null
 
   MEDIAWIKI_USER="$(aws ssm get-parameter --name /mysql/users/mediawiki/username --query Parameter.Value --output text)"
@@ -181,6 +190,23 @@ GRANT RELOAD, PROCESS ON *.* TO '$MEDIAWIKI_USER'@'%';
 GRANT ALL PRIVILEGES ON femiwiki.* TO '$MEDIAWIKI_USER'@'%';
 SQL
 
+  # The account the mariadb workspace logs in as, over an SSM port forward that
+  # arrives on 127.0.0.1.
+  TOFU_PASSWORD="$(aws ssm get-parameter --name /mysql/users/tofu/password --with-decryption --query Parameter.Value --output text)"
+  mysql -uroot <<SQL
+CREATE USER 'tofu'@'127.0.0.1' IDENTIFIED BY '$TOFU_PASSWORD';
+GRANT RELOAD, PROCESS, REPLICATION SLAVE, CREATE USER ON *.* TO 'tofu'@'127.0.0.1' WITH GRANT OPTION;
+GRANT ALL PRIVILEGES ON femiwiki.* TO 'tofu'@'127.0.0.1' WITH GRANT OPTION;
+GRANT SELECT ON mysql.* TO 'tofu'@'127.0.0.1';
+SQL
+
+  # Replicas attach from anywhere in the VPC, to this host once it is promoted.
+  REPL_PASSWORD="$(aws ssm get-parameter --name /mariadb/users/repl/password --with-decryption --query Parameter.Value --output text)"
+  mysql -uroot <<SQL
+CREATE USER 'repl'@'10.20.%' IDENTIFIED BY '$REPL_PASSWORD';
+GRANT REPLICATION SLAVE ON *.* TO 'repl'@'10.20.%';
+SQL
+
   #
   # Restore the newest backup, so that replacing this host is the restore. Only
   # a fresh volume reaches here, so there is nothing to overwrite.
@@ -188,6 +214,9 @@ SQL
   BACKUP_KEY="mysql/$(aws s3 ls s3://${backups_bucket}/mysql/ | tail -1 | awk '{print $4}')"
   echo "Restoring from s3://${backups_bucket}/$BACKUP_KEY"
   aws s3 cp --no-progress "s3://${backups_bucket}/$BACKUP_KEY" /var/lib/mysql/restore.sql.gz
+  # The nightly dump comments its GTID position in at the end, after the data;
+  # only the CHANGE MASTER line is at the top.
+  GTID_POS="$(zcat /var/lib/mysql/restore.sql.gz | tail -n 30 | sed -n "s/^-- SET GLOBAL gtid_slave_pos='\(.*\)';$/\1/p")"
   # Two rewrites, both of things only a MySQL dump contains.
   #
   # mysqldump on a primary with gtid_mode=ON writes SET @@GLOBAL.GTID_PURGED,
@@ -219,6 +248,18 @@ SQL
   REVISIONS="$(mysql -uroot -N -B -e 'SELECT COUNT(*) FROM femiwiki.revision;')"
   echo "restored revisions: $REVISIONS"
   [ "$REVISIONS" -gt 0 ]
+
+  # RESET MASTER drops this host's own binlog, the restore included, so that
+  # it does not conflict with the primary's position.
+  if [ -n "${primary_host}" ]; then
+    [ -n "$GTID_POS" ]
+    mysql -uroot <<SQL
+RESET MASTER;
+SET GLOBAL gtid_slave_pos = '$GTID_POS';
+CHANGE MASTER TO MASTER_HOST = '${primary_host}', MASTER_USER = 'repl', MASTER_PASSWORD = '$REPL_PASSWORD', MASTER_USE_GTID = slave_pos;
+START SLAVE;
+SQL
+  fi
 
   # The dump account and its credentials, so that the host can back itself up
   # the moment it is the one being read. The timer is not enabled here: while

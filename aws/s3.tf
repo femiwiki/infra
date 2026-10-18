@@ -1,27 +1,26 @@
 # Caddy's ACME account and certificates, next to the host that reads them
 
-resource "aws_s3_bucket" "caddy_certs" {
-  region           = local.seoul_region
-  bucket           = "caddy-certs-${data.aws_caller_identity.current.account_id}-${local.seoul_region}-an"
-  bucket_namespace = "account-regional"
-}
-
-resource "aws_s3_bucket_public_access_block" "caddy_certs" {
-  region = local.seoul_region
-  bucket = aws_s3_bucket.caddy_certs.id
-
-  block_public_acls       = true
-  block_public_policy     = true
-  ignore_public_acls      = true
-  restrict_public_buckets = true
-}
-
-resource "aws_s3_bucket_policy" "caddy_certs" {
-  depends_on = [aws_s3_bucket_public_access_block.caddy_certs]
-
-  region = local.seoul_region
-  bucket = aws_s3_bucket.caddy_certs.bucket
-  policy = data.aws_iam_policy_document.caddy_certs.json
+module "caddy_certs" {
+  source                                = "terraform-aws-modules/s3-bucket/aws"
+  version                               = "5.17.0"
+  region                                = local.seoul_region
+  bucket                                = "caddy-certs-${data.aws_caller_identity.current.account_id}-${local.seoul_region}-an"
+  bucket_namespace                      = "account-regional"
+  attach_deny_insecure_transport_policy = true
+  attach_policy                         = true
+  policy                                = data.aws_iam_policy_document.caddy_certs.json
+  versioning                            = { enabled = true }
+  lifecycle_rule = [
+    {
+      id      = "expire-replaced-certificates"
+      enabled = true
+      # Every renewal leaves the old certificate as a version; 30 days keeps it
+      # to restore if a renewal writes something broken.
+      noncurrent_version_expiration          = { days = 30 }
+      expiration                             = { expired_object_delete_marker = true }
+      abort_incomplete_multipart_upload_days = 1
+    },
+  ]
 }
 
 data "aws_iam_policy_document" "caddy_certs" {
@@ -42,62 +41,6 @@ data "aws_iam_policy_document" "caddy_certs" {
     }
 
     resources = ["${local.caddy_certs}/*"]
-  }
-
-  statement {
-    sid     = "DenyPlainHttp"
-    effect  = "Deny"
-    actions = ["s3:*"]
-
-    principals {
-      type        = "AWS"
-      identifiers = ["*"]
-    }
-
-    resources = [
-      local.caddy_certs,
-      "${local.caddy_certs}/*",
-    ]
-
-    condition {
-      test     = "Bool"
-      variable = "aws:SecureTransport"
-      values   = ["false"]
-    }
-  }
-}
-
-resource "aws_s3_bucket_versioning" "caddy_certs" {
-  region = local.seoul_region
-  bucket = aws_s3_bucket.caddy_certs.id
-  versioning_configuration {
-    status = "Enabled"
-  }
-}
-
-resource "aws_s3_bucket_lifecycle_configuration" "caddy_certs" {
-  region = local.seoul_region
-  bucket = aws_s3_bucket.caddy_certs.id
-
-  rule {
-    id     = "expire-replaced-certificates"
-    status = "Enabled"
-
-    filter {}
-
-    # Every renewal leaves the old certificate as a version; 30 days keeps it
-    # to restore if a renewal writes something broken.
-    noncurrent_version_expiration {
-      noncurrent_days = 30
-    }
-
-    expiration {
-      expired_object_delete_marker = true
-    }
-
-    abort_incomplete_multipart_upload {
-      days_after_initiation = 1
-    }
   }
 }
 
@@ -165,7 +108,7 @@ resource "aws_s3_bucket_public_access_block" "backups" {
 
 # Roles grant both buckets until every backend reads state (femiwiki/femiwiki#666).
 locals {
-  tfstate_buckets = [aws_s3_bucket.tfstate.arn, aws_s3_bucket.state.arn]
+  tfstate_buckets = [aws_s3_bucket.tfstate.arn, module.state.s3_bucket_arn]
 }
 
 resource "aws_s3_bucket" "tfstate" {
@@ -229,92 +172,26 @@ resource "aws_s3_bucket_lifecycle_configuration" "tfstate" {
   }
 }
 
-resource "aws_s3_bucket" "state" {
-  region           = local.seoul_region
-  bucket           = "tfstate-${data.aws_caller_identity.current.account_id}-${local.seoul_region}-an"
-  bucket_namespace = "account-regional"
-}
-
-resource "aws_s3_bucket_public_access_block" "state" {
-  region = local.seoul_region
-  bucket = aws_s3_bucket.state.id
-
-  block_public_acls       = true
-  block_public_policy     = true
-  ignore_public_acls      = true
-  restrict_public_buckets = true
-}
-
-resource "aws_s3_bucket_policy" "state" {
-  region = local.seoul_region
-  bucket = aws_s3_bucket.state.id
-  policy = data.aws_iam_policy_document.state_bucket.json
-}
-
-data "aws_iam_policy_document" "state_bucket" {
-  statement {
-    sid     = "DenyPlainHttp"
-    effect  = "Deny"
-    actions = ["s3:*"]
-
-    principals {
-      type        = "AWS"
-      identifiers = ["*"]
-    }
-
-    resources = [aws_s3_bucket.state.arn, "${aws_s3_bucket.state.arn}/*"]
-
-    condition {
-      test     = "Bool"
-      variable = "aws:SecureTransport"
-      values   = ["false"]
-    }
+module "state" {
+  source                                = "terraform-aws-modules/s3-bucket/aws"
+  version                               = "5.17.0"
+  region                                = local.seoul_region
+  bucket                                = "tfstate-${data.aws_caller_identity.current.account_id}-${local.seoul_region}-an"
+  bucket_namespace                      = "account-regional"
+  attach_deny_insecure_transport_policy = true
+  versioning                            = { enabled = true }
+  server_side_encryption_configuration = {
+    rule = { apply_server_side_encryption_by_default = { sse_algorithm = "AES256" } }
   }
-}
-
-resource "aws_s3_bucket_versioning" "state" {
-  region = local.seoul_region
-  bucket = aws_s3_bucket.state.id
-  versioning_configuration {
-    status = "Enabled"
-  }
-}
-
-resource "aws_s3_bucket_server_side_encryption_configuration" "state" {
-  region = local.seoul_region
-  bucket = aws_s3_bucket.state.id
-
-  rule {
-    apply_server_side_encryption_by_default {
-      sse_algorithm = "AES256"
+  lifecycle_rule = [
+    for workspace in ["grafana"] : {
+      id                            = "Expire the ${workspace} state lock's old versions"
+      enabled                       = true
+      filter                        = { prefix = "${workspace}/terraform.tfstate.tflock" }
+      noncurrent_version_expiration = { days = 1 }
+      expiration                    = { expired_object_delete_marker = true }
     }
-  }
-}
-
-resource "aws_s3_bucket_lifecycle_configuration" "state" {
-  region = local.seoul_region
-  bucket = aws_s3_bucket.state.id
-
-  dynamic "rule" {
-    for_each = ["grafana"]
-
-    content {
-      status = "Enabled"
-      id     = "Expire the ${rule.value} state lock's old versions"
-
-      filter {
-        prefix = "${rule.value}/terraform.tfstate.tflock"
-      }
-
-      noncurrent_version_expiration {
-        noncurrent_days = 1
-      }
-
-      expiration {
-        expired_object_delete_marker = true
-      }
-    }
-  }
+  ]
 }
 
 resource "aws_s3_bucket" "cost_exports" {
@@ -337,7 +214,7 @@ resource "aws_s3_bucket_public_access_block" "cost_exports" {
 data "aws_iam_policy_document" "cost_exports_bucket" {
   for_each = {
     cost_exports   = aws_s3_bucket.cost_exports.arn
-    cost_and_usage = aws_s3_bucket.cost_and_usage.arn
+    cost_and_usage = module.cost_and_usage.s3_bucket_arn
   }
 
   statement {
@@ -391,113 +268,77 @@ resource "aws_s3_bucket_policy" "cost_exports" {
   policy = data.aws_iam_policy_document.cost_exports_bucket["cost_exports"].json
 }
 
-# The Data Export's monthly line items, read by femiwiki.github.io's collect job
+module "rate_limit" {
+  source                                = "terraform-aws-modules/s3-bucket/aws"
+  version                               = "5.17.0"
+  region                                = local.seoul_region
+  bucket                                = "rate-limit-${data.aws_caller_identity.current.account_id}-${local.seoul_region}-an"
+  bucket_namespace                      = "account-regional"
+  attach_deny_insecure_transport_policy = true
+  lifecycle_rule = [
+    {
+      id                                     = "expire-states-of-gone-containers"
+      enabled                                = true
+      expiration                             = { days = 1 }
+      abort_incomplete_multipart_upload_days = 1
+    },
+  ]
+}
 
-resource "aws_s3_bucket" "cost_and_usage" {
+moved {
+  from = aws_s3_bucket.rate_limit
+  to   = module.rate_limit.aws_s3_bucket.this[0]
+}
+
+moved {
+  from = aws_s3_bucket_public_access_block.rate_limit
+  to   = module.rate_limit.aws_s3_bucket_public_access_block.this[0]
+}
+
+moved {
+  from = aws_s3_bucket_lifecycle_configuration.rate_limit
+  to   = module.rate_limit.aws_s3_bucket_lifecycle_configuration.this[0]
+}
+
+moved {
+  from = aws_s3_bucket_policy.rate_limit
+  to   = module.rate_limit.aws_s3_bucket_policy.this[0]
+}
+
+# The Data Export's monthly line items, read by femiwiki.github.io's collect job
+module "cost_and_usage" {
+  source           = "terraform-aws-modules/s3-bucket/aws"
+  version          = "5.17.0"
   region           = local.seoul_region
   bucket           = "cost-exports-${data.aws_caller_identity.current.account_id}-${local.seoul_region}-an"
   bucket_namespace = "account-regional"
+  attach_policy    = true
+  policy           = data.aws_iam_policy_document.cost_exports_bucket["cost_and_usage"].json
+  lifecycle_rule = [
+    {
+      id                                     = "abort-incomplete-uploads"
+      enabled                                = true
+      abort_incomplete_multipart_upload_days = 7
+    },
+  ]
 }
 
-resource "aws_s3_bucket_public_access_block" "cost_and_usage" {
-  region = local.seoul_region
-  bucket = aws_s3_bucket.cost_and_usage.id
-
-  block_public_acls       = true
-  block_public_policy     = true
-  ignore_public_acls      = true
-  restrict_public_buckets = true
+moved {
+  from = aws_s3_bucket.cost_and_usage
+  to   = module.cost_and_usage.aws_s3_bucket.this[0]
 }
 
-resource "aws_s3_bucket_policy" "cost_and_usage" {
-  depends_on = [aws_s3_bucket_public_access_block.cost_and_usage]
-
-  region = local.seoul_region
-  bucket = aws_s3_bucket.cost_and_usage.id
-  policy = data.aws_iam_policy_document.cost_exports_bucket["cost_and_usage"].json
+moved {
+  from = aws_s3_bucket_public_access_block.cost_and_usage
+  to   = module.cost_and_usage.aws_s3_bucket_public_access_block.this[0]
 }
 
-# No expiration: the collect job re-reads every month the export has written.
-resource "aws_s3_bucket_lifecycle_configuration" "cost_and_usage" {
-  region = local.seoul_region
-  bucket = aws_s3_bucket.cost_and_usage.id
-
-  rule {
-    id     = "abort-incomplete-uploads"
-    status = "Enabled"
-
-    filter {}
-
-    abort_incomplete_multipart_upload {
-      days_after_initiation = 7
-    }
-  }
+moved {
+  from = aws_s3_bucket_policy.cost_and_usage
+  to   = module.cost_and_usage.aws_s3_bucket_policy.this[0]
 }
 
-resource "aws_s3_bucket" "rate_limit" {
-  region           = local.seoul_region
-  bucket           = "rate-limit-${data.aws_caller_identity.current.account_id}-${local.seoul_region}-an"
-  bucket_namespace = "account-regional"
-}
-
-resource "aws_s3_bucket_public_access_block" "rate_limit" {
-  region = local.seoul_region
-  bucket = aws_s3_bucket.rate_limit.id
-
-  block_public_acls       = true
-  block_public_policy     = true
-  ignore_public_acls      = true
-  restrict_public_buckets = true
-}
-
-resource "aws_s3_bucket_lifecycle_configuration" "rate_limit" {
-  region = local.seoul_region
-  bucket = aws_s3_bucket.rate_limit.id
-
-  rule {
-    id     = "expire-states-of-gone-containers"
-    status = "Enabled"
-
-    filter {}
-
-    expiration {
-      days = 1
-    }
-
-    abort_incomplete_multipart_upload {
-      days_after_initiation = 1
-    }
-  }
-}
-
-resource "aws_s3_bucket_policy" "rate_limit" {
-  depends_on = [aws_s3_bucket_public_access_block.rate_limit]
-
-  region = local.seoul_region
-  bucket = aws_s3_bucket.rate_limit.bucket
-  policy = data.aws_iam_policy_document.rate_limit.json
-}
-
-data "aws_iam_policy_document" "rate_limit" {
-  statement {
-    sid     = "DenyPlainHttp"
-    effect  = "Deny"
-    actions = ["s3:*"]
-
-    principals {
-      type        = "AWS"
-      identifiers = ["*"]
-    }
-
-    resources = [
-      aws_s3_bucket.rate_limit.arn,
-      "${aws_s3_bucket.rate_limit.arn}/*",
-    ]
-
-    condition {
-      test     = "Bool"
-      variable = "aws:SecureTransport"
-      values   = ["false"]
-    }
-  }
+moved {
+  from = aws_s3_bucket_lifecycle_configuration.cost_and_usage
+  to   = module.cost_and_usage.aws_s3_bucket_lifecycle_configuration.this[0]
 }

@@ -1,0 +1,131 @@
+---
+# Replaces the primary database host: a replica catches up, then a Deployer
+# approves its promotion. See .github/scripts/database-swap/.
+name: database swap
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: database-swap
+  cancel-in-progress: false
+
+permissions: {}
+
+jobs:
+  replica:
+    runs-on: ubuntu-latest
+    # Restoring the nightly dump on the new host is most of it
+    timeout-minutes: 300
+    environment: database-replica
+    permissions:
+      contents: read
+      id-token: write
+    outputs:
+      primary: ${{ steps.replica.outputs.primary }}
+      replica: ${{ steps.replica.outputs.replica }}
+      replica-address: ${{ steps.replica.outputs.replica-address }}
+      server-id: ${{ steps.replica.outputs.server-id }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd  # v6.3.0
+        with:
+          role-to-assume: arn:aws:iam::302617221463:role/database-swap
+          aws-region: ap-northeast-2
+          # The wait outlasts the default hour
+          role-duration-seconds: 18000
+
+      - uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3  # v9.0.0
+        id: replica
+        with:
+          script: |
+            const { replica } = await import(`${process.env.GITHUB_WORKSPACE}/.github/scripts/database-swap/replica.mts`)
+            await replica({ core, env: process.env })
+
+  promote:
+    needs: replica
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    environment: database
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd  # v6.3.0
+        with:
+          role-to-assume: arn:aws:iam::302617221463:role/database-swap
+          aws-region: ap-northeast-2
+
+      - uses: ./.github/actions/ssm-port-forward
+        id: daemon
+        with:
+          filters: Name=tag:Name,Values=docker
+          region: ap-northeast-2
+          port: 2376
+          probe: 'curl -sf --max-time 3 "http://$HOST:$PORT/_ping"'
+
+      - name: Pull the images the apply will start
+        run: |
+          grep -ohE 'image\s*=\s*"[^"]+"' docker/*.tf | grep -oE '"[^"]+"' | tr -d '"' | sort -u | while read -r image; do
+            curl -sf -X POST "http://127.0.0.1:2376/images/create?fromImage=${image%%:*}&tag=${image##*:}" > /dev/null
+          done
+
+      - name: Turn ProxySQL on
+        uses: dflook/tofu-apply@e3e5dfc8f935d4b152c767801046f63abf8a77d3  # v3.1.0
+        env:
+          TF_VAR_docker_host: tcp://${{ steps.daemon.outputs.address }}
+          TF_VAR_state_passphrase: ${{ secrets.DOCKER_STATE_PASSPHRASE }}
+          TF_VAR_aws_state_passphrase: ${{ secrets.AWS_STATE_PASSPHRASE }}
+          TF_VAR_gcp_state_passphrase: ${{ secrets.GCP_STATE_PASSPHRASE }}
+        with:
+          path: docker
+          auto_approve: true
+          variables: proxysql_enabled = true
+
+      # A server greets first, so four bytes back mean ProxySQL answered
+      - uses: ./.github/actions/ssm-port-forward
+        with:
+          filters: Name=tag:Name,Values=docker
+          region: ap-northeast-2
+          port: 6032
+          probe: '[ "$(timeout 3 head -c 4 < "/dev/tcp/$HOST/$PORT" | wc -c)" = 4 ]'
+
+      - name: Promote the replica
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3  # v9.0.0
+        env:
+          PRIMARY: ${{ needs.replica.outputs.primary }}
+          REPLICA: ${{ needs.replica.outputs.replica }}
+          REPLICA_ADDRESS: ${{ needs.replica.outputs.replica-address }}
+        with:
+          script: |
+            const { promote } = await import(`${process.env.GITHUB_WORKSPACE}/.github/scripts/database-swap/promote.mts`)
+            await promote({ core, env: process.env })
+
+      # The wiki goes back to the fixed address, which the new primary now holds
+      - name: Turn ProxySQL off
+        uses: dflook/tofu-apply@e3e5dfc8f935d4b152c767801046f63abf8a77d3  # v3.1.0
+        env:
+          TF_VAR_docker_host: tcp://${{ steps.daemon.outputs.address }}
+          TF_VAR_state_passphrase: ${{ secrets.DOCKER_STATE_PASSPHRASE }}
+          TF_VAR_aws_state_passphrase: ${{ secrets.AWS_STATE_PASSPHRASE }}
+          TF_VAR_gcp_state_passphrase: ${{ secrets.GCP_STATE_PASSPHRASE }}
+        with:
+          path: docker
+          auto_approve: true
+          variables: proxysql_enabled = false
+
+      - name: Let the group end the old primary
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3  # v9.0.0
+        env:
+          PRIMARY: ${{ needs.replica.outputs.primary }}
+        with:
+          script: |
+            const { retire } = await import(`${process.env.GITHUB_WORKSPACE}/.github/scripts/database-swap/retire.mts`)
+            await retire({ core, env: process.env })

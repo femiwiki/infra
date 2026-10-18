@@ -2,14 +2,22 @@ terraform {
   required_version = "1.13.1"
 
   backend "s3" {
-    bucket       = "tfstate-302617221463-ap-northeast-1-an"
+    bucket       = "tfstate-302617221463-ap-northeast-2-an"
     key          = "grafana/terraform.tfstate"
-    region       = "ap-northeast-1"
+    region       = "ap-northeast-2"
     use_lockfile = true
   }
 
-  # Only to read the aws outputs; this state itself stays unencrypted.
   encryption {
+    # "grafana" is this state's and is never renamed.
+    key_provider "pbkdf2" "grafana" {
+      passphrase = var.state_passphrase
+    }
+
+    method "aes_gcm" "grafana" {
+      keys = key_provider.pbkdf2.grafana
+    }
+
     # Same names as in aws/base.tf, which the stored key metadata is filed under.
     key_provider "pbkdf2" "state" {
       passphrase = var.aws_state_passphrase
@@ -23,6 +31,16 @@ terraform {
       remote_state_data_source "aws" {
         method = method.aes_gcm.state
       }
+    }
+
+    state {
+      method   = method.aes_gcm.grafana
+      enforced = true
+    }
+
+    plan {
+      method   = method.aes_gcm.grafana
+      enforced = true
     }
   }
 
@@ -43,12 +61,23 @@ provider "grafana" {
   retry_status_codes = ["403", "429", "5xx"]
 }
 
+provider "grafana" {
+  alias                     = "cloud"
+  cloud_access_policy_token = var.grafana_cloud_auth
+}
+
+provider "grafana" {
+  alias           = "sm"
+  sm_access_token = grafana_synthetic_monitoring_installation.femiwiki.sm_access_token
+  sm_url          = grafana_synthetic_monitoring_installation.femiwiki.stack_sm_api_url
+}
+
 data "terraform_remote_state" "aws" {
   backend = "s3"
 
   config = {
-    bucket = "tfstate-302617221463-ap-northeast-1-an"
+    bucket = "tfstate-302617221463-ap-northeast-2-an"
     key    = "aws/terraform.tfstate"
-    region = "ap-northeast-1"
+    region = "ap-northeast-2"
   }
 }

@@ -1,7 +1,11 @@
+module "caddyfile" {
+  source = "./caddyfile"
+}
+
 resource "docker_container" "http" {
   name         = "http-${local.fastcgi_generation}"
   log_driver   = "local"
-  image        = "ghcr.io/femiwiki/femiwiki:2026-10-14T20-05-0c4aeef6"
+  image        = "ghcr.io/femiwiki/femiwiki:2026-10-18T04-39-794a4ccf"
   command      = ["caddy-run"]
   restart      = "always"
   network_mode = "host"
@@ -43,8 +47,7 @@ resource "docker_container" "http" {
       FW_EXPENSIVE_EVENTS    = "60",
       FW_EXPENSIVE_IP_EVENTS = "15",
 
-      FW_LOG_EXCLUDE      = "http.handlers.mwcache",
-      FW_CADDYFILE        = file("../serving/Caddyfile"),
+      FW_CADDYFILE        = module.caddyfile.text,
       FW_ROBOTS_TXT       = file("../serving/robots.txt"),
       FW_DEAD_URLS        = join("\n", [for l in split("\n", file("../serving/dead-urls.txt")) : l if trimspace(l) != "" && !startswith(l, "#")]),
       AWS_REGION          = "ap-northeast-2",
@@ -65,13 +68,6 @@ resource "docker_container" "http" {
     } : "${k}=${v}"
   ]
 
-  mounts {
-    type      = "volume"
-    source    = docker_volume.sitemap.id
-    target    = "/srv/femiwiki.com/sitemap"
-    read_only = true
-  }
-
   ulimit {
     hard = 65536
     name = "nofile"
@@ -87,7 +83,7 @@ resource "docker_container" "http" {
 resource "docker_container" "fastcgi" {
   name         = "fastcgi-${local.fastcgi_generation}"
   log_driver   = "local"
-  image        = "ghcr.io/femiwiki/femiwiki:2026-10-14T20-05-0c4aeef6"
+  image        = "ghcr.io/femiwiki/femiwiki:2026-10-18T04-39-794a4ccf"
   network_mode = "host"
   restart      = "always"
   memory       = 768
@@ -153,6 +149,12 @@ resource "docker_container" "fastcgi" {
         "www.gstatic.com",        # 위젯:구글 통계 and 위젯:인기있는 문서
       ])
 
+      # MediaWiki globals LocalSettings applies after its defaults. See femiwiki#691.
+      FW_SETTINGS = jsonencode({
+        # Naver Search Advisor's public HTML tag key for femiwiki@naver.com
+        wgNaverSiteVerificationKey = "8e17c8c264cfe03530591213361fe53c765056d3"
+      })
+
       WG_BOUNCE_HANDLER_INTERNAL_IPS = "10.20.0.0/16"
       WG_CDN_SERVERS                 = "127.0.0.1:80"
       WG_INTERNAL_SERVER             = "http://127.0.0.1:80"
@@ -165,7 +167,7 @@ resource "docker_container" "fastcgi" {
       # Used by fcgi-probe.php and databasez-probe.php
       FCGI_URL = "127.0.0.1:${9100 + local.fastcgi_generation % 2}"
 
-      WG_DB_SERVER          = "${data.aws_instances.database.private_ips[0]}:3306"
+      WG_DB_SERVER          = var.proxysql_enabled ? "127.0.0.1:6033" : "${data.terraform_remote_state.aws.outputs.database_address}:3306"
       WG_DB_USER            = "mediawiki"
       WG_SESSION_DB_NAME    = "femiwiki_sessions"
       WG_H_CAPTCHA_SITE_KEY = "6cb24780-3282-490c-9b4e-83122cb04cda"
@@ -206,13 +208,6 @@ resource "docker_container" "fastcgi" {
 
   mounts {
     type      = "volume"
-    source    = docker_volume.sitemap.id
-    target    = "/srv/femiwiki.com/sitemap"
-    read_only = false
-  }
-
-  mounts {
-    type      = "volume"
     target    = "/tmp/cache"
     read_only = false
   }
@@ -226,6 +221,38 @@ resource "docker_container" "fastcgi" {
   labels {
     label = "autoheal"
     value = "true"
+  }
+
+  # Turned off, the old generation leaves before ProxySQL does
+  depends_on = [docker_container.proxysql]
+}
+
+# Parks the wiki's queries while the database replacement workflow promotes a
+# replica, so no write fails. It runs only while the switch is on.
+resource "docker_container" "proxysql" {
+  count = var.proxysql_enabled ? 1 : 0
+
+  name         = "proxysql"
+  log_driver   = "local"
+  image        = "proxysql/proxysql:3.0.11"
+  network_mode = "host"
+  restart      = "always"
+  memory       = 128
+  memory_swap  = 256
+
+  # Read on every start, since the container keeps no database of its own
+  upload {
+    file = "/etc/proxysql.cnf"
+    content = templatefile("proxysql.cnf.tftpl", {
+      database_address   = data.terraform_remote_state.aws.outputs.database_address
+      mediawiki_password = data.terraform_remote_state.aws.outputs.mysql_mediawiki_password
+    })
+  }
+
+  ulimit {
+    hard = 65536
+    name = "nofile"
+    soft = 32768
   }
 }
 
@@ -244,10 +271,31 @@ resource "docker_container" "memcached" {
     value = "true"
   }
 
+  healthcheck {
+    test     = terraform_data.memcached_healthcheck.input.test
+    interval = terraform_data.memcached_healthcheck.input.interval
+    timeout  = terraform_data.memcached_healthcheck.input.timeout
+    retries  = terraform_data.memcached_healthcheck.input.retries
+  }
+
   ulimit {
     hard = 65536
     name = "nofile"
     soft = 32768
+  }
+
+  lifecycle {
+    replace_triggered_by = [terraform_data.memcached_healthcheck]
+  }
+}
+
+# The provider plans a changed healthcheck as an in-place update that never reaches the container
+resource "terraform_data" "memcached_healthcheck" {
+  input = {
+    test     = ["CMD-SHELL", "printf 'version\\r\\n' | nc -w 2 127.0.0.1 11211 | grep -q '^VERSION'"]
+    interval = "30s"
+    timeout  = "5s"
+    retries  = 3
   }
 }
 

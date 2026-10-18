@@ -5,6 +5,3 @@
 *.tfstate
 *.tfstate.backup
 *.tfstate.*.backup
-
-# uv
-.venv/

@@ -33,12 +33,26 @@ jobs:
           application_id: ${{ vars.PAT_APPLICATION_ID }}
           application_private_key: ${{ secrets.PAT_APPLICATION_PRIVATE_KEY }}
 
-      - uses: adRise/update-pr-branch@e96e796f4ab23ab388016fdaed7092de99bd71cf  # v0.11.1
+      # GitHub reports a pull request as behind only when the branch requires
+      # it to be up to date, which main does not, so compare with main instead
+      - uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3  # v9.0.0
         if: steps.secret.outputs.run == 'true'
         with:
-          token: ${{ steps.token.outputs.token }}
-          base: main
-          required_approval_count: 0
-          require_auto_merge_enabled: false
-          require_passed_checks: true
-          allow_ongoing_checks: true
+          github-token: ${{ steps.token.outputs.token }}
+          script: |
+            const { owner, repo } = context.repo
+            const pulls = await github.paginate(github.rest.pulls.list, { owner, repo, state: 'open', base: 'main', per_page: 100 })
+            for (const pr of pulls) {
+              // Dependabot stops rebasing a branch someone else has pushed to
+              if (pr.draft || pr.user.login === 'dependabot[bot]' || pr.head.repo?.full_name !== `${owner}/${repo}`) continue
+              const { data: { behind_by } } = await github.rest.repos.compareCommitsWithBasehead({
+                owner, repo, basehead: `main...${pr.head.sha}`, per_page: 1,
+              })
+              if (behind_by === 0) continue
+              try {
+                await github.rest.pulls.updateBranch({ owner, repo, pull_number: pr.number, expected_head_sha: pr.head.sha })
+                core.info(`#${pr.number}: merged main, ${behind_by} commits ahead of it.`)
+              } catch (e) {
+                core.info(`#${pr.number}: left alone, ${e.message}`)
+              }
+            }

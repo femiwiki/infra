@@ -18,7 +18,7 @@ resource "aws_bcmdataexports_export" "cost_and_usage" {
 
     destination_configurations {
       s3_destination {
-        s3_bucket = aws_s3_bucket.cost_and_usage.bucket
+        s3_bucket = module.cost_and_usage.s3_bucket_id
         s3_prefix = "cost-and-usage"
         s3_region = local.seoul_region
 
@@ -36,5 +36,5 @@ resource "aws_bcmdataexports_export" "cost_and_usage" {
     }
   }
 
-  depends_on = [aws_s3_bucket_policy.cost_and_usage]
+  depends_on = [module.cost_and_usage]
 }

@@ -1,38 +1,24 @@
-resource "aws_iam_role" "infra_github" {
+module "infra_github" {
+  source             = "terraform-aws-modules/iam/aws//modules/iam-role"
+  version            = "6.8.2"
   name               = "infra-github"
+  use_name_prefix    = false
   description        = "Allows GitHub Actions workflows of femiwiki/infra to plan and apply the github workspace."
-  assume_role_policy = data.aws_iam_policy_document.infra_github_assume_role.json
+  enable_github_oidc = true
+  oidc_subjects = [
+    "femiwiki@21275875/infra@188597503:pull_request",
+    "femiwiki@21275875/infra@188597503:environment:github",
+  ]
 }
 
-data "aws_iam_policy_document" "infra_github_assume_role" {
-  statement {
-    actions = ["sts:AssumeRoleWithWebIdentity"]
-
-    principals {
-      type        = "Federated"
-      identifiers = [aws_iam_openid_connect_provider.github_actions.arn]
-    }
-
-    condition {
-      test     = "StringEquals"
-      variable = "token.actions.githubusercontent.com:aud"
-      values   = ["sts.amazonaws.com"]
-    }
-
-    condition {
-      test     = "StringEquals"
-      variable = "token.actions.githubusercontent.com:sub"
-      values = [
-        "repo:femiwiki@21275875/infra@188597503:pull_request",
-        "repo:femiwiki@21275875/infra@188597503:environment:github",
-      ]
-    }
-  }
+moved {
+  from = aws_iam_role.infra_github
+  to   = module.infra_github.aws_iam_role.this[0]
 }
 
 resource "aws_iam_role_policy" "infra_github" {
   name   = "InfraGithub"
-  role   = aws_iam_role.infra_github.name
+  role   = module.infra_github.name
   policy = data.aws_iam_policy_document.infra_github.json
 }
 
@@ -41,6 +27,12 @@ data "aws_iam_policy_document" "infra_github" {
     sid       = "State"
     actions   = ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"]
     resources = [for b in local.tfstate_buckets : "${b}/github/terraform.tfstate*"]
+  }
+
+  statement {
+    sid       = "ReadGrafanaOutputs"
+    actions   = ["s3:GetObject"]
+    resources = [for b in local.tfstate_buckets : "${b}/grafana/terraform.tfstate"]
   }
 
   statement {

@@ -65,76 +65,50 @@ resource "aws_iam_group_policy_attachment" "readonly_mfa" {
 }
 
 
-#
 # IAM Roles
-#
-resource "aws_iam_role" "github_lambda" {
+module "github_lambda" {
+  source             = "terraform-aws-modules/iam/aws//modules/iam-role"
+  version            = "6.8.2"
   name               = "github-lambda"
+  use_name_prefix    = false
   description        = "Allows GitHub Actions workflows of femiwiki/lambda to deploy its functions."
-  assume_role_policy = data.aws_iam_policy_document.github_lambda_assume_role.json
+  enable_github_oidc = true
+  oidc_subjects = [
+    "femiwiki/lambda:ref:refs/heads/main",
+  ]
 }
 
-data "aws_iam_policy_document" "github_lambda_assume_role" {
-  statement {
-    actions = ["sts:AssumeRoleWithWebIdentity"]
-
-    principals {
-      type        = "Federated"
-      identifiers = [aws_iam_openid_connect_provider.github_actions.arn]
-    }
-
-    condition {
-      test     = "StringEquals"
-      variable = "token.actions.githubusercontent.com:aud"
-      values   = ["sts.amazonaws.com"]
-    }
-
-    condition {
-      test     = "StringEquals"
-      variable = "token.actions.githubusercontent.com:sub"
-      values   = ["repo:femiwiki/lambda:ref:refs/heads/main"]
-    }
-  }
+moved {
+  from = aws_iam_role.github_lambda
+  to   = module.github_lambda.aws_iam_role.this[0]
 }
 
 resource "aws_iam_role_policy" "github_lambda" {
   name   = "GithubLambda"
-  role   = aws_iam_role.github_lambda.name
+  role   = module.github_lambda.name
   policy = data.aws_iam_policy_document.github_lambda.json
 }
 
-resource "aws_iam_role" "femiwiki_github_io" {
+module "femiwiki_github_io" {
+  source             = "terraform-aws-modules/iam/aws//modules/iam-role"
+  version            = "6.8.2"
   name               = "femiwiki-github-io"
+  use_name_prefix    = false
   description        = "Allows GitHub Actions workflows of femiwiki/femiwiki.github.io to read what the site publishes."
-  assume_role_policy = data.aws_iam_policy_document.femiwiki_github_io_assume_role.json
+  enable_github_oidc = true
+  oidc_subjects = [
+    "femiwiki@21275875/femiwiki.github.io@1377892969:ref:refs/heads/main",
+  ]
 }
 
-data "aws_iam_policy_document" "femiwiki_github_io_assume_role" {
-  statement {
-    actions = ["sts:AssumeRoleWithWebIdentity"]
-
-    principals {
-      type        = "Federated"
-      identifiers = [aws_iam_openid_connect_provider.github_actions.arn]
-    }
-
-    condition {
-      test     = "StringEquals"
-      variable = "token.actions.githubusercontent.com:aud"
-      values   = ["sts.amazonaws.com"]
-    }
-
-    condition {
-      test     = "StringEquals"
-      variable = "token.actions.githubusercontent.com:sub"
-      values   = ["repo:femiwiki@21275875/femiwiki.github.io@1377892969:ref:refs/heads/main"]
-    }
-  }
+moved {
+  from = aws_iam_role.femiwiki_github_io
+  to   = module.femiwiki_github_io.aws_iam_role.this[0]
 }
 
 resource "aws_iam_role_policy" "femiwiki_github_io" {
   name   = "FemiwikiGithubIo"
-  role   = aws_iam_role.femiwiki_github_io.name
+  role   = module.femiwiki_github_io.name
   policy = data.aws_iam_policy_document.femiwiki_github_io.json
 }
 
@@ -149,188 +123,199 @@ data "aws_iam_policy_document" "lambda_assume_role" {
   }
 }
 
-resource "aws_iam_role" "femiwiki" {
-  name               = "Femiwiki"
-  description        = "Allows EC2 instances to call AWS services on your behalf."
-  assume_role_policy = data.aws_iam_policy_document.instance_assume_role.json
-}
-
-data "aws_iam_policy_document" "instance_assume_role" {
-  statement {
-    actions = ["sts:AssumeRole"]
-
-    principals {
-      type        = "Service"
-      identifiers = ["ec2.amazonaws.com"]
+locals {
+  instance_trust = {
+    EC2AssumeRole = {
+      actions    = ["sts:AssumeRole"]
+      principals = [{ type = "Service", identifiers = ["ec2.amazonaws.com"] }]
     }
   }
-}
-
-resource "aws_iam_role_policy_attachment" "femiwiki_amazon_s3_access" {
-  role       = aws_iam_role.femiwiki.name
-  policy_arn = aws_iam_policy.amazon_s3_access.arn
-}
-
-resource "aws_iam_role_policy_attachment" "femiwiki_route53" {
-  role       = aws_iam_role.femiwiki.name
-  policy_arn = aws_iam_policy.route53.arn
-}
-
-resource "aws_iam_role_policy_attachment" "femiwiki_access_caddycerts" {
-  role       = aws_iam_role.femiwiki.name
-  policy_arn = aws_iam_policy.access_caddycerts.arn
-}
-
-resource "aws_iam_role_policy_attachment" "femiwiki_share_rate_limit_state" {
-  role       = aws_iam_role.femiwiki.name
-  policy_arn = aws_iam_policy.share_rate_limit_state.arn
-}
-
-resource "aws_iam_role_policy_attachment" "femiwiki_read_secret_parameters" {
-  role       = aws_iam_role.femiwiki.name
-  policy_arn = aws_iam_policy.read_secret_parameters.arn
-}
-
-resource "aws_iam_role_policy_attachment" "femiwiki_get_google_subject_token" {
-  role       = aws_iam_role.femiwiki.name
-  policy_arn = aws_iam_policy.get_google_subject_token.arn
-}
-
-resource "aws_iam_role_policy_attachment" "femiwiki_upload_backup" {
-  role       = aws_iam_role.femiwiki.name
-  policy_arn = aws_iam_policy.upload_backup.arn
-}
-
-resource "aws_iam_role_policy_attachment" "femiwiki_managed_policies" {
-  for_each = toset([
-    "AmazonSSMManagedInstanceCore",
-    "CloudWatchAgentServerPolicy",
-  ])
-  role       = aws_iam_role.femiwiki.name
-  policy_arn = "arn:aws:iam::aws:policy/${each.key}"
-}
-
-resource "aws_iam_role" "database" {
-  name               = "database"
-  description        = "EC2 instance(s) running database"
-  assume_role_policy = data.aws_iam_policy_document.instance_assume_role.json
-}
-
-resource "aws_iam_role_policy_attachment" "database_upload_backup" {
-  role       = aws_iam_role.database.name
-  policy_arn = aws_iam_policy.upload_backup.arn
-}
-
-resource "aws_iam_role_policy_attachment" "database_read_backup" {
-  role       = aws_iam_role.database.name
-  policy_arn = aws_iam_policy.read_backup.arn
-}
-
-resource "aws_iam_role_policy_attachment" "database_read_mysql_user_parameters" {
-  role       = aws_iam_role.database.name
-  policy_arn = aws_iam_policy.read_mysql_user_parameters.arn
-}
-
-resource "aws_iam_role_policy_attachment" "database_read_backup_healthcheck_url" {
-  role       = aws_iam_role.database.name
-  policy_arn = aws_iam_policy.read_backup_healthcheck_url.arn
-}
-
-resource "aws_iam_role_policy_attachment" "database_write_mysql_root_password" {
-  role       = aws_iam_role.database.name
-  policy_arn = aws_iam_policy.write_mysql_root_password.arn
-}
-
-resource "aws_iam_role_policy_attachment" "database_managed_policies" {
-  for_each = toset([
-    "AmazonSSMManagedInstanceCore",
-    "CloudWatchAgentServerPolicy",
-  ])
-  role       = aws_iam_role.database.name
-  policy_arn = "arn:aws:iam::aws:policy/${each.key}"
-}
-
-resource "aws_iam_role_policy_attachment" "read_alloy_parameters" {
-  for_each = {
-    database = aws_iam_role.database.name
-    femiwiki = aws_iam_role.femiwiki.name
+  instance_managed_policies = {
+    for name in ["AmazonSSMManagedInstanceCore", "CloudWatchAgentServerPolicy"] :
+    name => "arn:aws:iam::aws:policy/${name}"
   }
-  role       = each.value
-  policy_arn = aws_iam_policy.read_alloy_parameters.arn
 }
 
-resource "aws_iam_role" "infra_grafana" {
+module "femiwiki" {
+  source                   = "terraform-aws-modules/iam/aws//modules/iam-role"
+  version                  = "6.8.2"
+  name                     = "Femiwiki"
+  use_name_prefix          = false
+  description              = "Allows EC2 instances to call AWS services on your behalf."
+  trust_policy_permissions = local.instance_trust
+  policies = merge(local.instance_managed_policies, {
+    amazon_s3_access         = aws_iam_policy.amazon_s3_access.arn
+    route53                  = aws_iam_policy.route53.arn
+    access_caddycerts        = aws_iam_policy.access_caddycerts.arn
+    share_rate_limit_state   = aws_iam_policy.share_rate_limit_state.arn
+    read_secret_parameters   = aws_iam_policy.read_secret_parameters.arn
+    get_google_subject_token = aws_iam_policy.get_google_subject_token.arn
+    upload_backup            = aws_iam_policy.upload_backup.arn
+    read_alloy_parameters    = aws_iam_policy.read_alloy_parameters.arn
+  })
+}
+
+module "database" {
+  source                   = "terraform-aws-modules/iam/aws//modules/iam-role"
+  version                  = "6.8.2"
+  name                     = "database"
+  use_name_prefix          = false
+  description              = "EC2 instance(s) running database"
+  trust_policy_permissions = local.instance_trust
+  policies = merge(local.instance_managed_policies, {
+    upload_backup               = aws_iam_policy.upload_backup.arn
+    read_backup                 = aws_iam_policy.read_backup.arn
+    read_mysql_user_parameters  = aws_iam_policy.read_mysql_user_parameters.arn
+    read_backup_healthcheck_url = aws_iam_policy.read_backup_healthcheck_url.arn
+    write_mysql_root_password   = aws_iam_policy.write_mysql_root_password.arn
+    read_alloy_parameters       = aws_iam_policy.read_alloy_parameters.arn
+  })
+}
+
+moved {
+  from = aws_iam_role.femiwiki
+  to   = module.femiwiki.aws_iam_role.this[0]
+}
+
+moved {
+  from = aws_iam_role.database
+  to   = module.database.aws_iam_role.this[0]
+}
+
+moved {
+  from = aws_iam_role_policy_attachment.femiwiki_amazon_s3_access
+  to   = module.femiwiki.aws_iam_role_policy_attachment.this["amazon_s3_access"]
+}
+
+moved {
+  from = aws_iam_role_policy_attachment.femiwiki_route53
+  to   = module.femiwiki.aws_iam_role_policy_attachment.this["route53"]
+}
+
+moved {
+  from = aws_iam_role_policy_attachment.femiwiki_access_caddycerts
+  to   = module.femiwiki.aws_iam_role_policy_attachment.this["access_caddycerts"]
+}
+
+moved {
+  from = aws_iam_role_policy_attachment.femiwiki_share_rate_limit_state
+  to   = module.femiwiki.aws_iam_role_policy_attachment.this["share_rate_limit_state"]
+}
+
+moved {
+  from = aws_iam_role_policy_attachment.femiwiki_read_secret_parameters
+  to   = module.femiwiki.aws_iam_role_policy_attachment.this["read_secret_parameters"]
+}
+
+moved {
+  from = aws_iam_role_policy_attachment.femiwiki_get_google_subject_token
+  to   = module.femiwiki.aws_iam_role_policy_attachment.this["get_google_subject_token"]
+}
+
+moved {
+  from = aws_iam_role_policy_attachment.femiwiki_upload_backup
+  to   = module.femiwiki.aws_iam_role_policy_attachment.this["upload_backup"]
+}
+
+moved {
+  from = aws_iam_role_policy_attachment.database_upload_backup
+  to   = module.database.aws_iam_role_policy_attachment.this["upload_backup"]
+}
+
+moved {
+  from = aws_iam_role_policy_attachment.database_read_backup
+  to   = module.database.aws_iam_role_policy_attachment.this["read_backup"]
+}
+
+moved {
+  from = aws_iam_role_policy_attachment.database_read_mysql_user_parameters
+  to   = module.database.aws_iam_role_policy_attachment.this["read_mysql_user_parameters"]
+}
+
+moved {
+  from = aws_iam_role_policy_attachment.database_read_backup_healthcheck_url
+  to   = module.database.aws_iam_role_policy_attachment.this["read_backup_healthcheck_url"]
+}
+
+moved {
+  from = aws_iam_role_policy_attachment.database_write_mysql_root_password
+  to   = module.database.aws_iam_role_policy_attachment.this["write_mysql_root_password"]
+}
+
+moved {
+  from = aws_iam_role_policy_attachment.femiwiki_managed_policies["AmazonSSMManagedInstanceCore"]
+  to   = module.femiwiki.aws_iam_role_policy_attachment.this["AmazonSSMManagedInstanceCore"]
+}
+
+moved {
+  from = aws_iam_role_policy_attachment.femiwiki_managed_policies["CloudWatchAgentServerPolicy"]
+  to   = module.femiwiki.aws_iam_role_policy_attachment.this["CloudWatchAgentServerPolicy"]
+}
+
+moved {
+  from = aws_iam_role_policy_attachment.read_alloy_parameters["femiwiki"]
+  to   = module.femiwiki.aws_iam_role_policy_attachment.this["read_alloy_parameters"]
+}
+
+moved {
+  from = aws_iam_role_policy_attachment.database_managed_policies["AmazonSSMManagedInstanceCore"]
+  to   = module.database.aws_iam_role_policy_attachment.this["AmazonSSMManagedInstanceCore"]
+}
+
+moved {
+  from = aws_iam_role_policy_attachment.database_managed_policies["CloudWatchAgentServerPolicy"]
+  to   = module.database.aws_iam_role_policy_attachment.this["CloudWatchAgentServerPolicy"]
+}
+
+moved {
+  from = aws_iam_role_policy_attachment.read_alloy_parameters["database"]
+  to   = module.database.aws_iam_role_policy_attachment.this["read_alloy_parameters"]
+}
+
+module "infra_grafana" {
+  source             = "terraform-aws-modules/iam/aws//modules/iam-role"
+  version            = "6.8.2"
   name               = "infra-grafana"
+  use_name_prefix    = false
   description        = "Allows GitHub Actions workflows of femiwiki/infra to keep the grafana workspace's state in S3."
-  assume_role_policy = data.aws_iam_policy_document.infra_grafana_assume_role.json
+  enable_github_oidc = true
+  oidc_subjects = [
+    "femiwiki@21275875/infra@188597503:pull_request",
+    "femiwiki@21275875/infra@188597503:environment:grafana",
+  ]
 }
 
-data "aws_iam_policy_document" "infra_grafana_assume_role" {
-  statement {
-    actions = ["sts:AssumeRoleWithWebIdentity"]
-
-    principals {
-      type        = "Federated"
-      identifiers = [aws_iam_openid_connect_provider.github_actions.arn]
-    }
-
-    condition {
-      test     = "StringEquals"
-      variable = "token.actions.githubusercontent.com:aud"
-      values   = ["sts.amazonaws.com"]
-    }
-
-    condition {
-      test     = "StringEquals"
-      variable = "token.actions.githubusercontent.com:sub"
-      values = [
-        "repo:femiwiki@21275875/infra@188597503:pull_request",
-        "repo:femiwiki@21275875/infra@188597503:environment:grafana",
-      ]
-    }
-  }
+moved {
+  from = aws_iam_role.infra_grafana
+  to   = module.infra_grafana.aws_iam_role.this[0]
 }
 
 resource "aws_iam_role_policy" "infra_grafana" {
   name   = "InfraGrafana"
-  role   = aws_iam_role.infra_grafana.name
+  role   = module.infra_grafana.name
   policy = data.aws_iam_policy_document.infra_grafana.json
 }
 
-resource "aws_iam_role" "infra_healthchecks" {
+module "infra_healthchecks" {
+  source             = "terraform-aws-modules/iam/aws//modules/iam-role"
+  version            = "6.8.2"
   name               = "infra-healthchecks"
+  use_name_prefix    = false
   description        = "Allows GitHub Actions workflows of femiwiki/infra to keep the healthchecks workspace's state in S3."
-  assume_role_policy = data.aws_iam_policy_document.infra_healthchecks_assume_role.json
+  enable_github_oidc = true
+  oidc_subjects = [
+    "femiwiki@21275875/infra@188597503:pull_request",
+    "femiwiki@21275875/infra@188597503:environment:healthchecks",
+  ]
 }
 
-data "aws_iam_policy_document" "infra_healthchecks_assume_role" {
-  statement {
-    actions = ["sts:AssumeRoleWithWebIdentity"]
-
-    principals {
-      type        = "Federated"
-      identifiers = [aws_iam_openid_connect_provider.github_actions.arn]
-    }
-
-    condition {
-      test     = "StringEquals"
-      variable = "token.actions.githubusercontent.com:aud"
-      values   = ["sts.amazonaws.com"]
-    }
-
-    condition {
-      test     = "StringEquals"
-      variable = "token.actions.githubusercontent.com:sub"
-      values = [
-        "repo:femiwiki@21275875/infra@188597503:pull_request",
-        "repo:femiwiki@21275875/infra@188597503:environment:healthchecks",
-      ]
-    }
-  }
+moved {
+  from = aws_iam_role.infra_healthchecks
+  to   = module.infra_healthchecks.aws_iam_role.this[0]
 }
 
 resource "aws_iam_role_policy" "infra_healthchecks" {
   name   = "InfraHealthchecks"
-  role   = aws_iam_role.infra_healthchecks.name
+  role   = module.infra_healthchecks.name
   policy = data.aws_iam_policy_document.infra_healthchecks.json
 }

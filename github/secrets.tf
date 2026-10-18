@@ -7,6 +7,7 @@ locals {
     AWS_LOKI_PASSWORD               = "AWS_LOKI_PASSWORD"
     AWS_PROMETHEUS_PASSWORD         = "AWS_PROMETHEUS_PASSWORD"
     AWS_STATE_PASSPHRASE            = "AWS_STATE_PASSPHRASE"
+    GRAFANA_CLOUD_PLAN_TOKEN        = "GRAFANA_CLOUD_PLAN_TOKEN"
     GRAFANA_DISCORD_WEBHOOK_URL     = "GRAFANA_DISCORD_WEBHOOK_URL"
     GRAFANA_MASTODON_TOKEN          = "GRAFANA_MASTODON_TOKEN"
     GRAFANA_PLAN_TOKEN              = "GRAFANA_PLAN_TOKEN"
@@ -28,7 +29,8 @@ locals {
 
   # Read by no plan, so they sit behind the environment's reviewers (#982).
   infra_environment_secrets = {
-    GRAFANA_APPLY_TOKEN = { environment = "grafana", item = "GRAFANA_APPLY_TOKEN" }
+    GRAFANA_APPLY_TOKEN       = { environment = "grafana", item = "GRAFANA_APPLY_TOKEN" }
+    GRAFANA_CLOUD_APPLY_TOKEN = { environment = "grafana", item = "GRAFANA_CLOUD_APPLY_TOKEN" }
   }
 }
 
@@ -76,6 +78,14 @@ resource "github_actions_secret" "femiwiki_github_io" {
   value       = data.onepassword_item.infra[each.value].password
 }
 
+# The availability collector's read-only view of the metrics, as JSON with url,
+# user and token. Made by grafana/readers.tf.
+resource "github_actions_secret" "github_io_prometheus" {
+  repository  = module.femiwiki_github_io.name
+  secret_name = "GRAFANA_PROMETHEUS"
+  value       = jsonencode(data.terraform_remote_state.grafana.outputs.github_io_prometheus)
+}
+
 data "onepassword_item" "alerts_app_private_key" {
   vault = data.onepassword_vault.infra.uuid
   title = "LAMBDA_ALERTS_APP_PRIVATE_KEY"
@@ -113,6 +123,21 @@ resource "github_actions_secret" "gcp_state_passphrase" {
   repository  = module.infra.name
   secret_name = "GCP_STATE_PASSPHRASE"
   value       = random_password.gcp_state_passphrase.result
+}
+
+resource "random_password" "state_passphrase" {
+  for_each = toset(["docker", "grafana", "mariadb"])
+
+  length  = 48
+  special = false
+}
+
+resource "github_actions_secret" "state_passphrase" {
+  for_each = toset(["docker", "grafana", "mariadb"])
+
+  repository  = module.infra.name
+  secret_name = "${upper(each.key)}_STATE_PASSPHRASE"
+  value       = random_password.state_passphrase[each.key].result
 }
 
 resource "github_repository_environment" "dot_github_gitlab" {
