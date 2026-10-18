@@ -200,12 +200,6 @@ locals {
       color       = "85d659"
     }
 
-    patch_welcome = {
-      name        = "patch welcome"
-      description = ""
-      color       = "7057ff"
-    }
-
     performance = {
       name        = "performance"
       description = ""
@@ -273,7 +267,7 @@ locals {
     }
   }
 
-  base_label_suite = ["enhancement", "invalid", "wontfix", "help_wanted", "patch_welcome", "upstreamed", "ci"]
+  base_label_suite = ["enhancement", "invalid", "wontfix", "help_wanted", "good_first_issue", "upstreamed", "ci"]
   ext_label_suite  = concat(local.base_label_suite, ["deprecation"])
 
 
@@ -322,7 +316,6 @@ locals {
 
         # etc
         "femiwiki_discussion_needed",
-        "good_first_issue",
       ]
     )
 
@@ -367,21 +360,23 @@ locals {
     )
 
     ".github"            = local.base_label_suite
-    quibble-action       = ["ci"]
-    "femiwiki.github.io" = ["ci"]
-    sns-discord          = local.base_label_suite
+    quibble-action       = ["ci", "good_first_issue"]
+    "femiwiki.github.io" = ["ci", "good_first_issue"]
+    # Renamed to lambda; the API answers the old name with a redirect, which the
+    # provider may not follow for writes, so this list is frozen.
+    sns-discord          = ["enhancement", "invalid", "wontfix", "help_wanted", "upstreamed", "ci"]
 
     caddy-mwcache       = local.base_label_suite
     caddy-cloudfront-ip = local.base_label_suite
     FediFeeds           = local.ext_label_suite
-    legunto             = concat(local.base_label_suite, ["good_first_issue"])
+    legunto             = local.base_label_suite
     OOUIFemiwikiTheme   = local.ext_label_suite
     remote-gadgets      = concat(local.base_label_suite, ["search", "windows", "mw1_38", "mw1_39", "mw1_40", "mw1_41", "mw1_42"])
 
     tweetbot   = local.base_label_suite
     rankingbot = local.base_label_suite
 
-    FemiwikiSkin                = concat(local.ext_label_suite, ["good_first_issue", "femiwiki_discussion_needed", "ve", "search", "mw1_35", "mw1_36", "mw1_37", "mw1_39", "mw1_42", "mw1_43", "mw1_44", "mw1_45", "mw1_47"])
+    FemiwikiSkin                = concat(local.ext_label_suite, ["femiwiki_discussion_needed", "ve", "search", "mw1_35", "mw1_36", "mw1_37", "mw1_39", "mw1_42", "mw1_43", "mw1_44", "mw1_45", "mw1_47"])
     UnifiedExtensionForFemiwiki = concat(local.ext_label_suite, ["wikibase", "mw1_35", "mw1_36", "mw1_37", "mw1_39", "mw1_42", "mw1_43", "mw1_44", "mw1_45", "mw1_47"])
   }
 
