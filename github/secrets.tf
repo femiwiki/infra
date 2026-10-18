@@ -78,6 +78,14 @@ resource "github_actions_secret" "femiwiki_github_io" {
   value       = data.onepassword_item.infra[each.value].password
 }
 
+# The availability collector's read-only view of the metrics, as JSON with url,
+# user and token. Made by grafana/readers.tf.
+resource "github_actions_secret" "github_io_prometheus" {
+  repository  = module.femiwiki_github_io.name
+  secret_name = "GRAFANA_PROMETHEUS"
+  value       = jsonencode(data.terraform_remote_state.grafana.outputs.github_io_prometheus)
+}
+
 data "onepassword_item" "alerts_app_private_key" {
   vault = data.onepassword_vault.infra.uuid
   title = "LAMBDA_ALERTS_APP_PRIVATE_KEY"
