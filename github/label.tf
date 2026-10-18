@@ -368,6 +368,7 @@ locals {
 
     caddy-mwcache       = local.base_label_suite
     caddy-cloudfront-ip = local.base_label_suite
+    DelayedJobQueue     = local.ext_label_suite
     FediFeeds           = local.ext_label_suite
     legunto             = local.base_label_suite
     OOUIFemiwikiTheme   = local.ext_label_suite
