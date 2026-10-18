@@ -642,7 +642,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
-      actions: read
+      actions: write
       contents: write
       deployments: read
       pull-requests: write
@@ -651,6 +651,13 @@ jobs:
         with:
           step: merge
           apply-before-merge: "true"
+
+      # A push made with this run's token starts no workflow, so the push to
+      # main that would bring the other pull requests up to date never comes
+      - name: Bring the other pull requests up to date with main
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run update-branches.yml --repo "$GITHUB_REPOSITORY" --ref main
 
   log:
     needs: apply
