@@ -8,9 +8,10 @@ description: >-
   every fastcgi name on the host, running or not, or it reuses a name that
   exists. Normally that is the serving generation plus one. After a swap whose
   new generation never became healthy, that generation keeps its name but not
-  its port, so the next is the serving one plus three. Needs the docker-daemon
-  action to have run, since the numbers are read off the host rather than off
-  main, which sits one behind whenever something is applied but not yet merged.
+  its port, so the next is the serving one plus three. Needs the daemon port
+  forwarded to 127.0.0.1:2376, since the numbers are read off the host rather
+  than off main, which sits one behind whenever something is applied but not
+  yet merged.
 inputs:
   workspace:
     description: The root whose locals.tf to read.

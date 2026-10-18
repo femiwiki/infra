@@ -55,8 +55,8 @@ updates:
     cooldown:
       default-days: 7
 
-  - package-ecosystem: "uv"
-    directory: "/"
+  - package-ecosystem: "terraform"
+    directory: "/mariadb"
     schedule:
       interval: monthly
     reviewers:

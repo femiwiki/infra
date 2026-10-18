@@ -2,14 +2,23 @@ terraform {
   required_version = "1.13.1"
 
   backend "s3" {
-    bucket       = "tfstate-302617221463-ap-northeast-1-an"
+    bucket       = "tfstate-302617221463-ap-northeast-2-an"
     key          = "docker/terraform.tfstate"
-    region       = "ap-northeast-1"
+    region       = "ap-northeast-2"
     use_lockfile = true
   }
 
-  # Only to read the aws and gcp outputs, under aws/base.tf's and gcp/base.tf's names
+  # The aws and gcp key names are theirs, under which their states file the key
+  # metadata. "docker" is this state's and is never renamed.
   encryption {
+    key_provider "pbkdf2" "docker" {
+      passphrase = var.state_passphrase
+    }
+
+    method "aes_gcm" "docker" {
+      keys = key_provider.pbkdf2.docker
+    }
+
     key_provider "pbkdf2" "state" {
       passphrase = var.aws_state_passphrase
     }
@@ -35,6 +44,16 @@ terraform {
         method = method.aes_gcm.gcp
       }
     }
+
+    state {
+      method   = method.aes_gcm.docker
+      enforced = true
+    }
+
+    plan {
+      method   = method.aes_gcm.docker
+      enforced = true
+    }
   }
 
   required_providers {
@@ -57,18 +76,13 @@ provider "docker" {
   host = var.docker_host
 }
 
-data "aws_instances" "database" {
-  instance_tags        = { Name = "database-5" }
-  instance_state_names = ["running"]
-}
-
 data "terraform_remote_state" "aws" {
   backend = "s3"
 
   config = {
-    bucket = "tfstate-302617221463-ap-northeast-1-an"
+    bucket = "tfstate-302617221463-ap-northeast-2-an"
     key    = "aws/terraform.tfstate"
-    region = "ap-northeast-1"
+    region = "ap-northeast-2"
   }
 }
 
@@ -76,8 +90,8 @@ data "terraform_remote_state" "gcp" {
   backend = "s3"
 
   config = {
-    bucket = "tfstate-302617221463-ap-northeast-1-an"
+    bucket = "tfstate-302617221463-ap-northeast-2-an"
     key    = "gcp/terraform.tfstate"
-    region = "ap-northeast-1"
+    region = "ap-northeast-2"
   }
 }

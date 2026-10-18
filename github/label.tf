@@ -80,6 +80,12 @@ locals {
       color       = "d4c5f9"
     }
 
+    good_first_issue = {
+      name        = "good first issue"
+      description = "Left for first-time contributors; Claude does not take it"
+      color       = "7057ff"
+    }
+
     help_wanted = {
       name        = "help wanted"
       description = "Extra attention is needed"
@@ -194,12 +200,6 @@ locals {
       color       = "85d659"
     }
 
-    patch_welcome = {
-      name        = "patch welcome"
-      description = ""
-      color       = "7057ff"
-    }
-
     performance = {
       name        = "performance"
       description = ""
@@ -267,12 +267,12 @@ locals {
     }
   }
 
-  base_label_suite = ["enhancement", "invalid", "wontfix", "help_wanted", "patch_welcome", "upstreamed", "ci"]
+  base_label_suite = ["enhancement", "invalid", "wontfix", "help_wanted", "good_first_issue", "upstreamed", "ci"]
   ext_label_suite  = concat(local.base_label_suite, ["deprecation"])
 
 
   repository_label_map = {
-    femiwiki = concat(
+    (module.femiwiki.name) = concat(
       local.base_label_suite,
       [
         # general
@@ -319,7 +319,7 @@ locals {
       ]
     )
 
-    docker-mediawiki = concat(
+    (module.docker_mediawiki.name) = concat(
       local.base_label_suite,
       [
         "note",
@@ -345,7 +345,7 @@ locals {
       ]
     )
 
-    infra = concat(
+    (module.infra.name) = concat(
       local.base_label_suite, [
         "operation",
         "monitoring",
@@ -359,23 +359,26 @@ locals {
       ]
     )
 
-    ".github"            = local.base_label_suite
-    quibble-action       = ["ci"]
-    "femiwiki.github.io" = ["ci"]
-    sns-discord          = local.base_label_suite
+    (module.dot_github.name)         = local.base_label_suite
+    (module.quibble_action.name)     = ["ci", "good_first_issue"]
+    (module.femiwiki_github_io.name) = ["ci", "good_first_issue"]
+    # Renamed to lambda; the API answers the old name with a redirect, which the
+    # provider may not follow for writes, so this list is frozen.
+    sns-discord = ["enhancement", "invalid", "wontfix", "help_wanted", "upstreamed", "ci"]
 
-    caddy-mwcache       = local.base_label_suite
-    caddy-cloudfront-ip = local.base_label_suite
-    FediFeeds           = local.ext_label_suite
-    legunto             = local.base_label_suite
-    OOUIFemiwikiTheme   = local.ext_label_suite
-    remote-gadgets      = concat(local.base_label_suite, ["search", "windows", "mw1_38", "mw1_39", "mw1_40", "mw1_41", "mw1_42"])
+    (module.caddy_mwcache.name)       = local.base_label_suite
+    (module.caddy_cloudfront_ip.name) = local.base_label_suite
+    (module.delayed_job_queue.name)   = local.ext_label_suite
+    (module.fedifeeds.name)           = local.ext_label_suite
+    (module.legunto.name)             = local.base_label_suite
+    (module.ooui_femiwiki_theme.name) = local.ext_label_suite
+    (module.remote_gadgets.name)      = concat(local.base_label_suite, ["search", "windows", "mw1_38", "mw1_39", "mw1_40", "mw1_41", "mw1_42"])
 
-    tweetbot   = local.base_label_suite
-    rankingbot = local.base_label_suite
+    (module.tweetbot.name)   = local.base_label_suite
+    (module.rankingbot.name) = local.base_label_suite
 
-    FemiwikiSkin                = concat(local.ext_label_suite, ["femiwiki_discussion_needed", "ve", "search", "mw1_35", "mw1_36", "mw1_37", "mw1_39", "mw1_42", "mw1_43", "mw1_44", "mw1_45", "mw1_47"])
-    UnifiedExtensionForFemiwiki = concat(local.ext_label_suite, ["wikibase", "mw1_35", "mw1_36", "mw1_37", "mw1_39", "mw1_42", "mw1_43", "mw1_44", "mw1_45", "mw1_47"])
+    (module.femiwiki_skin.name)                  = concat(local.ext_label_suite, ["femiwiki_discussion_needed", "ve", "search", "mw1_35", "mw1_36", "mw1_37", "mw1_39", "mw1_42", "mw1_43", "mw1_44", "mw1_45", "mw1_47"])
+    (module.unified_extension_for_femiwiki.name) = concat(local.ext_label_suite, ["wikibase", "mw1_35", "mw1_36", "mw1_37", "mw1_39", "mw1_42", "mw1_43", "mw1_44", "mw1_45", "mw1_47"])
   }
 
   // Flattening nested structures
@@ -390,6 +393,12 @@ locals {
   ])
 }
 
+# legunto already had GitHub's default "good first issue" label.
+import {
+  to = github_issue_label.femiwiki["legunto.good_first_issue"]
+  id = "legunto:good first issue"
+}
+
 resource "github_issue_label" "femiwiki" {
   // Flattening nested structures
   // See https://www.terraform.io/docs/language/functions/flatten.html#flattening-nested-structures-for-for_each
@@ -398,8 +407,4 @@ resource "github_issue_label" "femiwiki" {
   name        = local.label_definition[each.value.tag].name
   description = local.label_definition[each.value.tag].description
   color       = local.label_definition[each.value.tag].color
-
-  lifecycle {
-    prevent_destroy = true
-  }
 }

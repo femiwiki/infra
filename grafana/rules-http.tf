@@ -21,11 +21,11 @@ locals {
     }))}&schemaVersion=1"
   }
 
-  sitemap_rebuilt      = trimspace(file("${path.module}/queries/sitemap-rebuilt.logql"))
   dump_failed          = trimspace(file("${path.module}/queries/dump-failed.logql"))
   dump_published       = trimspace(file("${path.module}/queries/dump-published.logql"))
   dump_due             = trimspace(file("${path.module}/queries/dump-due.promql"))
   successful_responses = trimspace(file("${path.module}/queries/site-down.promql"))
+  probe_success_ratio  = trimspace(file("${path.module}/queries/site-unreachable.promql"))
   server_errors        = trimspace(file("${path.module}/queries/server-errors.promql"))
   all_responses        = trimspace(file("${path.module}/queries/all-responses.promql"))
   server_errors_2m     = trimspace(file("${path.module}/queries/server-errors-2m.promql"))
@@ -46,7 +46,9 @@ resource "grafana_rule_group" "femiwiki_http" {
     name = "Site down"
     for  = "5m"
 
-    condition      = "B"
+    # Down when the server answers nothing, or when probes from outside mostly fail
+    # (grafana/synthetics.tf). The probes read 1 while they have no data.
+    condition      = "D"
     no_data_state  = "Alerting"
     exec_err_state = "OK"
 
@@ -57,7 +59,7 @@ resource "grafana_rule_group" "femiwiki_http" {
 
     annotations = {
       summary          = "페미위키 접속이 잘 되지 않고 있습니다."
-      description      = "최근 5분 동안 정상 응답이 {{ printf \"%.0f\" $values.A.Value }}건입니다."
+      description      = "최근 5분 동안 정상 응답이 {{ printf \"%.0f\" $values.A.Value }}건이고, 바깥 검사는 {{ humanizePercentage $values.C.Value }} 성공했습니다."
       logs             = local.explore_urls.status
       __dashboardUid__ = grafana_dashboard.availability.uid
       __panelId__      = "1"
@@ -90,6 +92,35 @@ resource "grafana_rule_group" "femiwiki_http" {
         type       = "threshold"
         expression = "A"
         conditions = [{ evaluator = { type = "lt", params = [100] } }]
+      })
+    }
+
+    data {
+      ref_id         = "C"
+      datasource_uid = data.grafana_data_source.prometheus.uid
+      relative_time_range {
+        from = 300
+        to   = 0
+      }
+      model = jsonencode({
+        refId   = "C"
+        expr    = local.probe_success_ratio
+        instant = true
+        range   = false
+      })
+    }
+
+    data {
+      ref_id         = "D"
+      datasource_uid = "__expr__"
+      relative_time_range {
+        from = 0
+        to   = 0
+      }
+      model = jsonencode({
+        refId      = "D"
+        type       = "math"
+        expression = "$B || $C < 0.5"
       })
     }
   }

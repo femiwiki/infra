@@ -5,7 +5,19 @@ provider "registry.opentofu.org/grafana/grafana" {
   version     = "4.46.0"
   constraints = "~> 4.46"
   hashes = [
+    "h1:4ht2uLwmZhnSgxD0eFaPdacz11yUEZ0N3vUfP1mnirE=",
     "h1:B/T/w2S/i2Ififrco0tlHU3IvclmbRb/J0sTc6hqG88=",
+    "h1:FajCus3E8nqYFGk7VC1l0vRQs4VoL9H5E6x1d+CpGaY=",
+    "h1:IWydTb5OzjXV1KqKTkc+7fNG3chGHhpW6/N26l8KmTs=",
+    "h1:K9fFFOcQTYS4GaBKShNN7vKZTysfOLB/qrEyF9ngPLw=",
+    "h1:QKxfDx4AoGdFv59xU7ZFM9E8c7V4LnfbPhjKF3+WpVc=",
+    "h1:UUXVJJ8j4WnO2IJO24jeLkGjiEAO/ILCCBqOPHOguNM=",
+    "h1:Us9liS1XzeTcb9+MHOem8IfsirTam38jpx1xhqRp3nM=",
+    "h1:kc+lpSApn2IBG1POfZWLhUPmH8Ra728Q6uv+Zdj31cc=",
+    "h1:nvbEfb1kzj5Zovvk9EdfE2Nc7oOUtLLSpDMMXntbZqQ=",
+    "h1:ra4YUZTi7TxKZ3hlo6IzWbReEspj2mwpqgvv9Eo9vTk=",
+    "h1:uhnwCNFGvURyqB3XSj5ISd9sXF195pk52u11KrzOH9A=",
+    "h1:vkNm99bZXAeVba6ttcnYkkr5u1sEJtM/NeazdGNYsR8=",
     "zh:19f7fdc47921acfdf629abcaba66a1857bd8f97173124b5610002dcf1437fe3f",
     "zh:26638a04481a13030ad03f35d0e583d915bbca3c1ea8c00254292d3fddec4745",
     "zh:2967ffecbdc31e74d34584cb62b3641cf696bfa4a61e5caeeda34d0beb6a1321",

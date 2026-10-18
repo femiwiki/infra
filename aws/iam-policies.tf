@@ -119,11 +119,11 @@ resource "aws_iam_policy" "amazon_s3_access" {
 #   https://github.com/hashicorp/terraform/issues/27171#issuecomment-740249394
 #   https://github.com/hashicorp/terraform/issues/27282
 locals {
-  caddy_certs   = aws_s3_bucket.caddy_certs.arn
+  caddy_certs   = module.caddy_certs.s3_bucket_arn
   backups       = aws_s3_bucket.backups.arn
-  backups_seoul = aws_s3_bucket.backups_seoul.arn
-  uploads_seoul = aws_s3_bucket.uploads_seoul.arn
-  rate_limit    = aws_s3_bucket.rate_limit.arn
+  backups_seoul = module.backups_seoul.s3_bucket_arn
+  uploads_seoul = module.uploads_seoul.s3_bucket_arn
+  rate_limit    = module.rate_limit.s3_bucket_arn
 }
 
 data "aws_iam_policy_document" "amazon_s3_access" {
@@ -356,17 +356,6 @@ data "aws_iam_policy_document" "write_mysql_root_password" {
     actions   = ["ssm:PutParameter"]
     resources = [for region in local.parameter_store_regions : "arn:aws:ssm:${region}:${data.aws_caller_identity.current.account_id}:parameter/mysql/servers/*/root/password"]
   }
-
-  statement {
-    actions   = ["kms:Encrypt", "kms:GenerateDataKey"]
-    resources = ["*"]
-
-    condition {
-      test     = "StringEquals"
-      variable = "kms:ViaService"
-      values   = ["ssm.${local.tokyo_region}.amazonaws.com"]
-    }
-  }
 }
 
 
@@ -450,8 +439,8 @@ data "aws_iam_policy_document" "femiwiki_github_io" {
   statement {
     actions = ["s3:GetObject", "s3:ListBucket"]
     resources = [
-      aws_s3_bucket.cost_and_usage.arn,
-      "${aws_s3_bucket.cost_and_usage.arn}/*",
+      module.cost_and_usage.s3_bucket_arn,
+      "${module.cost_and_usage.s3_bucket_arn}/*",
       aws_s3_bucket.cost_exports.arn,
       "${aws_s3_bucket.cost_exports.arn}/*",
     ]
@@ -461,12 +450,14 @@ data "aws_iam_policy_document" "femiwiki_github_io" {
 data "aws_iam_policy_document" "iac" {
   statement {
     actions = [
+      "access-analyzer:*",
       "acm:*",
       "athena:*",
       "autoscaling:*",
       "bcm-data-exports:*",
       "budgets:*",
       "cloudfront:*",
+      "cloudtrail:*",
       "cloudwatch:*",
       "cur:*",
       "ec2:*",

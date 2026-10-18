@@ -29,7 +29,7 @@ MINIMUM_BYTES=$((500 * 1024 * 1024))
 
 # --defaults-file, not ~/.my.cnf: systemd does not promise HOME to a
 # system service, and a dump that cannot log in is a silent one.
-dump() { nice -n 19 mysqldump --defaults-file=/root/.my.cnf femiwiki | nice -n 19 gzip -9 > "$FILE"; }
+dump() { nice -n 19 mysqldump --defaults-file=/root/.my.cnf --master-data=2 --gtid femiwiki | nice -n 19 gzip -9 > "$FILE"; }
 upload() { nice -n 19 aws s3 cp --no-progress "$FILE" "s3://${backups_bucket}/mysql/$NAME"; }
 
 retry() {
