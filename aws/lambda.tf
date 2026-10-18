@@ -1,7 +1,7 @@
 resource "aws_lambda_function" "mastodon_discord" {
   function_name = "mastodon-discord"
   description   = "Relays mentions of the wiki's Mastodon status account to Discord. Code: femiwiki/lambda."
-  role          = aws_iam_role.mastodon_discord.arn
+  role          = module.mastodon_discord.arn
   runtime       = "python3.13"
   architectures = ["arm64"]
   handler       = "lambda_function.lambda_handler"
@@ -21,15 +21,23 @@ resource "aws_cloudwatch_log_group" "mastodon_discord" {
   retention_in_days = 14
 }
 
-resource "aws_iam_role" "mastodon_discord" {
-  name               = "mastodon-discord"
-  description        = "Execution role for the mastodon-discord Lambda function."
-  assume_role_policy = data.aws_iam_policy_document.lambda_assume_role.json
+module "mastodon_discord" {
+  source                   = "terraform-aws-modules/iam/aws//modules/iam-role"
+  version                  = "6.8.2"
+  name                     = "mastodon-discord"
+  use_name_prefix          = false
+  description              = "Execution role for the mastodon-discord Lambda function."
+  trust_policy_permissions = local.lambda_trust
+}
+
+moved {
+  from = aws_iam_role.mastodon_discord
+  to   = module.mastodon_discord.aws_iam_role.this[0]
 }
 
 resource "aws_iam_role_policy" "mastodon_discord" {
   name   = "MastodonDiscord"
-  role   = aws_iam_role.mastodon_discord.name
+  role   = module.mastodon_discord.name
   policy = data.aws_iam_policy_document.mastodon_discord.json
 }
 
@@ -67,7 +75,7 @@ resource "aws_lambda_permission" "mastodon_discord" {
 resource "aws_lambda_function" "mastodon_boost" {
   function_name = "mastodon-boost"
   description   = "Boosts mentions of the wiki's Mastodon status account from trusted accounts. Code: femiwiki/lambda."
-  role          = aws_iam_role.mastodon_boost.arn
+  role          = module.mastodon_boost.arn
   runtime       = "python3.13"
   architectures = ["arm64"]
   handler       = "lambda_function.lambda_handler"
@@ -87,15 +95,23 @@ resource "aws_cloudwatch_log_group" "mastodon_boost" {
   retention_in_days = 14
 }
 
-resource "aws_iam_role" "mastodon_boost" {
-  name               = "mastodon-boost"
-  description        = "Execution role for the mastodon-boost Lambda function."
-  assume_role_policy = data.aws_iam_policy_document.lambda_assume_role.json
+module "mastodon_boost" {
+  source                   = "terraform-aws-modules/iam/aws//modules/iam-role"
+  version                  = "6.8.2"
+  name                     = "mastodon-boost"
+  use_name_prefix          = false
+  description              = "Execution role for the mastodon-boost Lambda function."
+  trust_policy_permissions = local.lambda_trust
+}
+
+moved {
+  from = aws_iam_role.mastodon_boost
+  to   = module.mastodon_boost.aws_iam_role.this[0]
 }
 
 resource "aws_iam_role_policy" "mastodon_boost" {
   name   = "MastodonBoost"
-  role   = aws_iam_role.mastodon_boost.name
+  role   = module.mastodon_boost.name
   policy = data.aws_iam_policy_document.mastodon_boost.json
 }
 
@@ -133,7 +149,7 @@ resource "aws_lambda_permission" "mastodon_boost" {
 resource "aws_lambda_function" "grafana_github" {
   function_name = "grafana-github"
   description   = "Opens a GitHub issue per Grafana alert rule that only operators need to act on. Code: femiwiki/lambda."
-  role          = aws_iam_role.grafana_github.arn
+  role          = module.grafana_github.arn
   runtime       = "python3.13"
   architectures = ["arm64"]
   handler       = "lambda_function.lambda_handler"
@@ -153,15 +169,23 @@ resource "aws_cloudwatch_log_group" "grafana_github" {
   retention_in_days = 14
 }
 
-resource "aws_iam_role" "grafana_github" {
-  name               = "grafana-github"
-  description        = "Execution role for the grafana-github Lambda function."
-  assume_role_policy = data.aws_iam_policy_document.lambda_assume_role.json
+module "grafana_github" {
+  source                   = "terraform-aws-modules/iam/aws//modules/iam-role"
+  version                  = "6.8.2"
+  name                     = "grafana-github"
+  use_name_prefix          = false
+  description              = "Execution role for the grafana-github Lambda function."
+  trust_policy_permissions = local.lambda_trust
+}
+
+moved {
+  from = aws_iam_role.grafana_github
+  to   = module.grafana_github.aws_iam_role.this[0]
 }
 
 resource "aws_iam_role_policy" "grafana_github" {
   name   = "GrafanaGithub"
-  role   = aws_iam_role.grafana_github.name
+  role   = module.grafana_github.name
   policy = data.aws_iam_policy_document.grafana_github.json
 }
 
@@ -195,7 +219,7 @@ resource "aws_lambda_permission" "grafana_github" {
 resource "aws_lambda_function" "sns_discord" {
   function_name = "sns-discord"
   description   = "Posts CloudWatch alarm notifications from SNS to Discord. Code: femiwiki/lambda."
-  role          = aws_iam_role.sns_discord.arn
+  role          = module.sns_discord.arn
   runtime       = "python3.13"
   architectures = ["arm64"]
   handler       = "lambda_function.lambda_handler"
@@ -215,15 +239,23 @@ resource "aws_cloudwatch_log_group" "sns_discord" {
   retention_in_days = 14
 }
 
-resource "aws_iam_role" "sns_discord" {
-  name               = "sns-discord"
-  description        = "Execution role for the sns-discord Lambda function."
-  assume_role_policy = data.aws_iam_policy_document.lambda_assume_role.json
+module "sns_discord" {
+  source                   = "terraform-aws-modules/iam/aws//modules/iam-role"
+  version                  = "6.8.2"
+  name                     = "sns-discord"
+  use_name_prefix          = false
+  description              = "Execution role for the sns-discord Lambda function."
+  trust_policy_permissions = local.lambda_trust
+}
+
+moved {
+  from = aws_iam_role.sns_discord
+  to   = module.sns_discord.aws_iam_role.this[0]
 }
 
 resource "aws_iam_role_policy" "sns_discord" {
   name   = "SnsDiscord"
-  role   = aws_iam_role.sns_discord.name
+  role   = module.sns_discord.name
   policy = data.aws_iam_policy_document.sns_discord.json
 }
 
@@ -288,7 +320,7 @@ resource "aws_lambda_permission" "sns_discord_ok" {
 resource "aws_lambda_function" "bounce_handler" {
   function_name = "bounce-handler"
   description   = "Hands SES permanent bounces to MediaWiki's BounceHandler API. Code: femiwiki/lambda."
-  role          = aws_iam_role.bounce_handler.arn
+  role          = module.bounce_handler.arn
   runtime       = "python3.13"
   architectures = ["arm64"]
   handler       = "lambda_function.lambda_handler"
@@ -308,15 +340,23 @@ resource "aws_cloudwatch_log_group" "bounce_handler" {
   retention_in_days = 14
 }
 
-resource "aws_iam_role" "bounce_handler" {
-  name               = "bounce-handler"
-  description        = "Execution role for the bounce-handler Lambda function."
-  assume_role_policy = data.aws_iam_policy_document.lambda_assume_role.json
+module "bounce_handler" {
+  source                   = "terraform-aws-modules/iam/aws//modules/iam-role"
+  version                  = "6.8.2"
+  name                     = "bounce-handler"
+  use_name_prefix          = false
+  description              = "Execution role for the bounce-handler Lambda function."
+  trust_policy_permissions = local.lambda_trust
+}
+
+moved {
+  from = aws_iam_role.bounce_handler
+  to   = module.bounce_handler.aws_iam_role.this[0]
 }
 
 resource "aws_iam_role_policy" "bounce_handler" {
   name   = "BounceHandler"
-  role   = aws_iam_role.bounce_handler.name
+  role   = module.bounce_handler.name
   policy = data.aws_iam_policy_document.bounce_handler.json
 }
 
