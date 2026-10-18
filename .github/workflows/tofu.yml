@@ -516,7 +516,7 @@ jobs:
           plan_path: ${{ steps.saved.outcome == 'success' && 'saved-plan/plan.tfplan' || '' }}
 
       # A failed post does not fail an apply that has already changed production.
-      # The next post carries the note, and the Discord message says it is owed.
+      # It leaves an error annotation and a summary line saying how to post it again.
       - name: Post the ```wikitext blocks of the applied pull request to the wiki
         if: github.event.pull_request
         id: post
