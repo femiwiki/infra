@@ -1,79 +1,52 @@
-resource "aws_iam_role" "infra_aws" {
+module "infra_aws" {
+  source             = "terraform-aws-modules/iam/aws//modules/iam-role"
+  version            = "6.8.2"
   name               = "infra-aws"
+  use_name_prefix    = false
   description        = "Allows GitHub Actions workflows of femiwiki/infra to apply the aws workspace."
-  assume_role_policy = data.aws_iam_policy_document.infra_aws_assume_role.json
+  enable_github_oidc = true
+  # Only the environment, never pull_request: this role can do what Terraform
+  # Cloud can, IAM included, and any branch can open a pull request.
+  oidc_subjects = ["femiwiki@21275875/infra@188597503:environment:aws"]
 }
 
-data "aws_iam_policy_document" "infra_aws_assume_role" {
-  statement {
-    actions = ["sts:AssumeRoleWithWebIdentity"]
-
-    principals {
-      type        = "Federated"
-      identifiers = [aws_iam_openid_connect_provider.github_actions.arn]
-    }
-
-    condition {
-      test     = "StringEquals"
-      variable = "token.actions.githubusercontent.com:aud"
-      values   = ["sts.amazonaws.com"]
-    }
-
-    # Only the environment, never pull_request: this role can do what Terraform
-    # Cloud can, IAM included, and any branch can open a pull request.
-    condition {
-      test     = "StringEquals"
-      variable = "token.actions.githubusercontent.com:sub"
-      values   = ["repo:femiwiki@21275875/infra@188597503:environment:aws"]
-    }
-  }
+moved {
+  from = aws_iam_role.infra_aws
+  to   = module.infra_aws.aws_iam_role.this[0]
 }
 
 # Everything this root manages, IAM included.
 resource "aws_iam_role_policy" "infra_aws" {
   name   = "InfraAws"
-  role   = aws_iam_role.infra_aws.name
+  role   = module.infra_aws.name
   policy = data.aws_iam_policy_document.iac.json
 }
 
-resource "aws_iam_role" "infra_aws_plan" {
+module "infra_aws_plan" {
+  source             = "terraform-aws-modules/iam/aws//modules/iam-role"
+  version            = "6.8.2"
   name               = "infra-aws-plan"
+  use_name_prefix    = false
   description        = "Allows GitHub Actions workflows of femiwiki/infra to plan the aws workspace."
-  assume_role_policy = data.aws_iam_policy_document.infra_aws_plan_assume_role.json
+  enable_github_oidc = true
+  oidc_subjects      = ["femiwiki@21275875/infra@188597503:pull_request"]
+  policies           = { ReadOnlyAccess = "arn:aws:iam::aws:policy/ReadOnlyAccess" }
 }
 
-data "aws_iam_policy_document" "infra_aws_plan_assume_role" {
-  statement {
-    actions = ["sts:AssumeRoleWithWebIdentity"]
-
-    principals {
-      type        = "Federated"
-      identifiers = [aws_iam_openid_connect_provider.github_actions.arn]
-    }
-
-    condition {
-      test     = "StringEquals"
-      variable = "token.actions.githubusercontent.com:aud"
-      values   = ["sts.amazonaws.com"]
-    }
-
-    condition {
-      test     = "StringEquals"
-      variable = "token.actions.githubusercontent.com:sub"
-      values   = ["repo:femiwiki@21275875/infra@188597503:pull_request"]
-    }
-  }
+moved {
+  from = aws_iam_role.infra_aws_plan
+  to   = module.infra_aws_plan.aws_iam_role.this[0]
 }
 
-resource "aws_iam_role_policy_attachment" "infra_aws_plan" {
-  role       = aws_iam_role.infra_aws_plan.name
-  policy_arn = "arn:aws:iam::aws:policy/ReadOnlyAccess" # AWS managed policy
+moved {
+  from = aws_iam_role_policy_attachment.infra_aws_plan
+  to   = module.infra_aws_plan.aws_iam_role_policy_attachment.this["ReadOnlyAccess"]
 }
 
 # ReadOnlyAccess reads the state already. A plan also takes the lock.
 resource "aws_iam_role_policy" "infra_aws_plan" {
   name   = "InfraAwsPlan"
-  role   = aws_iam_role.infra_aws_plan.name
+  role   = module.infra_aws_plan.name
   policy = data.aws_iam_policy_document.infra_aws_plan.json
 }
 
