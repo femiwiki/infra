@@ -49,7 +49,7 @@ jobs:
     needs: replica
     runs-on: ubuntu-latest
     timeout-minutes: 60
-    environment: database-swap
+    environment: database
     permissions:
       contents: read
       id-token: write

@@ -286,6 +286,18 @@ module "fedifeeds" {
   homepage_url                    = "https://femiwiki.github.io/FediFeeds/"
 }
 
+module "delayed_job_queue" {
+  source      = "./modules/github-repository"
+  name        = "DelayedJobQueue"
+  description = "MediaWiki extension that adds delayed jobs to the database job queue"
+  topics = [
+    "mediawiki",
+    "mediawiki-extension",
+  ]
+  required_status_checks_contexts = ["required"]
+  default_status_checks           = []
+}
+
 module "status" {
   source           = "./modules/github-repository"
   name             = "status"
@@ -314,7 +326,7 @@ module "tacos" {
   source = "github.com/femiwiki/terraform-github-tacos?ref=v0.2.3"
 
   repository     = module.infra.name
-  environments   = ["aws", "docker", "gcp", "github", "grafana", "healthchecks", "mariadb"]
+  environments   = ["aws", "database", "docker", "gcp", "github", "grafana", "healthchecks", "mariadb"]
   reviewer_teams = [github_team.deployer.id]
   # The provider's default, which these environments were created with
   can_admins_bypass = true
@@ -323,4 +335,16 @@ module "tacos" {
 moved {
   from = github_repository_environment.infra
   to   = module.tacos.github_repository_environment.this
+}
+
+# The swap's replica job, unreviewed: it stops for a Deployer at
+# database above before anything is promoted.
+resource "github_repository_environment" "database_replica" {
+  repository  = module.infra.name
+  environment = "database-replica"
+
+  deployment_branch_policy {
+    protected_branches     = true
+    custom_branch_policies = false
+  }
 }
