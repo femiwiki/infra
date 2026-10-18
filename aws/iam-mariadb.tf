@@ -1,38 +1,24 @@
-resource "aws_iam_role" "infra_mariadb" {
+module "infra_mariadb" {
+  source             = "terraform-aws-modules/iam/aws//modules/iam-role"
+  version            = "6.8.2"
   name               = "infra-mariadb"
+  use_name_prefix    = false
   description        = "Allows GitHub Actions workflows of femiwiki/infra to plan and apply the mariadb workspace."
-  assume_role_policy = data.aws_iam_policy_document.infra_mariadb_assume_role.json
+  enable_github_oidc = true
+  oidc_subjects = [
+    "femiwiki@21275875/infra@188597503:pull_request",
+    "femiwiki@21275875/infra@188597503:environment:mariadb",
+  ]
 }
 
-data "aws_iam_policy_document" "infra_mariadb_assume_role" {
-  statement {
-    actions = ["sts:AssumeRoleWithWebIdentity"]
-
-    principals {
-      type        = "Federated"
-      identifiers = [aws_iam_openid_connect_provider.github_actions.arn]
-    }
-
-    condition {
-      test     = "StringEquals"
-      variable = "token.actions.githubusercontent.com:aud"
-      values   = ["sts.amazonaws.com"]
-    }
-
-    condition {
-      test     = "StringEquals"
-      variable = "token.actions.githubusercontent.com:sub"
-      values = [
-        "repo:femiwiki@21275875/infra@188597503:pull_request",
-        "repo:femiwiki@21275875/infra@188597503:environment:mariadb",
-      ]
-    }
-  }
+moved {
+  from = aws_iam_role.infra_mariadb
+  to   = module.infra_mariadb.aws_iam_role.this[0]
 }
 
 resource "aws_iam_role_policy" "infra_mariadb" {
   name   = "InfraMariadb"
-  role   = aws_iam_role.infra_mariadb.name
+  role   = module.infra_mariadb.name
   policy = data.aws_iam_policy_document.infra_mariadb.json
 }
 
