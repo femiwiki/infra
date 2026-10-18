@@ -19,6 +19,21 @@ terraform {
       keys = key_provider.pbkdf2.state
     }
 
+    # Same names as in grafana/base.tf, which the stored key metadata is filed under
+    key_provider "pbkdf2" "grafana" {
+      passphrase = var.grafana_state_passphrase
+    }
+
+    method "aes_gcm" "grafana" {
+      keys = key_provider.pbkdf2.grafana
+    }
+
+    remote_state_data_sources {
+      remote_state_data_source "grafana" {
+        method = method.aes_gcm.grafana
+      }
+    }
+
     state {
       method   = method.aes_gcm.state
       enforced = true
@@ -52,6 +67,16 @@ provider "github" {
 
   # The legacy client sends one request at a time, which is most of the plan
   legacy_client = false
+}
+
+data "terraform_remote_state" "grafana" {
+  backend = "s3"
+
+  config = {
+    bucket = "tfstate-302617221463-ap-northeast-2-an"
+    key    = "grafana/terraform.tfstate"
+    region = "ap-northeast-2"
+  }
 }
 
 # Reads OP_SERVICE_ACCOUNT_TOKEN, a service account that can only read the infra vault.

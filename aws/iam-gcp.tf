@@ -1,38 +1,24 @@
-resource "aws_iam_role" "infra_gcp" {
+module "infra_gcp" {
+  source             = "terraform-aws-modules/iam/aws//modules/iam-role"
+  version            = "6.8.2"
   name               = "infra-gcp"
+  use_name_prefix    = false
   description        = "Allows GitHub Actions workflows of femiwiki/infra to plan and apply the gcp workspace."
-  assume_role_policy = data.aws_iam_policy_document.infra_gcp_assume_role.json
+  enable_github_oidc = true
+  oidc_subjects = [
+    "femiwiki@21275875/infra@188597503:pull_request",
+    "femiwiki@21275875/infra@188597503:environment:gcp",
+  ]
 }
 
-data "aws_iam_policy_document" "infra_gcp_assume_role" {
-  statement {
-    actions = ["sts:AssumeRoleWithWebIdentity"]
-
-    principals {
-      type        = "Federated"
-      identifiers = [aws_iam_openid_connect_provider.github_actions.arn]
-    }
-
-    condition {
-      test     = "StringEquals"
-      variable = "token.actions.githubusercontent.com:aud"
-      values   = ["sts.amazonaws.com"]
-    }
-
-    condition {
-      test     = "StringEquals"
-      variable = "token.actions.githubusercontent.com:sub"
-      values = [
-        "repo:femiwiki@21275875/infra@188597503:pull_request",
-        "repo:femiwiki@21275875/infra@188597503:environment:gcp",
-      ]
-    }
-  }
+moved {
+  from = aws_iam_role.infra_gcp
+  to   = module.infra_gcp.aws_iam_role.this[0]
 }
 
 resource "aws_iam_role_policy" "infra_gcp" {
   name   = "InfraGcp"
-  role   = aws_iam_role.infra_gcp.name
+  role   = module.infra_gcp.name
   policy = data.aws_iam_policy_document.infra_gcp.json
 }
 
