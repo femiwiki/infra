@@ -12,7 +12,7 @@ locals {
 }
 
 resource "aws_route53_record" "femiwiki_com" {
-  for_each = toset(["femiwiki.com", "www.femiwiki.com"])
+  for_each = toset(local.cloudfront_aliases)
 
   name    = each.key
   type    = "A"
@@ -33,7 +33,7 @@ resource "aws_route53_record" "femiwiki_com" {
 
 # The box has no IPv6, so these exist only behind CloudFront
 resource "aws_route53_record" "femiwiki_com_ipv6" {
-  for_each = local.through_cloudfront ? toset(["femiwiki.com", "www.femiwiki.com"]) : toset([])
+  for_each = local.through_cloudfront ? toset(local.cloudfront_aliases) : toset([])
 
   name    = each.key
   type    = "AAAA"
