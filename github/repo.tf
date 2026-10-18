@@ -51,7 +51,7 @@ module "docker_mediawiki" {
   delete_branch_on_merge          = true
   enforce_admins                  = local.docker.enforce_admins
   required_pull_request_reviews   = local.docker.required_pull_request_reviews
-  required_status_checks_contexts = ["required", "title scope"]
+  required_status_checks_contexts = ["required"]
   topics = [
     "docker-compose",
     "docker-image",
