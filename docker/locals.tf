@@ -3,7 +3,7 @@ locals {
   fastcgi_generation = 139 + (var.proxysql_enabled ? 1 : 0)
   # The generation whose fastcgi runs update.php as it starts, set with an image
   # that changes the schema; it lapses once the generation moves on
-  schema_update_generation = null
+  schema_update_generation = 139
 
   memcached_default_mib  = 64 # the -m default memcached has been running on
   memcached_observed_mib = 28 # buffers, hash table and stacks it allocates outside -m today
