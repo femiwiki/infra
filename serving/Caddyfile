@@ -403,6 +403,8 @@ femiwiki.com *.femiwiki.com 127.0.0.1:80 localhost:80 {
 		@read method GET HEAD
 		handle @read {
 			log_append fallback true
+			rewrite @fedi_actors /rest.php/fedifeeds{path}
+			rewrite /.well-known/webfinger /rest.php/fedifeeds/webfinger
 			rewrite /w/api.php /api.php
 			rewrite /w/* /index.php
 			php_fastcgi 127.0.0.1:9000 127.0.0.1:9001 {
@@ -505,6 +507,20 @@ femiwiki.com *.femiwiki.com 127.0.0.1:80 localhost:80 {
 	@dead not vars {dead_url} ""
 	log_append @dead dead_url {dead_url}
 	respond @dead "" {dead_status}
+
+	# FediFeeds actors on fedi.femiwiki.com, the rest of that host goes to the wiki.
+	# Not load.php or favicon.ico: CloudFront caches them without the host.
+	@fedi_elsewhere {
+		host fedi.femiwiki.com
+		not path /actors/* /.well-known/webfinger /load.php /favicon.ico
+	}
+	redir @fedi_elsewhere https://femiwiki.com{uri} 301
+	@fedi_actors {
+		host fedi.femiwiki.com
+		path /actors/*
+	}
+	rewrite @fedi_actors /rest.php/fedifeeds{path}
+	rewrite /.well-known/webfinger /rest.php/fedifeeds/webfinger
 
 	rewrite /w/api.php /api.php
 	rewrite /w/* /index.php
