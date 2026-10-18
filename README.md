@@ -101,6 +101,14 @@ tofu -chdir=docker plan
 tofu -chdir=docker apply
 ```
 
+## 기술 블로그
+
+이 저장소로 한 일 가운데 일부를 [페미위키 기술 블로그]에 적었습니다.
+
+- [2025년 가을부터 이어진 사이트 접속 문제 안내](https://femiwiki.com/?curid=80441)
+- [가용성 문서와 상태 페이지를 소개합니다](https://femiwiki.com/?curid=80475)
+- [Claude Code로 크롤러 막기](https://femiwiki.com/?curid=81514)
+
 [github checks status]: https://badgen.net/github/checks/femiwiki/infra
 [github checks link]: https://github.com/femiwiki/infra/actions
 [Session Manager 플러그인]: https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-install-plugin.html
@@ -108,3 +116,4 @@ tofu -chdir=docker apply
 [terraform-github-tacos]: https://github.com/femiwiki/terraform-github-tacos
 [Apply-before-merge]: https://femiwiki.github.io/terraform-github-tacos/Apply-before-merge
 [dflook/tofu-apply]: https://github.com/dflook/terraform-github-actions/tree/main/tofu-apply
+[페미위키 기술 블로그]: https://femiwiki.com/?curid=30779
