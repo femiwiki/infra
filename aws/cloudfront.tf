@@ -12,7 +12,7 @@ resource "aws_route53_record" "cloudfront_origin" {
 }
 
 locals {
-  cloudfront_aliases = ["femiwiki.com", "www.femiwiki.com"]
+  cloudfront_aliases = ["femiwiki.com", "www.femiwiki.com", "fedi.femiwiki.com"]
 }
 
 # A viewer certificate has to be in us-east-1. Caddy keeps its own for the
