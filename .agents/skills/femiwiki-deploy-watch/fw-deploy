@@ -247,13 +247,16 @@ cmd_watch_apply() {
 # docker apply job. A rollback shows here as the arrow pointing down; one
 # happened because a plan saying fastcgi-60 -> fastcgi-59 went unread.
 applied_generation() {
-  # Most runs apply nothing, so look for the newest one whose docker apply ran
-  found=$(gh api "repos/$REPO/actions/workflows/tofu.yml/runs?status=success&per_page=30" \
-    --jq '.workflow_runs[].id' 2>/dev/null | while read -r run; do
+  # An apply runs on approval, long after its run started and before the run ends,
+  # so keep the docker apply that finished last among recently updated runs
+  found=$(gh api "repos/$REPO/actions/workflows/tofu.yml/runs?per_page=100" \
+    --jq '.workflow_runs | sort_by(.updated_at) | reverse | .[:30][].id' 2>/dev/null |
+    while read -r run; do
       gh api "repos/$REPO/actions/runs/$run/jobs" \
-        --jq ".jobs[] | select(.name == \"docker apply\" and .conclusion == \"success\") | \"$run \\(.id)\"" 2>/dev/null
-    done | head -1 || true)
+        --jq ".jobs[] | select(.name == \"docker apply\" and .conclusion == \"success\") | \"\\(.completed_at) $run \\(.id)\"" 2>/dev/null
+    done | sort -r | head -1 || true)
   [ -n "$found" ] || { echo "  no successful docker apply found"; return; }
+  found=${found#* }
   run=${found% *}
   job=${found#* }
   echo "  last successful docker apply: https://github.com/$REPO/actions/runs/$run/job/$job"
