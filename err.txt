@@ -1,1 +1,0 @@
-{"level":"warn","ts":1792287738.9729261,"msg":"The nested 'metrics' option inside `servers` is deprecated and will be removed in the next major version. Use the global 'metrics' option instead."}
