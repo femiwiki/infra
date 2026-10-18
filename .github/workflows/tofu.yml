@@ -289,11 +289,16 @@ jobs:
   # started, and a required check that has not reported keeps the merge button
   # dead. Nothing reaches main unapplied that way.
   gate:
-    # An approval's run that plans carries it too, replacing Dependabot's failed gate
+    # Dependabot's own run fails under another name, as a failed check of the
+    # required name keeps blocking after its approval's run passes (#1378)
     name: >-
-      ${{ (github.event_name == 'pull_request'
-      || (github.event_name == 'pull_request_review' && needs.plan.result != 'skipped'))
-      && 'tofu gate' || 'tofu gate (pull requests only)' }}
+      ${{ case(
+      github.event_name == 'pull_request' && github.event.pull_request.user.login == 'dependabot[bot]',
+      'tofu gate (approve to plan)',
+      github.event_name == 'pull_request'
+      || (github.event_name == 'pull_request_review' && needs.plan.result != 'skipped'),
+      'tofu gate',
+      'tofu gate (pull requests only)') }}
     needs: [plan, pending, apply]
     if: >-
       always() && (github.event_name == 'pull_request'
