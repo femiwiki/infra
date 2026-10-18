@@ -28,27 +28,6 @@ resource "aws_cloudwatch_metric_alarm" "complaint_rate" {
   region              = "us-east-1"
 }
 
-resource "aws_cloudwatch_metric_alarm" "femiwiki_pages" {
-  for_each = aws_route53_health_check.femiwiki_pages
-
-  alarm_name  = "${each.key} awsroute53 Low-HealthCheckStatus"
-  namespace   = "AWS/Route53"
-  metric_name = "HealthCheckStatus"
-  period      = 60
-  statistic   = "Minimum"
-  dimensions = {
-    HealthCheckId = each.value.id
-  }
-  threshold           = 1
-  comparison_operator = "LessThanThreshold"
-  datapoints_to_alarm = 5
-  evaluation_periods  = 5
-  alarm_actions       = [aws_sns_topic.cloudwatch_alarms_topic_us.arn]
-  ok_actions          = [aws_sns_topic.cloudwatch_alarms_topic_us.arn]
-  region              = "us-east-1"
-}
-
-
 resource "aws_cloudwatch_metric_alarm" "cloudfront_requests" {
   alarm_name  = "CloudFront Requests"
   namespace   = "AWS/CloudFront"
