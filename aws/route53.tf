@@ -206,28 +206,3 @@ resource "aws_route53_record" "atproto_quote_femiwiki_com" {
   ttl     = 3600
   zone_id = aws_route53_zone.femiwiki_com.zone_id
 }
-
-resource "aws_route53_health_check" "femiwiki_pages" {
-  for_each = toset([
-    "페미위키:대문",
-    "특수:빈문서",
-  ])
-  fqdn              = "femiwiki.com"
-  port              = 443
-  type              = "HTTPS"
-  failure_threshold = 3
-  request_interval  = 30
-  resource_path     = "/w/${urlencode(each.key)}"
-
-  # Three is the fewest Route53 accepts, down from the sixteen it uses unset;
-  # 특수:빈문서 cannot be cached, so each region is a full render. See #581.
-  regions = [
-    "ap-northeast-1",
-    "us-west-1",
-    "eu-west-1",
-  ]
-
-  tags = {
-    "Name" = "Femiwiki ${each.key}"
-  }
-}
