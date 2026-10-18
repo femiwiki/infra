@@ -131,6 +131,20 @@ femiwiki.com *.femiwiki.com 127.0.0.1:80 localhost:80 {
 			events {$FW_CSP_REPORT_EVENTS:120}
 			window {$FW_CSP_REPORT_WINDOW:10m}
 		}
+		# FediFeeds' actors, notes, outboxes, inboxes and WebFinger, per /24. Nothing
+		# caches them, an outbox parses up to 20 pages when the parser cache is cold
+		# (7.9 s once), and an inbox fetches the signer's key. A fediverse server
+		# asks for a handful at a time and retries a 429 later.
+		zone fedifeeds {
+			match {
+				path /rest.php/fedifeeds/*
+			}
+			key {client_ip}
+			ipv4_prefix 24
+			ipv6_prefix 64
+			events {$FW_FEDIFEEDS_EVENTS:60}
+			window {$FW_FEDIFEEDS_WINDOW:10m}
+		}
 		# Diffs and old revisions from anyone not logged in, counted across the
 		# whole site. A crawler spread over enough /24s stays under the zone
 		# above in every one of them while together taking every php-fpm worker,
