@@ -286,6 +286,18 @@ module "fedifeeds" {
   homepage_url                    = "https://femiwiki.github.io/FediFeeds/"
 }
 
+module "delayed_job_queue" {
+  source      = "./modules/github-repository"
+  name        = "DelayedJobQueue"
+  description = "MediaWiki extension that adds delayed jobs to the database job queue"
+  topics = [
+    "mediawiki",
+    "mediawiki-extension",
+  ]
+  required_status_checks_contexts = ["required"]
+  default_status_checks           = []
+}
+
 module "status" {
   source           = "./modules/github-repository"
   name             = "status"
