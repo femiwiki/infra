@@ -35,7 +35,7 @@ output "database_address" {
 
 output "femiwiki_role_arn" {
   description = "The role of the wiki's instances"
-  value       = aws_iam_role.femiwiki.arn
+  value       = module.femiwiki.arn
 }
 
 output "mysql_tofu_password" {
