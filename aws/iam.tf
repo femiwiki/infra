@@ -112,18 +112,13 @@ resource "aws_iam_role_policy" "femiwiki_github_io" {
   policy = data.aws_iam_policy_document.femiwiki_github_io.json
 }
 
-data "aws_iam_policy_document" "lambda_assume_role" {
-  statement {
-    actions = ["sts:AssumeRole"]
-
-    principals {
-      type        = "Service"
-      identifiers = ["lambda.amazonaws.com"]
+locals {
+  lambda_trust = {
+    LambdaAssumeRole = {
+      actions    = ["sts:AssumeRole"]
+      principals = [{ type = "Service", identifiers = ["lambda.amazonaws.com"] }]
     }
   }
-}
-
-locals {
   instance_trust = {
     EC2AssumeRole = {
       actions    = ["sts:AssumeRole"]
