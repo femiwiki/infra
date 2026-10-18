@@ -6,6 +6,12 @@ variable "github_token" {
   ephemeral = true
 }
 
+variable "grafana_state_passphrase" {
+  description = "Passphrase of the grafana state, read for its outputs"
+  type        = string
+  sensitive   = true
+}
+
 variable "state_passphrase" {
   description = "Encrypts the state and plan files. Losing it loses the state."
   type        = string

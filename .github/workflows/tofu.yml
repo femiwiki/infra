@@ -123,6 +123,7 @@ jobs:
           TF_VAR_github_token: ${{ steps.app-token.outputs.token }}
           GOOGLE_OAUTH_ACCESS_TOKEN: ${{ steps.gcp.outputs.access_token }}
           TF_VAR_grafana_auth: ${{ matrix.workspace == 'grafana' && secrets.GRAFANA_PLAN_TOKEN || '' }}
+          TF_VAR_grafana_cloud_auth: ${{ matrix.workspace == 'grafana' && secrets.GRAFANA_CLOUD_PLAN_TOKEN || '' }}
           TF_VAR_discord_webhook_url: ${{ matrix.workspace == 'grafana' && secrets.GRAFANA_DISCORD_WEBHOOK_URL || '' }}
           TF_VAR_mastodon_token: ${{ matrix.workspace == 'grafana' && secrets.GRAFANA_MASTODON_TOKEN || '' }}
           TF_VAR_alerts_webhook_token: ${{ matrix.workspace == 'grafana' && secrets.GRAFANA_ALERTS_WEBHOOK_TOKEN || '' }}
@@ -135,6 +136,7 @@ jobs:
           TF_VAR_h_captcha_secret_key: ${{ matrix.workspace == 'aws' && secrets.AWS_H_CAPTCHA_SECRET_KEY || '' }}
           TF_VAR_state_passphrase: ${{ matrix.workspace == 'aws' && secrets.AWS_STATE_PASSPHRASE || matrix.workspace == 'github' && secrets.TOFU_GITHUB_STATE_PASSPHRASE || matrix.workspace == 'gcp' && secrets.GCP_STATE_PASSPHRASE || matrix.workspace == 'docker' && secrets.DOCKER_STATE_PASSPHRASE || matrix.workspace == 'grafana' && secrets.GRAFANA_STATE_PASSPHRASE || matrix.workspace == 'mariadb' && secrets.MARIADB_STATE_PASSPHRASE || '' }}
           TF_VAR_gcp_state_passphrase: ${{ (matrix.workspace == 'aws' || matrix.workspace == 'docker') && secrets.GCP_STATE_PASSPHRASE || '' }}
+          TF_VAR_grafana_state_passphrase: ${{ matrix.workspace == 'github' && secrets.GRAFANA_STATE_PASSPHRASE || '' }}
           OP_SERVICE_ACCOUNT_TOKEN: ${{ matrix.workspace == 'github' && secrets.TOFU_OP_SERVICE_ACCOUNT_TOKEN || '' }}
         with:
           path: ${{ matrix.workspace }}
@@ -184,6 +186,44 @@ jobs:
             exec php /srv/femiwiki.com/maintenance/run.php getConfiguration \
               --conf /etc/mediawiki/LocalSettings.php --settings wgVersion --format json
           '
+
+      # A setting nothing declares is read by nothing; not a gate, as it breaks no page (#820)
+      - name: Every setting the hotfix assigns is declared
+        if: steps.scope.outputs.plan == 'true' && startsWith(matrix.workspace, 'docker')
+        continue-on-error: true
+        env:
+          PLAN_JSON: ${{ steps.plan.outputs.json_plan_path }}
+          CHECKER: https://raw.githubusercontent.com/femiwiki/docker-mediawiki/49728f3390255b125415b0d25869ebf6da8ece32/.github/scripts/CheckConfigKeys.php
+        run: |
+          after=$(jq -c 'first(.resource_changes[]
+            | select(.type == "docker_container" and .name == "fastcgi" and (.change.actions | index("create"))))
+            | .change.after' "$PLAN_JSON")
+          if [ -z "$after" ]; then
+            echo "fastcgi is not replaced, so the hotfix is unchanged."
+            exit 0
+          fi
+          image=$(jq -r .image <<< "$after")
+          args=()
+          while IFS= read -r -d '' kv; do
+            args+=(-e "$kv")
+          done < <(jq -j '.env[] + "\u0000"' <<< "$after")
+          curl -sSfL "$CHECKER" -o "$RUNNER_TEMP/CheckConfigKeys.php"
+          # shellcheck disable=SC2016
+          if ! out=$(docker run --rm --network none "${args[@]}" \
+            -v "$RUNNER_TEMP/CheckConfigKeys.php:/tmp/CheckConfigKeys.php:ro" --entrypoint bash "$image" -c '
+              [ -z "${MEDIAWIKI_HOTFIX_SNIPPET:-}" ] || printf "%s\n" "$MEDIAWIKI_HOTFIX_SNIPPET" > /etc/mediawiki/Hotfix.php
+              exec php /tmp/CheckConfigKeys.php --conf /etc/mediawiki/LocalSettings.php /etc/mediawiki/Hotfix.php
+            ' 2>&1); then
+            echo "$out"
+            unknown=$(grep -o '^\$wg[A-Za-z0-9_]*' <<< "$out" | paste -sd ' ')
+            if [ -n "$unknown" ]; then
+              echo "::warning file=serving/Hotfix.php::nothing declares $unknown, so nothing reads it."
+            else
+              echo "::warning file=serving/Hotfix.php::the setting check could not run."
+            fi
+            exit 1
+          fi
+          echo "$out"
 
       - uses: femiwiki/terraform-github-tacos@7a2c2a88035e6e07e6a72c08ad44ea82381a6daf  # v0.8.0
         id: changes
@@ -455,6 +495,7 @@ jobs:
           TF_VAR_github_token: ${{ steps.app-token.outputs.token }}
           GOOGLE_OAUTH_ACCESS_TOKEN: ${{ steps.gcp.outputs.access_token }}
           TF_VAR_grafana_auth: ${{ matrix.workspace == 'grafana' && secrets.GRAFANA_APPLY_TOKEN || '' }}
+          TF_VAR_grafana_cloud_auth: ${{ matrix.workspace == 'grafana' && secrets.GRAFANA_CLOUD_APPLY_TOKEN || '' }}
           TF_VAR_discord_webhook_url: ${{ matrix.workspace == 'grafana' && secrets.GRAFANA_DISCORD_WEBHOOK_URL || '' }}
           TF_VAR_mastodon_token: ${{ matrix.workspace == 'grafana' && secrets.GRAFANA_MASTODON_TOKEN || '' }}
           TF_VAR_alerts_webhook_token: ${{ matrix.workspace == 'grafana' && secrets.GRAFANA_ALERTS_WEBHOOK_TOKEN || '' }}
@@ -467,6 +508,7 @@ jobs:
           TF_VAR_h_captcha_secret_key: ${{ matrix.workspace == 'aws' && secrets.AWS_H_CAPTCHA_SECRET_KEY || '' }}
           TF_VAR_state_passphrase: ${{ matrix.workspace == 'aws' && secrets.AWS_STATE_PASSPHRASE || matrix.workspace == 'github' && secrets.TOFU_GITHUB_STATE_PASSPHRASE || matrix.workspace == 'gcp' && secrets.GCP_STATE_PASSPHRASE || matrix.workspace == 'docker' && secrets.DOCKER_STATE_PASSPHRASE || matrix.workspace == 'grafana' && secrets.GRAFANA_STATE_PASSPHRASE || matrix.workspace == 'mariadb' && secrets.MARIADB_STATE_PASSPHRASE || '' }}
           TF_VAR_gcp_state_passphrase: ${{ (matrix.workspace == 'aws' || matrix.workspace == 'docker') && secrets.GCP_STATE_PASSPHRASE || '' }}
+          TF_VAR_grafana_state_passphrase: ${{ matrix.workspace == 'github' && secrets.GRAFANA_STATE_PASSPHRASE || '' }}
           OP_SERVICE_ACCOUNT_TOKEN: ${{ matrix.workspace == 'github' && secrets.TOFU_OP_SERVICE_ACCOUNT_TOKEN || '' }}
         with:
           path: ${{ matrix.workspace }}
@@ -504,6 +546,7 @@ jobs:
           TF_VAR_github_token: ${{ steps.app-token.outputs.token }}
           GOOGLE_OAUTH_ACCESS_TOKEN: ${{ steps.gcp.outputs.access_token }}
           TF_VAR_grafana_auth: ${{ matrix.workspace == 'grafana' && secrets.GRAFANA_PLAN_TOKEN || '' }}
+          TF_VAR_grafana_cloud_auth: ${{ matrix.workspace == 'grafana' && secrets.GRAFANA_CLOUD_PLAN_TOKEN || '' }}
           TF_VAR_discord_webhook_url: ${{ matrix.workspace == 'grafana' && secrets.GRAFANA_DISCORD_WEBHOOK_URL || '' }}
           TF_VAR_mastodon_token: ${{ matrix.workspace == 'grafana' && secrets.GRAFANA_MASTODON_TOKEN || '' }}
           TF_VAR_alerts_webhook_token: ${{ matrix.workspace == 'grafana' && secrets.GRAFANA_ALERTS_WEBHOOK_TOKEN || '' }}
@@ -516,6 +559,7 @@ jobs:
           TF_VAR_h_captcha_secret_key: ${{ matrix.workspace == 'aws' && secrets.AWS_H_CAPTCHA_SECRET_KEY || '' }}
           TF_VAR_state_passphrase: ${{ matrix.workspace == 'aws' && secrets.AWS_STATE_PASSPHRASE || matrix.workspace == 'github' && secrets.TOFU_GITHUB_STATE_PASSPHRASE || matrix.workspace == 'gcp' && secrets.GCP_STATE_PASSPHRASE || matrix.workspace == 'docker' && secrets.DOCKER_STATE_PASSPHRASE || matrix.workspace == 'grafana' && secrets.GRAFANA_STATE_PASSPHRASE || matrix.workspace == 'mariadb' && secrets.MARIADB_STATE_PASSPHRASE || '' }}
           TF_VAR_gcp_state_passphrase: ${{ (matrix.workspace == 'aws' || matrix.workspace == 'docker') && secrets.GCP_STATE_PASSPHRASE || '' }}
+          TF_VAR_grafana_state_passphrase: ${{ matrix.workspace == 'github' && secrets.GRAFANA_STATE_PASSPHRASE || '' }}
           OP_SERVICE_ACCOUNT_TOKEN: ${{ matrix.workspace == 'github' && secrets.TOFU_OP_SERVICE_ACCOUNT_TOKEN || '' }}
         with:
           path: ${{ matrix.workspace }}

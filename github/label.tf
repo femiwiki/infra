@@ -80,6 +80,12 @@ locals {
       color       = "d4c5f9"
     }
 
+    good_first_issue = {
+      name        = "good first issue"
+      description = "Left for first-time contributors; Claude does not take it"
+      color       = "7057ff"
+    }
+
     help_wanted = {
       name        = "help wanted"
       description = "Extra attention is needed"
@@ -194,12 +200,6 @@ locals {
       color       = "85d659"
     }
 
-    patch_welcome = {
-      name        = "patch welcome"
-      description = ""
-      color       = "7057ff"
-    }
-
     performance = {
       name        = "performance"
       description = ""
@@ -267,7 +267,7 @@ locals {
     }
   }
 
-  base_label_suite = ["enhancement", "invalid", "wontfix", "help_wanted", "patch_welcome", "upstreamed", "ci"]
+  base_label_suite = ["enhancement", "invalid", "wontfix", "help_wanted", "good_first_issue", "upstreamed", "ci"]
   ext_label_suite  = concat(local.base_label_suite, ["deprecation"])
 
 
@@ -360,9 +360,11 @@ locals {
     )
 
     ".github"            = local.base_label_suite
-    quibble-action       = ["ci"]
-    "femiwiki.github.io" = ["ci"]
-    sns-discord          = local.base_label_suite
+    quibble-action       = ["ci", "good_first_issue"]
+    "femiwiki.github.io" = ["ci", "good_first_issue"]
+    # Renamed to lambda; the API answers the old name with a redirect, which the
+    # provider may not follow for writes, so this list is frozen.
+    sns-discord          = ["enhancement", "invalid", "wontfix", "help_wanted", "upstreamed", "ci"]
 
     caddy-mwcache       = local.base_label_suite
     caddy-cloudfront-ip = local.base_label_suite
@@ -390,6 +392,12 @@ locals {
   ])
 }
 
+# legunto already had GitHub's default "good first issue" label.
+import {
+  to = github_issue_label.femiwiki["legunto.good_first_issue"]
+  id = "legunto:good first issue"
+}
+
 resource "github_issue_label" "femiwiki" {
   // Flattening nested structures
   // See https://www.terraform.io/docs/language/functions/flatten.html#flattening-nested-structures-for-for_each
@@ -398,8 +406,4 @@ resource "github_issue_label" "femiwiki" {
   name        = local.label_definition[each.value.tag].name
   description = local.label_definition[each.value.tag].description
   color       = local.label_definition[each.value.tag].color
-
-  lifecycle {
-    prevent_destroy = true
-  }
 }
