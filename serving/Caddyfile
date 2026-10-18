@@ -66,6 +66,36 @@
 	}
 }
 
+# A click on a link in a page here: the browser marks a navigation the user started.
+# Both headers can be faked, so this earns a bucket of its own, not an exemption.
+(reader_click) {
+	header Sec-Fetch-User ?1
+	header_regexp Referer ^https://([a-z0-9-]+\.)?femiwiki\.com/
+}
+
+# Red links, the mobile and desktop toggle and what links here; see link_walk.
+(link_walk_requests) {
+	path /index.php*
+	vars_regexp {query} {$FW_LINK_WALK_QUERY:(?i)(^|&)(redlink=1|mobileaction=)|(^|&)title=(%ED%8A%B9%EC%88%98|특수|Special)(%3A|:)(%EA%B0%80%EB%A6%AC%ED%82%A4%EB%8A%94%EB%AC%B8%EC%84%9C|가리키는문서|WhatLinksHere)}
+	not header Cookie *femiwikiUserID=*
+}
+
+# Sidebar page tools on the URI as sent, since /w/ is rewritten first; see page_tools.
+(page_tools_requests) {
+	method GET
+	vars_regexp {http.request.orig_uri} {$FW_PAGE_TOOLS_URI:(?i)[?&]action=(edit|watch|unwatch|credits)(&|$)|[?&]title=(%ED%8A%B9%EC%88%98|특수|Special)(%3A|:)(%EC%83%88%ED%95%AD%EB%AA%A9|새항목|NewItem|%EB%A7%81%ED%81%AC%EC%B5%9C%EA%B7%BC%EB%B0%94%EB%80%9C|링크최근바뀜|RecentChangesLinked|%EC%9D%B4%EB%AC%B8%EC%84%9C%EC%9D%B8%EC%9A%A9|이문서인용|CiteThisPage)|^/w/(%ED%8A%B9%EC%88%98|특수|Special)(%3A|:)(%EC%83%88%ED%95%AD%EB%AA%A9|새항목|NewItem|%EB%A7%81%ED%81%AC%EC%B5%9C%EA%B7%BC%EB%B0%94%EB%80%9C|링크최근바뀜|RecentChangesLinked|%EC%9D%B4%EB%AC%B8%EC%84%9C%EC%9D%B8%EC%9A%A9|이문서인용|CiteThisPage|%EA%B0%80%EB%A6%AC%ED%82%A4%EB%8A%94%EB%AC%B8%EC%84%9C|가리키는문서|WhatLinksHere)}
+	not header Cookie *femiwikiUserID=*
+}
+
+# Special pages but the ones readers come for and others depend on; see special_pages.
+(special_page_requests) {
+	method GET HEAD
+	vars_regexp {http.request.orig_uri} {$FW_SPECIAL_URI:(?i)(^/w/|[?&]title=)(특수|%ED%8A%B9%EC%88%98|Special)(:|%3A)}
+	not vars_regexp {http.request.orig_uri} {$FW_SPECIAL_EXEMPT_URI:(?i)(^/w/|[?&]title=)(특수|%ED%8A%B9%EC%88%98|Special)(:|%3A)(SPECIAL_EXEMPT_PAGES_FROM_DOCKER_CADDYFILE)(/|%2F|&|\?|$)}
+	not client_ip {$FW_ROUTE53_HEALTHCHECKS}
+	not header Cookie *femiwikiUserID=*
+}
+
 femiwiki.com *.femiwiki.com 127.0.0.1:80 localhost:80 {
 	tls {
 		dns route53
@@ -163,9 +193,10 @@ femiwiki.com *.femiwiki.com 127.0.0.1:80 localhost:80 {
 		# or only diffs and history, so none of this reached them.
 		zone link_walk {
 			match {
-				path /index.php*
-				vars_regexp {query} {$FW_LINK_WALK_QUERY:(?i)(^|&)(redlink=1|mobileaction=)|(^|&)title=(%ED%8A%B9%EC%88%98|특수|Special)(%3A|:)(%EA%B0%80%EB%A6%AC%ED%82%A4%EB%8A%94%EB%AC%B8%EC%84%9C|가리키는문서|WhatLinksHere)}
-				not header Cookie *femiwikiUserID=*
+				import link_walk_requests
+				not {
+					import reader_click
+				}
 			}
 			key link_walk
 			events {$FW_LINK_WALK_EVENTS:150}
@@ -187,9 +218,10 @@ femiwiki.com *.femiwiki.com 127.0.0.1:80 localhost:80 {
 		# since /w/ is rewritten first. New item calls our own api.php: two workers.
 		zone page_tools {
 			match {
-				method GET
-				vars_regexp {http.request.orig_uri} {$FW_PAGE_TOOLS_URI:(?i)[?&]action=(edit|watch|unwatch|credits)(&|$)|[?&]title=(%ED%8A%B9%EC%88%98|특수|Special)(%3A|:)(%EC%83%88%ED%95%AD%EB%AA%A9|새항목|NewItem|%EB%A7%81%ED%81%AC%EC%B5%9C%EA%B7%BC%EB%B0%94%EB%80%9C|링크최근바뀜|RecentChangesLinked|%EC%9D%B4%EB%AC%B8%EC%84%9C%EC%9D%B8%EC%9A%A9|이문서인용|CiteThisPage)|^/w/(%ED%8A%B9%EC%88%98|특수|Special)(%3A|:)(%EC%83%88%ED%95%AD%EB%AA%A9|새항목|NewItem|%EB%A7%81%ED%81%AC%EC%B5%9C%EA%B7%BC%EB%B0%94%EB%80%9C|링크최근바뀜|RecentChangesLinked|%EC%9D%B4%EB%AC%B8%EC%84%9C%EC%9D%B8%EC%9A%A9|이문서인용|CiteThisPage|%EA%B0%80%EB%A6%AC%ED%82%A4%EB%8A%94%EB%AC%B8%EC%84%9C|가리키는문서|WhatLinksHere)}
-				not header Cookie *femiwikiUserID=*
+				import page_tools_requests
+				not {
+					import reader_click
+				}
 			}
 			key page_tools
 			events {$FW_PAGE_TOOLS_EVENTS:150}
@@ -199,15 +231,33 @@ femiwiki.com *.femiwiki.com 127.0.0.1:80 localhost:80 {
 		# ones other things depend on; Route 53 health checks pass by range. See #1073.
 		zone special_pages {
 			match {
-				method GET HEAD
-				vars_regexp {http.request.orig_uri} {$FW_SPECIAL_URI:(?i)(^/w/|[?&]title=)(특수|%ED%8A%B9%EC%88%98|Special)(:|%3A)}
-				not vars_regexp {http.request.orig_uri} {$FW_SPECIAL_EXEMPT_URI:(?i)(^/w/|[?&]title=)(특수|%ED%8A%B9%EC%88%98|Special)(:|%3A)(SPECIAL_EXEMPT_PAGES_FROM_DOCKER_CADDYFILE)(/|%2F|&|\?|$)}
-				not client_ip {$FW_ROUTE53_HEALTHCHECKS}
-				not header Cookie *femiwikiUserID=*
+				import special_page_requests
+				not {
+					import reader_click
+				}
 			}
 			key special_pages
 			events {$FW_SPECIAL_EVENTS:60}
 			window {$FW_SPECIAL_WINDOW:10m}
+		}
+		# Readers' clicks into link_walk, page_tools and special_pages, out of the bucket
+		# the crawls empty; faked, the headers still get no more than this. See #1254.
+		zone reader_clicks {
+			match {
+				import link_walk_requests
+				import reader_click
+			}
+			match {
+				import page_tools_requests
+				import reader_click
+			}
+			match {
+				import special_page_requests
+				import reader_click
+			}
+			key reader_clicks
+			events {$FW_READER_CLICKS_EVENTS:60}
+			window {$FW_READER_CLICKS_WINDOW:10m}
 		}
 		# Login and signup pages opened from anywhere but a page here, site-wide; the
 		# #978 crawl forges search engine Referers. GET only, so an open form logs in.
