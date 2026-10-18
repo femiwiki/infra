@@ -127,7 +127,7 @@ resource "docker_container" "fastcgi" {
 
       MEDIAWIKI_SKIP_IMPORT_SITES = "1"
       MEDIAWIKI_SKIP_INSTALL      = "1"
-      MEDIAWIKI_SKIP_UPDATE       = "1"
+      MEDIAWIKI_SKIP_UPDATE       = local.fastcgi_generation == local.schema_update_generation ? "" : "1"
       MEDIAWIKI_HOTFIX_SNIPPET    = file("../serving/Hotfix.php")
 
       FW_JOB_TYPES_OFF_DEFAULT_QUEUE = ""
