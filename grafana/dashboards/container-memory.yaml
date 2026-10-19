@@ -51,46 +51,13 @@ panels:
   - refId: A
     datasource: *prom
     expr: |-
-      container_memory_working_set_bytes{job="integrations/cadvisor"}
+      container_memory_usage_total_bytes{job="integrations/docker_stats"}
     legendFormat: '{{name}}'
   - refId: B
     datasource: *prom
     expr: |-
-      container_spec_memory_limit_bytes{job="integrations/cadvisor"} != 0
+      container_memory_usage_limit_bytes{job="integrations/docker_stats"} < on(instance) group_left node_memory_MemTotal_bytes{job="integrations/node_exporter"}
     legendFormat: '{{name}} 상한'
-- id: 2
-  type: bargauge
-  title: 컨테이너가 뜬 뒤 가장 많이 쓴 메모리
-  description: |-
-    cgroup v2의 memory.peak입니다. 컨테이너가 살아 있는 동안 줄지 않으므로, 상한은 이보다 낮게 잡을 수 없습니다.
-  datasource: *prom
-  gridPos:
-    h: 8
-    w: 12
-    x: 0
-    'y': 9
-  fieldConfig:
-    defaults:
-      unit: bytes
-      min: 0
-      color:
-        mode: continuous-BlYlRd
-    overrides: []
-  options:
-    displayMode: gradient
-    orientation: horizontal
-    reduceOptions:
-      calcs:
-      - lastNotNull
-      fields: ''
-      values: false
-  targets:
-  - refId: A
-    datasource: *prom
-    expr: |-
-      container_memory_max_usage_bytes{job="integrations/cadvisor"}
-    instant: true
-    legendFormat: '{{name}}'
 - id: 3
   type: timeseries
   title: 상한 대비 사용량
@@ -99,8 +66,8 @@ panels:
   datasource: *prom
   gridPos:
     h: 8
-    w: 12
-    x: 12
+    w: 24
+    x: 0
     'y': 9
   fieldConfig:
     defaults:
@@ -133,13 +100,13 @@ panels:
   - refId: A
     datasource: *prom
     expr: |-
-      100 * container_memory_working_set_bytes{job="integrations/cadvisor"} / (container_spec_memory_limit_bytes{job="integrations/cadvisor"} != 0)
+      100 * container_memory_usage_total_bytes{job="integrations/docker_stats"} / on(instance, name) (container_memory_usage_limit_bytes{job="integrations/docker_stats"} < on(instance) group_left node_memory_MemTotal_bytes{job="integrations/node_exporter"})
     legendFormat: '{{name}}'
 - id: 4
   type: timeseries
-  title: 호스트에 남은 메모리와 Alloy가 쓰는 메모리
+  title: 호스트에 남은 메모리와 수집기가 쓰는 메모리
   description: |-
-    위 컨테이너들은 호스트에 남은 메모리 안에서 돌아야 하고, Alloy도 그 메모리를 나눠 씁니다.
+    위 컨테이너들은 호스트에 남은 메모리 안에서 돌아야 하고, Alloy와 OpenTelemetry Collector도 그 메모리를 나눠 씁니다. Collector의 값은 대부분 실행 파일에서 읽어 들인 쪽으로, 메모리가 모자라면 커널이 먼저 내려놓습니다.
   datasource: *prom
   gridPos:
     h: 8
@@ -176,3 +143,8 @@ panels:
     expr: |-
       process_resident_memory_bytes{job="integrations/alloy-check"}
     legendFormat: '{{instance}} Alloy'
+  - refId: C
+    datasource: *prom
+    expr: |-
+      otelcol_process_memory_rss{job="integrations/otelcol"}
+    legendFormat: '{{instance}} Collector'

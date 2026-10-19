@@ -1,0 +1,165 @@
+extensions:
+  basicauth/metrics_service:
+    client_auth:
+      username: "${prometheus_username}"
+      password: $${file:/etc/otelcol-contrib/prometheus.password}
+
+receivers:
+  prometheus:
+    config:
+      global:
+        scrape_interval: 60s
+      scrape_configs:
+        - job_name: integrations/otelcol
+          static_configs:
+            - targets: [127.0.0.1:8888]
+              labels:
+                instance: ${name}
+          metric_relabel_configs:
+            - source_labels: [__name__]
+              regex: otelcol_process_memory_rss.*|otelcol_process_uptime.*|otelcol_exporter_sent_metric_points.*|otelcol_exporter_send_failed_metric_points.*|otelcol_receiver_refused_metric_points.*
+              action: keep
+
+        - job_name: integrations/node_exporter
+          static_configs:
+            - targets: [127.0.0.1:9110]
+              labels:
+                instance: ${name}
+          metric_relabel_configs:
+            - source_labels: [__name__]
+              regex: node_scrape_collector_.+
+              action: drop
+%{ if type == "app" ~}
+
+        # Caddy, on its admin endpoint
+        - job_name: integrations/caddy
+          static_configs:
+            - targets: [127.0.0.1:2019]
+              labels:
+                instance: ${name}
+          metric_relabel_configs:
+            - source_labels: [__name__]
+              regex: caddy_rate_limit_.+
+              action: drop
+
+        # php-fpm's pool status and opcache, served by Caddy on a loopback port
+        # that alternates with the deploy generation like the probe port
+        # (femiwiki/docker-mediawiki#1110). Outside a deploy only one of the two
+        # ports answers, so the other's targets are down.
+        - job_name: integrations/php-fpm
+          metrics_path: /fpm-status
+          # php-fpm answers in OpenMetrics only when asked
+          params:
+            openmetrics: [""]
+          static_configs:
+%{ for port in [9180, 9181] ~}
+            - targets: [127.0.0.1:${port}]
+              labels:
+                instance: ${name}
+                port: "${port}"
+%{ endfor ~}
+
+        - job_name: integrations/opcache
+          metrics_path: /opcache.php
+          static_configs:
+%{ for port in [9180, 9181] ~}
+            - targets: [127.0.0.1:${port}]
+              labels:
+                instance: ${name}
+                port: "${port}"
+%{ endfor ~}
+
+  # Per-container memory, from the Docker daemon
+  docker_stats:
+    endpoint: unix:///var/run/docker.sock
+    collection_interval: 60s
+
+  memcached:
+    endpoint: 127.0.0.1:11211
+    transport: tcp
+    collection_interval: 60s
+%{ endif ~}
+
+processors:
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 150
+    spike_limit_mib: 30
+
+  batch: {}
+
+  # The scope would otherwise become two labels on every series
+  transform/drop_scope:
+    metric_statements:
+      - set(scope.name, "")
+      - set(scope.version, "")
+%{ if type == "app" ~}
+
+  filter/docker_stats:
+    metrics:
+      metric:
+        - not (name == "container.memory.usage.total" or name == "container.memory.usage.limit")
+
+  # The remote write exporter makes job from service.namespace/service.name and
+  # instance from service.instance.id. The container's name goes on each point,
+  # as cAdvisor's name label did, so the alerts can still say which one.
+  transform/docker_stats:
+    metric_statements:
+      - set(datapoint.attributes["name"], resource.attributes["container.name"])
+      - set(resource.attributes["service.namespace"], "integrations")
+      - set(resource.attributes["service.name"], "docker_stats")
+      - set(resource.attributes["service.instance.id"], "${name}")
+
+  filter/memcached:
+    metrics:
+      metric:
+        - not (name == "memcached.bytes" or name == "memcached.current_items" or name == "memcached.evictions" or name == "memcached.commands" or name == "memcached.operations")
+
+  transform/memcached:
+    metric_statements:
+      - set(resource.attributes["service.namespace"], "integrations")
+      - set(resource.attributes["service.name"], "memcached")
+      - set(resource.attributes["service.instance.id"], "${name}")
+%{ endif ~}
+
+exporters:
+  prometheus_remote_write/metrics_service:
+    endpoint: "${prometheus_endpoint}"
+    auth:
+      authenticator: basicauth/metrics_service
+    # job and instance are enough; nothing reads target_info
+    target_info:
+      enabled: false
+
+service:
+  extensions: [basicauth/metrics_service]
+
+  telemetry:
+    logs:
+      level: warn
+    metrics:
+      level: basic
+      readers:
+        - pull:
+            exporter:
+              prometheus:
+                host: 127.0.0.1
+                port: 8888
+
+  pipelines:
+    metrics/scraped:
+      receivers: [prometheus]
+      processors: [memory_limiter, transform/drop_scope, batch]
+      exporters: [prometheus_remote_write/metrics_service]
+%{ if type == "app" ~}
+
+    metrics/docker_stats:
+      receivers: [docker_stats]
+      processors: [memory_limiter, filter/docker_stats, transform/docker_stats, transform/drop_scope, batch]
+      exporters: [prometheus_remote_write/metrics_service]
+
+    metrics/memcached:
+      receivers: [memcached]
+      processors: [memory_limiter, filter/memcached, transform/memcached, transform/drop_scope, batch]
+      exporters: [prometheus_remote_write/metrics_service]
+%{ endif ~}
