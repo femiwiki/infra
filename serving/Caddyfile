@@ -94,7 +94,6 @@
 	method GET HEAD
 	vars_regexp {http.request.orig_uri} {$FW_SPECIAL_URI:(?i)(^/w/|[?&]title=)(특수|%ED%8A%B9%EC%88%98|Special)(:|%3A)}
 	not vars_regexp {http.request.orig_uri} {$FW_SPECIAL_EXEMPT_URI:(?i)(^/w/|[?&]title=)(특수|%ED%8A%B9%EC%88%98|Special)(:|%3A)(SPECIAL_EXEMPT_PAGES_FROM_DOCKER_CADDYFILE)(/|%2F|&|\?|$)}
-	not client_ip {$FW_ROUTE53_HEALTHCHECKS}
 	not header Cookie *femiwikiUserID=*
 }
 
@@ -242,7 +241,7 @@ femiwiki.com *.femiwiki.com 127.0.0.1:80 localhost:80 {
 			window {$FW_PAGE_TOOLS_WINDOW:10m}
 		}
 		# Logged-out special pages, site-wide, except the ones readers come for and the
-		# ones other things depend on; Route 53 health checks pass by range. See #1073.
+		# ones other things depend on. See #1073.
 		zone special_pages {
 			match {
 				import special_page_requests
