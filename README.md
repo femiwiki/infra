@@ -49,6 +49,17 @@ bump PR로 옮겨 싣습니다. `docker/` 밖의 PR에는 블록이 저절로 �
 
 [페미위키:업데이트]: https://femiwiki.com/w/페미위키:업데이트
 
+## `.tf` 고치기
+
+스크립트로 `.tf`를 고칠 때는 `sed`나 문자열 치환 대신 [hcledit]으로 속성이나
+블록을 주소로 지정해 고칩니다. 고친 뒤에는 `tofu fmt`를 거칩니다.
+
+```sh
+hcledit attribute set locals.schema_update_generation 145 -f docker/locals.tf -u
+hcledit attribute get resource.docker_container.http.image -f docker/container.tf
+hcledit block list -f github/repo.tf
+```
+
 ## 호스트 위의 알로이 설정
 
 `aws/res/config.alloy.tftpl`은 `user_data`로만 들어가는데 `user_data`는
@@ -106,6 +117,7 @@ tofu -chdir=docker apply
 [github checks link]: https://github.com/femiwiki/infra/actions
 [Session Manager 플러그인]: https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-install-plugin.html
 [OpenTofu]: https://opentofu.org
+[hcledit]: https://github.com/minamijoyo/hcledit
 [terraform-github-tacos]: https://github.com/femiwiki/terraform-github-tacos
 [Apply-before-merge]: https://femiwiki.github.io/terraform-github-tacos/Apply-before-merge
 [dflook/tofu-apply]: https://github.com/dflook/terraform-github-actions/tree/main/tofu-apply
