@@ -5,6 +5,7 @@
 	order mwcache before rewrite
 	order respond before mwcache
 	order encode before mwcache
+	order uri before mwcache
 
 	# The idle fastcgi port fails its check every second; keep that out of the
 	# log. FW_LOG_EXCLUDE adds to the list, so a logger that turns out to be
@@ -454,6 +455,17 @@ femiwiki.com *.femiwiki.com 127.0.0.1:80 localhost:80 {
 	}
 	file_server
 	encode gzip
+	# Analytics reads campaign tags in the browser; dropping them lets a tagged
+	# link share its page's cache entry. Only then, as uri re-encodes the query
+	@campaign expression `{query}.matches("(^|&)utm_")`
+	uri @campaign query {
+		-utm_source
+		-utm_medium
+		-utm_campaign
+		-utm_term
+		-utm_content
+		-utm_id
+	}
 	mwcache {
 		# A budget in bytes rather than a count of entries. 64 MiB holds about
 		# 1,400 responses of the size this wiki serves, well above the 595
