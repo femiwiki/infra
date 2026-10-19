@@ -82,8 +82,7 @@ loki.write "grafana_cloud_loki" {
 }
 
 %{ if type == "database" ~}
-// Linux. The database host keeps it until it has the memory to run the
-// Collector beside Alloy (#1259); the app host's comes from the Collector.
+// Linux
 discovery.relabel "integrations_node_exporter" {
   targets = prometheus.exporter.unix.integrations_node_exporter.targets
   rule {
@@ -121,6 +120,7 @@ prometheus.relabel "integrations_node_exporter" {
     action        = "drop"
   }
 }
+
 %{ endif ~}
 %{ if type == "app" ~}
 // Caddy's pprof, also on the admin endpoint. A minute apart keeps it far under
