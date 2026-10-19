@@ -30,7 +30,6 @@ locals {
   all_responses        = trimspace(file("${path.module}/queries/all-responses.promql"))
   server_errors_2m     = trimspace(file("${path.module}/queries/server-errors-2m.promql"))
   all_responses_2m     = trimspace(file("${path.module}/queries/all-responses-2m.promql"))
-  busiest_network      = trimspace(file("${path.module}/queries/concentrated-refusals.logql"))
   history_refused      = trimspace(file("${path.module}/queries/history-refused.promql"))
   uncaught_exceptions  = trimspace(file("${path.module}/queries/uncaught-exceptions.promql"))
   top_exception        = trimspace(file("${path.module}/queries/top-uncaught-exception.promql"))
@@ -281,58 +280,6 @@ resource "grafana_rule_group" "femiwiki_http" {
         refId      = "D"
         type       = "math"
         expression = "($C > 30) && ($A > 20)" # the week to 2026-10-11: outages 36-84%, all else under 3%
-      })
-    }
-  }
-
-  rule {
-    name            = "One network is being refused far more than the rest"
-    for             = "1h"
-    keep_firing_for = "1h"
-
-    condition      = "B"
-    no_data_state  = "OK"
-    exec_err_state = "OK"
-
-    labels = {
-      impact   = "none"
-      severity = "warning"
-    }
-
-    annotations = {
-      summary = "{{ $labels.net }} 한 망에서만 최근 한 시간에 {{ printf \"%.0f\" $values.A.Value }}건이 거절됐습니다. 퍼져 있는 크롤은 한 망에서 백 건을 넘지 않으니, 이건 한 곳이 긁고 있다는 뜻입니다. 그 대역을 막을지 정하면 됩니다."
-      logs    = grafana_dashboard.this["scrapes"].url
-    }
-
-    data {
-      ref_id         = "A"
-      datasource_uid = data.grafana_data_source.loki.uid
-      query_type     = "instant"
-      relative_time_range {
-        from = 3600
-        to   = 0
-      }
-      model = jsonencode({
-        refId     = "A"
-        expr      = local.busiest_network
-        queryType = "instant"
-        instant   = true
-        range     = false
-      })
-    }
-
-    data {
-      ref_id         = "B"
-      datasource_uid = "__expr__"
-      relative_time_range {
-        from = 0
-        to   = 0
-      }
-      model = jsonencode({
-        refId      = "B"
-        type       = "threshold"
-        expression = "A"
-        conditions = [{ evaluator = { type = "gt", params = [400] } }]
       })
     }
   }
