@@ -66,8 +66,10 @@ updates:
 
   - package-ecosystem: "github-actions"
     directory: "/"
+    # Weekly so a tacos release reaches tofu.yml soon; the rest stays grouped
+    # behind the week of cooldown below
     schedule:
-      interval: monthly
+      interval: weekly
     reviewers:
       - 'femiwiki/reviewer'
     groups:
