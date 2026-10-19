@@ -11,11 +11,6 @@ module "infra_mariadb" {
   ]
 }
 
-moved {
-  from = aws_iam_role.infra_mariadb
-  to   = module.infra_mariadb.aws_iam_role.this[0]
-}
-
 resource "aws_iam_role_policy" "infra_mariadb" {
   name   = "InfraMariadb"
   role   = module.infra_mariadb.name

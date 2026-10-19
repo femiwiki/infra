@@ -11,11 +11,6 @@ module "infra_github" {
   ]
 }
 
-moved {
-  from = aws_iam_role.infra_github
-  to   = module.infra_github.aws_iam_role.this[0]
-}
-
 resource "aws_iam_role_policy" "infra_github" {
   name   = "InfraGithub"
   role   = module.infra_github.name
