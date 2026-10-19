@@ -67,35 +67,51 @@ runs:
           --filters $FILTERS Name=instance-state-name,Values=running \
           --query 'Reservations[].Instances[].InstanceId' --output text)
         [ -n "$instance" ] || { echo "::error::no running instance matches $FILTERS in $AWS_REGION"; exit 1; }
-        nohup aws ssm start-session --target "$instance" \
-          --document-name AWS-StartPortForwardingSession \
-          --parameters "portNumber=$PORT,localPortNumber=$PORT" > /tmp/ssm-session.log 2>&1 &
-        # Read before the wait below and left in a file rather than a step
-        # output: a session that never carries traffic still exists and still
-        # has to be closed, and a composite action that fails does not reliably
-        # carry its outputs. The tunnel failing to come up is exactly when this
-        # was leaking. The id reaches the log about a second after the start.
-        rm -f /tmp/ssm-session-id
-        for _ in $(seq 10); do
-          awk '/^Starting session with SessionId: /{print $NF; exit}' /tmp/ssm-session.log > /tmp/ssm-session-id
+        # A session can accept connections and never carry them, so a dud one
+        # is closed and replaced, a bounded number of times
+        for attempt in 1 2 3; do
+          nohup aws ssm start-session --target "$instance" \
+            --document-name AWS-StartPortForwardingSession \
+            --parameters "portNumber=$PORT,localPortNumber=$PORT" > /tmp/ssm-session.log 2>&1 &
+          pid=$!
+          # A file, not a step output: a failed composite action may drop its
+          # outputs, and the caller still has to close a dud session
+          rm -f /tmp/ssm-session-id
+          for _ in $(seq 10); do
+            awk '/^Starting session with SessionId: /{print $NF; exit}' /tmp/ssm-session.log > /tmp/ssm-session-id
+            if [ -s /tmp/ssm-session-id ]; then
+              echo "Session $(cat /tmp/ssm-session-id), to be closed by the caller."
+              break
+            fi
+            sleep 1
+          done
+          if [ ! -s /tmp/ssm-session-id ]; then
+            echo "::warning::the session id never appeared in the log, so nothing can close this session."
+          fi
+          # The probe needs its own timeout, or a silent tunnel stalls the
+          # first iteration for ever (femiwiki/infra#901).
+          for _ in $(seq 30); do
+            if HOST=127.0.0.1 bash -c "$PROBE" > /dev/null 2>&1; then
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "::warning::the port forward did not come up on attempt $attempt"
+          cat /tmp/ssm-session.log
           if [ -s /tmp/ssm-session-id ]; then
-            echo "Session $(cat /tmp/ssm-session-id), to be closed by the caller."
-            break
+            aws ssm terminate-session --session-id "$(cat /tmp/ssm-session-id)" --output text > /dev/null \
+              || echo "::warning::could not terminate $(cat /tmp/ssm-session-id); it may have ended already."
           fi
-          sleep 1
+          kill "$pid" 2> /dev/null || true
+          wait "$pid" 2> /dev/null || true
+          # The plugin lets go of the port once its session ends.
+          for _ in $(seq 10); do
+            [ -z "$(ss -Hltn "sport = :$PORT")" ] && break
+            sleep 1
+          done
+          rm -f /tmp/ssm-session-id
         done
-        if [ ! -s /tmp/ssm-session-id ]; then
-          echo "::warning::the session id never appeared in the log, so nothing can close this session."
-        fi
-        # The probe needs its own timeout, or a silent tunnel stalls the first
-        # iteration for ever (femiwiki/infra#901).
-        for _ in $(seq 30); do
-          if HOST=127.0.0.1 bash -c "$PROBE" > /dev/null 2>&1; then
-            exit 0
-          fi
-          sleep 1
-        done
-        echo "::error::the port forward did not come up"; cat /tmp/ssm-session.log; exit 1
+        echo "::error::the port forward did not come up"; exit 1
 
     - name: Relay it on the bridge gateway for container actions
       id: relay
