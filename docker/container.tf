@@ -5,7 +5,7 @@ module "caddyfile" {
 resource "docker_container" "http" {
   name         = "http-${local.fastcgi_generation}"
   log_driver   = "local"
-  image        = "ghcr.io/femiwiki/femiwiki:2026-10-18T14-17-701f6dae"
+  image        = "ghcr.io/femiwiki/femiwiki:2026-10-19T13-26-790d2bf5"
   command      = ["caddy-run"]
   restart      = "always"
   network_mode = "host"
@@ -79,7 +79,7 @@ resource "docker_container" "http" {
 resource "docker_container" "fastcgi" {
   name         = "fastcgi-${local.fastcgi_generation}"
   log_driver   = "local"
-  image        = "ghcr.io/femiwiki/femiwiki:2026-10-18T14-17-701f6dae"
+  image        = "ghcr.io/femiwiki/femiwiki:2026-10-19T13-26-790d2bf5"
   network_mode = "host"
   restart      = "always"
   memory       = 768
