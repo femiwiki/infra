@@ -24,9 +24,7 @@ install_unit() {
   systemctl daemon-reload
 }
 
-#
 # node_exporter, which Amazon Linux does not package
-#
 if [ "$(/usr/local/bin/node_exporter --version 2>/dev/null | awk 'NR == 1 { print $3 }')" != "$node_exporter_version" ]; then
   curl -sSfLo "$tmpdir/node_exporter.tar.gz" \
     "https://github.com/prometheus/node_exporter/releases/download/v$node_exporter_version/node_exporter-$node_exporter_version.linux-arm64.tar.gz"
@@ -75,12 +73,8 @@ if [ "$restart_node_exporter" -eq 1 ]; then
   systemctl restart node_exporter
 fi
 
-#
-# The OpenTelemetry Collector (femiwiki/infra#1259)
-#
-# The user and the configuration come before the package, so its first start
-# reads this configuration instead of the default one, which listens on every
-# interface. The package keeps a configuration it finds (config|noreplace).
+# The Collector (#1259). Its user and configuration come first, so the package
+# keeps them (config|noreplace) instead of starting on its open default.
 getent passwd otelcol-contrib >/dev/null ||
   useradd --system --user-group --no-create-home --shell /sbin/nologin otelcol-contrib
 install -d -m 0750 -g otelcol-contrib /etc/otelcol-contrib

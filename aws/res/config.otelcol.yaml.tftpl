@@ -42,10 +42,8 @@ receivers:
               regex: caddy_rate_limit_.+
               action: drop
 
-        # php-fpm's pool status and opcache, served by Caddy on a loopback port
-        # that alternates with the deploy generation like the probe port
-        # (femiwiki/docker-mediawiki#1110). Outside a deploy only one of the two
-        # ports answers, so the other's targets are down.
+        # Served by Caddy on a port that alternates with the deploy generation
+        # (femiwiki/docker-mediawiki#1110), so one of the two is always down
         - job_name: integrations/php-fpm
           metrics_path: /fpm-status
           # php-fpm answers in OpenMetrics only when asked
@@ -100,9 +98,8 @@ processors:
       metric:
         - not (name == "container.memory.usage.total" or name == "container.memory.usage.limit")
 
-  # The remote write exporter makes job from service.namespace/service.name and
-  # instance from service.instance.id. The container's name goes on each point,
-  # as cAdvisor's name label did, so the alerts can still say which one.
+  # job and instance come from the service.* attributes; name keeps cAdvisor's
+  # label, which the alert's summary reads
   transform/docker_stats:
     metric_statements:
       - set(datapoint.attributes["name"], resource.attributes["container.name"])

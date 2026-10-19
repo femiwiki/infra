@@ -47,10 +47,8 @@ locals {
   }
 }
 
-# The OpenTelemetry Collector and the node_exporter it scrapes, taking over
-# from Alloy one signal at a time (#1259), with Alloy's credentials. The
-# database host, which ran down to 15 MiB available on 2026-10-18, waits until
-# it has room for both side by side.
+# Taking over from Alloy one signal at a time (#1259). The database host, down
+# to 15 MiB available on 2026-10-18, waits until it has room for both.
 locals {
   otelcol_hosts = { for tag, host in local.alloy_hosts : tag => host if host.type == "app" }
 
