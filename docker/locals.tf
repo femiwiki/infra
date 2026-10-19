@@ -1,9 +1,9 @@
 locals {
   # The ProxySQL switch rolls the wiki like a deploy, so it moves the generation too
-  fastcgi_generation = 143 + (var.proxysql_enabled ? 1 : 0)
+  fastcgi_generation = 144 + (var.proxysql_enabled ? 1 : 0)
   # The generation whose fastcgi runs update.php as it starts, set with an image
   # that changes the schema; it lapses once the generation moves on
-  schema_update_generation = 139
+  schema_update_generation = 144
 
   memcached_default_mib  = 64 # the -m default memcached has been running on
   memcached_observed_mib = 28 # buffers, hash table and stacks it allocates outside -m today
