@@ -107,6 +107,13 @@ resource "aws_ssm_association" "mysql_backup" {
 locals {
   swapfile_mib = 1024
 
+  # Database hosts come and go with the replacement workflow, so they are
+  # found by role.
+  swapfile_hosts = {
+    "docker"   = { region = local.seoul_region, tag = "Name", value = "docker" }
+    "database" = { region = local.seoul_region, tag = "Role", value = "database" }
+  }
+
   swapfile_install = replace(file("res/install-swapfile.sh"), "__SIZE_MIB__", local.swapfile_mib)
 }
 
@@ -158,7 +165,7 @@ resource "aws_ssm_association" "prune_docker_images" {
 }
 
 resource "aws_ssm_document" "swapfile" {
-  for_each = local.app_hosts
+  for_each = local.swapfile_hosts
 
   region          = each.value.region
   name            = "install-swapfile-${each.key}"
@@ -167,7 +174,7 @@ resource "aws_ssm_document" "swapfile" {
 
   content = jsonencode({
     schemaVersion = "2.2"
-    description   = "Give the docker host a swap file, so a container swap does not end in an OOM kill."
+    description   = "Give the host a swap file, so running short of memory slows it down instead of stopping it."
     mainSteps = [{
       action = "aws:runShellScript"
       name   = "installSwapfile"
@@ -179,7 +186,7 @@ resource "aws_ssm_document" "swapfile" {
 }
 
 resource "aws_ssm_association" "swapfile" {
-  for_each = local.app_hosts
+  for_each = local.swapfile_hosts
 
   region              = each.value.region
   association_name    = "install-swapfile-${each.key}"
@@ -191,8 +198,8 @@ resource "aws_ssm_association" "swapfile" {
   max_errors          = "0"
 
   targets {
-    key    = "tag:Name"
-    values = [each.key]
+    key    = "tag:${each.value.tag}"
+    values = [each.value.value]
   }
 }
 
