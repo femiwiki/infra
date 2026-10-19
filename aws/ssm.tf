@@ -48,15 +48,19 @@ locals {
 }
 
 # The OpenTelemetry Collector and the node_exporter it scrapes, taking over
-# from Alloy one signal at a time (#1259). Same hosts and credentials as Alloy.
+# from Alloy one signal at a time (#1259), with Alloy's credentials. The
+# database host, which ran down to 15 MiB available on 2026-10-18, waits until
+# it has room for both side by side.
 locals {
+  otelcol_hosts = { for tag, host in local.alloy_hosts : tag => host if host.type == "app" }
+
   otelcol_version       = "0.162.0"
   otelcol_sha256        = "cc005e793ec6f029d1a1627d656db998298dd5a8a8f9d25a13e555116e93e1ea"
   node_exporter_version = "1.12.1"
   node_exporter_sha256  = "ad35b605f9954b9f1ffddf5ba054bdc5a98d790b9eae5291e1eeb83f1ecbd0e7"
 
   otelcol_install = {
-    for tag, host in local.alloy_hosts : tag => replace(replace(replace(replace(replace(replace(
+    for tag, host in local.otelcol_hosts : tag => replace(replace(replace(replace(replace(replace(
       file("res/install-otelcol.sh"),
       "__REGION__", host.region),
       "__OTELCOL_VERSION__", local.otelcol_version),
@@ -282,7 +286,7 @@ resource "aws_ssm_association" "alloy_config" {
 }
 
 resource "aws_ssm_document" "otelcol" {
-  for_each = local.alloy_hosts
+  for_each = local.otelcol_hosts
 
   region          = each.value.region
   name            = "install-otelcol-${each.key}"
@@ -303,7 +307,7 @@ resource "aws_ssm_document" "otelcol" {
 }
 
 resource "aws_ssm_association" "otelcol" {
-  for_each = local.alloy_hosts
+  for_each = local.otelcol_hosts
 
   depends_on = [aws_ssm_parameter.alloy_seoul]
 
