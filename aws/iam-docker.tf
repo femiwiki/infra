@@ -11,11 +11,6 @@ module "infra_docker" {
   ]
 }
 
-moved {
-  from = aws_iam_role.infra_docker
-  to   = module.infra_docker.aws_iam_role.this[0]
-}
-
 resource "aws_iam_role_policy" "infra_docker" {
   name   = "InfraDocker"
   role   = module.infra_docker.name

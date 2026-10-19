@@ -10,11 +10,6 @@ module "infra_aws" {
   oidc_subjects = ["femiwiki@21275875/infra@188597503:environment:aws"]
 }
 
-moved {
-  from = aws_iam_role.infra_aws
-  to   = module.infra_aws.aws_iam_role.this[0]
-}
-
 # Everything this root manages, IAM included.
 resource "aws_iam_role_policy" "infra_aws" {
   name   = "InfraAws"
@@ -31,16 +26,6 @@ module "infra_aws_plan" {
   enable_github_oidc = true
   oidc_subjects      = ["femiwiki@21275875/infra@188597503:pull_request"]
   policies           = { ReadOnlyAccess = "arn:aws:iam::aws:policy/ReadOnlyAccess" }
-}
-
-moved {
-  from = aws_iam_role.infra_aws_plan
-  to   = module.infra_aws_plan.aws_iam_role.this[0]
-}
-
-moved {
-  from = aws_iam_role_policy_attachment.infra_aws_plan
-  to   = module.infra_aws_plan.aws_iam_role_policy_attachment.this["ReadOnlyAccess"]
 }
 
 # ReadOnlyAccess reads the state already. A plan also takes the lock.

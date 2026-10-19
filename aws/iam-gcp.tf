@@ -11,11 +11,6 @@ module "infra_gcp" {
   ]
 }
 
-moved {
-  from = aws_iam_role.infra_gcp
-  to   = module.infra_gcp.aws_iam_role.this[0]
-}
-
 resource "aws_iam_role_policy" "infra_gcp" {
   name   = "InfraGcp"
   role   = module.infra_gcp.name
