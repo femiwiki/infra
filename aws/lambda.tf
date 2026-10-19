@@ -30,11 +30,6 @@ module "mastodon_discord" {
   trust_policy_permissions = local.lambda_trust
 }
 
-moved {
-  from = aws_iam_role.mastodon_discord
-  to   = module.mastodon_discord.aws_iam_role.this[0]
-}
-
 resource "aws_iam_role_policy" "mastodon_discord" {
   name   = "MastodonDiscord"
   role   = module.mastodon_discord.name
@@ -102,11 +97,6 @@ module "mastodon_boost" {
   use_name_prefix          = false
   description              = "Execution role for the mastodon-boost Lambda function."
   trust_policy_permissions = local.lambda_trust
-}
-
-moved {
-  from = aws_iam_role.mastodon_boost
-  to   = module.mastodon_boost.aws_iam_role.this[0]
 }
 
 resource "aws_iam_role_policy" "mastodon_boost" {
@@ -178,11 +168,6 @@ module "grafana_github" {
   trust_policy_permissions = local.lambda_trust
 }
 
-moved {
-  from = aws_iam_role.grafana_github
-  to   = module.grafana_github.aws_iam_role.this[0]
-}
-
 resource "aws_iam_role_policy" "grafana_github" {
   name   = "GrafanaGithub"
   role   = module.grafana_github.name
@@ -246,11 +231,6 @@ module "sns_discord" {
   use_name_prefix          = false
   description              = "Execution role for the sns-discord Lambda function."
   trust_policy_permissions = local.lambda_trust
-}
-
-moved {
-  from = aws_iam_role.sns_discord
-  to   = module.sns_discord.aws_iam_role.this[0]
 }
 
 resource "aws_iam_role_policy" "sns_discord" {
@@ -347,11 +327,6 @@ module "bounce_handler" {
   use_name_prefix          = false
   description              = "Execution role for the bounce-handler Lambda function."
   trust_policy_permissions = local.lambda_trust
-}
-
-moved {
-  from = aws_iam_role.bounce_handler
-  to   = module.bounce_handler.aws_iam_role.this[0]
 }
 
 resource "aws_iam_role_policy" "bounce_handler" {

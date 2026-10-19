@@ -32,7 +32,6 @@ resource "aws_iam_user_policy" "ses_sending_access" {
   policy = data.aws_iam_policy_document.ses_sending_access.json
 }
 
-
 #
 # IAM Groups
 #
@@ -64,7 +63,6 @@ resource "aws_iam_group_policy_attachment" "readonly_mfa" {
   policy_arn = aws_iam_policy.force_mfa.arn
 }
 
-
 # IAM Roles
 module "github_lambda" {
   source             = "terraform-aws-modules/iam/aws//modules/iam-role"
@@ -76,11 +74,6 @@ module "github_lambda" {
   oidc_subjects = [
     "femiwiki/lambda:ref:refs/heads/main",
   ]
-}
-
-moved {
-  from = aws_iam_role.github_lambda
-  to   = module.github_lambda.aws_iam_role.this[0]
 }
 
 resource "aws_iam_role_policy" "github_lambda" {
@@ -99,11 +92,6 @@ module "femiwiki_github_io" {
   oidc_subjects = [
     "femiwiki@21275875/femiwiki.github.io@1377892969:ref:refs/heads/main",
   ]
-}
-
-moved {
-  from = aws_iam_role.femiwiki_github_io
-  to   = module.femiwiki_github_io.aws_iam_role.this[0]
 }
 
 resource "aws_iam_role_policy" "femiwiki_github_io" {
@@ -167,106 +155,6 @@ module "database" {
   })
 }
 
-moved {
-  from = aws_iam_role.femiwiki
-  to   = module.femiwiki.aws_iam_role.this[0]
-}
-
-moved {
-  from = aws_iam_role.database
-  to   = module.database.aws_iam_role.this[0]
-}
-
-moved {
-  from = aws_iam_role_policy_attachment.femiwiki_amazon_s3_access
-  to   = module.femiwiki.aws_iam_role_policy_attachment.this["amazon_s3_access"]
-}
-
-moved {
-  from = aws_iam_role_policy_attachment.femiwiki_route53
-  to   = module.femiwiki.aws_iam_role_policy_attachment.this["route53"]
-}
-
-moved {
-  from = aws_iam_role_policy_attachment.femiwiki_access_caddycerts
-  to   = module.femiwiki.aws_iam_role_policy_attachment.this["access_caddycerts"]
-}
-
-moved {
-  from = aws_iam_role_policy_attachment.femiwiki_share_rate_limit_state
-  to   = module.femiwiki.aws_iam_role_policy_attachment.this["share_rate_limit_state"]
-}
-
-moved {
-  from = aws_iam_role_policy_attachment.femiwiki_read_secret_parameters
-  to   = module.femiwiki.aws_iam_role_policy_attachment.this["read_secret_parameters"]
-}
-
-moved {
-  from = aws_iam_role_policy_attachment.femiwiki_get_google_subject_token
-  to   = module.femiwiki.aws_iam_role_policy_attachment.this["get_google_subject_token"]
-}
-
-moved {
-  from = aws_iam_role_policy_attachment.femiwiki_upload_backup
-  to   = module.femiwiki.aws_iam_role_policy_attachment.this["upload_backup"]
-}
-
-moved {
-  from = aws_iam_role_policy_attachment.database_upload_backup
-  to   = module.database.aws_iam_role_policy_attachment.this["upload_backup"]
-}
-
-moved {
-  from = aws_iam_role_policy_attachment.database_read_backup
-  to   = module.database.aws_iam_role_policy_attachment.this["read_backup"]
-}
-
-moved {
-  from = aws_iam_role_policy_attachment.database_read_mysql_user_parameters
-  to   = module.database.aws_iam_role_policy_attachment.this["read_mysql_user_parameters"]
-}
-
-moved {
-  from = aws_iam_role_policy_attachment.database_read_backup_healthcheck_url
-  to   = module.database.aws_iam_role_policy_attachment.this["read_backup_healthcheck_url"]
-}
-
-moved {
-  from = aws_iam_role_policy_attachment.database_write_mysql_root_password
-  to   = module.database.aws_iam_role_policy_attachment.this["write_mysql_root_password"]
-}
-
-moved {
-  from = aws_iam_role_policy_attachment.femiwiki_managed_policies["AmazonSSMManagedInstanceCore"]
-  to   = module.femiwiki.aws_iam_role_policy_attachment.this["AmazonSSMManagedInstanceCore"]
-}
-
-moved {
-  from = aws_iam_role_policy_attachment.femiwiki_managed_policies["CloudWatchAgentServerPolicy"]
-  to   = module.femiwiki.aws_iam_role_policy_attachment.this["CloudWatchAgentServerPolicy"]
-}
-
-moved {
-  from = aws_iam_role_policy_attachment.read_alloy_parameters["femiwiki"]
-  to   = module.femiwiki.aws_iam_role_policy_attachment.this["read_alloy_parameters"]
-}
-
-moved {
-  from = aws_iam_role_policy_attachment.database_managed_policies["AmazonSSMManagedInstanceCore"]
-  to   = module.database.aws_iam_role_policy_attachment.this["AmazonSSMManagedInstanceCore"]
-}
-
-moved {
-  from = aws_iam_role_policy_attachment.database_managed_policies["CloudWatchAgentServerPolicy"]
-  to   = module.database.aws_iam_role_policy_attachment.this["CloudWatchAgentServerPolicy"]
-}
-
-moved {
-  from = aws_iam_role_policy_attachment.read_alloy_parameters["database"]
-  to   = module.database.aws_iam_role_policy_attachment.this["read_alloy_parameters"]
-}
-
 module "infra_grafana" {
   source             = "terraform-aws-modules/iam/aws//modules/iam-role"
   version            = "6.8.2"
@@ -278,11 +166,6 @@ module "infra_grafana" {
     "femiwiki@21275875/infra@188597503:pull_request",
     "femiwiki@21275875/infra@188597503:environment:grafana",
   ]
-}
-
-moved {
-  from = aws_iam_role.infra_grafana
-  to   = module.infra_grafana.aws_iam_role.this[0]
 }
 
 resource "aws_iam_role_policy" "infra_grafana" {
@@ -302,11 +185,6 @@ module "infra_healthchecks" {
     "femiwiki@21275875/infra@188597503:pull_request",
     "femiwiki@21275875/infra@188597503:environment:healthchecks",
   ]
-}
-
-moved {
-  from = aws_iam_role.infra_healthchecks
-  to   = module.infra_healthchecks.aws_iam_role.this[0]
 }
 
 resource "aws_iam_role_policy" "infra_healthchecks" {
