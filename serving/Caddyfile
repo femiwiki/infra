@@ -67,9 +67,11 @@
 }
 
 # A click on a link in a page here: the browser marks a navigation the user started.
-# Both headers can be faked, so this earns a bucket of its own, not an exemption.
+# Crawls fake these but send Sec-Fetch-Site none with a Referer, which browsers never do.
 (reader_click) {
 	header Sec-Fetch-User ?1
+	header Sec-Fetch-Site same-origin
+	header Sec-Fetch-Site same-site
 	header_regexp Referer ^https://([a-z0-9-]+\.)?femiwiki\.com/
 }
 
