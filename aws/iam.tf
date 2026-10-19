@@ -72,7 +72,7 @@ module "github_lambda" {
   description        = "Allows GitHub Actions workflows of femiwiki/lambda to deploy its functions."
   enable_github_oidc = true
   oidc_subjects = [
-    "femiwiki/lambda:ref:refs/heads/main",
+    "femiwiki@21275875/lambda@324717599:ref:refs/heads/main",
   ]
 }
 
