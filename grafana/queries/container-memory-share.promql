@@ -1,1 +1,1 @@
-100 * container_memory_working_set_bytes / (container_spec_memory_limit_bytes > 0)
+100 * container_memory_usage_total_bytes / on(instance, name) (container_memory_usage_limit_bytes < on(instance) group_left node_memory_MemTotal_bytes{job="integrations/node_exporter"})

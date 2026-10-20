@@ -47,6 +47,35 @@ locals {
   }
 }
 
+# Taking over from Alloy one signal at a time (#1259). The database host, down
+# to 15 MiB available on 2026-10-18, waits until it has room for both.
+locals {
+  otelcol_hosts = { for tag, host in local.alloy_hosts : tag => host if host.type == "app" }
+
+  otelcol_version       = "0.162.0"
+  otelcol_sha256        = "cc005e793ec6f029d1a1627d656db998298dd5a8a8f9d25a13e555116e93e1ea"
+  node_exporter_version = "1.12.1"
+  node_exporter_sha256  = "ad35b605f9954b9f1ffddf5ba054bdc5a98d790b9eae5291e1eeb83f1ecbd0e7"
+
+  otelcol_install = {
+    for tag, host in local.otelcol_hosts : tag => replace(replace(replace(replace(replace(replace(
+      file("res/install-otelcol.sh"),
+      "__REGION__", host.region),
+      "__OTELCOL_VERSION__", local.otelcol_version),
+      "__OTELCOL_SHA256__", local.otelcol_sha256),
+      "__NODE_EXPORTER_VERSION__", local.node_exporter_version),
+      "__NODE_EXPORTER_SHA256__", local.node_exporter_sha256),
+      "__CONFIG__",
+      templatefile("res/config.otelcol.yaml.tftpl", {
+        name                = host.name
+        type                = host.type
+        prometheus_endpoint = local.alloy_grafana.prometheus_endpoint
+        prometheus_username = local.alloy_grafana.prometheus_username
+      })
+    )
+  }
+}
+
 locals {
   app_hosts = {
     "docker" = { region = local.seoul_region }
@@ -243,6 +272,47 @@ resource "aws_ssm_association" "alloy_config" {
   association_name    = "install-alloy-config-${each.key}"
   name                = aws_ssm_document.alloy_config[each.key].name
   document_version    = aws_ssm_document.alloy_config[each.key].latest_version
+  schedule_expression = "rate(30 minutes)"
+  compliance_severity = "HIGH"
+  max_concurrency     = "1"
+  max_errors          = "0"
+
+  targets {
+    key    = "tag:${each.value.tag}"
+    values = [each.key]
+  }
+}
+
+resource "aws_ssm_document" "otelcol" {
+  for_each = local.otelcol_hosts
+
+  region          = each.value.region
+  name            = "install-otelcol-${each.key}"
+  document_type   = "Command"
+  document_format = "JSON"
+
+  content = jsonencode({
+    schemaVersion = "2.2"
+    description   = "Install node_exporter and the OpenTelemetry Collector with its configuration and the credentials it reads, then reload the Collector."
+    mainSteps = [{
+      action = "aws:runShellScript"
+      name   = "installOtelcol"
+      inputs = {
+        runCommand = split("\n", local.otelcol_install[each.key])
+      }
+    }]
+  })
+}
+
+resource "aws_ssm_association" "otelcol" {
+  for_each = local.otelcol_hosts
+
+  depends_on = [aws_ssm_parameter.alloy_seoul]
+
+  region              = each.value.region
+  association_name    = "install-otelcol-${each.key}"
+  name                = aws_ssm_document.otelcol[each.key].name
+  document_version    = aws_ssm_document.otelcol[each.key].latest_version
   schedule_expression = "rate(30 minutes)"
   compliance_severity = "HIGH"
   max_concurrency     = "1"
