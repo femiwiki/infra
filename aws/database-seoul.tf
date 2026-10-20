@@ -75,7 +75,7 @@ resource "aws_instance" "database" {
     region          = local.seoul_region
     backups_bucket  = module.backups_seoul.s3_bucket_id
 
-    alloy_install = local.alloy_install["database"]
+    otelcol_install = local.otelcol_install["database"]
   }))
 
   vpc_security_group_ids = [
@@ -146,7 +146,7 @@ resource "aws_launch_template" "database" {
     region          = local.seoul_region
     backups_bucket  = module.backups_seoul.s3_bucket_id
 
-    alloy_install = local.alloy_install["database"]
+    otelcol_install = local.otelcol_install["database"]
   }))
 
   iam_instance_profile {
