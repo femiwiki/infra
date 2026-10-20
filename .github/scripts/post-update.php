@@ -8,6 +8,11 @@
 // and APPLIED_AT to head a late post with an earlier time: a time in Asia/Seoul, or empty for when the PR merged
 
 define( 'WIKI_API', getenv( 'WIKI_API' ) ?: 'https://femiwiki.com/api.php' );
+/**
+ * The page itself rather than a /<year>년 subpage, as FediFeeds feeds new sections only from edits of the page; at a
+ * new year last year's sections are cut by hand into 페미위키:업데이트/<year>년, and the page keeps its id
+ */
+const TITLE = '페미위키:업데이트';
 
 /** Exit 1, and on Actions say on the run which pull request to post again with the post update workflow */
 function fail( string $message ): never {
@@ -109,20 +114,29 @@ function layout( array $items ): string {
 /**
  * The page with the post under its day, a ==day== that the table of contents shows, holding a ===time=== per
  * apply, newest first. A day without one gets it above the first section of that day or earlier, an older
- * ==day time== section included
+ * ==day time== section included. Around a new year the page holds two years, so a day's year counts back from
+ * $now's at the top of the page, one year earlier below a day that comes before it in the year
  */
-function insert( string $text, DateTimeInterface $at, string $link, string $note ): string {
+function insert( string $text, DateTimeInterface $at, string $link, string $note, DateTimeInterface $now ): string {
 	$day = $at->format( 'n월 j일' );
 	$time = $at->format( 'H:i' );
 	$post = "===$time===\n\n$link\n\n$note\n\n";
 	$sections = preg_split( '/^(?===[^=])/mu', $text );
+	$year = (int)$now->format( 'Y' );
+	$above = $now->format( 'md' );
 	for ( $i = str_starts_with( $text, '==' ) ? 0 : 1; $i < count( $sections ); $i++ ) {
-		if ( !preg_match( '/^==\s*(\d+)월\s*(\d+)일(\s+\d+:\d+)?\s*==/u', $sections[$i], $m )
-			|| sprintf( '%02d%02d', $m[1], $m[2] ) > $at->format( 'md' )
-		) {
+		if ( !preg_match( '/^==\s*(\d+)월\s*(\d+)일(\s+\d+:\d+)?\s*==/u', $sections[$i], $m ) ) {
 			continue;
 		}
-		if ( sprintf( '%02d%02d', $m[1], $m[2] ) === $at->format( 'md' ) && empty( $m[3] ) ) {
+		$md = sprintf( '%02d%02d', $m[1], $m[2] );
+		if ( $md > $above ) {
+			$year--;
+		}
+		$above = $md;
+		if ( $year . $md > $at->format( 'Ymd' ) ) {
+			continue;
+		}
+		if ( $year . $md === $at->format( 'Ymd' ) && empty( $m[3] ) ) {
 			$posts = preg_split( '/^(?====[^=])/mu', $sections[$i] );
 			for ( $j = 1; $j < count( $posts ); $j++ ) {
 				if ( preg_match( '/^===\s*(\d+):(\d+)\s*===/u', $posts[$j], $t ) && sprintf( '%02d%02d', $t[1], $t[2] ) <= $at->format( 'Hi' ) ) {
@@ -171,17 +185,13 @@ function wiki( array $params ): array {
 	return $result;
 }
 
-/** The current text and timestamp of a year's page */
+/** The current text and timestamp of the page */
 function page( string $title ): array {
 	$page = wiki( [
 		'action' => 'query', 'prop' => 'revisions', 'rvprop' => 'content|timestamp', 'rvslots' => 'main', 'titles' => $title,
 	] )['query']['pages'][0];
 	$revision = $page['revisions'][0] ?? [];
 	return [ $revision['slots']['main']['content'] ?? '', $revision['timestamp'] ?? '' ];
-}
-
-function title( DateTimeInterface $at ): string {
-	return '페미위키:업데이트/' . $at->format( 'Y' ) . '년';
 }
 
 function seoul( string $time ): DateTime {
@@ -224,7 +234,7 @@ function post( string $repo, int $number, DateTime $at, bool $dryRun ): void {
 		echo "$repo#$number: no ```wikitext block, nothing to post\n";
 		return;
 	}
-	$title = title( $at );
+	$title = TITLE;
 	[ $text, $timestamp ] = page( $title );
 	// A re-run of the apply lands under a later minute, so a PR whose link already heads a section is not posted
 	// again: its blocks may since have been translated, so they are not what tells
@@ -242,7 +252,7 @@ function post( string $repo, int $number, DateTime $at, bool $dryRun ): void {
 			echo "::warning::$repo#$number has a line under no category heading and without a (분류) prefix\n";
 		}
 		$note = layout( $items );
-		$merged = insert( $text, $at, $link, $note );
+		$merged = insert( $text, $at, $link, $note, seoul( 'now' ) );
 		$summary = '/* ' . sectionOf( $merged, $note ) . ' */ 배포된 변경 사항 추가';
 	} else {
 		$merged = linkUnder( $text, $onPage( $blocks[0] ), $link );
@@ -296,7 +306,7 @@ if ( $appliedAt === '' ) {
 $at = seoul( $appliedAt ?: 'now' );
 
 // A post that failed, say while an apply had the wiki read-only, left its note off the page; this one carries it
-[ $text ] = page( title( $at ) );
+[ $text ] = page( TITLE );
 $missed = missed( $repo, $number, $text );
 if ( $missed ) {
 	echo '::warning::posting notes an earlier apply failed to post: ' . implode( ', ', array_map( fn ( $n ) => "#$n", $missed ) ) . "\n";
