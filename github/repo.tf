@@ -298,6 +298,32 @@ module "delayed_job_queue" {
   default_status_checks           = []
 }
 
+module "http_signatures" {
+  source      = "./modules/github-repository"
+  name        = "http-signatures"
+  description = "PHP library to sign and verify HTTP signatures as ActivityPub servers use them"
+  topics = [
+    "activitypub",
+    "http-signatures",
+    "php",
+  ]
+  required_status_checks_contexts = ["required"]
+  default_status_checks           = []
+}
+
+module "webfinger" {
+  source      = "./modules/github-repository"
+  name        = "webfinger"
+  description = "PHP library to parse WebFinger resources and build their answers"
+  topics = [
+    "activitypub",
+    "php",
+    "webfinger",
+  ]
+  required_status_checks_contexts = ["required"]
+  default_status_checks           = []
+}
+
 module "status" {
   source           = "./modules/github-repository"
   name             = "status"
