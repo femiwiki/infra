@@ -62,6 +62,13 @@ resource "aws_ses_identity_notification_topic" "complaint" {
   topic_arn         = aws_sns_topic.ses_bounces.arn
 }
 
+# Off by default on accounts created before 2019-11-25. Suppressed sends stay out
+# of Reputation.BounceRate, while repeat sends to a hard-bounced address count.
+resource "aws_sesv2_account_suppression_attributes" "this" {
+  region             = "us-east-1"
+  suppressed_reasons = ["BOUNCE", "COMPLAINT"]
+}
+
 resource "aws_sesv2_email_identity_feedback_attributes" "femiwiki_com" {
   region                   = "us-east-1"
   email_identity           = aws_ses_domain_identity.femiwiki_com.domain
