@@ -43,9 +43,7 @@ sed -i 's|^SADC_OPTIONS=.*|SADC_OPTIONS=" -S XALL"|' /etc/sysconfig/sysstat
 systemctl enable atop.service atop-rotate.timer sysstat-collect.timer sysstat.service
 systemctl restart atop.service atop-rotate.timer sysstat-collect.timer sysstat.service
 
-#
 # Install node_exporter and the OpenTelemetry Collector
-#
 bash <<'OTELCOL_INSTALL'
 ${otelcol_install}
 OTELCOL_INSTALL
