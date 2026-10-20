@@ -307,7 +307,7 @@ module "http_signatures" {
     "http-signatures",
     "php",
   ]
-  required_status_checks_contexts = ["required"]
+  required_status_checks_contexts = ["required", "semantic-pull-request"]
   default_status_checks           = []
 }
 
@@ -320,7 +320,7 @@ module "webfinger" {
     "php",
     "webfinger",
   ]
-  required_status_checks_contexts = ["required"]
+  required_status_checks_contexts = ["required", "semantic-pull-request"]
   default_status_checks           = []
 }
 
