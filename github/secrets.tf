@@ -24,7 +24,8 @@ locals {
   }
 
   femiwiki_github_io_secrets = {
-    MASTODON_TOKEN = "GITHUB_IO_MASTODON_TOKEN"
+    MASTODON_TOKEN    = "GITHUB_IO_MASTODON_TOKEN"
+    WIKI_BOT_PASSWORD = "GITHUB_IO_WIKI_BOT_PASSWORD"
   }
 
   # Read by no plan, so they sit behind the environment's reviewers (#982).
@@ -76,6 +77,14 @@ resource "github_actions_secret" "femiwiki_github_io" {
   repository  = module.femiwiki_github_io.name
   secret_name = each.key
   value       = data.onepassword_item.infra[each.value].password
+}
+
+# The monthly collect job adds a row to 페미위키:구글 애널리틱스 기록 with its own bot
+# password, whose item also holds the login name (User@label).
+resource "github_actions_variable" "github_io_wiki_bot_user" {
+  repository    = module.femiwiki_github_io.name
+  variable_name = "WIKI_BOT_USER"
+  value         = data.onepassword_item.infra["GITHUB_IO_WIKI_BOT_PASSWORD"].username
 }
 
 # The availability collector's read-only view of the metrics, as JSON with url,
