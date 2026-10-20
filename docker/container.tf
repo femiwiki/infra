@@ -4,7 +4,8 @@ module "caddyfile" {
 
 resource "docker_container" "http" {
   name         = "http-${local.fastcgi_generation}"
-  log_driver   = "local"
+  log_driver   = "fluentd"
+  log_opts     = local.log_opts
   image        = "ghcr.io/femiwiki/femiwiki:2026-10-21T00-18-259bdbda"
   command      = ["caddy-run"]
   restart      = "always"
@@ -78,7 +79,8 @@ resource "docker_container" "http" {
 
 resource "docker_container" "fastcgi" {
   name         = "fastcgi-${local.fastcgi_generation}"
-  log_driver   = "local"
+  log_driver   = "fluentd"
+  log_opts     = local.log_opts
   image        = "ghcr.io/femiwiki/femiwiki:2026-10-21T00-18-259bdbda"
   network_mode = "host"
   restart      = "always"
@@ -229,7 +231,8 @@ resource "docker_container" "proxysql" {
   count = var.proxysql_enabled ? 1 : 0
 
   name         = "proxysql"
-  log_driver   = "local"
+  log_driver   = "fluentd"
+  log_opts     = local.log_opts
   image        = "proxysql/proxysql:3.0.11"
   network_mode = "host"
   restart      = "always"
@@ -254,7 +257,8 @@ resource "docker_container" "proxysql" {
 
 resource "docker_container" "memcached" {
   name         = "memcached"
-  log_driver   = "local"
+  log_driver   = "fluentd"
+  log_opts     = local.log_opts
   image        = "memcached:1.6.23-alpine"
   command      = ["memcached", "-m", tostring(local.memcached_item_mib)]
   network_mode = "host"
@@ -297,7 +301,8 @@ resource "terraform_data" "memcached_healthcheck" {
 
 resource "docker_container" "autoheal" {
   name         = "autoheal"
-  log_driver   = "local"
+  log_driver   = "fluentd"
+  log_opts     = local.log_opts
   image        = "willfarrell/autoheal:1.1.0"
   network_mode = "none"
   restart      = "always"
