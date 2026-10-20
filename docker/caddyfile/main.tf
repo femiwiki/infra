@@ -45,3 +45,8 @@ output "special_exempt_uri" {
   description = "FW_SPECIAL_EXEMPT_URI's default as filled in, for the tests"
   value       = regex("\\{\\$FW_SPECIAL_EXEMPT_URI:([^\\n]*)\\}\\n", local.text)[0]
 }
+
+output "export_uri" {
+  description = "FW_EXPORT_URI's default, for the tests"
+  value       = regex("\\{\\$FW_EXPORT_URI:([^\\n]*)\\}\\n", local.text)[0]
+}

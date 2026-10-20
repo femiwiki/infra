@@ -98,6 +98,11 @@
 	not header Cookie *femiwikiUserID=*
 }
 
+# Special:Export by any method, logged in or not; see export.
+(export_requests) {
+	vars_regexp {http.request.orig_uri} {$FW_EXPORT_URI:(?i)(^/w/|[?&]title=)(특수|%ED%8A%B9%EC%88%98|Special)(:|%3A)(내보내기|%EB%82%B4%EB%B3%B4%EB%82%B4%EA%B8%B0|Export)(/|%2F|&|\?|$)}
+}
+
 femiwiki.com *.femiwiki.com 127.0.0.1:80 localhost:80 {
 	tls {
 		dns route53
@@ -253,6 +258,18 @@ femiwiki.com *.femiwiki.com 127.0.0.1:80 localhost:80 {
 			key special_pages
 			events {$FW_SPECIAL_EVENTS:60}
 			window {$FW_SPECIAL_WINDOW:10m}
+		}
+		# Special:Export per /24, any method and no cookie exemption since cookies are free.
+		# Nothing caches an export, and nobody exports more than a few pages in ten minutes.
+		zone export {
+			match {
+				import export_requests
+			}
+			key {client_ip}
+			ipv4_prefix 24
+			ipv6_prefix 64
+			events {$FW_EXPORT_EVENTS:20}
+			window {$FW_EXPORT_WINDOW:10m}
 		}
 		# Readers' clicks into link_walk, page_tools and special_pages, out of the bucket
 		# the crawls empty; faked, the headers still get no more than this. See #1254.
