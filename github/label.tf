@@ -370,8 +370,10 @@ locals {
     (module.caddy_cloudfront_ip.name) = local.base_label_suite
     (module.delayed_job_queue.name)   = local.ext_label_suite
     (module.fedifeeds.name)           = local.ext_label_suite
+    (module.http_signatures.name)     = local.base_label_suite
     (module.legunto.name)             = local.base_label_suite
     (module.ooui_femiwiki_theme.name) = local.ext_label_suite
+    (module.webfinger.name)           = local.base_label_suite
     (module.remote_gadgets.name)      = concat(local.base_label_suite, ["search", "windows", "mw1_38", "mw1_39", "mw1_40", "mw1_41", "mw1_42"])
 
     (module.tweetbot.name)   = local.base_label_suite
