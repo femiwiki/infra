@@ -188,6 +188,13 @@ resource "docker_container" "fastcgi" {
     content = "[www]\nlisten.backlog = 64\n"
   }
 
+  # Until the image carries it in php.ini (docker-mediawiki); nothing here
+  # shows upload progress
+  upload {
+    file    = "/usr/local/etc/php/conf.d/zz-session-upload-progress.ini"
+    content = "session.upload_progress.enabled = Off\n"
+  }
+
   upload {
     file = "/etc/mediawiki/google-analytics.json"
     content = jsonencode({
