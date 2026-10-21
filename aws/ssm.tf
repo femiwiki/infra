@@ -39,7 +39,7 @@ locals {
   }
 
   alloy_install = {
-    for tag, host in local.alloy_hosts : tag => replace(
+    for tag, host in local.alloy_config_hosts : tag => replace(
       replace(file("res/install-alloy-config.sh"), "__REGION__", host.region),
       "__CONFIG__",
       templatefile("res/config.alloy.tftpl", merge(local.alloy_grafana, { name = host.name, type = host.type }))
@@ -47,10 +47,13 @@ locals {
   }
 }
 
-# Taking over from Alloy one signal at a time (#1259). The database host, down
-# to 15 MiB available on 2026-10-18, waits until it has room for both.
+# Taking over from Alloy one signal at a time (#1259). Alloy is removed from a
+# host once the Collector carries everything it sent.
 locals {
-  otelcol_hosts = { for tag, host in local.alloy_hosts : tag => host if host.type == "app" }
+  otelcol_hosts = local.alloy_hosts
+  alloy_retired = toset(["database"])
+
+  alloy_config_hosts = { for tag, host in local.alloy_hosts : tag => host if !contains(local.alloy_retired, tag) }
 
   otelcol_version       = "0.162.0"
   otelcol_sha256        = "cc005e793ec6f029d1a1627d656db998298dd5a8a8f9d25a13e555116e93e1ea"
@@ -58,19 +61,23 @@ locals {
   node_exporter_sha256  = "ad35b605f9954b9f1ffddf5ba054bdc5a98d790b9eae5291e1eeb83f1ecbd0e7"
 
   otelcol_install = {
-    for tag, host in local.otelcol_hosts : tag => replace(replace(replace(replace(replace(replace(
+    for tag, host in local.otelcol_hosts : tag => replace(replace(replace(replace(replace(replace(replace(
       file("res/install-otelcol.sh"),
       "__REGION__", host.region),
       "__OTELCOL_VERSION__", local.otelcol_version),
       "__OTELCOL_SHA256__", local.otelcol_sha256),
       "__NODE_EXPORTER_VERSION__", local.node_exporter_version),
       "__NODE_EXPORTER_SHA256__", local.node_exporter_sha256),
+      "__REMOVE_ALLOY__", contains(local.alloy_retired, tag) ? "1" : "0"),
       "__CONFIG__",
       templatefile("res/config.otelcol.yaml.tftpl", {
         name                = host.name
         type                = host.type
+        logs                = contains(local.alloy_retired, tag)
         prometheus_endpoint = local.alloy_grafana.prometheus_endpoint
         prometheus_username = local.alloy_grafana.prometheus_username
+        loki_endpoint       = replace(local.alloy_grafana.loki_endpoint, "/loki/api/v1/push", "/otlp")
+        loki_username       = local.alloy_grafana.loki_username
       })
     )
   }
@@ -233,7 +240,7 @@ resource "aws_ssm_association" "swapfile" {
 }
 
 resource "aws_ssm_document" "alloy_config" {
-  for_each = local.alloy_hosts
+  for_each = local.alloy_config_hosts
 
   region          = each.value.region
   name            = "install-alloy-config-${each.key}"
@@ -264,7 +271,7 @@ moved {
 }
 
 resource "aws_ssm_association" "alloy_config" {
-  for_each = local.alloy_hosts
+  for_each = local.alloy_config_hosts
 
   depends_on = [aws_ssm_parameter.alloy_seoul]
 
