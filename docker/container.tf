@@ -5,7 +5,7 @@ module "caddyfile" {
 resource "docker_container" "http" {
   name         = "http-${local.fastcgi_generation}"
   log_driver   = "local"
-  image        = "ghcr.io/femiwiki/femiwiki:2026-10-21T00-18-259bdbda"
+  image        = "ghcr.io/femiwiki/femiwiki:2026-10-21T05-58-85cdc93c"
   command      = ["caddy-run"]
   restart      = "always"
   network_mode = "host"
@@ -79,7 +79,7 @@ resource "docker_container" "http" {
 resource "docker_container" "fastcgi" {
   name         = "fastcgi-${local.fastcgi_generation}"
   log_driver   = "local"
-  image        = "ghcr.io/femiwiki/femiwiki:2026-10-21T00-18-259bdbda"
+  image        = "ghcr.io/femiwiki/femiwiki:2026-10-21T05-58-85cdc93c"
   network_mode = "host"
   restart      = "always"
   memory       = 768
@@ -184,13 +184,6 @@ resource "docker_container" "fastcgi" {
   upload {
     file    = "/usr/local/etc/php-fpm.d/zzz-backlog.conf"
     content = "[www]\nlisten.backlog = 64\n"
-  }
-
-  # Until the image carries it in php.ini (docker-mediawiki); nothing here
-  # shows upload progress
-  upload {
-    file    = "/usr/local/etc/php/conf.d/zz-session-upload-progress.ini"
-    content = "session.upload_progress.enabled = Off\n"
   }
 
   upload {
