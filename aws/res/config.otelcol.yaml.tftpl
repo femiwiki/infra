@@ -3,6 +3,13 @@ extensions:
     client_auth:
       username: "${prometheus_username}"
       password: $${file:/etc/otelcol-contrib/prometheus.password}
+%{ if logs ~}
+
+  basicauth/logs_service:
+    client_auth:
+      username: "${loki_username}"
+      password: $${file:/etc/otelcol-contrib/loki.password}
+%{ endif ~}
 
 receivers:
   prometheus:
@@ -77,6 +84,11 @@ receivers:
     transport: tcp
     collection_interval: 60s
 %{ endif ~}
+%{ if logs ~}
+
+  journald:
+    directory: /var/log/journal
+%{ endif ~}
 
 processors:
   memory_limiter:
@@ -118,6 +130,24 @@ processors:
       - set(resource.attributes["service.name"], "memcached")
       - set(resource.attributes["service.instance.id"], "${name}")
 %{ endif ~}
+%{ if logs ~}
+
+  # The unit becomes service_name, one of the labels Loki indexes by default
+  transform/journald:
+    log_statements:
+      - set(log.attributes["service.name"], log.body["_SYSTEMD_UNIT"])
+      - set(log.attributes["service.name"], log.body["SYSLOG_IDENTIFIER"]) where log.attributes["service.name"] == nil
+      - set(log.severity_number, SEVERITY_NUMBER_ERROR) where log.body["PRIORITY"] == "3"
+      - set(log.severity_number, SEVERITY_NUMBER_WARN) where log.body["PRIORITY"] == "4"
+      - set(log.body, log.body["MESSAGE"])
+
+  groupbyattrs/service:
+    keys: [service.name]
+
+  transform/host:
+    log_statements:
+      - set(resource.attributes["host.name"], "${name}")
+%{ endif ~}
 
 exporters:
   prometheus_remote_write/metrics_service:
@@ -127,9 +157,16 @@ exporters:
     # job and instance are enough; nothing reads target_info
     target_info:
       enabled: false
+%{ if logs ~}
+
+  otlphttp/logs_service:
+    endpoint: "${loki_endpoint}"
+    auth:
+      authenticator: basicauth/logs_service
+%{ endif ~}
 
 service:
-  extensions: [basicauth/metrics_service]
+  extensions: [basicauth/metrics_service%{ if logs }, basicauth/logs_service%{ endif }]
 
   telemetry:
     logs:
@@ -159,4 +196,11 @@ service:
       receivers: [memcached]
       processors: [memory_limiter, filter/memcached, transform/memcached, transform/drop_scope, batch]
       exporters: [prometheus_remote_write/metrics_service]
+%{ endif ~}
+%{ if logs ~}
+
+    logs/journald:
+      receivers: [journald]
+      processors: [memory_limiter, transform/journald, groupbyattrs/service, transform/host, batch]
+      exporters: [otlphttp/logs_service]
 %{ endif ~}

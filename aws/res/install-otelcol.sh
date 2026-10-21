@@ -7,6 +7,7 @@ otelcol_version=__OTELCOL_VERSION__
 otelcol_sha256=__OTELCOL_SHA256__
 node_exporter_version=__NODE_EXPORTER_VERSION__
 node_exporter_sha256=__NODE_EXPORTER_SHA256__
+remove_alloy=__REMOVE_ALLOY__
 
 tmpdir=$(mktemp -d)
 trap 'rm -rf "$tmpdir"' EXIT
@@ -79,11 +80,14 @@ getent passwd otelcol-contrib >/dev/null ||
   useradd --system --user-group --no-create-home --shell /sbin/nologin otelcol-contrib
 install -d -m 0750 -g otelcol-contrib /etc/otelcol-contrib
 
-# docker_stats reads the Docker socket. The group counts from the next start.
-if getent group docker >/dev/null && ! id -nG otelcol-contrib | grep -qw docker; then
-  usermod -a -G docker otelcol-contrib
-  restart_otelcol=1
-fi
+# docker_stats reads the Docker socket and journald the journal. Groups count
+# from the next start.
+for group in docker systemd-journal; do
+  if getent group "$group" >/dev/null && ! id -nG otelcol-contrib | grep -qw "$group"; then
+    usermod -a -G "$group" otelcol-contrib
+    restart_otelcol=1
+  fi
+done
 
 install_file() {
   local src=$1 dest=$2
@@ -96,17 +100,23 @@ install_file() {
   reload_otelcol=1
 }
 
-(
-  umask 0077
-  printf '%s' "$(aws ssm get-parameter \
-    --region __REGION__ \
-    --name /alloy/prometheus_password \
-    --with-decryption \
-    --query Parameter.Value \
-    --output text)" >"$tmpdir/prometheus.password"
-)
-test -s "$tmpdir/prometheus.password"
-install_file "$tmpdir/prometheus.password" /etc/otelcol-contrib/prometheus.password
+install_parameter() {
+  local parameter=$1 dest=$2
+  (
+    umask 0077
+    printf '%s' "$(aws ssm get-parameter \
+      --region __REGION__ \
+      --name "$parameter" \
+      --with-decryption \
+      --query Parameter.Value \
+      --output text)" >"$tmpdir/parameter"
+  )
+  test -s "$tmpdir/parameter"
+  install_file "$tmpdir/parameter" "$dest"
+}
+
+install_parameter /alloy/prometheus_password /etc/otelcol-contrib/prometheus.password
+install_parameter /alloy/loki_password /etc/otelcol-contrib/loki.password
 
 cat >"$tmpdir/config.yaml" <<'OTELCOL_CONFIG'
 __CONFIG__
@@ -140,4 +150,10 @@ if [ "$restart_otelcol" -eq 1 ]; then
   systemctl restart otelcol-contrib
 elif [ "$reload_otelcol" -eq 1 ]; then
   systemctl reload otelcol-contrib
+fi
+
+# Once the Collector sends everything Alloy did, Alloy goes
+if [ "$remove_alloy" -eq 1 ] && rpm -q alloy >/dev/null; then
+  systemctl disable --now alloy
+  dnf remove -y alloy
 fi
