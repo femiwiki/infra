@@ -64,6 +64,15 @@ updates:
     cooldown:
       default-days: 7
 
+  - package-ecosystem: "composer"
+    directory: "/"
+    schedule:
+      interval: monthly
+    reviewers:
+      - 'femiwiki/reviewer'
+    cooldown:
+      default-days: 7
+
   - package-ecosystem: "github-actions"
     directory: "/"
     # Weekly so a tacos release reaches tofu.yml soon; the rest stays grouped
