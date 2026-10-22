@@ -31,7 +31,6 @@ install_parameter() {
 }
 
 install_parameter /alloy/prometheus_password /etc/alloy/prometheus.password
-install_parameter /alloy/loki_password /etc/alloy/loki.password
 
 cat >"$tmpdir/config.alloy" <<'ALLOY_CONFIG'
 __CONFIG__

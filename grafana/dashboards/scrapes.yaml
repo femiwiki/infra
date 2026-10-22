@@ -90,7 +90,7 @@ panels:
     instant: true
     queryType: instant
     expr: |-
-      topk(20, sum by (client_ip) (count_over_time({docker_container_name=~"http.*"} |= `"msg":"refused"` | json | __error__="" [$__range])))
+      topk(20, sum by (client_ip) (count_over_time({service_name="http"} |= `"msg":"refused"` | json | __error__="" [$__range])))
     legendFormat: '{{client_ip}}'
 - id: 3
   type: table
@@ -118,5 +118,5 @@ panels:
     instant: true
     queryType: instant
     expr: |-
-      topk(20, sum by (uri) (count_over_time({docker_container_name=~"http.*"} | json uri="request.uri", client="request.client_ip" | __error__="" | client =~ `$client.*` | uri != `` [$__range])))
+      topk(20, sum by (uri) (count_over_time({service_name="http"} | json uri="request.uri", client="request.client_ip" | __error__="" | client =~ `$client.*` | uri != `` [$__range])))
     legendFormat: '{{uri}}'

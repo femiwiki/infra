@@ -1,1 +1,1 @@
-{docker_container_name=~"http.*"} |= `"status":0,`
+{service_name="http"} |= `"status":0,`
