@@ -106,7 +106,7 @@ panels:
   type: timeseries
   title: 호스트에 남은 메모리와 수집기가 쓰는 메모리
   description: |-
-    위 컨테이너들은 호스트에 남은 메모리 안에서 돌아야 하고, Alloy와 OpenTelemetry Collector도 그 메모리를 나눠 씁니다. Collector의 값은 대부분 실행 파일에서 읽어 들인 쪽으로, 메모리가 모자라면 커널이 먼저 내려놓습니다.
+    위 컨테이너들은 호스트에 남은 메모리 안에서 돌아야 하고, OpenTelemetry Collector도 그 메모리를 나눠 씁니다. Collector의 값은 대부분 실행 파일에서 읽어 들인 쪽으로, 메모리가 모자라면 커널이 먼저 내려놓습니다.
   datasource: *prom
   gridPos:
     h: 8
@@ -139,11 +139,6 @@ panels:
       node_memory_MemAvailable_bytes{job="integrations/node_exporter"}
     legendFormat: '{{instance}} 남음'
   - refId: B
-    datasource: *prom
-    expr: |-
-      process_resident_memory_bytes{job="integrations/alloy-check"}
-    legendFormat: '{{instance}} Alloy'
-  - refId: C
     datasource: *prom
     expr: |-
       otelcol_process_memory_rss{job="integrations/otelcol"}

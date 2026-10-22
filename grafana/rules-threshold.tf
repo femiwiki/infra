@@ -57,7 +57,7 @@ locals {
           threshold   = 0
           for         = "30m"
           labels      = { impact = "operators", severity = "warning" }
-          annotations = { summary = "{{ $labels.instance }}의 {{ $labels.job }}이 30분 넘게 지표를 보내지 않습니다. 두 시간 안에는 보내고 있었습니다. 호스트를 내린 것이면 두 시간 뒤 스스로 해소되고, 아니면 그 호스트의 Alloy를 봐야 합니다." }
+          annotations = { summary = "{{ $labels.instance }}의 {{ $labels.job }}이 30분 넘게 지표를 보내지 않습니다. 두 시간 안에는 보내고 있었습니다. 호스트를 내린 것이면 두 시간 뒤 스스로 해소되고, 아니면 그 호스트의 OpenTelemetry Collector를 봐야 합니다." }
         },
         {
           name           = "Memory almost gone"
