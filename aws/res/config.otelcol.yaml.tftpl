@@ -188,10 +188,21 @@ processors:
   groupbyattrs/containers:
     keys: [service.name, container.name]
 
+  # Docker stamps lines in whole seconds, and delta_to_cumulative drops a count
+  # no later than the one before, so a count takes the time it was made
+  transform/count_time:
+    metric_statements:
+      - set(datapoint.time, Now())
+
   # Cumulative, as the remote write exporter takes, and kept a day so a rare
   # counter does not start over
   delta_to_cumulative:
     max_stale: 24h
+
+  # A count comes for every line Docker sends. Remote write gets the latest total
+  # once a minute, as from Alloy's scraped counters, not one request per line.
+  interval/counts:
+    interval: 60s
 
   transform/counts:
     metric_statements:
@@ -309,7 +320,7 @@ service:
 
     metrics/log_counts:
       receivers: [count/containers]
-      processors: [delta_to_cumulative, transform/counts, transform/drop_scope, batch]
+      processors: [transform/count_time, delta_to_cumulative, interval/counts, transform/counts, transform/drop_scope, batch]
       exporters: [prometheus_remote_write/metrics_service]
 %{ endif ~}
 
