@@ -124,13 +124,16 @@ OTELCOL_CONFIG
 install_file "$tmpdir/config.yaml" /etc/otelcol-contrib/config.yaml
 
 # On a host without Docker, docker_stats is not configured; on one with it, the
-# collector waits for the daemon rather than failing to start without it
+# collector waits for the daemon rather than failing to start without it.
+# Profiles are still behind a feature gate.
 mkdir -p /etc/systemd/system/otelcol-contrib.service.d
 cat >"$tmpdir/override.conf" <<'UNIT'
 [Unit]
 After=docker.service
 
 [Service]
+ExecStart=
+ExecStart=/usr/bin/otelcol-contrib $OTELCOL_OPTIONS --feature-gates=+service.profilesSupport
 RestartSec=10s
 UNIT
 if install_unit "$tmpdir/override.conf" /etc/systemd/system/otelcol-contrib.service.d/override.conf; then
