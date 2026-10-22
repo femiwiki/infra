@@ -7,6 +7,13 @@
 // Environment: GH_TOKEN, WIKI_DEPLOY_BOT_USER, WIKI_DEPLOY_BOT_PASSWORD (the last two not needed with --dry-run),
 // and APPLIED_AT to head a late post with an earlier time: a time in Asia/Seoul, or empty for when the PR merged
 
+namespace Femiwiki\Infra\PostUpdate;
+
+use DateTime;
+use DateTimeInterface;
+use DateTimeZone;
+use Throwable;
+
 define( 'WIKI_API', getenv( 'WIKI_API' ) ?: 'https://femiwiki.com/api.php' );
 /**
  * The page itself rather than a /<year>년 subpage, as FediFeeds feeds new sections only from edits of the page; at a
@@ -16,19 +23,27 @@ const TITLE = '페미위키:업데이트';
 
 /** Exit 1, and on Actions say on the run which pull request to post again with the post update workflow */
 function fail( string $message ): never {
-	global $repo, $number;
 	fwrite( STDERR, "$message\n" );
-	if ( getenv( 'GITHUB_ACTIONS' ) && isset( $number ) ) {
-		$workflow = getenv( 'GITHUB_SERVER_URL' ) . "/$repo/actions/workflows/post-update.yml";
-		echo "::error::the update note of #$number was not posted: " . strtok( $message, "\n" ) . "\n";
-		file_put_contents( getenv( 'GITHUB_STEP_SUMMARY' ) ?: '/dev/null', "The update note of #$number was not posted: "
-			. strtok( $message, "\n" ) . ". Once the wiki takes edits, run [post update]($workflow) with `pr` $number.\n", FILE_APPEND );
+	if ( getenv( 'GITHUB_ACTIONS' ) && defined( __NAMESPACE__ . '\NUMBER' ) ) {
+		$number = NUMBER;
+		$workflow = getenv( 'GITHUB_SERVER_URL' ) . '/' . REPO . '/actions/workflows/post-update.yml';
+		$reason = strtok( $message, "\n" );
+		echo "::error::the update note of #$number was not posted: $reason\n";
+		file_put_contents(
+			getenv( 'GITHUB_STEP_SUMMARY' ) ?: '/dev/null',
+			"The update note of #$number was not posted: $reason. "
+				. "Once the wiki takes edits, run [post update]($workflow) with `pr` $number.\n",
+			FILE_APPEND
+		);
 	}
 	exit( 1 );
 }
-set_exception_handler( fn ( Throwable $e ) => fail( $e->getMessage() ) );
+
+set_exception_handler( static fn ( Throwable $e ) => fail( $e->getMessage() ) );
 
 function gh( string $path ): array {
+	// gh signs in with GH_TOKEN, and the test swaps in a stub gh on PATH
+	// phpcs:ignore MediaWiki.Usage.ForbiddenFunctions.shell_exec, MediaWiki.Usage.ForbiddenFunctions.escapeshellarg
 	$json = shell_exec( 'gh api ' . escapeshellarg( $path ) );
 	return json_decode( $json ?? '', true ) ?? fail( "gh api $path failed" );
 }
@@ -93,19 +108,22 @@ function rank( ?string $category ): int {
  * categories as a section per category
  */
 function layout( array $items ): string {
-	usort( $items, fn ( $a, $b ) => rank( $a[0] ) <=> rank( $b[0] ) );
-	$subs = fn ( $item ) => implode( '', array_map( fn ( $sub ) => "\n$sub", $item[2] ) );
-	$prefixed = fn ( $item ) => ( $item[0] === null ? '' : "($item[0]) " ) . $item[1] . $subs( $item );
+	usort( $items, static fn ( $a, $b ) => rank( $a[0] ) <=> rank( $b[0] ) );
+	$subs = static fn ( $item ) => implode( '', array_map( static fn ( $sub ) => "\n$sub", $item[2] ) );
+	$prefixed = static fn ( $item ) => ( $item[0] === null ? '' : "($item[0]) " ) . $item[1] . $subs( $item );
 	if ( count( $items ) === 1 && !$items[0][2] ) {
 		return $prefixed( $items[0] );
 	}
 	$categories = array_unique( array_column( $items, 0 ) );
 	if ( count( $items ) < 5 || count( $categories ) < 2 ) {
-		return implode( "\n", array_map( fn ( $item ) => '*' . $prefixed( $item ), $items ) );
+		return implode( "\n", array_map( static fn ( $item ) => '*' . $prefixed( $item ), $items ) );
 	}
 	$sections = [];
 	foreach ( $categories as $category ) {
-		$lines = array_map( fn ( $item ) => "*$item[1]" . $subs( $item ), array_filter( $items, fn ( $item ) => $item[0] === $category ) );
+		$lines = array_map(
+			static fn ( $item ) => "*$item[1]" . $subs( $item ),
+			array_filter( $items, static fn ( $item ) => $item[0] === $category )
+		);
 		$sections[] = ( $category === null ? '' : "====$category====\n\n" ) . implode( "\n", $lines );
 	}
 	return implode( "\n\n", $sections );
@@ -139,7 +157,9 @@ function insert( string $text, DateTimeInterface $at, string $link, string $note
 		if ( $year . $md === $at->format( 'Ymd' ) && empty( $m[3] ) ) {
 			$posts = preg_split( '/^(?====[^=])/mu', $sections[$i] );
 			for ( $j = 1; $j < count( $posts ); $j++ ) {
-				if ( preg_match( '/^===\s*(\d+):(\d+)\s*===/u', $posts[$j], $t ) && sprintf( '%02d%02d', $t[1], $t[2] ) <= $at->format( 'Hi' ) ) {
+				if ( preg_match( '/^===\s*(\d+):(\d+)\s*===/u', $posts[$j], $t )
+					&& sprintf( '%02d%02d', $t[1], $t[2] ) <= $at->format( 'Hi' )
+				) {
 					break;
 				}
 			}
@@ -153,9 +173,13 @@ function insert( string $text, DateTimeInterface $at, string $link, string $note
 	return implode( '', $sections );
 }
 
-/** The page with the PR linked under the heading of the post, or of the older section, that a post from before the link put its block in */
+/**
+ * The page with the PR linked under the heading of the post, or of the older section, that a post from before the
+ * link put its block in
+ */
 function linkUnder( string $text, string $block, string $link ): string {
-	preg_match_all( '/^(?:==[^=].*==|===\s*\d+:\d+\s*===)\h*\n\n?/mu', substr( $text, 0, strpos( $text, $block ) ), $headings, PREG_OFFSET_CAPTURE );
+	preg_match_all( '/^(?:==[^=].*==|===\s*\d+:\d+\s*===)\h*\n\n?/mu', substr( $text, 0, strpos( $text, $block ) ),
+		$headings, PREG_OFFSET_CAPTURE );
 	[ $heading, $offset ] = end( $headings[0] ) ?: fail( 'no section heads the posted block' );
 	return substr_replace( $text, "$link\n\n", $offset + strlen( $heading ), 0 );
 }
@@ -188,7 +212,8 @@ function wiki( array $params ): array {
 /** The current text and timestamp of the page */
 function page( string $title ): array {
 	$page = wiki( [
-		'action' => 'query', 'prop' => 'revisions', 'rvprop' => 'content|timestamp', 'rvslots' => 'main', 'titles' => $title,
+		'action' => 'query', 'prop' => 'revisions', 'rvprop' => 'content|timestamp', 'rvslots' => 'main',
+		'titles' => $title,
 	] )['query']['pages'][0];
 	$revision = $page['revisions'][0] ?? [];
 	return [ $revision['slots']['main']['content'] ?? '', $revision['timestamp'] ?? '' ];
@@ -214,7 +239,9 @@ function missed( string $repo, int $current, string $text ): array {
 	$found = [];
 	foreach ( gh( "search/issues?q=$query&per_page=100" )['items'] as $item ) {
 		$number = $item['number'];
-		if ( $number === $current || preg_match( "/^https:\/\/github\.com\/" . preg_quote( $repo, '/' ) . "\/pull\/$number$/m", $text ) ) {
+		if ( $number === $current
+			|| preg_match( "/^https:\/\/github\.com\/" . preg_quote( $repo, '/' ) . "\/pull\/$number$/m", $text )
+		) {
 			continue;
 		}
 		$pr = gh( "repos/$repo/pulls/$number" );
@@ -240,8 +267,10 @@ function post( string $repo, int $number, DateTime $at, bool $dryRun ): void {
 	// again: its blocks may since have been translated, so they are not what tells
 	$link = "https://github.com/$repo/pull/$number";
 	// A block is on the page as posted, a level down, or as posted before days grouped the posts
-	$onPage = fn ( $block ) => str_contains( $text, demote( $block ) ) ? demote( $block ) : ( str_contains( $text, $block ) ? $block : null );
-	$new = array_values( array_filter( $blocks, fn ( $block ) => $onPage( $block ) === null ) );
+	$onPage = static fn ( $block ) => str_contains( $text, demote( $block ) )
+		? demote( $block )
+		: ( str_contains( $text, $block ) ? $block : null );
+	$new = array_values( array_filter( $blocks, static fn ( $block ) => $onPage( $block ) === null ) );
 	// The summary links to the day, since a summary does not link a URL or a repo#number and a time repeats daily
 	if ( preg_match( '/^' . preg_quote( $link, '/' ) . '$/m', $text ) ) {
 		echo "$title: $repo#$number already posted\n";
@@ -264,6 +293,7 @@ function post( string $repo, int $number, DateTime $at, bool $dryRun ): void {
 		file_put_contents( $before, $text );
 		file_put_contents( $after, $merged );
 		echo "$repo#$number summary: $summary\n";
+		// phpcs:ignore MediaWiki.Usage.ForbiddenFunctions.passthru -- the dry run shows the edit as a diff
 		passthru( "diff -u $before $after" );
 		unlink( $before );
 		unlink( $after );
@@ -279,9 +309,10 @@ function post( string $repo, int $number, DateTime $at, bool $dryRun ): void {
 function csrf(): string {
 	static $token = null;
 	if ( $token === null ) {
+		$tokens = wiki( [ 'action' => 'query', 'meta' => 'tokens', 'type' => 'login' ] )['query']['tokens'];
 		$login = wiki( [
-			'action' => 'login', 'lgname' => getenv( 'WIKI_DEPLOY_BOT_USER' ), 'lgpassword' => getenv( 'WIKI_DEPLOY_BOT_PASSWORD' ),
-			'lgtoken' => wiki( [ 'action' => 'query', 'meta' => 'tokens', 'type' => 'login' ] )['query']['tokens']['logintoken'],
+			'action' => 'login', 'lgname' => getenv( 'WIKI_DEPLOY_BOT_USER' ),
+			'lgpassword' => getenv( 'WIKI_DEPLOY_BOT_PASSWORD' ), 'lgtoken' => $tokens['logintoken'],
 		] )['login'];
 		if ( $login['result'] !== 'Success' ) {
 			fail( 'login: ' . json_encode( $login ) );
@@ -294,6 +325,9 @@ function csrf(): string {
 $dryRun = in_array( '--dry-run', $argv, true );
 [ $repo, $number ] = array_values( array_diff( array_slice( $argv, 1 ), [ '--dry-run' ] ) );
 $number = (int)$number;
+// For fail() to name on the run
+define( __NAMESPACE__ . '\REPO', $repo );
+define( __NAMESPACE__ . '\NUMBER', $number );
 if ( !$dryRun && ( !getenv( 'WIKI_DEPLOY_BOT_USER' ) || !getenv( 'WIKI_DEPLOY_BOT_PASSWORD' ) ) ) {
 	echo "no bot account to log in with, nothing to post\n";
 	exit;
@@ -301,7 +335,8 @@ if ( !$dryRun && ( !getenv( 'WIKI_DEPLOY_BOT_USER' ) || !getenv( 'WIKI_DEPLOY_BO
 
 $appliedAt = getenv( 'APPLIED_AT' );
 if ( $appliedAt === '' ) {
-	$appliedAt = gh( "repos/$repo/pulls/$number" )['merged_at'] ?? fail( "$repo#$number has not merged, so give APPLIED_AT" );
+	$appliedAt = gh( "repos/$repo/pulls/$number" )['merged_at']
+		?? fail( "$repo#$number has not merged, so give APPLIED_AT" );
 }
 $at = seoul( $appliedAt ?: 'now' );
 
@@ -309,7 +344,8 @@ $at = seoul( $appliedAt ?: 'now' );
 [ $text ] = page( TITLE );
 $missed = missed( $repo, $number, $text );
 if ( $missed ) {
-	echo '::warning::posting notes an earlier apply failed to post: ' . implode( ', ', array_map( fn ( $n ) => "#$n", $missed ) ) . "\n";
+	echo '::warning::posting notes an earlier apply failed to post: '
+		. implode( ', ', array_map( static fn ( $n ) => "#$n", $missed ) ) . "\n";
 }
 foreach ( $missed as $late ) {
 	post( $repo, $late, seoul( gh( "repos/$repo/pulls/$late" )['merged_at'] ), $dryRun );
