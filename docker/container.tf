@@ -9,6 +9,7 @@ resource "docker_container" "http" {
   image        = "ghcr.io/femiwiki/femiwiki:2026-10-21T17-12-032fa26e"
   command      = ["caddy-run"]
   restart      = "always"
+  init         = true
   network_mode = "host"
   memory       = 384
   memory_swap  = 768
@@ -84,6 +85,7 @@ resource "docker_container" "fastcgi" {
   image        = "ghcr.io/femiwiki/femiwiki:2026-10-21T17-12-032fa26e"
   network_mode = "host"
   restart      = "always"
+  init         = true
   memory       = 768
   memory_swap  = 1536
 
