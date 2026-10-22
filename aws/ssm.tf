@@ -73,7 +73,6 @@ locals {
       templatefile("res/config.otelcol.yaml.tftpl", {
         name                = host.name
         type                = host.type
-        logs                = contains(local.alloy_retired, tag)
         prometheus_endpoint = local.alloy_grafana.prometheus_endpoint
         prometheus_username = local.alloy_grafana.prometheus_username
         loki_endpoint       = replace(local.alloy_grafana.loki_endpoint, "/loki/api/v1/push", "/otlp")

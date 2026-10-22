@@ -3,13 +3,11 @@ extensions:
     client_auth:
       username: "${prometheus_username}"
       password: $${file:/etc/otelcol-contrib/prometheus.password}
-%{ if logs ~}
 
   basicauth/logs_service:
     client_auth:
       username: "${loki_username}"
       password: $${file:/etc/otelcol-contrib/loki.password}
-%{ endif ~}
 
 receivers:
   prometheus:
@@ -83,12 +81,14 @@ receivers:
     endpoint: 127.0.0.1:11211
     transport: tcp
     collection_interval: 60s
+
+  # Docker's fluentd log driver, which every container uses
+  fluent_forward:
+    endpoint: 127.0.0.1:24224
 %{ endif ~}
-%{ if logs ~}
 
   journald:
     directory: /var/log/journal
-%{ endif ~}
 
 processors:
   memory_limiter:
@@ -129,8 +129,76 @@ processors:
       - set(resource.attributes["service.namespace"], "integrations")
       - set(resource.attributes["service.name"], "memcached")
       - set(resource.attributes["service.instance.id"], "${name}")
+
+  # The name without its generation becomes service_name, so queries need no
+  # regular expression. The rest repeats what Alloy's loki.process did.
+  transform/containers:
+    error_mode: silent
+    log_statements:
+      - set(log.attributes["container.name"], log.attributes["container_name"])
+      - replace_pattern(log.attributes["container.name"], "^/", "")
+      - set(log.attributes["container.id"], log.attributes["container_id"])
+      - delete_matching_keys(log.attributes, "^(container_name|container_id|fluent\\.tag)$")
+      - set(log.attributes["service.name"], log.attributes["container.name"])
+      - replace_pattern(log.attributes["service.name"], "-[0-9]+$", "")
+
+      - 'set(log.body, ExtractPatterns(log.body, "^NOTICE: PHP message: (?P<line>\\{.*)$")["line"]) where log.attributes["service.name"] == "fastcgi" and IsMatch(log.body, "^NOTICE: PHP message: \\{")'
+      # Its own service_name lets the rules waiting on its finish line read only it
+      - 'set(log.attributes["service.name"], "publish-dump") where log.attributes["service.name"] == "fastcgi" and IsMatch(log.body, "^publish-dump: ")'
+      - set(log.attributes["class"], ParseJSON(log.body)["context"]["exception"]["class"]) where log.attributes["service.name"] == "fastcgi" and IsMatch(log.body, "\"caught_by\":\"entrypoint\"|\"channel\":\"fatal\"")
+
+      # php-fpm's copy of a deprecation is counted and dropped; MediaWiki's,
+      # which has the URL, is kept at one a minute for each
+      - 'set(log.cache["deprecated"], log.body) where log.attributes["service.name"] == "fastcgi" and IsMatch(log.body, "^NOTICE: PHP message: PHP Deprecated: ")'
+      - 'set(log.cache["deprecated"], ParseJSON(log.body)["context"]["exception"]["message"]) where log.attributes["service.name"] == "fastcgi" and IsMatch(log.body, "\"channel\":\"error\"") and IsMatch(log.body, "PHP Deprecated: ")'
+      - 'merge_maps(log.attributes, ExtractPatterns(log.cache["deprecated"], "PHP Deprecated: +(?P<deprecation>.*?)(?: \\[Called from .*)?(?: in /\\S+ on line \\d+)?$"), "upsert") where log.cache["deprecated"] != nil'
+      - 'merge_maps(log.attributes, ExtractPatterns(log.cache["deprecated"], "PHP Deprecated: +Use of (?P<deprecation>\\S+) was deprecated"), "upsert") where log.cache["deprecated"] != nil'
+      - 'merge_maps(log.attributes, ExtractPatterns(log.cache["deprecated"], "PHP Deprecated: .*<br>(?P<deprecation>[^<]*?) is deprecated\\."), "upsert") where log.cache["deprecated"] != nil'
+
+      # A refused request's access log line is cut down to what the scrapes
+      # dashboard reads
+      - set(log.cache["request"], ParseJSON(log.body)["request"]) where log.attributes["service.name"] == "http" and IsMatch(log.body, "\"status\":429")
+      - 'set(log.body, {"msg": "refused", "client_ip": log.cache["request"]["client_ip"], "uri": log.cache["request"]["uri"]}) where log.cache["request"] != nil'
+
+      - set(log.attributes["zone"], ParseJSON(log.body)["zone"]) where log.attributes["service.name"] == "http" and IsMatch(log.body, "\"logger\":\"http\\.handlers\\.rate_limit\"") and IsMatch(log.body, "rate limit exceeded")
+
+      # From the access log, not Caddy's metrics: those count the skipped static
+      # images and cannot tell the 503 fallback apart
+      - set(log.cache["access"], ParseJSON(log.body)) where log.attributes["service.name"] == "http" and IsMatch(log.body, "\"logger\":\"http\\.log\\.access")
+      - set(log.attributes["status_class"], Substring(String(Int(log.cache["access"]["status"])), 0, 1)) where log.cache["access"] != nil
+      - set(log.attributes["fallback"], String(log.cache["access"]["fallback"])) where log.cache["access"] != nil and log.cache["access"]["fallback"] != nil
+
+  filter/containers:
+    error_mode: silent
+    logs:
+      log_record:
+        - 'attributes["service.name"] == "fastcgi" and IsMatch(body, "^NOTICE: PHP message: PHP Deprecated: ")'
+        # php-fpm's own access log repeats what Caddy's says about the same request
+        - attributes["service.name"] == "fastcgi" and IsMatch(body, "^127\\.0\\.0\\.1 - ")
+        - 'attributes["service.name"] == "fastcgi" and IsMatch(body, "\"channel\":\"memcached\"") and IsMatch(body, "Duplicate get\\(\\): ")'
+        # The refusal counter is all that reads them
+        - attributes["zone"] != nil
+
+  log_dedup/deprecations:
+    interval: 60s
+    conditions:
+      - log.attributes["deprecation"] != nil
+    include_fields: [attributes.deprecation]
+
+  groupbyattrs/containers:
+    keys: [service.name, container.name]
+
+  # Cumulative, as the remote write exporter takes, and kept a day so a rare
+  # counter does not start over
+  delta_to_cumulative:
+    max_stale: 24h
+
+  transform/counts:
+    metric_statements:
+      - set(resource.attributes["service.namespace"], "integrations")
+      - set(resource.attributes["service.name"], "logs")
+      - set(resource.attributes["service.instance.id"], "${name}")
 %{ endif ~}
-%{ if logs ~}
 
   # The unit becomes service_name, one of the labels Loki indexes by default
   transform/journald:
@@ -147,6 +215,40 @@ processors:
   transform/host:
     log_statements:
       - set(resource.attributes["host.name"], "${name}")
+%{ if type == "app" ~}
+
+connectors:
+  forward/containers: {}
+
+  # Named as Alloy's were, so the queries and their history carry over
+  count/containers:
+    logs:
+      loki_process_custom_responses:
+        description: Access log lines by the status's first digit, 0 for none
+        conditions:
+          - attributes["status_class"] != nil
+        attributes:
+          - key: status_class
+          - key: fallback
+            default_value: "false"
+      loki_process_custom_uncaught_exceptions:
+        description: Exceptions that reached the reader as an error page, by class
+        conditions:
+          - attributes["class"] != nil
+        attributes:
+          - key: class
+      loki_process_custom_php_deprecations:
+        description: PHP Deprecated messages, by what is deprecated
+        conditions:
+          - 'attributes["deprecation"] != nil and IsMatch(body, "^NOTICE: PHP message: PHP Deprecated: ")'
+        attributes:
+          - key: deprecation
+      loki_process_custom_rate_limit_refusals:
+        description: Requests Caddy's rate_limit refused, by zone
+        conditions:
+          - attributes["zone"] != nil
+        attributes:
+          - key: zone
 %{ endif ~}
 
 exporters:
@@ -157,16 +259,14 @@ exporters:
     # job and instance are enough; nothing reads target_info
     target_info:
       enabled: false
-%{ if logs ~}
 
   otlphttp/logs_service:
     endpoint: "${loki_endpoint}"
     auth:
       authenticator: basicauth/logs_service
-%{ endif ~}
 
 service:
-  extensions: [basicauth/metrics_service%{ if logs }, basicauth/logs_service%{ endif }]
+  extensions: [basicauth/metrics_service, basicauth/logs_service]
 
   telemetry:
     logs:
@@ -196,11 +296,24 @@ service:
       receivers: [memcached]
       processors: [memory_limiter, filter/memcached, transform/memcached, transform/drop_scope, batch]
       exporters: [prometheus_remote_write/metrics_service]
+
+    logs/containers:
+      receivers: [fluent_forward]
+      processors: [memory_limiter, transform/containers]
+      exporters: [count/containers, forward/containers]
+
+    logs/containers_kept:
+      receivers: [forward/containers]
+      processors: [filter/containers, log_dedup/deprecations, groupbyattrs/containers, transform/host, batch]
+      exporters: [otlphttp/logs_service]
+
+    metrics/log_counts:
+      receivers: [count/containers]
+      processors: [delta_to_cumulative, transform/counts, transform/drop_scope, batch]
+      exporters: [prometheus_remote_write/metrics_service]
 %{ endif ~}
-%{ if logs ~}
 
     logs/journald:
       receivers: [journald]
       processors: [memory_limiter, transform/journald, groupbyattrs/service, transform/host, batch]
       exporters: [otlphttp/logs_service]
-%{ endif ~}

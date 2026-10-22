@@ -1,1 +1,1 @@
-{docker_container_name=~"fastcgi.*"} |~ `"caught_by":"entrypoint"|"channel":"fatal"`
+{service_name="fastcgi"} |~ `"caught_by":"entrypoint"|"channel":"fatal"`
