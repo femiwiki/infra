@@ -77,6 +77,8 @@ locals {
         prometheus_username = local.alloy_grafana.prometheus_username
         loki_endpoint       = replace(local.alloy_grafana.loki_endpoint, "/loki/api/v1/push", "/otlp")
         loki_username       = local.alloy_grafana.loki_username
+        pyroscope_endpoint  = local.alloy_grafana.pyroscope_endpoint
+        pyroscope_username  = local.alloy_grafana.pyroscope_username
       })
     )
   }
