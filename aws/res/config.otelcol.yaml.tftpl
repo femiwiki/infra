@@ -8,6 +8,14 @@ extensions:
     client_auth:
       username: "${loki_username}"
       password: $${file:/etc/otelcol-contrib/loki.password}
+%{ if type == "app" ~}
+
+  basicauth/profiles_service:
+    client_auth:
+      username: "${pyroscope_username}"
+      # The metrics token also carries profiles:write
+      password: $${file:/etc/otelcol-contrib/prometheus.password}
+%{ endif ~}
 
 receivers:
   prometheus:
@@ -85,6 +93,19 @@ receivers:
   # Docker's fluentd log driver, which every container uses
   fluent_forward:
     endpoint: 127.0.0.1:24224
+
+  # Caddy's pprof, a minute apart as Alloy's was. No memory profile: each
+  # allocation size would become a series of its own (#1505).
+  pprof/caddy_cpu:
+    remote:
+      endpoint: http://127.0.0.1:2019/debug/pprof/profile?seconds=59
+      collection_interval: 60s
+      timeout: 70s
+
+  pprof/caddy_goroutine:
+    remote:
+      endpoint: http://127.0.0.1:2019/debug/pprof/goroutine
+      collection_interval: 60s
 %{ endif ~}
 
   journald:
@@ -118,6 +139,16 @@ processors:
       - set(resource.attributes["service.namespace"], "integrations")
       - set(resource.attributes["service.name"], "docker_stats")
       - set(resource.attributes["service.instance.id"], "${name}")
+
+  # Named as Alloy's were
+  resource/caddy_profiles:
+    attributes:
+      - key: service.name
+        value: caddy
+        action: upsert
+      - key: instance
+        value: ${name}
+        action: upsert
 
   filter/memcached:
     metrics:
@@ -275,9 +306,16 @@ exporters:
     endpoint: "${loki_endpoint}"
     auth:
       authenticator: basicauth/logs_service
+%{ if type == "app" ~}
+
+  otlphttp/profiles_service:
+    endpoint: "${pyroscope_endpoint}"
+    auth:
+      authenticator: basicauth/profiles_service
+%{ endif ~}
 
 service:
-  extensions: [basicauth/metrics_service, basicauth/logs_service]
+  extensions: [basicauth/metrics_service, basicauth/logs_service%{ if type == "app" }, basicauth/profiles_service%{ endif }]
 
   telemetry:
     logs:
@@ -322,6 +360,11 @@ service:
       receivers: [count/containers]
       processors: [transform/count_time, delta_to_cumulative, interval/counts, transform/counts, transform/drop_scope, batch]
       exporters: [prometheus_remote_write/metrics_service]
+
+    profiles/caddy:
+      receivers: [pprof/caddy_cpu, pprof/caddy_goroutine]
+      processors: [memory_limiter, resource/caddy_profiles]
+      exporters: [otlphttp/profiles_service]
 %{ endif ~}
 
     logs/journald:

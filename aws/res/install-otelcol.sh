@@ -131,6 +131,9 @@ cat >"$tmpdir/override.conf" <<'UNIT'
 After=docker.service
 
 [Service]
+# Profiles are still behind a feature gate
+ExecStart=
+ExecStart=/usr/bin/otelcol-contrib $OTELCOL_OPTIONS --feature-gates=+service.profilesSupport
 RestartSec=10s
 UNIT
 if install_unit "$tmpdir/override.conf" /etc/systemd/system/otelcol-contrib.service.d/override.conf; then
