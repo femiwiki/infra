@@ -79,12 +79,12 @@ resource "github_actions_secret" "femiwiki_github_io" {
   value       = data.onepassword_item.infra[each.value].password
 }
 
-# The monthly collect job adds a row to 페미위키:구글 애널리틱스 기록 with its own bot
-# password, whose item also holds the login name (User@label).
-resource "github_actions_variable" "github_io_wiki_bot_user" {
-  repository    = module.femiwiki_github_io.name
-  variable_name = "WIKI_BOT_USER"
-  value         = data.onepassword_item.infra["GITHUB_IO_WIKI_BOT_PASSWORD"].username
+# The collect job's own bot login for 페미위키:구글 애널리틱스 기록 (User@label from the item).
+# A secret, not a variable: the app token cannot write variables.
+resource "github_actions_secret" "github_io_wiki_bot_user" {
+  repository  = module.femiwiki_github_io.name
+  secret_name = "WIKI_BOT_USER"
+  value       = data.onepassword_item.infra["GITHUB_IO_WIKI_BOT_PASSWORD"].username
 }
 
 # The availability collector's read-only view of the metrics, as JSON with url,
