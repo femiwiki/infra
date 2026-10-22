@@ -94,10 +94,8 @@ receivers:
   fluent_forward:
     endpoint: 127.0.0.1:24224
 
-  # Caddy's pprof, on its admin endpoint. A minute apart keeps it far under the
-  # free plan's 50 GB of profiles a month. The CPU profile covers all but a
-  # second of each minute, as Alloy's did. The memory profile is left out: each
-  # allocation size would become a series of its own (#1259).
+  # Caddy's pprof, a minute apart as Alloy's was. No memory profile: each
+  # allocation size would become a series of its own (#1505).
   pprof/caddy_cpu:
     remote:
       endpoint: http://127.0.0.1:2019/debug/pprof/profile?seconds=59
