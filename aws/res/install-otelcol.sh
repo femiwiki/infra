@@ -7,7 +7,6 @@ otelcol_version=__OTELCOL_VERSION__
 otelcol_sha256=__OTELCOL_SHA256__
 node_exporter_version=__NODE_EXPORTER_VERSION__
 node_exporter_sha256=__NODE_EXPORTER_SHA256__
-remove_alloy=__REMOVE_ALLOY__
 
 tmpdir=$(mktemp -d)
 trap 'rm -rf "$tmpdir"' EXIT
@@ -155,8 +154,8 @@ elif [ "$reload_otelcol" -eq 1 ]; then
   systemctl reload otelcol-contrib
 fi
 
-# Once the Collector sends everything Alloy did, Alloy goes
-if [ "$remove_alloy" -eq 1 ] && rpm -q alloy >/dev/null; then
+# The Collector took over everything Alloy sent (#1259)
+if rpm -q alloy >/dev/null; then
   systemctl disable --now alloy
   dnf remove -y alloy
 fi
