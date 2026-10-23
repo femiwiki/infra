@@ -37,6 +37,8 @@ locals {
   secret_parameters = toset([
     "/mediawiki/bounce_handler/token",
     "/mediawiki/o_auth_2_private_key",
+    # A Grafana Cloud token with profiles:write only, for slow-request profiles (femiwiki/femiwiki#614)
+    "/mediawiki/pyroscope/password",
     "/mediawiki/rc_feeds_discord_url",
     "/mediawiki/site_key",
     "/mediawiki/smtp/password",
