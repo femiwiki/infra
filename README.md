@@ -63,23 +63,22 @@ hcledit attribute get resource.docker_container.http.image -f docker/container.t
 hcledit block list -f github/repo.tf
 ```
 
-## 호스트 위의 알로이 설정
+## 호스트 위의 수집기 설정
 
-`aws/res/config.alloy.tftpl`은 `user_data`로만 들어가는데 `user_data`는
-`ignore_changes`라, 이 파일을 고쳐도 돌고 있는 호스트는 바뀌지 않습니다. 설정을
-실제로 밀어 넣는 것은 SSM State Manager입니다. `aws/`를 적용하면
-`install-alloy-config-docker`와 `install-alloy-config-database` association이
-곧바로 한 번 돌고 그 뒤로는 30분마다 다시 돕니다. 누가 손으로 고쳐 놓았다면 그때
-되돌아옵니다.
+두 호스트의 지표, 로그, 프로필은 OpenTelemetry Collector가 Grafana Cloud로
+보냅니다. 설정은 `aws/res/config.otelcol.yaml.tftpl` 하나이고, 앱 호스트에만 있는
+부분은 `%{ if type == "app" ~}`로 갈립니다.
 
-두 경로가 같은 스크립트를 씁니다. `aws/res/install-alloy-config.sh`는 파라미터
-스토어에서 그라파나 자격 증명을 받아 `/etc/alloy`에 쓰고 설정 파일을 놓은 다음,
-내용이 달라졌을 때만 알로이를 reload합니다. 새로 만든 인스턴스는 user-data가
-부팅 때 같은 스크립트를 한 번 돌립니다.
+설정을 실제로 밀어 넣는 것은 SSM State Manager입니다. `aws/`를 적용하면
+`install-otelcol-docker`와 `install-otelcol-database` association이 곧바로 한 번
+돌고 그 뒤로는 30분마다 다시 돕니다. 누가 손으로 고쳐 놓았다면 그때 되돌아옵니다.
+`user_data`는 `ignore_changes`라 돌고 있는 호스트에는 닿지 않고, 새로 만든
+인스턴스가 부팅 때 같은 스크립트를 한 번 돌립니다.
 
-설정 파일에는 비밀번호가 없습니다. 알로이가 `local.file`로
-`/etc/alloy/prometheus.password`와 `loki.password`를 읽고, 그 두 파일은
-스크립트가 `/alloy/` 아래 SecureString 파라미터에서 받아 씁니다.
+`aws/res/install-otelcol.sh`는 고정한 판의 Collector와 node_exporter를 깔고,
+파라미터 스토어의 `/alloy/` 아래 SecureString에서 그라파나 자격 증명을 받아
+`/etc/otelcol-contrib`에 씁니다. 설정 파일에는 비밀번호가 없고, Collector가
+`${file:...}`로 그 파일을 읽습니다. 내용이 달라졌을 때만 reload합니다.
 
 ## 워크스페이스 추가하기
 

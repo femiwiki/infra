@@ -1,11 +1,3 @@
-locals {
-  alloy_install_docker_seoul = replace(
-    replace(file("res/install-alloy-config.sh"), "__REGION__", local.seoul_region),
-    "__CONFIG__",
-    templatefile("res/config.alloy.tftpl", merge(local.alloy_grafana, { name = "femiwiki-seoul", type = "app" }))
-  )
-}
-
 resource "aws_instance" "docker_seoul" {
   region                      = local.seoul_region
   ami                         = data.aws_ami.amazon_linux_2_arm64_seoul.image_id
@@ -20,7 +12,7 @@ resource "aws_instance" "docker_seoul" {
   user_data_replace_on_change = false
 
   user_data_base64 = base64gzip(templatefile("res/user-data-docker-provider.tftpl", {
-    alloy_install = local.alloy_install_docker_seoul
+    otelcol_install = local.otelcol_install["docker"]
   }))
 
   vpc_security_group_ids = [

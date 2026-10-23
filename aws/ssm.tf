@@ -24,12 +24,12 @@ data "terraform_remote_state" "gcp" {
 
 locals {
   # Database hosts come and go with the swap, so they are found by role.
-  alloy_hosts = {
+  otelcol_hosts = {
     "database" = { name = "mariadb-seoul", type = "database", region = local.seoul_region, tag = "Role" }
     "docker"   = { name = "femiwiki-seoul", type = "app", region = local.seoul_region, tag = "Name" }
   }
 
-  alloy_grafana = {
+  grafana_cloud = {
     prometheus_endpoint = "https://prometheus-prod-49-prod-ap-northeast-0.grafana.net/api/prom/push"
     prometheus_username = "1835631"
     loki_endpoint       = "https://logs-prod-030.grafana.net/loki/api/v1/push"
@@ -37,48 +37,32 @@ locals {
     pyroscope_endpoint  = "https://profiles-prod-019.grafana.net"
     pyroscope_username  = "1059321"
   }
-
-  alloy_install = {
-    for tag, host in local.alloy_config_hosts : tag => replace(
-      replace(file("res/install-alloy-config.sh"), "__REGION__", host.region),
-      "__CONFIG__",
-      templatefile("res/config.alloy.tftpl", merge(local.alloy_grafana, { name = host.name, type = host.type }))
-    )
-  }
 }
 
-# Taking over from Alloy one signal at a time (#1259). Alloy is removed from a
-# host once the Collector carries everything it sent.
 locals {
-  otelcol_hosts = local.alloy_hosts
-  alloy_retired = toset(["database"])
-
-  alloy_config_hosts = { for tag, host in local.alloy_hosts : tag => host if !contains(local.alloy_retired, tag) }
-
   otelcol_version       = "0.162.0"
   otelcol_sha256        = "cc005e793ec6f029d1a1627d656db998298dd5a8a8f9d25a13e555116e93e1ea"
   node_exporter_version = "1.12.1"
   node_exporter_sha256  = "ad35b605f9954b9f1ffddf5ba054bdc5a98d790b9eae5291e1eeb83f1ecbd0e7"
 
   otelcol_install = {
-    for tag, host in local.otelcol_hosts : tag => replace(replace(replace(replace(replace(replace(replace(
+    for tag, host in local.otelcol_hosts : tag => replace(replace(replace(replace(replace(replace(
       file("res/install-otelcol.sh"),
       "__REGION__", host.region),
       "__OTELCOL_VERSION__", local.otelcol_version),
       "__OTELCOL_SHA256__", local.otelcol_sha256),
       "__NODE_EXPORTER_VERSION__", local.node_exporter_version),
       "__NODE_EXPORTER_SHA256__", local.node_exporter_sha256),
-      "__REMOVE_ALLOY__", contains(local.alloy_retired, tag) ? "1" : "0"),
       "__CONFIG__",
       templatefile("res/config.otelcol.yaml.tftpl", {
         name                = host.name
         type                = host.type
-        prometheus_endpoint = local.alloy_grafana.prometheus_endpoint
-        prometheus_username = local.alloy_grafana.prometheus_username
-        loki_endpoint       = replace(local.alloy_grafana.loki_endpoint, "/loki/api/v1/push", "/otlp")
-        loki_username       = local.alloy_grafana.loki_username
-        pyroscope_endpoint  = local.alloy_grafana.pyroscope_endpoint
-        pyroscope_username  = local.alloy_grafana.pyroscope_username
+        prometheus_endpoint = local.grafana_cloud.prometheus_endpoint
+        prometheus_username = local.grafana_cloud.prometheus_username
+        loki_endpoint       = replace(local.grafana_cloud.loki_endpoint, "/loki/api/v1/push", "/otlp")
+        loki_username       = local.grafana_cloud.loki_username
+        pyroscope_endpoint  = local.grafana_cloud.pyroscope_endpoint
+        pyroscope_username  = local.grafana_cloud.pyroscope_username
       })
     )
   }
@@ -237,57 +221,6 @@ resource "aws_ssm_association" "swapfile" {
   targets {
     key    = "tag:${each.value.tag}"
     values = [each.value.value]
-  }
-}
-
-resource "aws_ssm_document" "alloy_config" {
-  for_each = local.alloy_config_hosts
-
-  region          = each.value.region
-  name            = "install-alloy-config-${each.key}"
-  document_type   = "Command"
-  document_format = "JSON"
-
-  content = jsonencode({
-    schemaVersion = "2.2"
-    description   = "Install /etc/alloy/config.alloy and the credentials it reads, then reload Alloy."
-    mainSteps = [{
-      action = "aws:runShellScript"
-      name   = "installAlloyConfig"
-      inputs = {
-        runCommand = split("\n", local.alloy_install[each.key])
-      }
-    }]
-  })
-}
-
-moved {
-  from = aws_ssm_document.alloy_config["database-5"]
-  to   = aws_ssm_document.alloy_config["database"]
-}
-
-moved {
-  from = aws_ssm_association.alloy_config["database-5"]
-  to   = aws_ssm_association.alloy_config["database"]
-}
-
-resource "aws_ssm_association" "alloy_config" {
-  for_each = local.alloy_config_hosts
-
-  depends_on = [aws_ssm_parameter.alloy_seoul]
-
-  region              = each.value.region
-  association_name    = "install-alloy-config-${each.key}"
-  name                = aws_ssm_document.alloy_config[each.key].name
-  document_version    = aws_ssm_document.alloy_config[each.key].latest_version
-  schedule_expression = "rate(30 minutes)"
-  compliance_severity = "HIGH"
-  max_concurrency     = "1"
-  max_errors          = "0"
-
-  targets {
-    key    = "tag:${each.value.tag}"
-    values = [each.key]
   }
 }
 
