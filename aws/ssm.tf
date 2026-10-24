@@ -429,13 +429,8 @@ resource "aws_ssm_parameter" "pyroscope_password" {
   value_wo_version = 1
 }
 
-moved {
-  from = aws_ssm_parameter.secret["/mediawiki/pyroscope/password"]
-  to   = aws_ssm_parameter.pyroscope_password
-}
-
-# Written by hand, so the values stay out of the configuration; only the type is
-# managed here (femiwiki/femiwiki#597).
+# Written by hand (femiwiki/femiwiki#597) and read without decryption, so their
+# values stay out of the state.
 locals {
   secret_parameters = toset([
     "/mediawiki/bounce_handler/token",
@@ -448,16 +443,19 @@ locals {
   ])
 }
 
-resource "aws_ssm_parameter" "secret" {
+data "aws_ssm_parameter" "secret" {
   for_each = local.secret_parameters
 
-  region = local.seoul_region
-  name   = each.key
-  type   = "SecureString"
-  value  = "placeholder"
+  region          = local.seoul_region
+  name            = each.key
+  with_decryption = false
+}
+
+removed {
+  from = aws_ssm_parameter.secret
 
   lifecycle {
-    ignore_changes = [value]
+    destroy = false
   }
 }
 

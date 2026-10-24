@@ -343,7 +343,7 @@ data "aws_iam_policy_document" "bounce_handler" {
 
   statement {
     actions   = ["ssm:GetParameter"]
-    resources = [aws_ssm_parameter.secret["/mediawiki/bounce_handler/token"].arn]
+    resources = [data.aws_ssm_parameter.secret["/mediawiki/bounce_handler/token"].arn]
   }
 }
 

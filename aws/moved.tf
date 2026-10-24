@@ -101,11 +101,6 @@ moved {
 }
 
 moved {
-  from = aws_ssm_parameter.secret_seoul
-  to   = aws_ssm_parameter.secret
-}
-
-moved {
   from = module.uploads_seoul
   to   = module.uploads
 }
