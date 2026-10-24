@@ -29,3 +29,9 @@ variable "proxysql_enabled" {
   type        = bool
   default     = false
 }
+
+variable "mediawiki_db_password" {
+  description = "Password MediaWiki logs in to MariaDB with, which the job reads from Parameter Store with its own role"
+  type        = string
+  sensitive   = true
+}
