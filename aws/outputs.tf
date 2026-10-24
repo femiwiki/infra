@@ -37,9 +37,3 @@ output "femiwiki_role_arn" {
   description = "The role of the wiki's instances"
   value       = module.femiwiki.arn
 }
-
-output "mysql_mediawiki_password" {
-  description = "The password of the MariaDB account MediaWiki logs in as"
-  value       = aws_ssm_parameter.secret["/mysql/users/mediawiki/password"].value
-  sensitive   = true
-}
