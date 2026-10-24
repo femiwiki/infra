@@ -16,6 +16,13 @@ inputs:
   port:
     description: The port, on the instance and on the runner.
     required: true
+  document:
+    description: >-
+      A session document that fixes the instance's port, so the role starting
+      the session can reach that port only. It takes the runner's port alone.
+      Empty, AWS-StartPortForwardingSession forwards whichever port is asked.
+    required: false
+    default: ''
   probe:
     description: >-
       A bash command that succeeds once the service answers on $HOST:$PORT. An
@@ -61,8 +68,14 @@ runs:
         FILTERS: ${{ inputs.filters }}
         AWS_REGION: ${{ inputs.region }}
         PORT: ${{ inputs.port }}
+        DOCUMENT: ${{ inputs.document }}
         PROBE: ${{ inputs.probe }}
       run: |
+        if [ -n "$DOCUMENT" ]; then
+          args=(--document-name "$DOCUMENT" --parameters "localPortNumber=$PORT")
+        else
+          args=(--document-name AWS-StartPortForwardingSession --parameters "portNumber=$PORT,localPortNumber=$PORT")
+        fi
         instance=$(aws ec2 describe-instances \
           --filters $FILTERS Name=instance-state-name,Values=running \
           --query 'Reservations[].Instances[].InstanceId' --output text)
@@ -70,9 +83,7 @@ runs:
         # A session can accept connections and never carry them, so a dud one
         # is closed and replaced, a bounded number of times
         for attempt in 1 2 3; do
-          nohup aws ssm start-session --target "$instance" \
-            --document-name AWS-StartPortForwardingSession \
-            --parameters "portNumber=$PORT,localPortNumber=$PORT" > /tmp/ssm-session.log 2>&1 &
+          nohup aws ssm start-session --target "$instance" "${args[@]}" > /tmp/ssm-session.log 2>&1 &
           pid=$!
           # A file, not a step output: a failed composite action may drop its
           # outputs, and the caller still has to close a dud session
