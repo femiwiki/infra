@@ -360,4 +360,10 @@ resource "docker_container" "docker_api_readonly" {
     target    = "/var/run/docker.sock"
     read_only = true
   }
+
+  ulimit {
+    hard = 65536
+    name = "nofile"
+    soft = 32768
+  }
 }
