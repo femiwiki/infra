@@ -451,14 +451,6 @@ data "aws_ssm_parameter" "secret" {
   with_decryption = false
 }
 
-removed {
-  from = aws_ssm_parameter.secret
-
-  lifecycle {
-    destroy = false
-  }
-}
-
 resource "random_password" "mysql_tofu" {
   length  = 32
   special = false
