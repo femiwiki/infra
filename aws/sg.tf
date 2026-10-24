@@ -31,21 +31,21 @@ resource "aws_security_group_rule" "default_instance_connect_browser_based_clien
 }
 
 # Web
-resource "aws_security_group" "web_seoul" {
+resource "aws_security_group" "web" {
   region      = local.seoul_region
   name        = "web"
   description = "Receives public HTTP and HTTPS"
-  vpc_id      = aws_vpc.seoul.id
+  vpc_id      = aws_vpc.main.id
 
   tags = { Name = "web" }
 }
 
 # CloudFront reaches the origin over HTTPS only, so port 80 serves only
 # readers who come straight to the box.
-resource "aws_vpc_security_group_ingress_rule" "web_seoul_http" {
+resource "aws_vpc_security_group_ingress_rule" "web_http" {
   for_each          = local.through_cloudfront ? toset([]) : toset(["http"])
   region            = local.seoul_region
-  security_group_id = aws_security_group.web_seoul.id
+  security_group_id = aws_security_group.web.id
   description       = "http"
   ip_protocol       = "tcp"
   from_port         = 80
@@ -53,9 +53,9 @@ resource "aws_vpc_security_group_ingress_rule" "web_seoul_http" {
   cidr_ipv4         = "0.0.0.0/0"
 }
 
-resource "aws_vpc_security_group_ingress_rule" "web_seoul_https" {
+resource "aws_vpc_security_group_ingress_rule" "web_https" {
   region            = local.seoul_region
-  security_group_id = aws_security_group.web_seoul.id
+  security_group_id = aws_security_group.web.id
   description       = "https"
   ip_protocol       = "tcp"
   from_port         = 443
@@ -71,77 +71,77 @@ data "aws_ec2_managed_prefix_list" "cloudfront_origin_facing" {
 }
 
 moved {
-  from = aws_vpc_security_group_ingress_rule.web_seoul_http
-  to   = aws_vpc_security_group_ingress_rule.web_seoul_http["http"]
+  from = aws_vpc_security_group_ingress_rule.web_http
+  to   = aws_vpc_security_group_ingress_rule.web_http["http"]
 }
 
-resource "aws_vpc_security_group_egress_rule" "web_seoul" {
+resource "aws_vpc_security_group_egress_rule" "web" {
   region            = local.seoul_region
-  security_group_id = aws_security_group.web_seoul.id
+  security_group_id = aws_security_group.web.id
   ip_protocol       = "-1"
   cidr_ipv4         = "0.0.0.0/0"
 }
 
 # Database
-resource "aws_security_group" "database_seoul" {
+resource "aws_security_group" "database" {
   region      = local.seoul_region
   name        = "database"
   description = "Receives database connections"
-  vpc_id      = aws_vpc.seoul.id
+  vpc_id      = aws_vpc.main.id
 
   tags = { Name = "database" }
 }
 
-resource "aws_vpc_security_group_ingress_rule" "database_seoul_self" {
+resource "aws_vpc_security_group_ingress_rule" "database_self" {
   region                       = local.seoul_region
-  security_group_id            = aws_security_group.database_seoul.id
+  security_group_id            = aws_security_group.database.id
   description                  = "replication"
   ip_protocol                  = "tcp"
   from_port                    = 3306
   to_port                      = 3306
-  referenced_security_group_id = aws_security_group.database_seoul.id
+  referenced_security_group_id = aws_security_group.database.id
 }
 
-resource "aws_vpc_security_group_ingress_rule" "database_seoul_db_client" {
+resource "aws_vpc_security_group_ingress_rule" "database_db_client" {
   region                       = local.seoul_region
-  security_group_id            = aws_security_group.database_seoul.id
+  security_group_id            = aws_security_group.database.id
   description                  = "From a database-client"
   ip_protocol                  = "tcp"
   from_port                    = 3306
   to_port                      = 3306
-  referenced_security_group_id = aws_security_group.database_client_seoul.id
+  referenced_security_group_id = aws_security_group.database_client.id
 }
 
-resource "aws_vpc_security_group_egress_rule" "database_seoul" {
+resource "aws_vpc_security_group_egress_rule" "database" {
   region            = local.seoul_region
-  security_group_id = aws_security_group.database_seoul.id
+  security_group_id = aws_security_group.database.id
   ip_protocol       = "-1"
   cidr_ipv4         = "0.0.0.0/0"
 }
 
 # Anything allowed to reach the database
-resource "aws_security_group" "database_client_seoul" {
+resource "aws_security_group" "database_client" {
   region      = local.seoul_region
   name        = "database-client"
   description = "May reach the database"
-  vpc_id      = aws_vpc.seoul.id
+  vpc_id      = aws_vpc.main.id
 
   tags = { Name = "database-client" }
 }
 
 # EC2 Instance Connect, for when SSM will not do
-resource "aws_security_group" "instance_connect_seoul" {
+resource "aws_security_group" "instance_connect" {
   region      = local.seoul_region
   name        = "instance-connect"
   description = "EC2 Instance Connect"
-  vpc_id      = aws_vpc.seoul.id
+  vpc_id      = aws_vpc.main.id
 
   tags = { Name = "instance-connect" }
 }
 
-resource "aws_vpc_security_group_ingress_rule" "instance_connect_seoul" {
+resource "aws_vpc_security_group_ingress_rule" "instance_connect" {
   region            = local.seoul_region
-  security_group_id = aws_security_group.instance_connect_seoul.id
+  security_group_id = aws_security_group.instance_connect.id
   description       = "EC2 Instance Connect Browser-based client"
   ip_protocol       = "tcp"
   from_port         = 22
@@ -157,7 +157,7 @@ import {
 
 resource "aws_default_security_group" "vpc" {
   region  = local.seoul_region
-  vpc_id  = aws_vpc.seoul.id
+  vpc_id  = aws_vpc.main.id
   ingress = []
   egress  = []
 }

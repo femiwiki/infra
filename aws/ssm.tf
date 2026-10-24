@@ -248,7 +248,7 @@ resource "aws_ssm_document" "otelcol" {
 resource "aws_ssm_association" "otelcol" {
   for_each = local.otelcol_hosts
 
-  depends_on = [aws_ssm_parameter.alloy_seoul]
+  depends_on = [aws_ssm_parameter.alloy]
 
   region              = each.value.region
   association_name    = "install-otelcol-${each.key}"
@@ -383,7 +383,7 @@ resource "aws_ssm_document" "mariadb_forward" {
   })
 }
 
-resource "aws_ssm_parameter" "alloy_seoul" {
+resource "aws_ssm_parameter" "alloy" {
   for_each = {
     loki_password       = var.loki_password
     prometheus_password = var.prometheus_password
@@ -430,7 +430,7 @@ resource "aws_ssm_parameter" "pyroscope_password" {
 }
 
 moved {
-  from = aws_ssm_parameter.secret_seoul["/mediawiki/pyroscope/password"]
+  from = aws_ssm_parameter.secret["/mediawiki/pyroscope/password"]
   to   = aws_ssm_parameter.pyroscope_password
 }
 
@@ -448,7 +448,7 @@ locals {
   ])
 }
 
-resource "aws_ssm_parameter" "secret_seoul" {
+resource "aws_ssm_parameter" "secret" {
   for_each = local.secret_parameters
 
   region = local.seoul_region

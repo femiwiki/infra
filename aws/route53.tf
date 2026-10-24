@@ -17,7 +17,7 @@ resource "aws_route53_record" "femiwiki_com" {
   name    = each.key
   type    = "A"
   zone_id = aws_route53_zone.femiwiki_com.zone_id
-  records = local.through_cloudfront ? null : [aws_eip.seoul.public_ip]
+  records = local.through_cloudfront ? null : [aws_eip.web.public_ip]
   ttl     = local.through_cloudfront ? null : 300
 
   dynamic "alias" {

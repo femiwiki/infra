@@ -1,4 +1,4 @@
-data "aws_ami" "amazon_linux_2_arm64_seoul" {
+data "aws_ami" "amazon_linux_2_arm64" {
   region      = local.seoul_region
   owners      = ["amazon"]
   most_recent = true
@@ -58,9 +58,9 @@ resource "aws_instance" "database" {
   for_each = local.database_hosts
 
   region                      = local.seoul_region
-  ami                         = data.aws_ami.amazon_linux_2_arm64_seoul.image_id
+  ami                         = data.aws_ami.amazon_linux_2_arm64.image_id
   availability_zone           = local.seoul_az
-  subnet_id                   = aws_subnet.seoul.id
+  subnet_id                   = aws_subnet.main.id
   disable_api_termination     = true
   disable_api_stop            = true
   ebs_optimized               = true
@@ -79,8 +79,8 @@ resource "aws_instance" "database" {
   }))
 
   vpc_security_group_ids = [
-    aws_security_group.database_seoul.id,
-    aws_security_group.instance_connect_seoul.id,
+    aws_security_group.database.id,
+    aws_security_group.instance_connect.id,
   ]
 
   root_block_device {
@@ -118,9 +118,9 @@ resource "aws_instance" "database" {
 # the promoted host; this attachment is only the first one.
 resource "aws_network_interface" "database" {
   region          = local.seoul_region
-  subnet_id       = aws_subnet.seoul.id
-  private_ips     = [cidrhost(aws_subnet.seoul.cidr_block, 10)]
-  security_groups = [aws_security_group.database_seoul.id]
+  subnet_id       = aws_subnet.main.id
+  private_ips     = [cidrhost(aws_subnet.main.cidr_block, 10)]
+  security_groups = [aws_security_group.database.id]
 
   tags = { Name = "database primary" }
 }
@@ -154,8 +154,8 @@ resource "aws_launch_template" "database" {
   }
 
   vpc_security_group_ids = [
-    aws_security_group.database_seoul.id,
-    aws_security_group.instance_connect_seoul.id,
+    aws_security_group.database.id,
+    aws_security_group.instance_connect.id,
   ]
 
   block_device_mappings {
@@ -208,7 +208,7 @@ resource "aws_autoscaling_group" "database" {
   min_size            = 0
   max_size            = 2
   desired_capacity    = 0
-  vpc_zone_identifier = [aws_subnet.seoul.id]
+  vpc_zone_identifier = [aws_subnet.main.id]
 
   launch_template {
     id      = aws_launch_template.database.id

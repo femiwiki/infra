@@ -129,7 +129,7 @@ data "aws_iam_policy_document" "database_swap" {
     sid     = "DockerPortForward"
     actions = ["ssm:StartSession"]
     resources = [
-      aws_instance.docker_seoul.arn,
+      aws_instance.docker.arn,
       "arn:aws:ssm:${local.seoul_region}::document/AWS-StartPortForwardingSession",
     ]
   }

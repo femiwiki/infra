@@ -1,8 +1,8 @@
-resource "aws_instance" "docker_seoul" {
+resource "aws_instance" "docker" {
   region                      = local.seoul_region
-  ami                         = data.aws_ami.amazon_linux_2_arm64_seoul.image_id
+  ami                         = data.aws_ami.amazon_linux_2_arm64.image_id
   availability_zone           = local.seoul_az
-  subnet_id                   = aws_subnet.seoul.id
+  subnet_id                   = aws_subnet.main.id
   disable_api_termination     = true
   disable_api_stop            = true
   ebs_optimized               = true
@@ -16,9 +16,9 @@ resource "aws_instance" "docker_seoul" {
   }))
 
   vpc_security_group_ids = [
-    aws_security_group.web_seoul.id,
-    aws_security_group.database_client_seoul.id,
-    aws_security_group.instance_connect_seoul.id,
+    aws_security_group.web.id,
+    aws_security_group.database_client.id,
+    aws_security_group.instance_connect.id,
   ]
 
   root_block_device {
@@ -48,8 +48,8 @@ resource "aws_instance" "docker_seoul" {
   }
 }
 
-resource "aws_eip_association" "seoul" {
+resource "aws_eip_association" "web" {
   region        = local.seoul_region
-  allocation_id = aws_eip.seoul.id
-  instance_id   = aws_instance.docker_seoul.id
+  allocation_id = aws_eip.web.id
+  instance_id   = aws_instance.docker.id
 }
