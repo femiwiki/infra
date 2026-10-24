@@ -17,3 +17,17 @@ variable "mysql_username" {
   type        = string
   ephemeral   = true
 }
+
+variable "mysql_password" {
+  description = "Password of mysql_username, which the job reads from Parameter Store with its own role"
+  type        = string
+  sensitive   = true
+  ephemeral   = true
+}
+
+variable "repl_password" {
+  description = "Password of the replication account"
+  type        = string
+  sensitive   = true
+  ephemeral   = true
+}
