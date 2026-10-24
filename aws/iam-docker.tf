@@ -3,10 +3,9 @@ module "infra_docker" {
   version            = "6.8.2"
   name               = "infra-docker"
   use_name_prefix    = false
-  description        = "Allows GitHub Actions workflows of femiwiki/infra to plan and apply the docker workspace."
+  description        = "Allows GitHub Actions workflows of femiwiki/infra to apply the docker workspace."
   enable_github_oidc = true
   oidc_subjects = [
-    "femiwiki@21275875/infra@188597503:pull_request",
     "femiwiki@21275875/infra@188597503:environment:docker",
   ]
 }
