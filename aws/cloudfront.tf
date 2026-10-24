@@ -7,7 +7,7 @@ resource "aws_route53_record" "cloudfront_origin" {
   name    = "cloudfront-origin.femiwiki.com"
   type    = "A"
   zone_id = aws_route53_zone.femiwiki_com.zone_id
-  records = [aws_eip.seoul.public_ip]
+  records = [aws_eip.web.public_ip]
   ttl     = 60
 }
 

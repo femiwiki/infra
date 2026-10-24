@@ -50,14 +50,14 @@ data "aws_iam_policy_document" "infra_docker" {
   statement {
     sid       = "ReadMediawikiDbPassword"
     actions   = ["ssm:GetParameter"]
-    resources = [aws_ssm_parameter.secret_seoul["/mysql/users/mediawiki/password"].arn]
+    resources = [aws_ssm_parameter.secret["/mysql/users/mediawiki/password"].arn]
   }
 
   statement {
     sid     = "DockerPortForward"
     actions = ["ssm:StartSession"]
     resources = [
-      aws_instance.docker_seoul.arn,
+      aws_instance.docker.arn,
       "arn:aws:ssm:${local.seoul_region}::document/AWS-StartPortForwardingSession",
     ]
   }
@@ -131,14 +131,14 @@ data "aws_iam_policy_document" "infra_docker_plan" {
   statement {
     sid       = "ReadMediawikiDbPassword"
     actions   = ["ssm:GetParameter"]
-    resources = [aws_ssm_parameter.secret_seoul["/mysql/users/mediawiki/password"].arn]
+    resources = [aws_ssm_parameter.secret["/mysql/users/mediawiki/password"].arn]
   }
 
   statement {
     sid     = "ReadOnlyDockerApiForward"
     actions = ["ssm:StartSession"]
     resources = [
-      aws_instance.docker_seoul.arn,
+      aws_instance.docker.arn,
       aws_ssm_document.docker_api_readonly_forward.arn,
     ]
   }

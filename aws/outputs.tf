@@ -40,6 +40,6 @@ output "femiwiki_role_arn" {
 
 output "mysql_mediawiki_password" {
   description = "The password of the MariaDB account MediaWiki logs in as"
-  value       = aws_ssm_parameter.secret_seoul["/mysql/users/mediawiki/password"].value
+  value       = aws_ssm_parameter.secret["/mysql/users/mediawiki/password"].value
   sensitive   = true
 }
