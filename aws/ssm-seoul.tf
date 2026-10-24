@@ -4,10 +4,11 @@ resource "aws_ssm_parameter" "alloy_seoul" {
     prometheus_password = var.prometheus_password
   }
 
-  region = local.seoul_region
-  name   = "/alloy/${each.key}"
-  type   = "SecureString"
-  value  = each.value
+  region           = local.seoul_region
+  name             = "/alloy/${each.key}"
+  type             = "SecureString"
+  value_wo         = each.value
+  value_wo_version = 1
 }
 
 # Read by publish-dump in the MediaWiki image (femiwiki/docker-mediawiki#1235).
@@ -17,27 +18,30 @@ resource "aws_ssm_parameter" "internet_archive" {
     secret_key = var.internet_archive_secret_key
   }
 
-  region = local.seoul_region
-  name   = "/mediawiki/internet_archive/${each.key}"
-  type   = "SecureString"
-  value  = each.value
+  region           = local.seoul_region
+  name             = "/mediawiki/internet_archive/${each.key}"
+  type             = "SecureString"
+  value_wo         = each.value
+  value_wo_version = 1
 }
 
 # Read by the MediaWiki image's ConfirmEdit (femiwiki/femiwiki#668).
 resource "aws_ssm_parameter" "h_captcha_secret_key" {
-  region = local.seoul_region
-  name   = "/mediawiki/h_captcha/secret_key"
-  type   = "SecureString"
-  value  = var.h_captcha_secret_key
+  region           = local.seoul_region
+  name             = "/mediawiki/h_captcha/secret_key"
+  type             = "SecureString"
+  value_wo         = var.h_captcha_secret_key
+  value_wo_version = 1
 }
 
 # Read by the MediaWiki image to send slow-request profiles; the profiles:write
 # token is made by grafana/access-policies.tf (femiwiki/femiwiki#614).
 resource "aws_ssm_parameter" "pyroscope_password" {
-  region = local.seoul_region
-  name   = "/mediawiki/pyroscope/password"
-  type   = "SecureString"
-  value  = var.pyroscope_password
+  region           = local.seoul_region
+  name             = "/mediawiki/pyroscope/password"
+  type             = "SecureString"
+  value_wo         = var.pyroscope_password
+  value_wo_version = 1
 }
 
 moved {
