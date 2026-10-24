@@ -86,6 +86,20 @@ resource "aws_ssm_parameter" "mysql_tofu_password" {
   value  = random_password.mysql_tofu.result
 }
 
+resource "random_password" "mysql_tofu_plan" {
+  length  = 32
+  special = false
+}
+
+# Read by mariadb plans of pull requests to log in, and by a new database host
+# to create the account.
+resource "aws_ssm_parameter" "mysql_tofu_plan_password" {
+  region = local.seoul_region
+  name   = "/mysql/users/tofu-plan/password"
+  type   = "SecureString"
+  value  = random_password.mysql_tofu_plan.result
+}
+
 resource "random_password" "mariadb_repl" {
   length  = 32
   special = false
