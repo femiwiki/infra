@@ -33,8 +33,8 @@ data "aws_iam_policy_document" "infra_mariadb" {
     sid     = "ReadLoginPasswords"
     actions = ["ssm:GetParameter"]
     resources = [
-      aws_ssm_parameter.mysql_tofu_password.arn,
-      aws_ssm_parameter.mariadb_repl_password.arn,
+      data.aws_ssm_parameter.secret["/mysql/users/tofu/password"].arn,
+      data.aws_ssm_parameter.secret["/mariadb/users/repl/password"].arn,
     ]
   }
 
@@ -112,8 +112,8 @@ data "aws_iam_policy_document" "infra_mariadb_plan" {
     sid     = "ReadLoginPasswords"
     actions = ["ssm:GetParameter"]
     resources = [
-      aws_ssm_parameter.mysql_tofu_plan_password.arn,
-      aws_ssm_parameter.mariadb_repl_password.arn,
+      data.aws_ssm_parameter.secret["/mysql/users/tofu-plan/password"].arn,
+      data.aws_ssm_parameter.secret["/mariadb/users/repl/password"].arn,
     ]
   }
 
