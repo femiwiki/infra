@@ -184,3 +184,11 @@ resource "github_actions_secret" "tofu_github_plan_app_pem" {
   secret_name = "TOFU_GITHUB_PLAN_APP_PEM"
   value       = data.onepassword_item.tofu_github_plan_app_pem.note_value
 }
+
+# For the github workspace's plans, which run in this environment once a Deployer approves
+resource "github_actions_environment_secret" "tofu_github_plan_app_pem" {
+  repository  = module.infra.name
+  environment = module.tacos.environments["github-plan"]
+  secret_name = "TOFU_GITHUB_PLAN_APP_PEM"
+  value       = data.onepassword_item.tofu_github_plan_app_pem.note_value
+}

@@ -365,7 +365,7 @@ module "tacos" {
   source = "github.com/femiwiki/terraform-github-tacos?ref=v0.7.0"
 
   repository     = module.infra.name
-  environments   = ["aws", "database", "docker", "gcp", "github", "grafana", "healthchecks", "mariadb"]
+  environments   = ["aws", "database", "docker", "gcp", "github", "github-plan", "grafana", "healthchecks", "mariadb"]
   reviewer_teams = [github_team.deployer.id]
   # The provider's default, which these environments were created with
   can_admins_bypass = true
