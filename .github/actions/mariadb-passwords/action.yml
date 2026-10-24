@@ -1,0 +1,34 @@
+---
+name: Read the MariaDB passwords
+description: >-
+  Reads the password of the account the mariadb workspace logs in as, and the
+  replication account's, from Parameter Store with the job's role, so the
+  workspace needs no aws provider. infra-mariadb-plan can read only tofu-plan's,
+  infra-mariadb only tofu's.
+inputs:
+  username:
+    description: The MariaDB account to log in as.
+    required: true
+outputs:
+  login:
+    description: The password of username.
+    value: ${{ steps.read.outputs.login }}
+  repl:
+    description: The password of the replication account.
+    value: ${{ steps.read.outputs.repl }}
+runs:
+  using: composite
+  steps:
+    - name: Read them
+      id: read
+      shell: bash
+      env:
+        AWS_REGION: ap-northeast-2
+        USERNAME: ${{ inputs.username }}
+      run: |
+        login=$(aws ssm get-parameter --name "/mysql/users/$USERNAME/password" --with-decryption --query Parameter.Value --output text)
+        echo "::add-mask::$login"
+        echo "login=$login" >> "$GITHUB_OUTPUT"
+        repl=$(aws ssm get-parameter --name /mariadb/users/repl/password --with-decryption --query Parameter.Value --output text)
+        echo "::add-mask::$repl"
+        echo "repl=$repl" >> "$GITHUB_OUTPUT"
