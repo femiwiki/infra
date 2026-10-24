@@ -31,14 +31,26 @@ resource "aws_ssm_parameter" "h_captcha_secret_key" {
   value  = var.h_captcha_secret_key
 }
 
+# Read by the MediaWiki image to send slow-request profiles; the profiles:write
+# token is made by grafana/access-policies.tf (femiwiki/femiwiki#614).
+resource "aws_ssm_parameter" "pyroscope_password" {
+  region = local.seoul_region
+  name   = "/mediawiki/pyroscope/password"
+  type   = "SecureString"
+  value  = var.pyroscope_password
+}
+
+moved {
+  from = aws_ssm_parameter.secret_seoul["/mediawiki/pyroscope/password"]
+  to   = aws_ssm_parameter.pyroscope_password
+}
+
 # Written by hand, so the values stay out of the configuration; only the type is
 # managed here (femiwiki/femiwiki#597).
 locals {
   secret_parameters = toset([
     "/mediawiki/bounce_handler/token",
     "/mediawiki/o_auth_2_private_key",
-    # A Grafana Cloud token with profiles:write only, for slow-request profiles (femiwiki/femiwiki#614)
-    "/mediawiki/pyroscope/password",
     "/mediawiki/rc_feeds_discord_url",
     "/mediawiki/site_key",
     "/mediawiki/smtp/password",
