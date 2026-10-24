@@ -4,6 +4,15 @@ resource "github_team" "reviewer" {
   privacy     = "closed"
 }
 
+# A second copy of module.infra's grant, imported by mistake
+removed {
+  from = github_team_repository.reviewer_infra
+
+  lifecycle {
+    destroy = false
+  }
+}
+
 resource "github_team" "package_manager" {
   name        = "Package Manager"
   description = "People managing Github Packages and Github Container Registry"
