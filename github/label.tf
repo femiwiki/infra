@@ -62,12 +62,6 @@ locals {
       color       = "f9d0c4"
     }
 
-    enhancement = {
-      name        = "enhancement"
-      description = "New feature or request"
-      color       = "a2eeef"
-    }
-
     epic = {
       name        = "EPIC"
       description = ""
@@ -273,7 +267,7 @@ locals {
     }
   }
 
-  base_label_suite = ["enhancement", "invalid", "wontfix", "help_wanted", "good_first_issue", "upstreamed", "needs_always_on_service", "ci"]
+  base_label_suite = ["invalid", "wontfix", "help_wanted", "good_first_issue", "upstreamed", "needs_always_on_service", "ci"]
   ext_label_suite  = concat(local.base_label_suite, ["deprecation"])
 
 
@@ -370,7 +364,7 @@ locals {
     (module.femiwiki_github_io.name) = ["ci", "good_first_issue"]
     # Renamed to lambda; the API answers the old name with a redirect, which the
     # provider may not follow for writes, so this list is frozen.
-    sns-discord = ["enhancement", "invalid", "wontfix", "help_wanted", "upstreamed", "ci"]
+    sns-discord = ["invalid", "wontfix", "help_wanted", "upstreamed", "ci"]
 
     (module.caddy_mwcache.name)       = local.base_label_suite
     (module.caddy_cloudfront_ip.name) = local.base_label_suite
