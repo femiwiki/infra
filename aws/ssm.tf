@@ -429,10 +429,11 @@ resource "aws_ssm_parameter" "pyroscope_password" {
   value_wo_version = 1
 }
 
-# Written by hand (femiwiki/femiwiki#597) and read without decryption, so their
-# values stay out of the state.
+# Read without decryption, so their values stay out of the state. Written by hand
+# (femiwiki/femiwiki#597), except the database logins, once random_password's.
 locals {
   secret_parameters = toset([
+    "/mariadb/users/repl/password",
     "/mediawiki/bounce_handler/token",
     "/mediawiki/o_auth_2_private_key",
     "/mediawiki/rc_feeds_discord_url",
@@ -440,6 +441,8 @@ locals {
     "/mediawiki/smtp/password",
     "/mediawiki/verp_secret",
     "/mysql/users/mediawiki/password",
+    "/mysql/users/tofu-plan/password",
+    "/mysql/users/tofu/password",
   ])
 }
 
@@ -451,45 +454,52 @@ data "aws_ssm_parameter" "secret" {
   with_decryption = false
 }
 
-resource "random_password" "mysql_tofu" {
-  length  = 32
-  special = false
+removed {
+  from = random_password.mysql_tofu
+
+  lifecycle {
+    destroy = false
+  }
 }
 
-# Read by the mariadb workspace to log in, and by a new database host to create
-# the account.
-resource "aws_ssm_parameter" "mysql_tofu_password" {
-  region = local.seoul_region
-  name   = "/mysql/users/tofu/password"
-  type   = "SecureString"
-  value  = random_password.mysql_tofu.result
+removed {
+  from = aws_ssm_parameter.mysql_tofu_password
+
+  lifecycle {
+    destroy = false
+  }
 }
 
-resource "random_password" "mysql_tofu_plan" {
-  length  = 32
-  special = false
+removed {
+  from = random_password.mysql_tofu_plan
+
+  lifecycle {
+    destroy = false
+  }
 }
 
-# Read by mariadb plans of pull requests to log in, and by a new database host
-# to create the account.
-resource "aws_ssm_parameter" "mysql_tofu_plan_password" {
-  region = local.seoul_region
-  name   = "/mysql/users/tofu-plan/password"
-  type   = "SecureString"
-  value  = random_password.mysql_tofu_plan.result
+removed {
+  from = aws_ssm_parameter.mysql_tofu_plan_password
+
+  lifecycle {
+    destroy = false
+  }
 }
 
-resource "random_password" "mariadb_repl" {
-  length  = 32
-  special = false
+removed {
+  from = random_password.mariadb_repl
+
+  lifecycle {
+    destroy = false
+  }
 }
 
-# For the mariadb workspace and for a new host that replicates the primary.
-resource "aws_ssm_parameter" "mariadb_repl_password" {
-  region = local.seoul_region
-  name   = "/mariadb/users/repl/password"
-  type   = "SecureString"
-  value  = random_password.mariadb_repl.result
+removed {
+  from = aws_ssm_parameter.mariadb_repl_password
+
+  lifecycle {
+    destroy = false
+  }
 }
 
 # The next database host's server_id, raised by the replacement workflow so no
