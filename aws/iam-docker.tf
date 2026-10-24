@@ -69,3 +69,75 @@ data "aws_iam_policy_document" "infra_docker" {
     ]
   }
 }
+
+module "infra_docker_plan" {
+  source             = "terraform-aws-modules/iam/aws//modules/iam-role"
+  version            = "6.8.2"
+  name               = "infra-docker-plan"
+  use_name_prefix    = false
+  description        = "Allows GitHub Actions workflows of femiwiki/infra to plan the docker workspace through the read-only Docker API."
+  enable_github_oidc = true
+  oidc_subjects      = ["femiwiki@21275875/infra@188597503:pull_request"]
+}
+
+resource "aws_iam_role_policy" "infra_docker_plan" {
+  name   = "InfraDockerPlan"
+  role   = module.infra_docker_plan.name
+  policy = data.aws_iam_policy_document.infra_docker_plan.json
+}
+
+data "aws_iam_policy_document" "infra_docker_plan" {
+  statement {
+    sid       = "ReadState"
+    actions   = ["s3:GetObject"]
+    resources = [for b in local.tfstate_buckets : "${b}/docker/terraform.tfstate"]
+  }
+
+  statement {
+    sid       = "StateLock"
+    actions   = ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"]
+    resources = [for b in local.tfstate_buckets : "${b}/docker/terraform.tfstate.tflock"]
+  }
+
+  statement {
+    sid       = "ReadAwsOutputs"
+    actions   = ["s3:GetObject"]
+    resources = [for b in local.tfstate_buckets : "${b}/aws/terraform.tfstate"]
+  }
+
+  statement {
+    sid       = "ReadGcpOutputs"
+    actions   = ["s3:GetObject"]
+    resources = [for b in local.tfstate_buckets : "${b}/gcp/terraform.tfstate"]
+  }
+
+  statement {
+    sid       = "StateBucket"
+    actions   = ["s3:ListBucket"]
+    resources = local.tfstate_buckets
+  }
+
+  statement {
+    sid       = "FindInstances"
+    actions   = ["ec2:DescribeInstances", "ec2:DescribeInstanceTypes"]
+    resources = ["*"]
+  }
+
+  statement {
+    sid     = "ReadOnlyDockerApiForward"
+    actions = ["ssm:StartSession"]
+    resources = [
+      aws_instance.docker_seoul.arn,
+      aws_ssm_document.docker_api_readonly_forward.arn,
+    ]
+  }
+
+  statement {
+    sid     = "OwnSessions"
+    actions = ["ssm:TerminateSession", "ssm:ResumeSession"]
+    resources = [
+      "arn:aws:ssm:*:*:session/GitHubActions-*",
+      "arn:aws:ssm:*:*:session/$${aws:userid}-*",
+    ]
+  }
+}
