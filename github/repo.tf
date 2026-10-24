@@ -298,6 +298,19 @@ module "delayed_job_queue" {
   default_status_checks           = []
 }
 
+module "property_suggester_local_stats" {
+  source      = "./modules/github-repository"
+  name        = "PropertySuggesterLocalStats"
+  description = "MediaWiki extension that fills PropertySuggester's statistics from the wiki's own Wikibase items"
+  topics = [
+    "mediawiki",
+    "mediawiki-extension",
+    "wikibase",
+  ]
+  required_status_checks_contexts = ["required"]
+  default_status_checks           = []
+}
+
 module "http_signatures" {
   source      = "./modules/github-repository"
   name        = "http-signatures"
