@@ -38,18 +38,6 @@ output "femiwiki_role_arn" {
   value       = module.femiwiki.arn
 }
 
-output "mysql_tofu_password" {
-  description = "The password of the MariaDB account the mariadb workspace logs in as"
-  value       = aws_ssm_parameter.mysql_tofu_password.value
-  sensitive   = true
-}
-
-output "mariadb_repl_password" {
-  description = "The password of the MariaDB account replicas log in as"
-  value       = aws_ssm_parameter.mariadb_repl_password.value
-  sensitive   = true
-}
-
 output "mysql_mediawiki_password" {
   description = "The password of the MariaDB account MediaWiki logs in as"
   value       = aws_ssm_parameter.secret_seoul["/mysql/users/mediawiki/password"].value
