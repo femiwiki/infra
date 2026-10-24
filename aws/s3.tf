@@ -106,74 +106,8 @@ resource "aws_s3_bucket_public_access_block" "backups" {
 # Terraform state
 #
 
-# Roles grant both buckets until every backend reads state (femiwiki/femiwiki#666).
 locals {
-  tfstate_buckets = [aws_s3_bucket.tfstate.arn, module.state.s3_bucket_arn]
-}
-
-resource "aws_s3_bucket" "tfstate" {
-  region           = local.tokyo_region
-  bucket           = "tfstate-${data.aws_caller_identity.current.account_id}-${local.tokyo_region}-an"
-  bucket_namespace = "account-regional"
-
-  # Every root reads its state in Seoul (femiwiki/femiwiki#666); the removal
-  # that follows has to empty the old keys and their versions.
-  force_destroy = true
-}
-
-resource "aws_s3_bucket_public_access_block" "tfstate" {
-  region = local.tokyo_region
-  bucket = aws_s3_bucket.tfstate.id
-
-  block_public_acls       = true
-  block_public_policy     = true
-  ignore_public_acls      = true
-  restrict_public_buckets = true
-}
-
-resource "aws_s3_bucket_versioning" "tfstate" {
-  region = local.tokyo_region
-  bucket = aws_s3_bucket.tfstate.id
-  versioning_configuration {
-    status = "Enabled"
-  }
-}
-
-resource "aws_s3_bucket_server_side_encryption_configuration" "tfstate" {
-  region = local.tokyo_region
-  bucket = aws_s3_bucket.tfstate.id
-
-  rule {
-    apply_server_side_encryption_by_default {
-      sse_algorithm = "AES256"
-    }
-  }
-}
-
-resource "aws_s3_bucket_lifecycle_configuration" "tfstate" {
-  region = local.tokyo_region
-  bucket = aws_s3_bucket.tfstate.id
-
-  dynamic "rule" {
-    for_each = ["grafana"]
-
-    content {
-      status = "Enabled"
-      id     = "Expire the ${rule.value} state lock's old versions"
-
-      filter {
-        prefix = "${rule.value}/terraform.tfstate.tflock"
-      }
-
-      noncurrent_version_expiration {
-        noncurrent_days = 1
-      }
-
-      expiration {
-        expired_object_delete_marker = true
-      }
-    }
-  }
+  tfstate_buckets = [module.state.s3_bucket_arn]
 }
 
 module "state" {
