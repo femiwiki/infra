@@ -141,6 +141,9 @@ resource "docker_container" "fastcgi" {
       # action=flow takes 5 to 9 seconds (femiwiki#576); a normal page is under
       # one, so 3 keeps the ordinary traffic out of the directory
       FW_PROFILER_THRESHOLD = "3"
+      # Kept profiles go to Grafana Cloud Profiles; the token is in SSM (femiwiki#614)
+      FW_PROFILER_PYROSCOPE_URL  = "https://profiles-prod-019.grafana.net"
+      FW_PROFILER_PYROSCOPE_USER = "1059321"
 
       # Script hosts of the report-only Content-Security-Policy. See femiwiki#680.
       FW_CSP_SCRIPT_SRC = join(",", [
