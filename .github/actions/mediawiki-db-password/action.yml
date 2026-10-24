@@ -1,0 +1,22 @@
+---
+name: Read the MediaWiki database password
+description: >-
+  Reads the password MediaWiki logs in to MariaDB with from Parameter Store
+  with the job's role, so the docker workspace needs neither the aws outputs
+  nor an aws data source for it.
+outputs:
+  password:
+    description: The password of the mediawiki account.
+    value: ${{ steps.read.outputs.password }}
+runs:
+  using: composite
+  steps:
+    - name: Read it
+      id: read
+      shell: bash
+      env:
+        AWS_REGION: ap-northeast-2
+      run: |
+        password=$(aws ssm get-parameter --name /mysql/users/mediawiki/password --with-decryption --query Parameter.Value --output text)
+        echo "::add-mask::$password"
+        echo "password=$password" >> "$GITHUB_OUTPUT"
