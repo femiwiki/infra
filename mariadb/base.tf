@@ -8,8 +8,7 @@ terraform {
     use_lockfile = true
   }
 
-  # "mariadb" is this state's and is never renamed. The aws key names are its own,
-  # under which its state files the key metadata.
+  # "mariadb" is this state's and is never renamed.
   encryption {
     key_provider "pbkdf2" "mariadb" {
       passphrase = var.state_passphrase
@@ -17,20 +16,6 @@ terraform {
 
     method "aes_gcm" "mariadb" {
       keys = key_provider.pbkdf2.mariadb
-    }
-
-    key_provider "pbkdf2" "state" {
-      passphrase = var.aws_state_passphrase
-    }
-
-    method "aes_gcm" "state" {
-      keys = key_provider.pbkdf2.state
-    }
-
-    remote_state_data_sources {
-      remote_state_data_source "aws" {
-        method = method.aes_gcm.state
-      }
     }
 
     state {
@@ -45,6 +30,10 @@ terraform {
   }
 
   required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 6.7"
+    }
     mysql = {
       source  = "petoju/mysql"
       version = "~> 3.0"
@@ -52,18 +41,24 @@ terraform {
   }
 }
 
-data "terraform_remote_state" "aws" {
-  backend = "s3"
+provider "aws" {
+  region = "ap-northeast-2"
+}
 
-  config = {
-    bucket = "tfstate-302617221463-ap-northeast-2-an"
-    key    = "aws/terraform.tfstate"
-    region = "ap-northeast-2"
-  }
+# Plans log in as tofu-plan, which reads grants only, and their role cannot
+# read the password of tofu, which applies.
+ephemeral "aws_ssm_parameter" "login" {
+  arn             = "arn:aws:ssm:ap-northeast-2:302617221463:parameter/mysql/users/${var.mysql_username}/password"
+  with_decryption = true
+}
+
+ephemeral "aws_ssm_parameter" "repl" {
+  arn             = "arn:aws:ssm:ap-northeast-2:302617221463:parameter/mariadb/users/repl/password"
+  with_decryption = true
 }
 
 provider "mysql" {
   endpoint = var.mariadb_endpoint
-  username = "tofu"
-  password = data.terraform_remote_state.aws.outputs.mysql_tofu_password
+  username = var.mysql_username
+  password = ephemeral.aws_ssm_parameter.login.value
 }
