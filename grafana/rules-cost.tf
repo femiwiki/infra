@@ -93,7 +93,7 @@ resource "grafana_rule_group" "cost" {
     }
 
     annotations = {
-      summary = "{{ $labels.instance }}의 최근 7일 평균 CPU가 {{ printf \"%.1f\" $values.A.Value }}%로, 하루 약 {{ printf \"%.0f\" $values.B.Value }} CPU 크레딧을 씁니다. 45%(하루 1,296 크레딧)를 넘으면 t4g.small unlimited보다 c7g.medium이 쌉니다. t4g.small은 시간당 0.0208달러에 기준선(2 vCPU의 20%, 시간당 24 크레딧)을 넘는 vCPU-시간마다 0.04달러를 더 내고, c7g.medium은 시간당 0.0408달러입니다. 차액 0.02달러는 초과 0.5 vCPU-시간, 곧 시간당 30 크레딧이므로 기준선과 합쳐 시간당 54 크레딧, 2 vCPU의 45%에서 두 요금이 같아집니다. 이 값은 호스트 안에서 잰 CPU라 AWS의 CPUCreditUsage보다 1%p쯤 낮게 나오므로 44%에서 알립니다. 이 호스트(aws/web-seoul.tf 또는 aws/database-seoul.tf)의 인스턴스 타입을 바꿀지 검토합니다. c7g.medium은 vCPU가 하나라 같은 부하에서 사용률이 약 90%가 됩니다."
+      summary = "{{ $labels.instance }}의 최근 7일 평균 CPU가 {{ printf \"%.1f\" $values.A.Value }}%로, 하루 약 {{ printf \"%.0f\" $values.B.Value }} CPU 크레딧을 씁니다. 45%(하루 1,296 크레딧)를 넘으면 t4g.small unlimited보다 c7g.medium이 쌉니다. t4g.small은 시간당 0.0208달러에 기준선(2 vCPU의 20%, 시간당 24 크레딧)을 넘는 vCPU-시간마다 0.04달러를 더 내고, c7g.medium은 시간당 0.0408달러입니다. 차액 0.02달러는 초과 0.5 vCPU-시간, 곧 시간당 30 크레딧이므로 기준선과 합쳐 시간당 54 크레딧, 2 vCPU의 45%에서 두 요금이 같아집니다. 이 값은 호스트 안에서 잰 CPU라 AWS의 CPUCreditUsage보다 1%p쯤 낮게 나오므로 44%에서 알립니다. 이 호스트(aws/web.tf 또는 aws/database.tf)의 인스턴스 타입을 바꿀지 검토합니다. c7g.medium은 vCPU가 하나라 같은 부하에서 사용률이 약 90%가 됩니다."
     }
 
     data {
