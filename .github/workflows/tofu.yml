@@ -95,18 +95,19 @@ jobs:
         if: steps.scope.outputs.plan == 'true' && matrix.workspace == 'github'
         id: app-token
         with:
-          client-id: ${{ vars.TOFU_GITHUB_CLIENT_ID }}
-          private-key: ${{ secrets.TOFU_GITHUB_APP_PEM }}
+          client-id: Iv23lixkYWBiZgNlreZS  # femiwiki-infra-plan, which cannot touch teams, environments or secrets
+          private-key: ${{ secrets.TOFU_GITHUB_PLAN_APP_PEM }}
           # This root manages every repository in the organisation, so the token
           # is bounded by permission rather than by repository. Listing them here
           # would be a second copy of github/repo.tf, drifting from the first.
           owner: femiwiki  # zizmor: ignore[github-app]
           permission-administration: write
-          permission-environments: write
-          permission-issues: write
-          permission-members: write
-          permission-pages: write
-          permission-secrets: write
+          permission-contents: write
+          permission-environments: read
+          permission-issues: read
+          permission-members: read
+          permission-pages: read
+          permission-secrets: read
 
       - uses: ./.github/actions/generation-swaps-ports
         if: steps.scope.outputs.plan == 'true' && startsWith(matrix.workspace, 'docker')
