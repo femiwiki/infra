@@ -88,7 +88,7 @@ resource "github_actions_secret" "github_io_wiki_bot_user" {
 }
 
 # The availability collector's read-only view of the metrics, as JSON with url,
-# user and token. Made by grafana/readers.tf.
+# user and token. Made by grafana/access-policies.tf.
 resource "github_actions_secret" "github_io_prometheus" {
   repository  = module.femiwiki_github_io.name
   secret_name = "GRAFANA_PROMETHEUS"
