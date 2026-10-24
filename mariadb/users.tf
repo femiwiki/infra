@@ -41,7 +41,7 @@ resource "mysql_grant" "backup_femiwiki" {
 resource "mysql_user" "repl" {
   user                = "repl"
   host                = "10.20.%"
-  password_wo         = data.terraform_remote_state.aws.outputs.mariadb_repl_password
+  password_wo         = ephemeral.aws_ssm_parameter.repl.value
   password_wo_version = 1
 }
 
