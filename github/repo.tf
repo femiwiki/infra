@@ -358,6 +358,48 @@ module "tacos" {
   can_admins_bypass = true
 }
 
+# A pull request's run uses its branch's workflow with the plan credentials,
+# so only admins and the bots may create or push a branch here.
+resource "github_repository_ruleset" "infra_branches" {
+  name        = "branches"
+  repository  = module.infra.name
+  target      = "branch"
+  enforcement = "active"
+
+  conditions {
+    ref_name {
+      include = ["~ALL"]
+      exclude = ["~DEFAULT_BRANCH"]
+    }
+  }
+
+  rules {
+    creation = true
+    update   = true
+  }
+
+  bypass_actors {
+    actor_id    = 5 # Repository admin
+    actor_type  = "RepositoryRole"
+    bypass_mode = "always"
+  }
+
+  dynamic "bypass_actors" {
+    for_each = data.github_app.infra_branch_pushers
+    content {
+      actor_id    = tonumber(bypass_actors.value.id)
+      actor_type  = "Integration"
+      bypass_mode = "always"
+    }
+  }
+}
+
+# femiwiki-pat-owner opens the bump pull requests and brings branches up to date
+data "github_app" "infra_branch_pushers" {
+  for_each = toset(["dependabot", "femiwiki-pat-owner"])
+  slug     = each.key
+}
+
 moved {
   from = github_repository_environment.infra
   to   = module.tacos.github_repository_environment.this
