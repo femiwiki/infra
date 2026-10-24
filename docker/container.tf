@@ -335,3 +335,29 @@ resource "docker_container" "autoheal" {
     soft = 32768
   }
 }
+
+resource "docker_container" "docker_api_readonly" {
+  name         = "docker-api-readonly"
+  log_driver   = "fluentd"
+  log_opts     = local.log_opts
+  image        = "ghcr.io/tecnativa/docker-socket-proxy:v0.5.0"
+  network_mode = "host"
+  restart      = "always"
+  memory       = 64
+  memory_swap  = 64
+  env = [
+    "BIND_CONFIG=127.0.0.1:2377",
+    "CONTAINERS=1",
+    "IMAGES=1",
+    "INFO=1",
+    "NETWORKS=1",
+    "VOLUMES=1",
+  ]
+
+  mounts {
+    type      = "bind"
+    source    = "/var/run/docker.sock"
+    target    = "/var/run/docker.sock"
+    read_only = true
+  }
+}
