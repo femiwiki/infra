@@ -20,7 +20,7 @@ resource "grafana_cloud_access_policy_token" "github_io" {
 }
 
 # Lets MediaWiki send Excimer's slow-request profiles (femiwiki/femiwiki#614),
-# handed over through github/secrets.tf and aws/ssm-seoul.tf
+# handed over through github/secrets.tf and aws/ssm.tf
 resource "grafana_cloud_access_policy" "mediawiki_profiles" {
   provider = grafana.cloud
   region   = data.grafana_cloud_stack.femiwiki.region_slug
