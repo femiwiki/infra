@@ -454,54 +454,6 @@ data "aws_ssm_parameter" "secret" {
   with_decryption = false
 }
 
-removed {
-  from = random_password.mysql_tofu
-
-  lifecycle {
-    destroy = false
-  }
-}
-
-removed {
-  from = aws_ssm_parameter.mysql_tofu_password
-
-  lifecycle {
-    destroy = false
-  }
-}
-
-removed {
-  from = random_password.mysql_tofu_plan
-
-  lifecycle {
-    destroy = false
-  }
-}
-
-removed {
-  from = aws_ssm_parameter.mysql_tofu_plan_password
-
-  lifecycle {
-    destroy = false
-  }
-}
-
-removed {
-  from = random_password.mariadb_repl
-
-  lifecycle {
-    destroy = false
-  }
-}
-
-removed {
-  from = aws_ssm_parameter.mariadb_repl_password
-
-  lifecycle {
-    destroy = false
-  }
-}
-
 # The next database host's server_id, raised by the replacement workflow so no
 # id comes back: a replica skips events that carry its own id.
 resource "aws_ssm_parameter" "mariadb_next_server_id" {
