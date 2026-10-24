@@ -356,3 +356,29 @@ resource "aws_ssm_document" "docker_api_readonly_forward" {
     }
   })
 }
+
+resource "aws_ssm_document" "mariadb_forward" {
+  region          = local.seoul_region
+  name            = "forward-mariadb"
+  document_type   = "Session"
+  document_format = "JSON"
+
+  content = jsonencode({
+    schemaVersion = "1.0"
+    description   = "Forwards MariaDB on 127.0.0.1:3306 and no other port, for mariadb plans of pull requests."
+    sessionType   = "Port"
+    parameters = {
+      localPortNumber = {
+        type           = "String"
+        description    = "The port on the client."
+        allowedPattern = "^[0-9]{1,5}$"
+        default        = "0"
+      }
+    }
+    properties = {
+      portNumber      = "3306"
+      type            = "LocalPortForwarding"
+      localPortNumber = "{{ localPortNumber }}"
+    }
+  })
+}
