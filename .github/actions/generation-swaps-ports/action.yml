@@ -8,13 +8,16 @@ description: >-
   every fastcgi name on the host, running or not, or it reuses a name that
   exists. Normally that is the serving generation plus one. After a swap whose
   new generation never became healthy, that generation keeps its name but not
-  its port, so the next is the serving one plus three. Needs the daemon port
-  forwarded to 127.0.0.1:2376, since the numbers are read off the host rather
-  than off main, which sits one behind whenever something is applied but not
-  yet merged.
+  its port, so the next is the serving one plus three. Needs a Docker API
+  forwarded to 127.0.0.1, since the numbers are read off the host rather than
+  off main, which sits one behind whenever something is applied but not yet
+  merged.
 inputs:
   workspace:
     description: The root whose locals.tf to read.
+    required: true
+  port:
+    description: The runner's port the Docker API is forwarded to.
     required: true
 runs:
   using: composite
@@ -23,11 +26,12 @@ runs:
       shell: bash
       env:
         WORKSPACE: ${{ inputs.workspace }}
+        PORT: ${{ inputs.port }}
       run: |
         gen=$(grep -oE 'fastcgi_generation = [0-9]+' "$WORKSPACE/locals.tf" | grep -oE '[0-9]+$')
         [ -n "$gen" ] || { echo "::error::no fastcgi_generation in $WORKSPACE/locals.tf"; exit 1; }
         generations() {
-          curl -sf --get --data-urlencode "$1" http://127.0.0.1:2376/containers/json \
+          curl -sf --get --data-urlencode "$1" "http://127.0.0.1:$PORT/containers/json" \
             | jq -r '.[].Names[]' \
             | grep -oE '^/fastcgi-[0-9]+$' | grep -oE '[0-9]+$' | sort -n | tail -1 || true
         }
