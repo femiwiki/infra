@@ -48,6 +48,12 @@ data "aws_iam_policy_document" "infra_docker" {
   }
 
   statement {
+    sid       = "ReadMediawikiDbPassword"
+    actions   = ["ssm:GetParameter"]
+    resources = [aws_ssm_parameter.secret_seoul["/mysql/users/mediawiki/password"].arn]
+  }
+
+  statement {
     sid     = "DockerPortForward"
     actions = ["ssm:StartSession"]
     resources = [
@@ -120,6 +126,12 @@ data "aws_iam_policy_document" "infra_docker_plan" {
     sid       = "FindInstances"
     actions   = ["ec2:DescribeInstances", "ec2:DescribeInstanceTypes"]
     resources = ["*"]
+  }
+
+  statement {
+    sid       = "ReadMediawikiDbPassword"
+    actions   = ["ssm:GetParameter"]
+    resources = [aws_ssm_parameter.secret_seoul["/mysql/users/mediawiki/password"].arn]
   }
 
   statement {
