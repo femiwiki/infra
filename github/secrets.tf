@@ -95,6 +95,14 @@ resource "github_actions_secret" "github_io_prometheus" {
   value       = jsonencode(data.terraform_remote_state.grafana.outputs.github_io_prometheus)
 }
 
+# MediaWiki's token for slow-request profiles, which the aws root writes to SSM
+# (femiwiki/femiwiki#614)
+resource "github_actions_secret" "aws_pyroscope_password" {
+  repository  = module.infra.name
+  secret_name = "AWS_PYROSCOPE_PASSWORD"
+  value       = data.terraform_remote_state.grafana.outputs.mediawiki_profiles_token
+}
+
 data "onepassword_item" "alerts_app_private_key" {
   vault = data.onepassword_vault.infra.uuid
   title = "LAMBDA_ALERTS_APP_PRIVATE_KEY"
