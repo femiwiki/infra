@@ -3,10 +3,9 @@ module "infra_mariadb" {
   version            = "6.8.2"
   name               = "infra-mariadb"
   use_name_prefix    = false
-  description        = "Allows GitHub Actions workflows of femiwiki/infra to plan and apply the mariadb workspace."
+  description        = "Allows GitHub Actions workflows of femiwiki/infra to apply the mariadb workspace."
   enable_github_oidc = true
   oidc_subjects = [
-    "femiwiki@21275875/infra@188597503:pull_request",
     "femiwiki@21275875/infra@188597503:environment:mariadb",
   ]
 }
@@ -22,12 +21,6 @@ data "aws_iam_policy_document" "infra_mariadb" {
     sid       = "State"
     actions   = ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"]
     resources = [for b in local.tfstate_buckets : "${b}/mariadb/terraform.tfstate*"]
-  }
-
-  statement {
-    sid       = "ReadAwsOutputs"
-    actions   = ["s3:GetObject"]
-    resources = [for b in local.tfstate_buckets : "${b}/aws/terraform.tfstate"]
   }
 
   statement {
