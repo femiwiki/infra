@@ -330,3 +330,29 @@ resource "aws_ssm_parameter" "mysql_backup_healthcheck_url" {
   type   = "SecureString"
   value  = data.terraform_remote_state.healthchecks.outputs.mysql_backup_ping_url
 }
+
+resource "aws_ssm_document" "docker_api_readonly_forward" {
+  region          = local.seoul_region
+  name            = "forward-docker-api-readonly"
+  document_type   = "Session"
+  document_format = "JSON"
+
+  content = jsonencode({
+    schemaVersion = "1.0"
+    description   = "Forwards the read-only Docker API on 127.0.0.1:2377 and no other port, for docker plans of pull requests."
+    sessionType   = "Port"
+    parameters = {
+      localPortNumber = {
+        type           = "String"
+        description    = "The port on the client."
+        allowedPattern = "^[0-9]{1,5}$"
+        default        = "0"
+      }
+    }
+    properties = {
+      portNumber      = "2377"
+      type            = "LocalPortForwarding"
+      localPortNumber = "{{ localPortNumber }}"
+    }
+  })
+}
