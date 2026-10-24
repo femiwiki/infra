@@ -12,8 +12,8 @@ variable "state_passphrase" {
   sensitive   = true
 }
 
-variable "aws_state_passphrase" {
-  description = "Passphrase of the aws state, read for its outputs"
+variable "mysql_username" {
+  description = "The MariaDB account to log in as: tofu-plan for plans of pull requests, tofu for applies"
   type        = string
-  sensitive   = true
+  ephemeral   = true
 }
