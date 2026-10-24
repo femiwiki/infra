@@ -249,7 +249,7 @@ resource "docker_container" "proxysql" {
     file = "/etc/proxysql.cnf"
     content = templatefile("proxysql.cnf.tftpl", {
       database_address   = data.terraform_remote_state.aws.outputs.database_address
-      mediawiki_password = data.terraform_remote_state.aws.outputs.mysql_mediawiki_password
+      mediawiki_password = var.mediawiki_db_password
     })
   }
 
