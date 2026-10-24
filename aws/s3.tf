@@ -115,6 +115,10 @@ resource "aws_s3_bucket" "tfstate" {
   region           = local.tokyo_region
   bucket           = "tfstate-${data.aws_caller_identity.current.account_id}-${local.tokyo_region}-an"
   bucket_namespace = "account-regional"
+
+  # Every root reads its state in Seoul (femiwiki/femiwiki#666); the removal
+  # that follows has to empty the old keys and their versions.
+  force_destroy = true
 }
 
 resource "aws_s3_bucket_public_access_block" "tfstate" {
