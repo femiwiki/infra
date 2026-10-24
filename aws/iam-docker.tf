@@ -50,7 +50,7 @@ data "aws_iam_policy_document" "infra_docker" {
   statement {
     sid       = "ReadMediawikiDbPassword"
     actions   = ["ssm:GetParameter"]
-    resources = [aws_ssm_parameter.secret["/mysql/users/mediawiki/password"].arn]
+    resources = [data.aws_ssm_parameter.secret["/mysql/users/mediawiki/password"].arn]
   }
 
   statement {
@@ -131,7 +131,7 @@ data "aws_iam_policy_document" "infra_docker_plan" {
   statement {
     sid       = "ReadMediawikiDbPassword"
     actions   = ["ssm:GetParameter"]
-    resources = [aws_ssm_parameter.secret["/mysql/users/mediawiki/password"].arn]
+    resources = [data.aws_ssm_parameter.secret["/mysql/users/mediawiki/password"].arn]
   }
 
   statement {
