@@ -173,3 +173,14 @@ resource "github_actions_environment_secret" "gitlab_mirror_ssh_key" {
   secret_name = "GITLAB_MIRROR_SSH_KEY"
   value       = data.onepassword_item.gitlab_mirror_ssh_key.note_value
 }
+
+data "onepassword_item" "tofu_github_plan_app_pem" {
+  vault = data.onepassword_vault.infra.uuid
+  title = "TOFU_GITHUB_PLAN_APP_PEM"
+}
+
+resource "github_actions_secret" "tofu_github_plan_app_pem" {
+  repository  = module.infra.name
+  secret_name = "TOFU_GITHUB_PLAN_APP_PEM"
+  value       = data.onepassword_item.tofu_github_plan_app_pem.note_value
+}
