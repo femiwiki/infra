@@ -352,7 +352,7 @@ locals {
   )
 }
 
-module "uploads_seoul" {
+module "uploads" {
   source           = "terraform-aws-modules/s3-bucket/aws"
   version          = "5.17.0"
   region           = local.seoul_region
@@ -372,7 +372,7 @@ module "uploads_seoul" {
   restrict_public_buckets = false
 
   attach_policy = true
-  policy        = data.aws_iam_policy_document.uploads_seoul.json
+  policy        = data.aws_iam_policy_document.uploads.json
 
   # MediaWiki expires a stash entry in hours, and nothing else empties temp/:
   # the Tokyo temp bucket holds 18,504 objects and 5.25 GiB.
@@ -391,7 +391,7 @@ module "uploads_seoul" {
   ]
 }
 
-data "aws_iam_policy_document" "uploads_seoul" {
+data "aws_iam_policy_document" "uploads" {
   statement {
     sid     = "PublicReadOfThePublicZones"
     actions = ["s3:GetObject"]
@@ -402,7 +402,7 @@ data "aws_iam_policy_document" "uploads_seoul" {
     }
 
     resources = [
-      for prefix in local.uploads_public_prefixes : "${module.uploads_seoul.s3_bucket_arn}/${prefix}"
+      for prefix in local.uploads_public_prefixes : "${module.uploads.s3_bucket_arn}/${prefix}"
     ]
   }
 }

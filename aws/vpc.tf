@@ -26,7 +26,7 @@ locals {
   seoul_az     = "ap-northeast-2a"
 }
 
-resource "aws_vpc" "seoul" {
+resource "aws_vpc" "main" {
   region               = local.seoul_region
   cidr_block           = "10.20.0.0/16"
   enable_dns_support   = true
@@ -35,9 +35,9 @@ resource "aws_vpc" "seoul" {
   tags = { Name = "femiwiki-seoul" }
 }
 
-resource "aws_subnet" "seoul" {
+resource "aws_subnet" "main" {
   region                  = local.seoul_region
-  vpc_id                  = aws_vpc.seoul.id
+  vpc_id                  = aws_vpc.main.id
   availability_zone       = local.seoul_az
   cidr_block              = "10.20.0.0/20"
   map_public_ip_on_launch = true
@@ -45,27 +45,27 @@ resource "aws_subnet" "seoul" {
   tags = { Name = "femiwiki-seoul" }
 }
 
-resource "aws_internet_gateway" "seoul" {
+resource "aws_internet_gateway" "main" {
   region = local.seoul_region
-  vpc_id = aws_vpc.seoul.id
+  vpc_id = aws_vpc.main.id
 
   tags = { Name = "femiwiki-seoul" }
 }
 
-resource "aws_route_table" "seoul" {
+resource "aws_route_table" "main" {
   region = local.seoul_region
-  vpc_id = aws_vpc.seoul.id
+  vpc_id = aws_vpc.main.id
 
   route {
     cidr_block = "0.0.0.0/0"
-    gateway_id = aws_internet_gateway.seoul.id
+    gateway_id = aws_internet_gateway.main.id
   }
 
   tags = { Name = "femiwiki-seoul" }
 }
 
-resource "aws_route_table_association" "seoul" {
+resource "aws_route_table_association" "main" {
   region         = local.seoul_region
-  subnet_id      = aws_subnet.seoul.id
-  route_table_id = aws_route_table.seoul.id
+  subnet_id      = aws_subnet.main.id
+  route_table_id = aws_route_table.main.id
 }
