@@ -69,6 +69,7 @@ jobs:
           filters: Name=tag:Name,Values=docker
           region: ap-northeast-2
           port: 2376
+          socket: /var/run/docker.sock
           probe: 'curl -sf --max-time 3 "http://$HOST:$PORT/_ping"'
 
       - name: Pull the images the apply will start
