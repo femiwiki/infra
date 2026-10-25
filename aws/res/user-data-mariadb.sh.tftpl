@@ -192,6 +192,14 @@ GRANT ALL PRIVILEGES ON femiwiki.* TO 'tofu'@'127.0.0.1' WITH GRANT OPTION;
 GRANT SELECT ON mysql.* TO 'tofu'@'127.0.0.1';
 SQL
 
+  # The account mariadb plans of pull requests log in as. It reads the grants
+  # and changes nothing.
+  TOFU_PLAN_PASSWORD="$(aws ssm get-parameter --name /mysql/users/tofu-plan/password --with-decryption --query Parameter.Value --output text)"
+  mysql -uroot <<SQL
+CREATE USER 'tofu-plan'@'127.0.0.1' IDENTIFIED BY '$TOFU_PLAN_PASSWORD';
+GRANT SELECT ON mysql.* TO 'tofu-plan'@'127.0.0.1';
+SQL
+
   # Replicas attach from anywhere in the VPC, to this host once it is promoted.
   REPL_PASSWORD="$(aws ssm get-parameter --name /mariadb/users/repl/password --with-decryption --query Parameter.Value --output text)"
   mysql -uroot <<SQL

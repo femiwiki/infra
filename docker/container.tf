@@ -6,7 +6,7 @@ resource "docker_container" "http" {
   name         = "http-${local.fastcgi_generation}"
   log_driver   = "fluentd"
   log_opts     = local.log_opts
-  image        = "ghcr.io/femiwiki/femiwiki:2026-10-22T23-41-4b0e18ef"
+  image        = "ghcr.io/femiwiki/femiwiki:2026-10-24T17-23-32044708"
   command      = ["caddy-run"]
   restart      = "always"
   init         = true
@@ -82,7 +82,7 @@ resource "docker_container" "fastcgi" {
   name         = "fastcgi-${local.fastcgi_generation}"
   log_driver   = "fluentd"
   log_opts     = local.log_opts
-  image        = "ghcr.io/femiwiki/femiwiki:2026-10-22T23-41-4b0e18ef"
+  image        = "ghcr.io/femiwiki/femiwiki:2026-10-24T17-23-32044708"
   network_mode = "host"
   restart      = "always"
   init         = true
@@ -141,6 +141,9 @@ resource "docker_container" "fastcgi" {
       # action=flow takes 5 to 9 seconds (femiwiki#576); a normal page is under
       # one, so 3 keeps the ordinary traffic out of the directory
       FW_PROFILER_THRESHOLD = "3"
+      # Kept profiles go to Grafana Cloud Profiles; the token is in SSM (femiwiki#614)
+      FW_PROFILER_PYROSCOPE_URL  = "https://profiles-prod-019.grafana.net"
+      FW_PROFILER_PYROSCOPE_USER = "1059321"
 
       # Script hosts of the report-only Content-Security-Policy. See femiwiki#680.
       FW_CSP_SCRIPT_SRC = join(",", [
@@ -246,7 +249,7 @@ resource "docker_container" "proxysql" {
     file = "/etc/proxysql.cnf"
     content = templatefile("proxysql.cnf.tftpl", {
       database_address   = data.terraform_remote_state.aws.outputs.database_address
-      mediawiki_password = data.terraform_remote_state.aws.outputs.mysql_mediawiki_password
+      mediawiki_password = var.mediawiki_db_password
     })
   }
 
@@ -324,6 +327,38 @@ resource "docker_container" "autoheal" {
     source    = "/var/run/docker.sock"
     target    = "/var/run/docker.sock"
     read_only = false
+  }
+
+  ulimit {
+    hard = 65536
+    name = "nofile"
+    soft = 32768
+  }
+}
+
+resource "docker_container" "docker_api_readonly" {
+  name         = "docker-api-readonly"
+  log_driver   = "fluentd"
+  log_opts     = local.log_opts
+  image        = "ghcr.io/tecnativa/docker-socket-proxy:v0.5.0"
+  network_mode = "host"
+  restart      = "always"
+  memory       = 64
+  memory_swap  = 64
+  env = [
+    "BIND_CONFIG=127.0.0.1:2377",
+    "CONTAINERS=1",
+    "IMAGES=1",
+    "INFO=1",
+    "NETWORKS=1",
+    "VOLUMES=1",
+  ]
+
+  mounts {
+    type      = "bind"
+    source    = "/var/run/docker.sock"
+    target    = "/var/run/docker.sock"
+    read_only = true
   }
 
   ulimit {

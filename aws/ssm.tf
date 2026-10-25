@@ -248,7 +248,7 @@ resource "aws_ssm_document" "otelcol" {
 resource "aws_ssm_association" "otelcol" {
   for_each = local.otelcol_hosts
 
-  depends_on = [aws_ssm_parameter.alloy_seoul]
+  depends_on = [aws_ssm_parameter.alloy]
 
   region              = each.value.region
   association_name    = "install-otelcol-${each.key}"
@@ -329,4 +329,140 @@ resource "aws_ssm_parameter" "mysql_backup_healthcheck_url" {
   name   = "/mysql/backup/healthcheck-url"
   type   = "SecureString"
   value  = data.terraform_remote_state.healthchecks.outputs.mysql_backup_ping_url
+}
+
+resource "aws_ssm_document" "docker_api_readonly_forward" {
+  region          = local.seoul_region
+  name            = "forward-docker-api-readonly"
+  document_type   = "Session"
+  document_format = "JSON"
+
+  content = jsonencode({
+    schemaVersion = "1.0"
+    description   = "Forwards the read-only Docker API on 127.0.0.1:2377 and no other port, for docker plans of pull requests."
+    sessionType   = "Port"
+    parameters = {
+      localPortNumber = {
+        type           = "String"
+        description    = "The port on the client."
+        allowedPattern = "^[0-9]{1,5}$"
+        default        = "0"
+      }
+    }
+    properties = {
+      portNumber      = "2377"
+      type            = "LocalPortForwarding"
+      localPortNumber = "{{ localPortNumber }}"
+    }
+  })
+}
+
+resource "aws_ssm_document" "mariadb_forward" {
+  region          = local.seoul_region
+  name            = "forward-mariadb"
+  document_type   = "Session"
+  document_format = "JSON"
+
+  content = jsonencode({
+    schemaVersion = "1.0"
+    description   = "Forwards MariaDB on 127.0.0.1:3306 and no other port, for mariadb plans of pull requests."
+    sessionType   = "Port"
+    parameters = {
+      localPortNumber = {
+        type           = "String"
+        description    = "The port on the client."
+        allowedPattern = "^[0-9]{1,5}$"
+        default        = "0"
+      }
+    }
+    properties = {
+      portNumber      = "3306"
+      type            = "LocalPortForwarding"
+      localPortNumber = "{{ localPortNumber }}"
+    }
+  })
+}
+
+resource "aws_ssm_parameter" "alloy" {
+  for_each = {
+    loki_password       = var.loki_password
+    prometheus_password = var.prometheus_password
+  }
+
+  region           = local.seoul_region
+  name             = "/alloy/${each.key}"
+  type             = "SecureString"
+  value_wo         = each.value
+  value_wo_version = 1
+}
+
+# Read by publish-dump in the MediaWiki image (femiwiki/docker-mediawiki#1235).
+resource "aws_ssm_parameter" "internet_archive" {
+  for_each = {
+    access_key = var.internet_archive_access_key
+    secret_key = var.internet_archive_secret_key
+  }
+
+  region           = local.seoul_region
+  name             = "/mediawiki/internet_archive/${each.key}"
+  type             = "SecureString"
+  value_wo         = each.value
+  value_wo_version = 1
+}
+
+# Read by the MediaWiki image's ConfirmEdit (femiwiki/femiwiki#668).
+resource "aws_ssm_parameter" "h_captcha_secret_key" {
+  region           = local.seoul_region
+  name             = "/mediawiki/h_captcha/secret_key"
+  type             = "SecureString"
+  value_wo         = var.h_captcha_secret_key
+  value_wo_version = 1
+}
+
+# Read by the MediaWiki image to send slow-request profiles; the profiles:write
+# token is made by grafana/access-policies.tf (femiwiki/femiwiki#614).
+resource "aws_ssm_parameter" "pyroscope_password" {
+  region           = local.seoul_region
+  name             = "/mediawiki/pyroscope/password"
+  type             = "SecureString"
+  value_wo         = var.pyroscope_password
+  value_wo_version = 1
+}
+
+# Read without decryption, so their values stay out of the state. Written by hand
+# (femiwiki/femiwiki#597), except the database logins, once random_password's.
+locals {
+  secret_parameters = toset([
+    "/mariadb/users/repl/password",
+    "/mediawiki/bounce_handler/token",
+    "/mediawiki/o_auth_2_private_key",
+    "/mediawiki/rc_feeds_discord_url",
+    "/mediawiki/site_key",
+    "/mediawiki/smtp/password",
+    "/mediawiki/verp_secret",
+    "/mysql/users/mediawiki/password",
+    "/mysql/users/tofu-plan/password",
+    "/mysql/users/tofu/password",
+  ])
+}
+
+data "aws_ssm_parameter" "secret" {
+  for_each = local.secret_parameters
+
+  region          = local.seoul_region
+  name            = each.key
+  with_decryption = false
+}
+
+# The next database host's server_id, raised by the replacement workflow so no
+# id comes back: a replica skips events that carry its own id.
+resource "aws_ssm_parameter" "mariadb_next_server_id" {
+  region = local.seoul_region
+  name   = "/mariadb/server-id/next"
+  type   = "String"
+  value  = "6"
+
+  lifecycle {
+    ignore_changes = [value]
+  }
 }

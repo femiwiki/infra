@@ -14,3 +14,9 @@ output "github_io_prometheus" {
     token = grafana_cloud_access_policy_token.github_io.token
   }
 }
+
+output "mediawiki_profiles_token" {
+  description = "The token MediaWiki sends its slow-request profiles with"
+  sensitive   = true
+  value       = grafana_cloud_access_policy_token.mediawiki_profiles.token
+}

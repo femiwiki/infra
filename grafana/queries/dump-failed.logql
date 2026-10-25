@@ -1,1 +1,1 @@
-sum(count_over_time({cron_job="publish-dump"} |= "publish-dump: failed" [1d]) or count_over_time({service_name="publish-dump"} |= "publish-dump: failed" [1d])) or vector(0)
+sum(count_over_time({service_name="publish-dump"} |= "publish-dump: failed" [1d])) or vector(0)

@@ -298,6 +298,19 @@ module "delayed_job_queue" {
   default_status_checks           = []
 }
 
+module "property_suggester_local_stats" {
+  source      = "./modules/github-repository"
+  name        = "PropertySuggesterLocalStats"
+  description = "MediaWiki extension that fills PropertySuggester's statistics from the wiki's own Wikibase items"
+  topics = [
+    "mediawiki",
+    "mediawiki-extension",
+    "wikibase",
+  ]
+  required_status_checks_contexts = ["required"]
+  default_status_checks           = []
+}
+
 module "http_signatures" {
   source      = "./modules/github-repository"
   name        = "http-signatures"
@@ -356,6 +369,48 @@ module "tacos" {
   reviewer_teams = [github_team.deployer.id]
   # The provider's default, which these environments were created with
   can_admins_bypass = true
+}
+
+# A pull request's run uses its branch's workflow with the plan credentials,
+# so only admins and the bots may create or push a branch here.
+resource "github_repository_ruleset" "infra_branches" {
+  name        = "branches"
+  repository  = module.infra.name
+  target      = "branch"
+  enforcement = "active"
+
+  conditions {
+    ref_name {
+      include = ["~ALL"]
+      exclude = ["~DEFAULT_BRANCH"]
+    }
+  }
+
+  rules {
+    creation = true
+    update   = true
+  }
+
+  bypass_actors {
+    actor_id    = 5 # Repository admin
+    actor_type  = "RepositoryRole"
+    bypass_mode = "always"
+  }
+
+  dynamic "bypass_actors" {
+    for_each = data.github_app.infra_branch_pushers
+    content {
+      actor_id    = tonumber(bypass_actors.value.id)
+      actor_type  = "Integration"
+      bypass_mode = "always"
+    }
+  }
+}
+
+# femiwiki-pat-owner opens the bump pull requests and brings branches up to date
+data "github_app" "infra_branch_pushers" {
+  for_each = toset(["dependabot", "femiwiki-pat-owner"])
+  slug     = each.key
 }
 
 moved {

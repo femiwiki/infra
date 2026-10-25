@@ -24,6 +24,7 @@ jobs:
       || (github.event_name == 'pull_request_review'
       && github.event.review.state == 'approved'
       && github.event.pull_request.user.login == 'dependabot[bot]'
+      && github.event.review.commit_id == github.event.pull_request.head.sha
       && contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.review.author_association))
     strategy:
       fail-fast: false
@@ -36,7 +37,7 @@ jobs:
       id-token: write
       pull-requests: write
     steps:
-      - uses: femiwiki/terraform-github-tacos@4ec9403700ed37ec6ca1f19c968f2919f3821c0e  # v0.9.0
+      - uses: femiwiki/terraform-github-tacos@f4ed7abef8631c36b2ed5303a848113bb4ec4bf8  # v0.9.1
         id: scope
         with:
           step: plan
@@ -55,9 +56,9 @@ jobs:
       - uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd  # v6.3.0
         if: steps.scope.outputs.plan == 'true'
         with:
-          # aws plans read-only: its apply role can change IAM, and any branch
-          # can open a pull request.
-          role-to-assume: arn:aws:iam::302617221463:role/infra-${{ matrix.workspace }}${{ matrix.workspace == 'aws' && '-plan' || '' }}
+          # aws, docker and mariadb plan read-only: their apply roles can change
+          # IAM, the app host or the database, and any branch can open a PR.
+          role-to-assume: arn:aws:iam::302617221463:role/infra-${{ matrix.workspace }}${{ (matrix.workspace == 'aws' || matrix.workspace == 'docker' || matrix.workspace == 'mariadb') && '-plan' || '' }}
           aws-region: ap-northeast-1
 
       - uses: ./.github/actions/ssm-port-forward
@@ -66,7 +67,9 @@ jobs:
         with:
           filters: Name=tag:Name,Values=${{ matrix.workspace }}
           region: ap-northeast-2
-          port: 2376
+          # The read-only Docker API, which passes GET and HEAD alone
+          port: 2377
+          document: forward-docker-api-readonly
           probe: 'curl -sf --max-time 3 "http://$HOST:$PORT/_ping"'
 
       # A server greets first, so four bytes back mean MariaDB answered
@@ -78,7 +81,18 @@ jobs:
           filters: Name=tag:Role,Values=database Name=network-interface.attachment.device-index,Values=1
           region: ap-northeast-2
           port: 3306
+          document: forward-mariadb
           probe: '[ "$(timeout 3 head -c 4 < "/dev/tcp/$HOST/$PORT" | wc -c)" = 4 ]'
+
+      - uses: ./.github/actions/mariadb-passwords
+        id: mariadb-passwords
+        if: steps.scope.outputs.plan == 'true' && matrix.workspace == 'mariadb'
+        with:
+          username: tofu-plan
+
+      - uses: ./.github/actions/mediawiki-db-password
+        id: mediawiki-db-password
+        if: steps.scope.outputs.plan == 'true' && matrix.workspace == 'docker'
 
       - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093  # v3.0.0
         if: steps.scope.outputs.plan == 'true' && matrix.workspace == 'gcp'
@@ -94,23 +108,25 @@ jobs:
         if: steps.scope.outputs.plan == 'true' && matrix.workspace == 'github'
         id: app-token
         with:
-          client-id: ${{ vars.TOFU_GITHUB_CLIENT_ID }}
-          private-key: ${{ secrets.TOFU_GITHUB_APP_PEM }}
+          client-id: Iv23lixkYWBiZgNlreZS  # femiwiki-infra-plan, which cannot touch teams, environments or secrets
+          private-key: ${{ secrets.TOFU_GITHUB_PLAN_APP_PEM }}
           # This root manages every repository in the organisation, so the token
           # is bounded by permission rather than by repository. Listing them here
           # would be a second copy of github/repo.tf, drifting from the first.
           owner: femiwiki  # zizmor: ignore[github-app]
           permission-administration: write
-          permission-environments: write
-          permission-issues: write
-          permission-members: write
-          permission-pages: write
-          permission-secrets: write
+          permission-contents: write
+          permission-environments: read
+          permission-issues: read
+          permission-members: read
+          permission-pages: read
+          permission-secrets: read
 
       - uses: ./.github/actions/generation-swaps-ports
         if: steps.scope.outputs.plan == 'true' && startsWith(matrix.workspace, 'docker')
         with:
           workspace: ${{ matrix.workspace }}
+          port: 2377
 
       - uses: dflook/tofu-plan@c7416238983bdd94c5486fb856bb7358f2bcc935  # v3.1.0
         if: steps.scope.outputs.plan == 'true'
@@ -120,6 +136,10 @@ jobs:
           TF_PLAN_COLLAPSE_LENGTH: "100000"  # never collapse the plan
           TF_VAR_docker_host: ${{ steps.daemon.outputs.address && format('tcp://{0}', steps.daemon.outputs.address) || '' }}
           TF_VAR_mariadb_endpoint: ${{ steps.mariadb.outputs.address }}
+          TF_VAR_mysql_username: ${{ matrix.workspace == 'mariadb' && 'tofu-plan' || '' }}
+          TF_VAR_mysql_password: ${{ steps.mariadb-passwords.outputs.login }}
+          TF_VAR_repl_password: ${{ steps.mariadb-passwords.outputs.repl }}
+          TF_VAR_mediawiki_db_password: ${{ steps.mediawiki-db-password.outputs.password }}
           TF_VAR_github_token: ${{ steps.app-token.outputs.token }}
           GOOGLE_OAUTH_ACCESS_TOKEN: ${{ steps.gcp.outputs.access_token }}
           TF_VAR_grafana_auth: ${{ matrix.workspace == 'grafana' && secrets.GRAFANA_PLAN_TOKEN || '' }}
@@ -127,13 +147,14 @@ jobs:
           TF_VAR_discord_webhook_url: ${{ matrix.workspace == 'grafana' && secrets.GRAFANA_DISCORD_WEBHOOK_URL || '' }}
           TF_VAR_mastodon_token: ${{ matrix.workspace == 'grafana' && secrets.GRAFANA_MASTODON_TOKEN || '' }}
           TF_VAR_alerts_webhook_token: ${{ matrix.workspace == 'grafana' && secrets.GRAFANA_ALERTS_WEBHOOK_TOKEN || '' }}
-          TF_VAR_aws_state_passphrase: ${{ (matrix.workspace == 'grafana' || matrix.workspace == 'docker' || matrix.workspace == 'gcp' || matrix.workspace == 'mariadb') && secrets.AWS_STATE_PASSPHRASE || '' }}
+          TF_VAR_aws_state_passphrase: ${{ (matrix.workspace == 'grafana' || matrix.workspace == 'docker' || matrix.workspace == 'gcp') && secrets.AWS_STATE_PASSPHRASE || '' }}
           TF_VAR_healthchecksio_api_key: ${{ matrix.workspace == 'healthchecks' && secrets.HEALTHCHECKSIO_API_KEY || '' }}
           TF_VAR_prometheus_password: ${{ matrix.workspace == 'aws' && secrets.AWS_PROMETHEUS_PASSWORD || '' }}
           TF_VAR_loki_password: ${{ matrix.workspace == 'aws' && secrets.AWS_LOKI_PASSWORD || '' }}
           TF_VAR_internet_archive_access_key: ${{ matrix.workspace == 'aws' && secrets.AWS_INTERNET_ARCHIVE_ACCESS_KEY || '' }}
           TF_VAR_internet_archive_secret_key: ${{ matrix.workspace == 'aws' && secrets.AWS_INTERNET_ARCHIVE_SECRET_KEY || '' }}
           TF_VAR_h_captcha_secret_key: ${{ matrix.workspace == 'aws' && secrets.AWS_H_CAPTCHA_SECRET_KEY || '' }}
+          TF_VAR_pyroscope_password: ${{ matrix.workspace == 'aws' && secrets.AWS_PYROSCOPE_PASSWORD || '' }}
           TF_VAR_state_passphrase: ${{ matrix.workspace == 'aws' && secrets.AWS_STATE_PASSPHRASE || matrix.workspace == 'github' && secrets.TOFU_GITHUB_STATE_PASSPHRASE || matrix.workspace == 'gcp' && secrets.GCP_STATE_PASSPHRASE || matrix.workspace == 'docker' && secrets.DOCKER_STATE_PASSPHRASE || matrix.workspace == 'grafana' && secrets.GRAFANA_STATE_PASSPHRASE || matrix.workspace == 'mariadb' && secrets.MARIADB_STATE_PASSPHRASE || '' }}
           TF_VAR_gcp_state_passphrase: ${{ (matrix.workspace == 'aws' || matrix.workspace == 'docker') && secrets.GCP_STATE_PASSPHRASE || '' }}
           TF_VAR_grafana_state_passphrase: ${{ matrix.workspace == 'github' && secrets.GRAFANA_STATE_PASSPHRASE || '' }}
@@ -225,7 +246,7 @@ jobs:
           fi
           echo "$out"
 
-      - uses: femiwiki/terraform-github-tacos@4ec9403700ed37ec6ca1f19c968f2919f3821c0e  # v0.9.0
+      - uses: femiwiki/terraform-github-tacos@f4ed7abef8631c36b2ed5303a848113bb4ec4bf8  # v0.9.1
         id: changes
         if: steps.scope.outputs.plan == 'true'
         with:
@@ -255,7 +276,7 @@ jobs:
             echo "::warning::applied, so the import and moved blocks above can go."
           fi
 
-      - uses: femiwiki/terraform-github-tacos@4ec9403700ed37ec6ca1f19c968f2919f3821c0e  # v0.9.0
+      - uses: femiwiki/terraform-github-tacos@f4ed7abef8631c36b2ed5303a848113bb4ec4bf8  # v0.9.1
         if: always() && steps.plan.outcome != 'skipped'
         with:
           step: collapse
@@ -313,7 +334,7 @@ jobs:
           echo "::error::Dependabot's runs get no plan secrets. Approve the pull request to plan it."
           exit 1
 
-      - uses: femiwiki/terraform-github-tacos@4ec9403700ed37ec6ca1f19c968f2919f3821c0e  # v0.9.0
+      - uses: femiwiki/terraform-github-tacos@f4ed7abef8631c36b2ed5303a848113bb4ec4bf8  # v0.9.1
         with:
           step: gate
           needs: ${{ toJSON(needs) }}
@@ -336,7 +357,7 @@ jobs:
     outputs:
       workspaces: ${{ steps.pending.outputs.workspaces }}
     steps:
-      - uses: femiwiki/terraform-github-tacos@4ec9403700ed37ec6ca1f19c968f2919f3821c0e  # v0.9.0
+      - uses: femiwiki/terraform-github-tacos@f4ed7abef8631c36b2ed5303a848113bb4ec4bf8  # v0.9.1
         id: pending
         with:
           step: pending
@@ -386,7 +407,7 @@ jobs:
       pull-requests: write
       statuses: read
     steps:
-      - uses: femiwiki/terraform-github-tacos@4ec9403700ed37ec6ca1f19c968f2919f3821c0e  # v0.9.0
+      - uses: femiwiki/terraform-github-tacos@f4ed7abef8631c36b2ed5303a848113bb4ec4bf8  # v0.9.1
         id: approver
         with:
           step: apply
@@ -442,6 +463,16 @@ jobs:
           port: 3306
           probe: '[ "$(timeout 3 head -c 4 < "/dev/tcp/$HOST/$PORT" | wc -c)" = 4 ]'
 
+      - uses: ./.github/actions/mariadb-passwords
+        id: mariadb-passwords
+        if: matrix.workspace == 'mariadb'
+        with:
+          username: tofu
+
+      - uses: ./.github/actions/mediawiki-db-password
+        id: mediawiki-db-password
+        if: matrix.workspace == 'docker'
+
       - name: Pull the images the plan will start
         if: startsWith(matrix.workspace, 'docker')
         env:
@@ -482,6 +513,7 @@ jobs:
         if: startsWith(matrix.workspace, 'docker')
         with:
           workspace: ${{ matrix.workspace }}
+          port: 2376
 
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333  # v8.0.2
         if: github.event.pull_request && matrix.workspace != 'healthchecks'
@@ -497,6 +529,10 @@ jobs:
           TF_PLAN_COLLAPSE_LENGTH: "100000"  # never collapse the plan
           TF_VAR_docker_host: ${{ steps.daemon.outputs.address && format('tcp://{0}', steps.daemon.outputs.address) || '' }}
           TF_VAR_mariadb_endpoint: ${{ steps.mariadb.outputs.address }}
+          TF_VAR_mysql_username: ${{ matrix.workspace == 'mariadb' && 'tofu' || '' }}
+          TF_VAR_mysql_password: ${{ steps.mariadb-passwords.outputs.login }}
+          TF_VAR_repl_password: ${{ steps.mariadb-passwords.outputs.repl }}
+          TF_VAR_mediawiki_db_password: ${{ steps.mediawiki-db-password.outputs.password }}
           TF_VAR_github_token: ${{ steps.app-token.outputs.token }}
           GOOGLE_OAUTH_ACCESS_TOKEN: ${{ steps.gcp.outputs.access_token }}
           TF_VAR_grafana_auth: ${{ matrix.workspace == 'grafana' && secrets.GRAFANA_APPLY_TOKEN || '' }}
@@ -504,13 +540,14 @@ jobs:
           TF_VAR_discord_webhook_url: ${{ matrix.workspace == 'grafana' && secrets.GRAFANA_DISCORD_WEBHOOK_URL || '' }}
           TF_VAR_mastodon_token: ${{ matrix.workspace == 'grafana' && secrets.GRAFANA_MASTODON_TOKEN || '' }}
           TF_VAR_alerts_webhook_token: ${{ matrix.workspace == 'grafana' && secrets.GRAFANA_ALERTS_WEBHOOK_TOKEN || '' }}
-          TF_VAR_aws_state_passphrase: ${{ (matrix.workspace == 'grafana' || matrix.workspace == 'docker' || matrix.workspace == 'gcp' || matrix.workspace == 'mariadb') && secrets.AWS_STATE_PASSPHRASE || '' }}
+          TF_VAR_aws_state_passphrase: ${{ (matrix.workspace == 'grafana' || matrix.workspace == 'docker' || matrix.workspace == 'gcp') && secrets.AWS_STATE_PASSPHRASE || '' }}
           TF_VAR_healthchecksio_api_key: ${{ matrix.workspace == 'healthchecks' && secrets.HEALTHCHECKSIO_API_KEY || '' }}
           TF_VAR_prometheus_password: ${{ matrix.workspace == 'aws' && secrets.AWS_PROMETHEUS_PASSWORD || '' }}
           TF_VAR_loki_password: ${{ matrix.workspace == 'aws' && secrets.AWS_LOKI_PASSWORD || '' }}
           TF_VAR_internet_archive_access_key: ${{ matrix.workspace == 'aws' && secrets.AWS_INTERNET_ARCHIVE_ACCESS_KEY || '' }}
           TF_VAR_internet_archive_secret_key: ${{ matrix.workspace == 'aws' && secrets.AWS_INTERNET_ARCHIVE_SECRET_KEY || '' }}
           TF_VAR_h_captcha_secret_key: ${{ matrix.workspace == 'aws' && secrets.AWS_H_CAPTCHA_SECRET_KEY || '' }}
+          TF_VAR_pyroscope_password: ${{ matrix.workspace == 'aws' && secrets.AWS_PYROSCOPE_PASSWORD || '' }}
           TF_VAR_state_passphrase: ${{ matrix.workspace == 'aws' && secrets.AWS_STATE_PASSPHRASE || matrix.workspace == 'github' && secrets.TOFU_GITHUB_STATE_PASSPHRASE || matrix.workspace == 'gcp' && secrets.GCP_STATE_PASSPHRASE || matrix.workspace == 'docker' && secrets.DOCKER_STATE_PASSPHRASE || matrix.workspace == 'grafana' && secrets.GRAFANA_STATE_PASSPHRASE || matrix.workspace == 'mariadb' && secrets.MARIADB_STATE_PASSPHRASE || '' }}
           TF_VAR_gcp_state_passphrase: ${{ (matrix.workspace == 'aws' || matrix.workspace == 'docker') && secrets.GCP_STATE_PASSPHRASE || '' }}
           TF_VAR_grafana_state_passphrase: ${{ matrix.workspace == 'github' && secrets.GRAFANA_STATE_PASSPHRASE || '' }}
@@ -548,6 +585,10 @@ jobs:
           TF_PLAN_COLLAPSE_LENGTH: "100000"  # never collapse the plan
           TF_VAR_docker_host: ${{ steps.daemon.outputs.address && format('tcp://{0}', steps.daemon.outputs.address) || '' }}
           TF_VAR_mariadb_endpoint: ${{ steps.mariadb.outputs.address }}
+          TF_VAR_mysql_username: ${{ matrix.workspace == 'mariadb' && 'tofu' || '' }}
+          TF_VAR_mysql_password: ${{ steps.mariadb-passwords.outputs.login }}
+          TF_VAR_repl_password: ${{ steps.mariadb-passwords.outputs.repl }}
+          TF_VAR_mediawiki_db_password: ${{ steps.mediawiki-db-password.outputs.password }}
           TF_VAR_github_token: ${{ steps.app-token.outputs.token }}
           GOOGLE_OAUTH_ACCESS_TOKEN: ${{ steps.gcp.outputs.access_token }}
           TF_VAR_grafana_auth: ${{ matrix.workspace == 'grafana' && secrets.GRAFANA_PLAN_TOKEN || '' }}
@@ -555,13 +596,14 @@ jobs:
           TF_VAR_discord_webhook_url: ${{ matrix.workspace == 'grafana' && secrets.GRAFANA_DISCORD_WEBHOOK_URL || '' }}
           TF_VAR_mastodon_token: ${{ matrix.workspace == 'grafana' && secrets.GRAFANA_MASTODON_TOKEN || '' }}
           TF_VAR_alerts_webhook_token: ${{ matrix.workspace == 'grafana' && secrets.GRAFANA_ALERTS_WEBHOOK_TOKEN || '' }}
-          TF_VAR_aws_state_passphrase: ${{ (matrix.workspace == 'grafana' || matrix.workspace == 'docker' || matrix.workspace == 'gcp' || matrix.workspace == 'mariadb') && secrets.AWS_STATE_PASSPHRASE || '' }}
+          TF_VAR_aws_state_passphrase: ${{ (matrix.workspace == 'grafana' || matrix.workspace == 'docker' || matrix.workspace == 'gcp') && secrets.AWS_STATE_PASSPHRASE || '' }}
           TF_VAR_healthchecksio_api_key: ${{ matrix.workspace == 'healthchecks' && secrets.HEALTHCHECKSIO_API_KEY || '' }}
           TF_VAR_prometheus_password: ${{ matrix.workspace == 'aws' && secrets.AWS_PROMETHEUS_PASSWORD || '' }}
           TF_VAR_loki_password: ${{ matrix.workspace == 'aws' && secrets.AWS_LOKI_PASSWORD || '' }}
           TF_VAR_internet_archive_access_key: ${{ matrix.workspace == 'aws' && secrets.AWS_INTERNET_ARCHIVE_ACCESS_KEY || '' }}
           TF_VAR_internet_archive_secret_key: ${{ matrix.workspace == 'aws' && secrets.AWS_INTERNET_ARCHIVE_SECRET_KEY || '' }}
           TF_VAR_h_captcha_secret_key: ${{ matrix.workspace == 'aws' && secrets.AWS_H_CAPTCHA_SECRET_KEY || '' }}
+          TF_VAR_pyroscope_password: ${{ matrix.workspace == 'aws' && secrets.AWS_PYROSCOPE_PASSWORD || '' }}
           TF_VAR_state_passphrase: ${{ matrix.workspace == 'aws' && secrets.AWS_STATE_PASSPHRASE || matrix.workspace == 'github' && secrets.TOFU_GITHUB_STATE_PASSPHRASE || matrix.workspace == 'gcp' && secrets.GCP_STATE_PASSPHRASE || matrix.workspace == 'docker' && secrets.DOCKER_STATE_PASSPHRASE || matrix.workspace == 'grafana' && secrets.GRAFANA_STATE_PASSPHRASE || matrix.workspace == 'mariadb' && secrets.MARIADB_STATE_PASSPHRASE || '' }}
           TF_VAR_gcp_state_passphrase: ${{ (matrix.workspace == 'aws' || matrix.workspace == 'docker') && secrets.GCP_STATE_PASSPHRASE || '' }}
           TF_VAR_grafana_state_passphrase: ${{ matrix.workspace == 'github' && secrets.GRAFANA_STATE_PASSPHRASE || '' }}
@@ -652,7 +694,7 @@ jobs:
       deployments: read
       pull-requests: write
     steps:
-      - uses: femiwiki/terraform-github-tacos@4ec9403700ed37ec6ca1f19c968f2919f3821c0e  # v0.9.0
+      - uses: femiwiki/terraform-github-tacos@f4ed7abef8631c36b2ed5303a848113bb4ec4bf8  # v0.9.1
         with:
           step: merge
           apply-before-merge: "true"
@@ -675,10 +717,10 @@ jobs:
       pull-requests: write
     steps:
       # Run logs expire, so each apply's output goes on the pull request
-      - uses: femiwiki/terraform-github-tacos@4ec9403700ed37ec6ca1f19c968f2919f3821c0e  # v0.9.0
+      - uses: femiwiki/terraform-github-tacos@f4ed7abef8631c36b2ed5303a848113bb4ec4bf8  # v0.9.1
         with:
           step: log
 
-      - uses: femiwiki/terraform-github-tacos@4ec9403700ed37ec6ca1f19c968f2919f3821c0e  # v0.9.0
+      - uses: femiwiki/terraform-github-tacos@f4ed7abef8631c36b2ed5303a848113bb4ec4bf8  # v0.9.1
         with:
           step: collapse

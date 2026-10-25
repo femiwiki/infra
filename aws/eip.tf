@@ -1,4 +1,4 @@
-resource "aws_eip" "seoul" {
+resource "aws_eip" "web" {
   region = local.seoul_region
   domain = "vpc"
 

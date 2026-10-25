@@ -8,10 +8,8 @@ terraform {
     use_lockfile = true
   }
 
-  # The state holds var.prometheus_password and var.loki_password, so it is
-  # encrypted before it reaches the bucket. Never rename the key provider or the
-  # method: the encrypted state records their names, and a renamed one cannot
-  # read it back.
+  # The state holds secrets. Never rename the key provider or the method: the
+  # encrypted state records their names and could not be read back.
   encryption {
     key_provider "pbkdf2" "state" {
       passphrase = var.state_passphrase
@@ -50,10 +48,6 @@ terraform {
     aws = {
       source  = "hashicorp/aws"
       version = "~> 6.7"
-    }
-    random = {
-      source  = "hashicorp/random"
-      version = "~> 3.7"
     }
   }
 }

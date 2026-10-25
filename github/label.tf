@@ -62,12 +62,6 @@ locals {
       color       = "f9d0c4"
     }
 
-    enhancement = {
-      name        = "enhancement"
-      description = "New feature or request"
-      color       = "a2eeef"
-    }
-
     epic = {
       name        = "EPIC"
       description = ""
@@ -188,6 +182,12 @@ locals {
       color       = "c5def5"
     }
 
+    needs_always_on_service = {
+      name        = "needs always-on service"
+      description = "Needs another always-on service; kept open until the budget allows"
+      color       = "fef2c0"
+    }
+
     note = {
       name        = "글쓰기"
       description = "공지사항이나 블로그 글로 문서화해야하는 이슈"
@@ -267,7 +267,7 @@ locals {
     }
   }
 
-  base_label_suite = ["enhancement", "invalid", "wontfix", "help_wanted", "good_first_issue", "upstreamed", "ci"]
+  base_label_suite = ["invalid", "wontfix", "help_wanted", "good_first_issue", "upstreamed", "needs_always_on_service", "ci"]
   ext_label_suite  = concat(local.base_label_suite, ["deprecation"])
 
 
@@ -364,17 +364,18 @@ locals {
     (module.femiwiki_github_io.name) = ["ci", "good_first_issue"]
     # Renamed to lambda; the API answers the old name with a redirect, which the
     # provider may not follow for writes, so this list is frozen.
-    sns-discord = ["enhancement", "invalid", "wontfix", "help_wanted", "upstreamed", "ci"]
+    sns-discord = ["invalid", "wontfix", "help_wanted", "upstreamed", "ci"]
 
-    (module.caddy_mwcache.name)       = local.base_label_suite
-    (module.caddy_cloudfront_ip.name) = local.base_label_suite
-    (module.delayed_job_queue.name)   = local.ext_label_suite
-    (module.fedifeeds.name)           = local.ext_label_suite
-    (module.http_signatures.name)     = local.base_label_suite
-    (module.legunto.name)             = local.base_label_suite
-    (module.ooui_femiwiki_theme.name) = local.ext_label_suite
-    (module.webfinger.name)           = local.base_label_suite
-    (module.remote_gadgets.name)      = concat(local.base_label_suite, ["search", "windows", "mw1_38", "mw1_39", "mw1_40", "mw1_41", "mw1_42"])
+    (module.caddy_mwcache.name)                  = local.base_label_suite
+    (module.caddy_cloudfront_ip.name)            = local.base_label_suite
+    (module.delayed_job_queue.name)              = local.ext_label_suite
+    (module.fedifeeds.name)                      = local.ext_label_suite
+    (module.http_signatures.name)                = local.base_label_suite
+    (module.legunto.name)                        = local.base_label_suite
+    (module.ooui_femiwiki_theme.name)            = local.ext_label_suite
+    (module.property_suggester_local_stats.name) = local.ext_label_suite
+    (module.webfinger.name)                      = local.base_label_suite
+    (module.remote_gadgets.name)                 = concat(local.base_label_suite, ["search", "windows", "mw1_38", "mw1_39", "mw1_40", "mw1_41", "mw1_42"])
 
     (module.tweetbot.name)   = local.base_label_suite
     (module.rankingbot.name) = local.base_label_suite

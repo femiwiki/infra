@@ -88,11 +88,19 @@ resource "github_actions_secret" "github_io_wiki_bot_user" {
 }
 
 # The availability collector's read-only view of the metrics, as JSON with url,
-# user and token. Made by grafana/readers.tf.
+# user and token. Made by grafana/access-policies.tf.
 resource "github_actions_secret" "github_io_prometheus" {
   repository  = module.femiwiki_github_io.name
   secret_name = "GRAFANA_PROMETHEUS"
   value       = jsonencode(data.terraform_remote_state.grafana.outputs.github_io_prometheus)
+}
+
+# MediaWiki's token for slow-request profiles, which the aws root writes to SSM
+# (femiwiki/femiwiki#614)
+resource "github_actions_secret" "aws_pyroscope_password" {
+  repository  = module.infra.name
+  secret_name = "AWS_PYROSCOPE_PASSWORD"
+  value       = data.terraform_remote_state.grafana.outputs.mediawiki_profiles_token
 }
 
 data "onepassword_item" "alerts_app_private_key" {
@@ -164,4 +172,15 @@ resource "github_actions_environment_secret" "gitlab_mirror_ssh_key" {
   environment = github_repository_environment.dot_github_gitlab.environment
   secret_name = "GITLAB_MIRROR_SSH_KEY"
   value       = data.onepassword_item.gitlab_mirror_ssh_key.note_value
+}
+
+data "onepassword_item" "tofu_github_plan_app_pem" {
+  vault = data.onepassword_vault.infra.uuid
+  title = "TOFU_GITHUB_PLAN_APP_PEM"
+}
+
+resource "github_actions_secret" "tofu_github_plan_app_pem" {
+  repository  = module.infra.name
+  secret_name = "TOFU_GITHUB_PLAN_APP_PEM"
+  value       = data.onepassword_item.tofu_github_plan_app_pem.note_value
 }
