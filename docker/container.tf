@@ -6,7 +6,7 @@ resource "docker_container" "http" {
   name         = "http-${local.fastcgi_generation}"
   log_driver   = "fluentd"
   log_opts     = local.log_opts
-  image        = "ghcr.io/femiwiki/femiwiki:2026-10-24T17-23-32044708"
+  image        = "ghcr.io/femiwiki/femiwiki:2026-10-26T14-27-b492805e"
   command      = ["caddy-run"]
   restart      = "always"
   init         = true
@@ -83,7 +83,7 @@ resource "docker_container" "fastcgi" {
   name         = "fastcgi-${local.fastcgi_generation}"
   log_driver   = "fluentd"
   log_opts     = local.log_opts
-  image        = "ghcr.io/femiwiki/femiwiki:2026-10-24T17-23-32044708"
+  image        = "ghcr.io/femiwiki/femiwiki:2026-10-26T14-27-b492805e"
   network_mode = "host"
   restart      = "always"
   init         = true
