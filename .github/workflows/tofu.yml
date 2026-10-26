@@ -450,6 +450,7 @@ jobs:
           filters: Name=tag:Name,Values=${{ matrix.workspace }}
           region: ap-northeast-2
           port: 2376
+          socket: /var/run/docker.sock
           probe: 'curl -sf --max-time 3 "http://$HOST:$PORT/_ping"'
 
       # A server greets first, so four bytes back mean MariaDB answered
