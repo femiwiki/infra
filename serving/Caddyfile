@@ -328,6 +328,8 @@ femiwiki.com *.femiwiki.com 127.0.0.1:80 localhost:80 {
 			match {
 				path /index.php* /api.php* /w/*
 				header_regexp User-Agent {$FW_CRAWLER_AGENTS:(?i)(bot|spider|crawl)}
+				# Google indexes a 429 as a server error; dynamic still bounds it
+				not client_ip {$FW_GOOGLE_CRAWLERS}
 			}
 			key {http.request.header.User-Agent}
 			events {$FW_CRAWLER_EVENTS:100}
