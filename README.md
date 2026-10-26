@@ -101,13 +101,16 @@ plan과 apply는 모든 워크스페이스가 `tofu.yml` 하나를 같이 씁니
 손으로 돌려야 할 때는 AWS CLI와 [Session Manager 플러그인]이 필요합니다.
 
 ```bash
-# 터미널 1: 터널
-aws ssm start-session \
-  --target "$(aws ec2 describe-instances \
-    --filters Name=tag:Name,Values=docker Name=instance-state-name,Values=running \
-    --query 'Reservations[].Instances[].InstanceId' --output text)" \
-  --document-name AWS-StartPortForwardingSession \
-  --parameters portNumber=2376,localPortNumber=2376
+# 터미널 1: 터널. 데몬은 유닉스 소켓만 열어서 SSM 위 ssh로 소켓을 끌어옵니다
+instance=$(aws ec2 describe-instances \
+  --filters Name=tag:Name,Values=docker Name=instance-state-name,Values=running \
+  --query 'Reservations[].Instances[].InstanceId' --output text)
+ssh-keygen -q -t ed25519 -N '' -f /tmp/docker-key
+aws ec2-instance-connect send-ssh-public-key --instance-id "$instance" \
+  --instance-os-user ec2-user --ssh-public-key file:///tmp/docker-key.pub
+ssh -N -i /tmp/docker-key \
+  -o 'ProxyCommand=aws ssm start-session --target %h --document-name AWS-StartSSHSession --parameters portNumber=%p' \
+  -L 127.0.0.1:2376:/var/run/docker.sock "ec2-user@$instance"
 
 # 터미널 2
 tofu -chdir=docker init
