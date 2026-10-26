@@ -466,3 +466,38 @@ resource "aws_ssm_parameter" "mariadb_next_server_id" {
     ignore_changes = [value]
   }
 }
+
+resource "aws_ssm_document" "docker_socket_only" {
+  region          = local.seoul_region
+  name            = "docker-socket-only"
+  document_type   = "Command"
+  document_format = "JSON"
+
+  content = jsonencode({
+    schemaVersion = "2.2"
+    description   = "Stop the Docker daemon listening on TCP, since applies reach its socket through ssh over SSM."
+    mainSteps = [{
+      action = "aws:runShellScript"
+      name   = "dockerSocketOnly"
+      inputs = {
+        runCommand = split("\n", file("res/docker-socket-only.sh"))
+      }
+    }]
+  })
+}
+
+resource "aws_ssm_association" "docker_socket_only" {
+  region              = local.seoul_region
+  association_name    = "docker-socket-only"
+  name                = aws_ssm_document.docker_socket_only.name
+  document_version    = aws_ssm_document.docker_socket_only.latest_version
+  schedule_expression = "rate(30 minutes)"
+  compliance_severity = "HIGH"
+  max_concurrency     = "1"
+  max_errors          = "0"
+
+  targets {
+    key    = "tag:Name"
+    values = ["docker"]
+  }
+}
