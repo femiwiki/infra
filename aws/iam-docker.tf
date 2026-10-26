@@ -152,3 +152,22 @@ data "aws_iam_policy_document" "infra_docker_plan" {
     ]
   }
 }
+
+data "aws_iam_policy_document" "docker_ssh" {
+  statement {
+    actions   = ["ec2-instance-connect:SendSSHPublicKey"]
+    resources = [aws_instance.docker.arn]
+  }
+}
+
+resource "aws_iam_role_policy" "infra_docker_ssh" {
+  name   = "DockerSsh"
+  role   = module.infra_docker.name
+  policy = data.aws_iam_policy_document.docker_ssh.json
+}
+
+resource "aws_iam_role_policy" "database_swap_ssh" {
+  name   = "DockerSsh"
+  role   = module.database_swap.name
+  policy = data.aws_iam_policy_document.docker_ssh.json
+}
