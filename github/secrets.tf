@@ -118,6 +118,10 @@ resource "github_actions_secret" "alerts_app_private_key" {
 resource "random_password" "alerts_webhook" {
   length  = 48
   special = false
+  # Change the date to rotate it.
+  keepers = {
+    rotated = "2026-10-27"
+  }
 }
 
 resource "github_actions_secret" "alerts_webhook" {
