@@ -76,3 +76,24 @@ data "aws_iam_policy_document" "infra_aws_plan_no_contents" {
     ])
   }
 }
+
+# Terraform manages no parameter under /lambda/, so a plan never decrypts one.
+resource "aws_iam_role_policy" "infra_aws_plan_no_lambda_secrets" {
+  name   = "InfraAwsPlanNoLambdaSecrets"
+  role   = module.infra_aws_plan.name
+  policy = data.aws_iam_policy_document.infra_aws_plan_no_lambda_secrets.json
+}
+
+data "aws_iam_policy_document" "infra_aws_plan_no_lambda_secrets" {
+  statement {
+    effect    = "Deny"
+    actions   = ["kms:Decrypt"]
+    resources = ["*"]
+
+    condition {
+      test     = "StringLike"
+      variable = "kms:EncryptionContext:PARAMETER_ARN"
+      values   = ["arn:aws:ssm:*:${data.aws_caller_identity.current.account_id}:parameter/lambda/*"]
+    }
+  }
+}

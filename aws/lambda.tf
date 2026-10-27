@@ -361,3 +361,44 @@ resource "aws_lambda_permission" "bounce_handler" {
   principal     = "sns.amazonaws.com"
   source_arn    = aws_sns_topic.ses_bounces.arn
 }
+
+# The deploy workflow of femiwiki/lambda writes each function's secrets under
+# /lambda/<function>/, and the function reads its own at run time
+locals {
+  lambda_secret_roles = {
+    grafana-github   = module.grafana_github.name
+    mastodon-boost   = module.mastodon_boost.name
+    mastodon-discord = module.mastodon_discord.name
+    sns-discord      = module.sns_discord.name
+  }
+}
+
+resource "aws_iam_role_policy" "lambda_secrets" {
+  for_each = local.lambda_secret_roles
+
+  name   = "ReadSecrets"
+  role   = each.value
+  policy = data.aws_iam_policy_document.lambda_secrets[each.key].json
+}
+
+data "aws_iam_policy_document" "lambda_secrets" {
+  for_each = local.lambda_secret_roles
+
+  statement {
+    actions   = ["ssm:GetParameter"]
+    resources = ["arn:aws:ssm:${local.seoul_region}:${data.aws_caller_identity.current.account_id}:parameter/lambda/${each.key}/*"]
+  }
+}
+
+resource "aws_iam_role_policy" "github_lambda_secrets" {
+  name   = "WriteSecrets"
+  role   = module.github_lambda.name
+  policy = data.aws_iam_policy_document.github_lambda_secrets.json
+}
+
+data "aws_iam_policy_document" "github_lambda_secrets" {
+  statement {
+    actions   = ["ssm:PutParameter"]
+    resources = ["arn:aws:ssm:${local.seoul_region}:${data.aws_caller_identity.current.account_id}:parameter/lambda/*"]
+  }
+}
