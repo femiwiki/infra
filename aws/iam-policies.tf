@@ -390,6 +390,29 @@ data "aws_iam_policy_document" "get_google_subject_token" {
       values   = ["3600"]
     }
   }
+
+  statement {
+    actions   = ["sts:GetWebIdentityToken"]
+    resources = ["*"]
+
+    condition {
+      test     = "ForAllValues:StringEquals"
+      variable = "sts:IdentityTokenAudience"
+      values   = ["chart-renderer"]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "sts:SigningAlgorithm"
+      values   = ["ES384"]
+    }
+
+    condition {
+      test     = "NumericLessThanEquals"
+      variable = "sts:DurationSeconds"
+      values   = ["3600"]
+    }
+  }
 }
 
 #
