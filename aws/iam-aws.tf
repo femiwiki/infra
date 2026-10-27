@@ -49,3 +49,30 @@ data "aws_iam_policy_document" "infra_aws_plan" {
     resources = [aws_bcmdataexports_export.cost_and_usage.arn]
   }
 }
+
+# A plan needs no object contents or log events beyond the states it reads.
+resource "aws_iam_role_policy" "infra_aws_plan_no_contents" {
+  name   = "InfraAwsPlanNoContents"
+  role   = module.infra_aws_plan.name
+  policy = data.aws_iam_policy_document.infra_aws_plan_no_contents.json
+}
+
+data "aws_iam_policy_document" "infra_aws_plan_no_contents" {
+  statement {
+    effect = "Deny"
+    actions = [
+      "s3:GetObject",
+      "s3:GetObjectVersion",
+      "logs:GetLogEvents",
+      "logs:FilterLogEvents",
+      "logs:GetLogRecord",
+      "logs:StartQuery",
+      "logs:StartLiveTail",
+    ]
+    not_resources = flatten([
+      for b in local.tfstate_buckets : [
+        for k in ["aws", "gcp", "healthchecks"] : "${b}/${k}/terraform.tfstate*"
+      ]
+    ])
+  }
+}
