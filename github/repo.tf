@@ -337,6 +337,20 @@ module "webfinger" {
   default_status_checks           = []
 }
 
+module "terraform_aws_mediawiki_chart_renderer" {
+  source      = "./modules/github-repository"
+  name        = "terraform-aws-mediawiki-chart-renderer"
+  description = "OpenTofu module for an AWS Lambda that renders charts for MediaWiki's Chart extension"
+  topics = [
+    "aws-lambda",
+    "mediawiki",
+    "opentofu",
+    "terraform-module",
+  ]
+  required_status_checks_contexts = ["required"]
+  default_status_checks           = []
+}
+
 module "status" {
   source           = "./modules/github-repository"
   name             = "status"
