@@ -402,3 +402,11 @@ data "aws_iam_policy_document" "github_lambda_secrets" {
     resources = ["arn:aws:ssm:${local.seoul_region}:${data.aws_caller_identity.current.account_id}:parameter/lambda/*"]
   }
 }
+
+module "chart_renderer" {
+  source = "git::https://github.com/femiwiki/terraform-aws-mediawiki-chart-renderer.git?ref=v0.1.1"
+
+  issuer     = aws_iam_outbound_web_identity_federation.this.issuer_identifier
+  subjects   = [module.femiwiki.arn]
+  algorithms = ["ES384"]
+}
