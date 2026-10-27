@@ -23,6 +23,11 @@ output "caddy_certs_s3_host" {
   value       = "s3.${module.caddy_certs.s3_bucket_region}.amazonaws.com"
 }
 
+output "chart_renderer_url" {
+  description = "The function URL MediaWiki's Chart extension posts to, followed by a token"
+  value       = module.chart_renderer.url
+}
+
 output "outbound_issuer" {
   description = "The issuer of the JWTs that sts:GetWebIdentityToken signs for this account"
   value       = aws_iam_outbound_web_identity_federation.this.issuer_identifier
