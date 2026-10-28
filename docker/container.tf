@@ -178,6 +178,8 @@ resource "docker_container" "fastcgi" {
 
       SSM_SECRETS = "1"
       AWS_REGION  = "ap-northeast-2"
+
+      FW_CHART_RENDERER_URL = data.terraform_remote_state.aws.outputs.chart_renderer_url
     } : "${k}=${v}"
   ]
 
