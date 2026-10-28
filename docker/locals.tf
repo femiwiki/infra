@@ -1,9 +1,9 @@
 locals {
   # The ProxySQL switch rolls the wiki like a deploy, so it moves the generation too
-  fastcgi_generation = 169 + (var.proxysql_enabled ? 1 : 0)
+  fastcgi_generation = 170 + (var.proxysql_enabled ? 1 : 0)
   # The generation whose fastcgi runs update.php as it starts, set with an image
   # that changes the schema; it lapses once the generation moves on
-  schema_update_generation = 164
+  schema_update_generation = 170
 
   # To the OpenTelemetry Collector on the host, which ships them to Loki. Async,
   # so a container still starts while the Collector is down.
