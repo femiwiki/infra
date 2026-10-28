@@ -6,7 +6,7 @@ resource "docker_container" "http" {
   name         = "http-${local.fastcgi_generation}"
   log_driver   = "fluentd"
   log_opts     = local.log_opts
-  image        = "ghcr.io/femiwiki/femiwiki:2026-10-26T14-27-b492805e"
+  image        = "ghcr.io/femiwiki/femiwiki:2026-10-28T00-25-5ccdecc9"
   command      = ["caddy-run"]
   restart      = "always"
   init         = true
@@ -83,7 +83,7 @@ resource "docker_container" "fastcgi" {
   name         = "fastcgi-${local.fastcgi_generation}"
   log_driver   = "fluentd"
   log_opts     = local.log_opts
-  image        = "ghcr.io/femiwiki/femiwiki:2026-10-26T14-27-b492805e"
+  image        = "ghcr.io/femiwiki/femiwiki:2026-10-28T00-25-5ccdecc9"
   network_mode = "host"
   restart      = "always"
   init         = true
@@ -178,6 +178,8 @@ resource "docker_container" "fastcgi" {
 
       SSM_SECRETS = "1"
       AWS_REGION  = "ap-northeast-2"
+
+      FW_CHART_RENDERER_URL = data.terraform_remote_state.aws.outputs.chart_renderer_url
     } : "${k}=${v}"
   ]
 
