@@ -106,10 +106,27 @@ resource "aws_cloudfront_cache_policy" "root" {
   }
 }
 
-# CloudFront adds X-Forwarded-For whatever the policy says, and nothing here
-# reads the CloudFront-* headers, which dominated every access log line.
-data "aws_cloudfront_origin_request_policy" "all_viewer" {
-  name = "Managed-AllViewer"
+# Every viewer header, as Managed-AllViewer, and of the CloudFront-* headers,
+# which would dominate every access log line, only the TLS fingerprint: a
+# crawl can copy a browser's User-Agent and Sec-Fetch-* headers, but not its
+# TLS handshake. Logged to tell readers from crawls that drain reader_clicks.
+# CloudFront adds X-Forwarded-For whatever the policy says.
+resource "aws_cloudfront_origin_request_policy" "all_viewer" {
+  name    = "femiwiki-all-viewer"
+  comment = "All viewer headers and the JA4 fingerprint"
+
+  cookies_config {
+    cookie_behavior = "all"
+  }
+  headers_config {
+    header_behavior = "allViewerAndWhitelistCloudFront"
+    headers {
+      items = ["CloudFront-Viewer-JA4-Fingerprint"]
+    }
+  }
+  query_strings_config {
+    query_string_behavior = "all"
+  }
 }
 
 locals {
@@ -167,7 +184,7 @@ resource "aws_cloudfront_distribution" "femiwiki_com" {
     allowed_methods          = ["GET", "HEAD", "OPTIONS", "PUT", "POST", "PATCH", "DELETE"]
     cached_methods           = ["GET", "HEAD"]
     cache_policy_id          = data.aws_cloudfront_cache_policy.caching_disabled.id
-    origin_request_policy_id = data.aws_cloudfront_origin_request_policy.all_viewer.id
+    origin_request_policy_id = aws_cloudfront_origin_request_policy.all_viewer.id
     compress                 = true
   }
 
@@ -178,7 +195,7 @@ resource "aws_cloudfront_distribution" "femiwiki_com" {
     allowed_methods          = ["GET", "HEAD", "OPTIONS", "PUT", "POST", "PATCH", "DELETE"]
     cached_methods           = ["GET", "HEAD"]
     cache_policy_id          = aws_cloudfront_cache_policy.root.id
-    origin_request_policy_id = data.aws_cloudfront_origin_request_policy.all_viewer.id
+    origin_request_policy_id = aws_cloudfront_origin_request_policy.all_viewer.id
     compress                 = true
   }
 
@@ -189,7 +206,7 @@ resource "aws_cloudfront_distribution" "femiwiki_com" {
     allowed_methods          = ["GET", "HEAD"]
     cached_methods           = ["GET", "HEAD"]
     cache_policy_id          = aws_cloudfront_cache_policy.load_php.id
-    origin_request_policy_id = data.aws_cloudfront_origin_request_policy.all_viewer.id
+    origin_request_policy_id = aws_cloudfront_origin_request_policy.all_viewer.id
     compress                 = true
   }
 
@@ -200,7 +217,7 @@ resource "aws_cloudfront_distribution" "femiwiki_com" {
     allowed_methods          = ["GET", "HEAD"]
     cached_methods           = ["GET", "HEAD"]
     cache_policy_id          = data.aws_cloudfront_cache_policy.caching_optimized.id
-    origin_request_policy_id = data.aws_cloudfront_origin_request_policy.all_viewer.id
+    origin_request_policy_id = aws_cloudfront_origin_request_policy.all_viewer.id
     compress                 = true
   }
 

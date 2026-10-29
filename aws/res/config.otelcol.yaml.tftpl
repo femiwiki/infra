@@ -187,9 +187,9 @@ processors:
       - 'merge_maps(log.attributes, ExtractPatterns(log.cache["deprecated"], "PHP Deprecated: .*<br>(?P<deprecation>[^<]*?) is deprecated\\."), "upsert") where log.cache["deprecated"] != nil'
 
       # A refused request's access log line is cut down to what the scrapes
-      # dashboard reads
+      # dashboard reads, and the TLS fingerprint that tells a reader from a crawl
       - set(log.cache["request"], ParseJSON(log.body)["request"]) where log.attributes["service.name"] == "http" and IsMatch(log.body, "\"status\":429")
-      - 'set(log.body, {"msg": "refused", "client_ip": log.cache["request"]["client_ip"], "uri": log.cache["request"]["uri"]}) where log.cache["request"] != nil'
+      - 'set(log.body, {"msg": "refused", "client_ip": log.cache["request"]["client_ip"], "uri": log.cache["request"]["uri"], "ja4": log.cache["request"]["headers"]["Cloudfront-Viewer-Ja4-Fingerprint"]}) where log.cache["request"] != nil'
 
       - set(log.attributes["zone"], ParseJSON(log.body)["zone"]) where log.attributes["service.name"] == "http" and IsMatch(log.body, "\"logger\":\"http\\.handlers\\.rate_limit\"") and IsMatch(log.body, "rate limit exceeded")
 
