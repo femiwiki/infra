@@ -292,12 +292,20 @@ femiwiki.com *.femiwiki.com 127.0.0.1:80 localhost:80 {
 		}
 		# Login and signup pages opened from anywhere but a page here, site-wide; the
 		# #978 crawl forges search engine Referers. GET only, so an open form logs in.
+		# The #1316 crawl forges a femiwiki Referer but sends Sec-Fetch-Site none,
+		# which browsers never do with one, so that counts as from elsewhere too.
 		zone login_walk {
 			match {
 				method GET
 				path /index.php*
 				vars_regexp {query} {$FW_LOGIN_WALK_QUERY:(?i)(^|&)title=(%ED%8A%B9%EC%88%98|특수|Special)(%3A|:)(%EB%A1%9C%EA%B7%B8%EC%9D%B8|로그인|%EA%B3%84%EC%A0%95%EB%A7%8C%EB%93%A4%EA%B8%B0|계정만들기|UserLogin|CreateAccount)(/|&|$)}
 				not header_regexp Referer ^https://([a-z0-9-]+\.)?femiwiki\.com/
+			}
+			match {
+				method GET
+				path /index.php*
+				vars_regexp {query} {$FW_LOGIN_WALK_QUERY:(?i)(^|&)title=(%ED%8A%B9%EC%88%98|특수|Special)(%3A|:)(%EB%A1%9C%EA%B7%B8%EC%9D%B8|로그인|%EA%B3%84%EC%A0%95%EB%A7%8C%EB%93%A4%EA%B8%B0|계정만들기|UserLogin|CreateAccount)(/|&|$)}
+				header Sec-Fetch-Site none
 			}
 			key login_walk
 			events {$FW_LOGIN_WALK_EVENTS:60}
