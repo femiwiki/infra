@@ -106,11 +106,8 @@ resource "aws_cloudfront_cache_policy" "root" {
   }
 }
 
-# Every viewer header, as Managed-AllViewer, and of the CloudFront-* headers,
-# which would dominate every access log line, only the TLS fingerprint: a
-# crawl can copy a browser's User-Agent and Sec-Fetch-* headers, but not its
-# TLS handshake. Logged to tell readers from crawls that drain reader_clicks.
-# CloudFront adds X-Forwarded-For whatever the policy says.
+# Managed-AllViewer plus the one CloudFront-* header that tells a reader from a
+# crawl copying a browser's headers: its TLS fingerprint. See #1577.
 resource "aws_cloudfront_origin_request_policy" "all_viewer" {
   name    = "femiwiki-all-viewer"
   comment = "All viewer headers and the JA4 fingerprint"
