@@ -290,10 +290,8 @@ femiwiki.com *.femiwiki.com 127.0.0.1:80 localhost:80 {
 			events {$FW_READER_CLICKS_EVENTS:60}
 			window {$FW_READER_CLICKS_WINDOW:10m}
 		}
-		# Login and signup pages opened from anywhere but a page here, site-wide; the
-		# #978 crawl forges search engine Referers. GET only, so an open form logs in.
-		# The #1316 crawl forges a femiwiki Referer but sends Sec-Fetch-Site none,
-		# which browsers never do with one, so that counts as from elsewhere too.
+		# Login and signup pages opened from anywhere but a page here, site-wide; crawls forge
+		# Referers (#978, #1316), but not Sec-Fetch-Site. GET only, so an open form logs in.
 		zone login_walk {
 			match {
 				method GET
