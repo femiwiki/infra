@@ -79,7 +79,7 @@ jobs:
           done
 
       - name: Turn ProxySQL on
-        uses: dflook/tofu-apply@e3e5dfc8f935d4b152c767801046f63abf8a77d3  # v3.1.0
+        uses: dflook/tofu-apply@1de081df5087fb9ba2acf4866e9bc9b95f79676c  # v3.1.2
         env:
           TF_VAR_docker_host: tcp://${{ steps.daemon.outputs.address }}
           TF_VAR_state_passphrase: ${{ secrets.DOCKER_STATE_PASSPHRASE }}
@@ -111,7 +111,7 @@ jobs:
 
       # The wiki goes back to the fixed address, which the new primary now holds
       - name: Turn ProxySQL off
-        uses: dflook/tofu-apply@e3e5dfc8f935d4b152c767801046f63abf8a77d3  # v3.1.0
+        uses: dflook/tofu-apply@1de081df5087fb9ba2acf4866e9bc9b95f79676c  # v3.1.2
         env:
           TF_VAR_docker_host: tcp://${{ steps.daemon.outputs.address }}
           TF_VAR_state_passphrase: ${{ secrets.DOCKER_STATE_PASSPHRASE }}
