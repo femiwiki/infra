@@ -1,6 +1,6 @@
 locals {
   # The ProxySQL switch rolls the wiki like a deploy, so it moves the generation too
-  fastcgi_generation = 172 + (var.proxysql_enabled ? 1 : 0)
+  fastcgi_generation = 173 + (var.proxysql_enabled ? 1 : 0)
   # The generation whose fastcgi runs update.php as it starts, set with an image
   # that changes the schema; it lapses once the generation moves on
   schema_update_generation = 170
