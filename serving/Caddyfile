@@ -39,12 +39,16 @@
 # Old revisions and diffs: a space a crawler walks, rather than something a
 # reader asks for once. Page history left for history_requests below.
 (expensive_requests) {
-	match {
-		# api.php is left out: the search box asks it on every keystroke
-		path /index.php*
-		vars_regexp {query} (^|&)(diff|oldid)=
-		not header Cookie *femiwikiUserID=*
-	}
+	# api.php is left out: the search box asks it on every keystroke
+	path /index.php*
+	vars_regexp {query} (^|&)(diff|oldid)=
+	not header Cookie *femiwikiUserID=*
+}
+
+# A TLS handshake offering only HTTP/1.1 or no ALPN, which no browser sends, from a
+# client not calling itself a crawler. CloudFront adds the JA4 header (#1577).
+(not_browser_tls) {
+	expression {$FW_NOT_BROWSER:header_regexp('Cloudfront-Viewer-Ja4-Fingerprint', '^[tq]\\d\\d[di]\\d\\d\\d\\d(00|h1)_') && !header_regexp('User-Agent', '(?i)(bot|spider|crawl)')}
 }
 
 # History and info are one click each, and the reader is looking at the result,
@@ -74,6 +78,9 @@
 	header Sec-Fetch-Site same-origin
 	header Sec-Fetch-Site same-site
 	header_regexp Referer ^https://([a-z0-9-]+\.)?femiwiki\.com/
+	not {
+		import not_browser_tls
+	}
 }
 
 # Red links, the mobile and desktop toggle and what links here; see link_walk.
@@ -160,16 +167,34 @@ femiwiki.com *.femiwiki.com 127.0.0.1:80 localhost:80 {
 		# zone reads its count and window from the environment so infra can
 		# retune them without waiting for an image.
 		zone expensive {
-			import expensive_requests
+			match {
+				import expensive_requests
+				not {
+					import not_browser_tls
+				}
+			}
 			key expensive
 			events {$FW_EXPENSIVE_EVENTS:1500}
+			window {$FW_EXPENSIVE_WINDOW:10m}
+		}
+		# The same requests from a handshake no browser makes, in a smaller budget of their
+		# own so they no longer spend the readers' one above.
+		zone expensive_not_browser {
+			match {
+				import expensive_requests
+				import not_browser_tls
+			}
+			key expensive_not_browser
+			events {$FW_EXPENSIVE_NOT_BROWSER_EVENTS:15}
 			window {$FW_EXPENSIVE_WINDOW:10m}
 		}
 		# The same requests counted per /24 as well, so one heavy client spends
 		# its own budget before the shared one. The busiest /24 asks for about
 		# fifty in ten minutes, so this only bites a single hard scraper.
 		zone expensive_per_ip {
-			import expensive_requests
+			match {
+				import expensive_requests
+			}
 			key {client_ip}
 			ipv4_prefix 24
 			ipv6_prefix 64
