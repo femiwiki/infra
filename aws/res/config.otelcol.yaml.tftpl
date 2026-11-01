@@ -174,9 +174,10 @@ processors:
       - replace_pattern(log.attributes["service.name"], "-[0-9]+$", "")
 
       - 'set(log.body, ExtractPatterns(log.body, "^NOTICE: PHP message: (?P<line>\\{.*)$")["line"]) where log.attributes["service.name"] == "fastcgi" and IsMatch(log.body, "^NOTICE: PHP message: \\{")'
-      # Its own service_name lets the rules waiting on its finish line read only it
-      - 'set(log.attributes["service.name"], "publish-dump") where log.attributes["service.name"] == "fastcgi" and IsMatch(log.body, "^publish-dump: ")'
-      - set(log.attributes["class"], ParseJSON(log.body)["context"]["exception"]["class"]) where log.attributes["service.name"] == "fastcgi" and IsMatch(log.body, "\"caught_by\":\"entrypoint\"|\"channel\":\"fatal\"")
+      # Its own service_name lets the rules waiting on its finish line read only it.
+      # fastcgi ran it until jobrunner took the jobs (femiwiki/docker-mediawiki#968).
+      - 'set(log.attributes["service.name"], "publish-dump") where (log.attributes["service.name"] == "fastcgi" or log.attributes["service.name"] == "jobrunner") and IsMatch(log.body, "^publish-dump: ")'
+      - set(log.attributes["class"], ParseJSON(log.body)["context"]["exception"]["class"]) where (log.attributes["service.name"] == "fastcgi" or log.attributes["service.name"] == "jobrunner") and IsMatch(log.body, "\"caught_by\":\"entrypoint\"|\"channel\":\"fatal\"")
 
       # php-fpm's copy of a deprecation is counted and dropped; MediaWiki's,
       # which has the URL, is kept at one a minute for each
