@@ -79,6 +79,62 @@ resource "docker_container" "http" {
   }
 }
 
+# The MediaWiki settings fastcgi and jobrunner share, since both run the same image
+locals {
+  mediawiki_env = {
+    MEDIAWIKI_HOTFIX_SNIPPET = file("../serving/Hotfix.php")
+
+    FW_JOB_TYPES_OFF_DEFAULT_QUEUE = ""
+    FW_JOB_SLOW_TYPES              = ""
+
+    # Script hosts of the report-only Content-Security-Policy. See femiwiki#680.
+    FW_CSP_SCRIPT_SRC = join(",", [
+      "*.googletagmanager.com", # The Google tag from PageViewInfoGA
+      "cdn.jsdelivr.net",       # WidgetBot's crate for the discord-widget gadget
+      "www.gstatic.com",        # 위젯:구글 통계 and 위젯:인기있는 문서
+    ])
+
+    # MediaWiki globals LocalSettings applies after its defaults. See femiwiki#691.
+    FW_SETTINGS = jsonencode({
+      # Naver Search Advisor's public HTML tag key for femiwiki@naver.com
+      wgNaverSiteVerificationKey = "8e17c8c264cfe03530591213361fe53c765056d3"
+    })
+
+    WG_BOUNCE_HANDLER_INTERNAL_IPS = "10.20.0.0/16"
+    WG_CDN_SERVERS                 = "127.0.0.1:80"
+    WG_INTERNAL_SERVER             = "http://127.0.0.1:80"
+    WG_MEMCACHED_SERVERS           = "127.0.0.1:11211"
+    # The C client. The pure-PHP one spends about 14% of a page's CPU on its
+    # sockets (#1073); the pecl keys start cold under pecl/ (#1134)
+    FW_MAIN_CACHE    = "memcached-pecl"
+    FW_PARSER_CACHE  = "memcached-pecl"
+    FW_MESSAGE_CACHE = "memcached-pecl"
+
+    WG_DB_SERVER          = var.proxysql_enabled ? "127.0.0.1:6033" : "${data.terraform_remote_state.aws.outputs.database_address}:3306"
+    WG_DB_USER            = "mediawiki"
+    WG_SESSION_DB_NAME    = "femiwiki_sessions"
+    WG_H_CAPTCHA_SITE_KEY = "6cb24780-3282-490c-9b4e-83122cb04cda"
+
+    SSM_SECRETS = "1"
+    AWS_REGION  = "ap-northeast-2"
+
+    FW_CHART_RENDERER_URL = data.terraform_remote_state.aws.outputs.chart_renderer_url
+  }
+
+  google_analytics_json = jsonencode({
+    universe_domain    = "googleapis.com"
+    type               = "external_account"
+    audience           = data.terraform_remote_state.gcp.outputs.pageviewinfoga_audience
+    subject_token_type = "urn:ietf:params:oauth:token-type:jwt"
+    token_url          = "https://sts.googleapis.com/v1/token"
+    credential_source = {
+      file   = "/run/secrets/google-subject-token"
+      format = { type = "text" }
+    }
+    service_account_impersonation_url = data.terraform_remote_state.gcp.outputs.pageviewinfoga_impersonation_url
+  })
+}
+
 resource "docker_container" "fastcgi" {
   name         = "fastcgi-${local.fastcgi_generation}"
   log_driver   = "fluentd"
@@ -100,7 +156,7 @@ resource "docker_container" "fastcgi" {
   }
 
   env = [
-    for k, v in {
+    for k, v in merge(local.mediawiki_env, {
       PHP_FPM_LISTEN       = 9000 + local.fastcgi_generation % 2
       PHP_FPM_PROBE_LISTEN = 9100 + local.fastcgi_generation % 2
 
@@ -128,11 +184,8 @@ resource "docker_container" "fastcgi" {
 
       MEDIAWIKI_SKIP_IMPORT_SITES = "1"
       MEDIAWIKI_SKIP_INSTALL      = "1"
+      MEDIAWIKI_SKIP_CRON         = "1" # jobrunner runs the jobs
       MEDIAWIKI_SKIP_UPDATE       = local.fastcgi_generation == local.schema_update_generation ? "" : "1"
-      MEDIAWIKI_HOTFIX_SNIPPET    = file("../serving/Hotfix.php")
-
-      FW_JOB_TYPES_OFF_DEFAULT_QUEUE = ""
-      FW_JOB_SLOW_TYPES              = ""
 
       FW_PROFILER = "excimer"
       # Every request is instrumented, so nothing slow can be missed, but only
@@ -146,41 +199,10 @@ resource "docker_container" "fastcgi" {
       FW_PROFILER_PYROSCOPE_URL  = "https://profiles-prod-019.grafana.net"
       FW_PROFILER_PYROSCOPE_USER = "1059321"
 
-      # Script hosts of the report-only Content-Security-Policy. See femiwiki#680.
-      FW_CSP_SCRIPT_SRC = join(",", [
-        "*.googletagmanager.com", # The Google tag from PageViewInfoGA
-        "cdn.jsdelivr.net",       # WidgetBot's crate for the discord-widget gadget
-        "www.gstatic.com",        # 위젯:구글 통계 and 위젯:인기있는 문서
-      ])
-
-      # MediaWiki globals LocalSettings applies after its defaults. See femiwiki#691.
-      FW_SETTINGS = jsonencode({
-        # Naver Search Advisor's public HTML tag key for femiwiki@naver.com
-        wgNaverSiteVerificationKey = "8e17c8c264cfe03530591213361fe53c765056d3"
-      })
-
-      WG_BOUNCE_HANDLER_INTERNAL_IPS = "10.20.0.0/16"
-      WG_CDN_SERVERS                 = "127.0.0.1:80"
-      WG_INTERNAL_SERVER             = "http://127.0.0.1:80"
-      WG_MEMCACHED_SERVERS           = "127.0.0.1:11211"
-      # The C client. The pure-PHP one spends about 14% of a page's CPU on its
-      # sockets (#1073); the pecl keys start cold under pecl/ (#1134)
-      FW_MAIN_CACHE    = "memcached-pecl"
-      FW_PARSER_CACHE  = "memcached-pecl"
-      FW_MESSAGE_CACHE = "memcached-pecl"
       # Used by fcgi-probe.php and databasez-probe.php
       FCGI_URL = "127.0.0.1:${9100 + local.fastcgi_generation % 2}"
 
-      WG_DB_SERVER          = var.proxysql_enabled ? "127.0.0.1:6033" : "${data.terraform_remote_state.aws.outputs.database_address}:3306"
-      WG_DB_USER            = "mediawiki"
-      WG_SESSION_DB_NAME    = "femiwiki_sessions"
-      WG_H_CAPTCHA_SITE_KEY = "6cb24780-3282-490c-9b4e-83122cb04cda"
-
-      SSM_SECRETS = "1"
-      AWS_REGION  = "ap-northeast-2"
-
-      FW_CHART_RENDERER_URL = data.terraform_remote_state.aws.outputs.chart_renderer_url
-    } : "${k}=${v}"
+    }) : "${k}=${v}"
   ]
 
   healthcheck {
@@ -197,19 +219,8 @@ resource "docker_container" "fastcgi" {
   }
 
   upload {
-    file = "/etc/mediawiki/google-analytics.json"
-    content = jsonencode({
-      universe_domain    = "googleapis.com"
-      type               = "external_account"
-      audience           = data.terraform_remote_state.gcp.outputs.pageviewinfoga_audience
-      subject_token_type = "urn:ietf:params:oauth:token-type:jwt"
-      token_url          = "https://sts.googleapis.com/v1/token"
-      credential_source = {
-        file   = "/run/secrets/google-subject-token"
-        format = { type = "text" }
-      }
-      service_account_impersonation_url = data.terraform_remote_state.gcp.outputs.pageviewinfoga_impersonation_url
-    })
+    file    = "/etc/mediawiki/google-analytics.json"
+    content = local.google_analytics_json
   }
 
   mounts {
@@ -230,6 +241,40 @@ resource "docker_container" "fastcgi" {
   }
 
   # Turned off, the old generation leaves before ProxySQL does
+  depends_on = [docker_container.proxysql]
+}
+
+# The job queue and scheduled maintenance, apart from page requests (femiwiki/docker-mediawiki#968)
+resource "docker_container" "jobrunner" {
+  name         = "jobrunner"
+  log_driver   = "fluentd"
+  log_opts     = local.log_opts
+  image        = "ghcr.io/femiwiki/femiwiki:2026-11-01T12-42-82e8b122"
+  command      = ["jobrunner"]
+  network_mode = "host"
+  restart      = "always"
+  init         = true
+  # A batch of jobs peaked at 91 MiB; swap is room for publish-dump, never measured
+  memory      = 256
+  memory_swap = 512
+
+  # It finishes the batch in progress, which stops within its 60 s --maxtime
+  stop_signal           = "SIGTERM"
+  destroy_grace_seconds = 90
+
+  env = [for k, v in local.mediawiki_env : "${k}=${v}"]
+
+  upload {
+    file    = "/etc/mediawiki/google-analytics.json"
+    content = local.google_analytics_json
+  }
+
+  ulimit {
+    hard = 65536
+    name = "nofile"
+    soft = 32768
+  }
+
   depends_on = [docker_container.proxysql]
 }
 
