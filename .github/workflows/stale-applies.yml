@@ -1,0 +1,46 @@
+---
+name: stale applies
+on:
+  # A new run of a branch cancels the older ones still waiting, but a closed
+  # pull request gets no new run, so its last one would wait for good (#1090)
+  pull_request:
+    types: [closed]
+  workflow_dispatch:
+permissions: {}
+jobs:
+  cancel:
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      actions: write
+      pull-requests: read
+    steps:
+      - name: Cancel the tofu runs waiting on a commit no open pull request has at its head
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3  # v9.0.0
+        with:
+          script: |
+            const { owner, repo } = context.repo
+            const waiting = await github.paginate(github.rest.actions.listWorkflowRuns, {
+              owner, repo, workflow_id: 'tofu.yml', status: 'waiting', per_page: 100,
+            })
+            const open = await github.paginate(github.rest.pulls.list, { owner, repo, state: 'open', per_page: 100 })
+            const heads = new Set(open.map((pr) => pr.head.sha))
+            for (const run of waiting) {
+              // A run on main is applied by workflow_dispatch and is left to whoever started it
+              if (!run.event.startsWith('pull_request') || heads.has(run.head_sha)) continue
+              const jobs = await github.paginate(github.rest.actions.listJobsForWorkflowRun, {
+                owner, repo, run_id: run.id, per_page: 100,
+              })
+              // Stopping an apply halfway can leave production half changed and the state locked
+              if (jobs.some((j) => j.status === 'in_progress')) {
+                core.warning(`run ${run.id} of ${run.head_branch} is applying, so it is left alone`)
+                continue
+              }
+              try {
+                await github.rest.actions.cancelWorkflowRun({ owner, repo, run_id: run.id })
+                core.info(`Cancelled run ${run.id} of ${run.head_branch}, which waited on ${run.head_sha.slice(0, 7)}`)
+              } catch (e) {
+                core.warning(`could not cancel run ${run.id}: ${e.message}`)
+              }
+            }
