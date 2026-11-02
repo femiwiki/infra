@@ -1,7 +1,7 @@
 # serving/Caddyfile with the lists that are kept here filled in
 
 terraform {
-  required_version = "1.13.1"
+  required_version = "1.13.2"
 }
 
 locals {
