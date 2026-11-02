@@ -32,8 +32,9 @@ jobs:
               const jobs = await github.paginate(github.rest.actions.listJobsForWorkflowRun, {
                 owner, repo, run_id: run.id, per_page: 100,
               })
-              // Stopping an apply halfway can leave production half changed and the state locked
-              if (jobs.some((j) => j.status === 'in_progress')) {
+              // Stopping an apply halfway can leave production half changed and the state locked.
+              // A job can stay listed in_progress after it concluded, as a plan job of #1217 has.
+              if (jobs.some((j) => j.status === 'in_progress' && !j.conclusion)) {
                 core.warning(`run ${run.id} of ${run.head_branch} is applying, so it is left alone`)
                 continue
               }
