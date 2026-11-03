@@ -162,7 +162,7 @@ resource "grafana_rule_group" "femiwiki_dumps" {
     }
 
     annotations = {
-      summary = "`publish-dump`가 공개 덤프를 Internet Archive에 올리지 못했습니다. fastcgi 컨테이너의 `/var/log/cron.log`에 실패한 단계가 남아 있습니다. 덤프 파일은 지워졌으니 원인을 고친 뒤 컨테이너에서 `publish-dump`를 다시 돌립니다."
+      summary = "`publish-dump`가 공개 덤프를 Internet Archive에 올리지 못했습니다. Loki의 `service_name=\"publish-dump\"`와 `service_name=\"jobrunner\"`에서 실패한 단계를 찾습니다. 덤프 파일은 지워졌으니 원인을 고친 뒤 jobrunner 컨테이너에서 `publish-dump`를 다시 돌립니다."
     }
 
     data {
@@ -213,7 +213,7 @@ resource "grafana_rule_group" "femiwiki_dumps" {
     }
 
     annotations = {
-      summary = "1월 1일·7월 1일 18:00 UTC에 시작한 공개 덤프가 18시간이 지나도록 끝났다는 줄을 남기지 않았습니다. cron이 돌지 않았거나, 실패 줄을 남기기 전에 죽었거나, 아직 덤프 중입니다. fastcgi 컨테이너의 `/var/log/cron.log`를 봅니다."
+      summary = "1월 1일·7월 1일 18:00 UTC에 시작한 공개 덤프가 18시간이 지나도록 끝났다는 줄을 남기지 않았습니다. cron이 돌지 않았거나, 실패 줄을 남기기 전에 죽었거나, 아직 덤프 중입니다. Loki의 `service_name=\"publish-dump\"`와 `service_name=\"jobrunner\"`를 봅니다."
     }
 
     data {
