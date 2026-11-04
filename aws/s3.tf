@@ -85,9 +85,45 @@ resource "aws_s3_bucket_lifecycle_configuration" "backups" {
     expiration {
       days = 7
     }
+  }
+
+  # Dumps that failed mid-upload left 44 uploads (14.4 GB of parts) from
+  # 2019 to 2024 that no listing shows.
+  rule {
+    status = "Enabled"
+    id     = "Abort incomplete multipart uploads after 1 day"
+
+    filter {}
 
     abort_incomplete_multipart_upload {
       days_after_initiation = 1
+    }
+  }
+}
+
+resource "aws_s3_bucket_policy" "backups" {
+  region = local.tokyo_region
+  bucket = aws_s3_bucket.backups.id
+  policy = data.aws_iam_policy_document.backups_bucket.json
+}
+
+data "aws_iam_policy_document" "backups_bucket" {
+  statement {
+    sid     = "DenyPlainHttp"
+    effect  = "Deny"
+    actions = ["s3:*"]
+
+    principals {
+      type        = "AWS"
+      identifiers = ["*"]
+    }
+
+    resources = [aws_s3_bucket.backups.arn, "${aws_s3_bucket.backups.arn}/*"]
+
+    condition {
+      test     = "Bool"
+      variable = "aws:SecureTransport"
+      values   = ["false"]
     }
   }
 }
@@ -121,15 +157,24 @@ module "state" {
   server_side_encryption_configuration = {
     rule = { apply_server_side_encryption_by_default = { sse_algorithm = "AES256" } }
   }
-  lifecycle_rule = [
-    for workspace in ["grafana"] : {
-      id                            = "Expire the ${workspace} state lock's old versions"
-      enabled                       = true
-      filter                        = { prefix = "${workspace}/terraform.tfstate.tflock" }
-      noncurrent_version_expiration = { days = 1 }
-      expiration                    = { expired_object_delete_marker = true }
-    }
-  ]
+  lifecycle_rule = concat(
+    [
+      for workspace in ["grafana"] : {
+        id                            = "Expire the ${workspace} state lock's old versions"
+        enabled                       = true
+        filter                        = { prefix = "${workspace}/terraform.tfstate.tflock" }
+        noncurrent_version_expiration = { days = 1 }
+        expiration                    = { expired_object_delete_marker = true }
+      }
+    ],
+    [
+      {
+        id                                     = "abort-incomplete-multipart-uploads"
+        enabled                                = true
+        abort_incomplete_multipart_upload_days = 1
+      },
+    ],
+  )
 }
 
 resource "aws_s3_bucket" "cost_exports" {
@@ -360,10 +405,14 @@ module "backups_seoul" {
       transition = [{ days = 14, storage_class = "DEEP_ARCHIVE" }]
     },
     {
-      id                                     = "Expire replica seeds after 7 days"
+      id         = "Expire replica seeds after 7 days"
+      enabled    = true
+      filter     = { prefix = "seed/" }
+      expiration = { days = 7 }
+    },
+    {
+      id                                     = "abort-incomplete-multipart-uploads"
       enabled                                = true
-      filter                                 = { prefix = "seed/" }
-      expiration                             = { days = 7 }
       abort_incomplete_multipart_upload_days = 1
     },
   ]
