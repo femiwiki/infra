@@ -572,12 +572,8 @@ jobs:
           PR: ${{ github.event.pull_request.number }}
         run: .github/scripts/post-update.php "$REPO" "$PR"
 
-      # The apply has to leave nothing behind, because the required check that
-      # used to say so is gone and this is what replaces it. Planning here rather
-      # than in a fresh run keeps the tofu binary, the providers and the docker
-      # daemon this job already set up. It leaves the pull request's plan
-      # comment alone: a newer run's apply compares its plan against that
-      # comment, and this one finishing later would overwrite it.
+      # Re-plan with this job's tofu, providers and docker to check the apply left nothing behind.
+      # Leave the plan comment alone: a newer run's apply compares its plan against it.
       - uses: dflook/tofu-plan@c7416238983bdd94c5486fb856bb7358f2bcc935  # v3.1.0
         if: github.event.pull_request && steps.apply.outcome == 'success'
         id: verify
