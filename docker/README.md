@@ -35,6 +35,15 @@ the fix to the same pull request with `fastcgi_generation` at N+2, and approve
 again. `generation-swaps-ports` names that number, and the apply removes both
 older fastcgi containers.
 
+**The apply failed on `http-N` after `fastcgi-N` came up.** `http` starts only
+once `fastcgi-N` is healthy, so this is Caddy's own start: `caddy-run` checks
+real pages before it opens the public ports and exits when one fails. State
+keeps `http-N` as tainted and `http-(N-1)` as deposed, and both may be serving.
+Read `http-N`'s log for the line ending in `want ...`. Once `http-N` is healthy,
+stop and remove `http-(N-1)` by hand, since `http-(N+1)` takes its ports. Then
+push the fix with `fastcgi_generation` at N+1: the tainted `http-N` cannot be
+replaced under its own name. femiwiki/infra#1588 went this way.
+
 **The apply succeeded and the new generation serves errors.** Put the previous
 image back from a branch, without waiting for a pull request's checks:
 
