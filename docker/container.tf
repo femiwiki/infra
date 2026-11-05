@@ -23,9 +23,7 @@ resource "docker_container" "http" {
     create_before_destroy = true
   }
 
-  # caddy-run checks real pages before it opens the public ports, so the new
-  # http starts once the new fastcgi is warm, and the old fastcgi stays until
-  # the old http has gone (#1588 timed out on a cold load.php)
+  # caddy-run checks real pages at start, so it needs a warm fastcgi
   depends_on = [docker_container.fastcgi]
 
   healthcheck {
