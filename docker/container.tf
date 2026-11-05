@@ -6,7 +6,7 @@ resource "docker_container" "http" {
   name         = "http-${local.fastcgi_generation}"
   log_driver   = "fluentd"
   log_opts     = local.log_opts
-  image        = "ghcr.io/femiwiki/femiwiki:2026-11-01T12-42-82e8b122"
+  image        = "ghcr.io/femiwiki/femiwiki:2026-11-05T13-34-b09bf7bc"
   command      = ["caddy-run"]
   restart      = "always"
   init         = true
@@ -22,6 +22,11 @@ resource "docker_container" "http" {
   lifecycle {
     create_before_destroy = true
   }
+
+  # caddy-run checks real pages before it opens the public ports, so the new
+  # http starts once the new fastcgi is warm, and the old fastcgi stays until
+  # the old http has gone (#1588 timed out on a cold load.php)
+  depends_on = [docker_container.fastcgi]
 
   healthcheck {
     test         = ["CMD-SHELL", "curl -sf http://127.0.0.1:$${FW_PROBE_PORT}/health-check"]
@@ -139,7 +144,7 @@ resource "docker_container" "fastcgi" {
   name         = "fastcgi-${local.fastcgi_generation}"
   log_driver   = "fluentd"
   log_opts     = local.log_opts
-  image        = "ghcr.io/femiwiki/femiwiki:2026-11-01T12-42-82e8b122"
+  image        = "ghcr.io/femiwiki/femiwiki:2026-11-05T13-34-b09bf7bc"
   network_mode = "host"
   restart      = "always"
   init         = true
@@ -249,7 +254,7 @@ resource "docker_container" "jobrunner" {
   name         = "jobrunner"
   log_driver   = "fluentd"
   log_opts     = local.log_opts
-  image        = "ghcr.io/femiwiki/femiwiki:2026-11-01T12-42-82e8b122"
+  image        = "ghcr.io/femiwiki/femiwiki:2026-11-05T13-34-b09bf7bc"
   command      = ["jobrunner"]
   network_mode = "host"
   restart      = "always"
