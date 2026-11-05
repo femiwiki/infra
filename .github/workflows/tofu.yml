@@ -37,7 +37,7 @@ jobs:
       id-token: write
       pull-requests: write
     steps:
-      - uses: femiwiki/terraform-github-tacos@f4ed7abef8631c36b2ed5303a848113bb4ec4bf8  # v0.9.1
+      - uses: femiwiki/terraform-github-tacos@9c74207f237a4a516f84f21310a3630ae2229ca7  # v0.9.2
         id: scope
         with:
           step: plan
@@ -246,7 +246,7 @@ jobs:
           fi
           echo "$out"
 
-      - uses: femiwiki/terraform-github-tacos@f4ed7abef8631c36b2ed5303a848113bb4ec4bf8  # v0.9.1
+      - uses: femiwiki/terraform-github-tacos@9c74207f237a4a516f84f21310a3630ae2229ca7  # v0.9.2
         id: changes
         if: steps.scope.outputs.plan == 'true'
         with:
@@ -276,7 +276,7 @@ jobs:
             echo "::warning::applied, so the import and moved blocks above can go."
           fi
 
-      - uses: femiwiki/terraform-github-tacos@f4ed7abef8631c36b2ed5303a848113bb4ec4bf8  # v0.9.1
+      - uses: femiwiki/terraform-github-tacos@9c74207f237a4a516f84f21310a3630ae2229ca7  # v0.9.2
         if: always() && steps.plan.outcome != 'skipped'
         with:
           step: collapse
@@ -334,7 +334,7 @@ jobs:
           echo "::error::Dependabot's runs get no plan secrets. Approve the pull request to plan it."
           exit 1
 
-      - uses: femiwiki/terraform-github-tacos@f4ed7abef8631c36b2ed5303a848113bb4ec4bf8  # v0.9.1
+      - uses: femiwiki/terraform-github-tacos@9c74207f237a4a516f84f21310a3630ae2229ca7  # v0.9.2
         with:
           step: gate
           needs: ${{ toJSON(needs) }}
@@ -357,7 +357,7 @@ jobs:
     outputs:
       workspaces: ${{ steps.pending.outputs.workspaces }}
     steps:
-      - uses: femiwiki/terraform-github-tacos@f4ed7abef8631c36b2ed5303a848113bb4ec4bf8  # v0.9.1
+      - uses: femiwiki/terraform-github-tacos@9c74207f237a4a516f84f21310a3630ae2229ca7  # v0.9.2
         id: pending
         with:
           step: pending
@@ -407,7 +407,7 @@ jobs:
       pull-requests: write
       statuses: read
     steps:
-      - uses: femiwiki/terraform-github-tacos@f4ed7abef8631c36b2ed5303a848113bb4ec4bf8  # v0.9.1
+      - uses: femiwiki/terraform-github-tacos@9c74207f237a4a516f84f21310a3630ae2229ca7  # v0.9.2
         id: approver
         with:
           step: apply
@@ -695,7 +695,7 @@ jobs:
       deployments: read
       pull-requests: write
     steps:
-      - uses: femiwiki/terraform-github-tacos@f4ed7abef8631c36b2ed5303a848113bb4ec4bf8  # v0.9.1
+      - uses: femiwiki/terraform-github-tacos@9c74207f237a4a516f84f21310a3630ae2229ca7  # v0.9.2
         with:
           step: merge
           apply-before-merge: "true"
@@ -718,10 +718,10 @@ jobs:
       pull-requests: write
     steps:
       # Run logs expire, so each apply's output goes on the pull request
-      - uses: femiwiki/terraform-github-tacos@f4ed7abef8631c36b2ed5303a848113bb4ec4bf8  # v0.9.1
+      - uses: femiwiki/terraform-github-tacos@9c74207f237a4a516f84f21310a3630ae2229ca7  # v0.9.2
         with:
           step: log
 
-      - uses: femiwiki/terraform-github-tacos@f4ed7abef8631c36b2ed5303a848113bb4ec4bf8  # v0.9.1
+      - uses: femiwiki/terraform-github-tacos@9c74207f237a4a516f84f21310a3630ae2229ca7  # v0.9.2
         with:
           step: collapse
