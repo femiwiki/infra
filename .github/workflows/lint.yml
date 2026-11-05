@@ -224,6 +224,6 @@ jobs:
           echo "All green."
 
   shared-lint:
-    uses: femiwiki/.github/.github/workflows/shared-lint.yml@5af0edb4c26434df8cc919442ed8403c3ad8b82f
+    uses: femiwiki/.github/.github/workflows/shared-lint.yml@ef16ea5429bae11332adede94803d8dbfdb18a31
     permissions:
       contents: read
