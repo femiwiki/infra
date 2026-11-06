@@ -119,6 +119,7 @@ jobs:
           permission-environments: read
           permission-issues: read
           permission-members: read
+          permission-organization-secrets: read
           permission-pages: read
           permission-secrets: read
 
@@ -507,6 +508,7 @@ jobs:
           permission-environments: write
           permission-issues: write
           permission-members: write
+          permission-organization-secrets: write
           permission-pages: write
           permission-secrets: write
 

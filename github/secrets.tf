@@ -188,3 +188,23 @@ resource "github_actions_secret" "tofu_github_plan_app_pem" {
   secret_name = "TOFU_GITHUB_PLAN_APP_PEM"
   value       = data.onepassword_item.tofu_github_plan_app_pem.note_value
 }
+
+# The femiwiki-pat-owner app's private key, which bump and release workflows across
+# the organisation turn into tokens (#1112). Its IDs stay hand-set organisation
+# variables PAT_APPLICATION_ID and PAT_APPLICATION_CLIENT_ID: the app token
+# cannot write variables, as create-github-app-token has no input that asks for it.
+data "onepassword_item" "pat_application_private_key" {
+  vault = data.onepassword_vault.infra.uuid
+  title = "PAT_APPLICATION_PRIVATE_KEY"
+}
+
+import {
+  to = github_actions_organization_secret.pat_application_private_key
+  id = "PAT_APPLICATION_PRIVATE_KEY"
+}
+
+resource "github_actions_organization_secret" "pat_application_private_key" {
+  secret_name = "PAT_APPLICATION_PRIVATE_KEY"
+  visibility  = "all"
+  value       = data.onepassword_item.pat_application_private_key.note_value
+}
