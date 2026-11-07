@@ -24,8 +24,12 @@ module "infra_aws_plan" {
   use_name_prefix    = false
   description        = "Allows GitHub Actions workflows of femiwiki/infra to plan the aws workspace."
   enable_github_oidc = true
-  oidc_subjects      = ["femiwiki@21275875/infra@188597503:pull_request"]
-  policies           = { ReadOnlyAccess = "arn:aws:iam::aws:policy/ReadOnlyAccess" }
+  oidc_subjects = [
+    "femiwiki@21275875/infra@188597503:pull_request",
+    # The scheduled security group audit, .github/workflows/security-groups.yml
+    "femiwiki@21275875/infra@188597503:ref:refs/heads/main",
+  ]
+  policies = { ReadOnlyAccess = "arn:aws:iam::aws:policy/ReadOnlyAccess" }
 }
 
 # ReadOnlyAccess reads the state already. A plan also takes the lock.
