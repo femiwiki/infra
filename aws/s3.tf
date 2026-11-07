@@ -177,35 +177,10 @@ module "state" {
   )
 }
 
-resource "aws_s3_bucket" "cost_exports" {
-  region           = local.tokyo_region
-  bucket           = "cost-exports-${data.aws_caller_identity.current.account_id}-${local.tokyo_region}-an"
-  bucket_namespace = "account-regional"
-
-  # Lets the next change delete it with the exports from before 2026-10-06 (femiwiki/femiwiki#667)
-  force_destroy = true
-}
-
-resource "aws_s3_bucket_public_access_block" "cost_exports" {
-  region = local.tokyo_region
-  bucket = aws_s3_bucket.cost_exports.id
-
-  block_public_acls       = true
-  block_public_policy     = true
-  ignore_public_acls      = true
-  restrict_public_buckets = true
-}
-
-# Both the Tokyo bucket and the Seoul one that replaces it (femiwiki/femiwiki#667)
-data "aws_iam_policy_document" "cost_exports_bucket" {
-  for_each = {
-    cost_exports   = aws_s3_bucket.cost_exports.arn
-    cost_and_usage = module.cost_and_usage.s3_bucket_arn
-  }
-
+data "aws_iam_policy_document" "cost_and_usage_bucket" {
   statement {
     actions   = ["s3:GetBucketPolicy", "s3:PutObject"]
-    resources = [each.value, "${each.value}/*"]
+    resources = [module.cost_and_usage.s3_bucket_arn, "${module.cost_and_usage.s3_bucket_arn}/*"]
 
     principals {
       type        = "Service"
@@ -238,7 +213,7 @@ data "aws_iam_policy_document" "cost_exports_bucket" {
       identifiers = ["*"]
     }
 
-    resources = [each.value, "${each.value}/*"]
+    resources = [module.cost_and_usage.s3_bucket_arn, "${module.cost_and_usage.s3_bucket_arn}/*"]
 
     condition {
       test     = "Bool"
@@ -246,12 +221,6 @@ data "aws_iam_policy_document" "cost_exports_bucket" {
       values   = ["false"]
     }
   }
-}
-
-resource "aws_s3_bucket_policy" "cost_exports" {
-  region = local.tokyo_region
-  bucket = aws_s3_bucket.cost_exports.id
-  policy = data.aws_iam_policy_document.cost_exports_bucket["cost_exports"].json
 }
 
 module "rate_limit" {
@@ -299,7 +268,7 @@ module "cost_and_usage" {
   bucket           = "cost-exports-${data.aws_caller_identity.current.account_id}-${local.seoul_region}-an"
   bucket_namespace = "account-regional"
   attach_policy    = true
-  policy           = data.aws_iam_policy_document.cost_exports_bucket["cost_and_usage"].json
+  policy           = data.aws_iam_policy_document.cost_and_usage_bucket.json
   lifecycle_rule = [
     {
       id                                     = "abort-incomplete-uploads"

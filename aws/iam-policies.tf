@@ -457,14 +457,11 @@ data "aws_iam_policy_document" "femiwiki_github_io" {
     resources = ["*"]
   }
 
-  # Both buckets until bill-from-export.sh reads the Seoul one (femiwiki/femiwiki#667).
   statement {
     actions = ["s3:GetObject", "s3:ListBucket"]
     resources = [
       module.cost_and_usage.s3_bucket_arn,
       "${module.cost_and_usage.s3_bucket_arn}/*",
-      aws_s3_bucket.cost_exports.arn,
-      "${aws_s3_bucket.cost_exports.arn}/*",
     ]
   }
 }
