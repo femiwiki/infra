@@ -99,7 +99,6 @@ locals {
       "www.google.com",               # GoogleSiteSearch's element scripts and reCAPTCHA
       "partner.googleadservices.com", # Ads GoogleSiteSearch loads with its results
       "ep2.adtrafficquality.google",  # The same ads' traffic check
-      "connect.facebook.net",         # AchievementBadges' Facebook share on 특수:도전과제
     ])
 
     # MediaWiki globals LocalSettings applies after its defaults. See femiwiki#691.
