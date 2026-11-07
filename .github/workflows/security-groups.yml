@@ -1,0 +1,31 @@
+---
+name: security groups
+on:
+  schedule:
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+permissions: {}
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+
+      # Read-only; trusts runs on main for this
+      - uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd  # v6.3.0
+        with:
+          role-to-assume: arn:aws:iam::302617221463:role/infra-aws-plan
+          aws-region: ap-northeast-2
+
+      - name: Fail on inbound rules open to everyone beyond HTTP and HTTPS
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3  # v9.0.0
+        with:
+          script: |
+            const { check } = await import(`${process.env.GITHUB_WORKSPACE}/.github/scripts/security-groups.mts`)
+            check({ core, env: process.env })
