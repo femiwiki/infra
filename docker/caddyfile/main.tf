@@ -29,12 +29,28 @@ locals {
     ["로그아웃", "사용자로그아웃", "UserLogout", "Logout"],
   ]
 
+  login_walk_pages = [
+    ["로그인", "UserLogin"],
+    ["계정만들기", "CreateAccount"],
+  ]
+
   # Each alias as written and percent-encoded, as the URI carries either
-  text = replace(file("${path.module}/../../serving/Caddyfile"), "SPECIAL_EXEMPT_PAGES_FROM_DOCKER_CADDYFILE", join("|", flatten([
+  special_exempt_pattern = join("|", flatten([
     for page in local.special_exempt_pages : [
       for alias in page : alias == urlencode(alias) ? [alias] : [alias, urlencode(alias)]
     ]
-  ])))
+  ]))
+
+  login_walk_pattern = join("|", concat(
+    flatten([for page in local.login_walk_pages : [for alias in page : [urlencode(alias), alias] if alias != urlencode(alias)]]),
+    flatten([for page in local.login_walk_pages : [for alias in page : alias if alias == urlencode(alias)]]),
+  ))
+
+  text = replace(replace(
+    file("${path.module}/../../serving/Caddyfile"),
+    "SPECIAL_EXEMPT_PAGES_FROM_DOCKER_CADDYFILE", local.special_exempt_pattern),
+    "LOGIN_PAGES_FROM_DOCKER_CADDYFILE", local.login_walk_pattern,
+  )
 }
 
 output "text" {
@@ -49,4 +65,14 @@ output "special_exempt_uri" {
 output "export_uri" {
   description = "FW_EXPORT_URI's default, for the tests"
   value       = regex("\\{\\$FW_EXPORT_URI:([^\\n]*)\\}\\n", local.text)[0]
+}
+
+output "login_walk_query" {
+  description = "FW_LOGIN_WALK_QUERY's default as filled in, for the tests"
+  value       = regex("\\{\\$FW_LOGIN_WALK_QUERY:([^\\n]*)\\}\\n", local.text)[0]
+}
+
+output "login_uselang_query" {
+  description = "FW_LOGIN_USELANG_QUERY's default as filled in, for the tests"
+  value       = regex("\\{\\$FW_LOGIN_USELANG_QUERY:([^\\n]*)\\}\\n", local.text)[0]
 }

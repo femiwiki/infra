@@ -321,13 +321,13 @@ femiwiki.com *.femiwiki.com 127.0.0.1:80 localhost:80 {
 			match {
 				method GET
 				path /index.php*
-				vars_regexp {query} {$FW_LOGIN_WALK_QUERY:(?i)(^|&)title=(%ED%8A%B9%EC%88%98|특수|Special)(%3A|:)(%EB%A1%9C%EA%B7%B8%EC%9D%B8|로그인|%EA%B3%84%EC%A0%95%EB%A7%8C%EB%93%A4%EA%B8%B0|계정만들기|UserLogin|CreateAccount)(/|&|$)}
+				vars_regexp {query} {$FW_LOGIN_WALK_QUERY:(?i)(^|&)title=(%ED%8A%B9%EC%88%98|특수|Special)(%3A|:)(LOGIN_PAGES_FROM_DOCKER_CADDYFILE)(/|&|$)}
 				not header_regexp Referer ^https://([a-z0-9-]+\.)?femiwiki\.com/
 			}
 			match {
 				method GET
 				path /index.php*
-				vars_regexp {query} {$FW_LOGIN_WALK_QUERY:(?i)(^|&)title=(%ED%8A%B9%EC%88%98|특수|Special)(%3A|:)(%EB%A1%9C%EA%B7%B8%EC%9D%B8|로그인|%EA%B3%84%EC%A0%95%EB%A7%8C%EB%93%A4%EA%B8%B0|계정만들기|UserLogin|CreateAccount)(/|&|$)}
+				vars_regexp {query} {$FW_LOGIN_WALK_QUERY:(?i)(^|&)title=(%ED%8A%B9%EC%88%98|특수|Special)(%3A|:)(LOGIN_PAGES_FROM_DOCKER_CADDYFILE)(/|&|$)}
 				header Sec-Fetch-Site none
 			}
 			key login_walk
@@ -340,7 +340,7 @@ femiwiki.com *.femiwiki.com 127.0.0.1:80 localhost:80 {
 			match {
 				method GET
 				path /index.php*
-				vars_regexp {query} {$FW_LOGIN_USELANG_QUERY:(?i)(^|&)title=(%ED%8A%B9%EC%88%98|특수|Special)(%3A|:)(%EB%A1%9C%EA%B7%B8%EC%9D%B8|로그인|%EA%B3%84%EC%A0%95%EB%A7%8C%EB%93%A4%EA%B8%B0|계정만들기|UserLogin|CreateAccount)(/[^&]*)?&(.*&)?uselang=|(^|&)uselang=[^&]*&(.*&)?title=(%ED%8A%B9%EC%88%98|특수|Special)(%3A|:)(%EB%A1%9C%EA%B7%B8%EC%9D%B8|로그인|%EA%B3%84%EC%A0%95%EB%A7%8C%EB%93%A4%EA%B8%B0|계정만들기|UserLogin|CreateAccount)(/[^&]*)?(&|$)}
+				vars_regexp {query} {$FW_LOGIN_USELANG_QUERY:(?i)(^|&)title=(%ED%8A%B9%EC%88%98|특수|Special)(%3A|:)(LOGIN_PAGES_FROM_DOCKER_CADDYFILE)(/[^&]*)?&(.*&)?uselang=|(^|&)uselang=[^&]*&(.*&)?title=(%ED%8A%B9%EC%88%98|특수|Special)(%3A|:)(LOGIN_PAGES_FROM_DOCKER_CADDYFILE)(/[^&]*)?(&|$)}
 				not header Cookie *femiwikiUserID=*
 			}
 			key login_uselang
