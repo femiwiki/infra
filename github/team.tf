@@ -1,6 +1,6 @@
 resource "github_team" "reviewer" {
   name        = "Reviewer"
-  description = "People reviewing PRs"
+  description = "People who review and merge pull requests, Dependabot's included"
   privacy     = "closed"
 }
 
