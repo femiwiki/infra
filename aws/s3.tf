@@ -181,6 +181,9 @@ resource "aws_s3_bucket" "cost_exports" {
   region           = local.tokyo_region
   bucket           = "cost-exports-${data.aws_caller_identity.current.account_id}-${local.tokyo_region}-an"
   bucket_namespace = "account-regional"
+
+  # Lets the next change delete it with the exports from before 2026-10-06 (femiwiki/femiwiki#667)
+  force_destroy = true
 }
 
 resource "aws_s3_bucket_public_access_block" "cost_exports" {
