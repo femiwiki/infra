@@ -205,7 +205,7 @@ jobs:
 
   gate:
     name: lint gate
-    needs: [tflint, shellcheck, parallel-lint, phpcs, post-update, taplo, caddyfile, tofu-test, long-comments, shared-lint]
+    needs: [tflint, shellcheck, parallel-lint, phpcs, post-update, taplo, caddyfile, tofu-test, long-comments, shared-lint, required-gate]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -224,6 +224,11 @@ jobs:
           echo "All green."
 
   shared-lint:
-    uses: femiwiki/.github/.github/workflows/shared-lint.yml@ef16ea5429bae11332adede94803d8dbfdb18a31
+    uses: femiwiki/.github/.github/workflows/shared-lint.yml@ef93d8c1f53e97717700ca68541f7be6a29f90fd
+    permissions:
+      contents: read
+
+  required-gate:
+    uses: femiwiki/.github/.github/workflows/required-gate.yml@ef93d8c1f53e97717700ca68541f7be6a29f90fd
     permissions:
       contents: read

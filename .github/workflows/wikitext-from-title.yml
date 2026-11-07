@@ -1,5 +1,6 @@
 ---
 name: wikitext from title
+# Outside the required gate: only writes the release note block into the PR body
 on:
   pull_request:
     types: [opened, reopened, edited]
