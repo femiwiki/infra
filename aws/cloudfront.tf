@@ -218,6 +218,19 @@ resource "aws_cloudfront_distribution" "femiwiki_com" {
     compress                 = true
   }
 
+  # Share cards (UnifiedExtensionForFemiwiki), one per revision and immutable, so
+  # each is drawn once rather than on every crawler's visit
+  ordered_cache_behavior {
+    path_pattern             = "/rest.php/femiwiki/v1/share-card/*"
+    target_origin_id         = "femiwiki"
+    viewer_protocol_policy   = "redirect-to-https"
+    allowed_methods          = ["GET", "HEAD"]
+    cached_methods           = ["GET", "HEAD"]
+    cache_policy_id          = data.aws_cloudfront_cache_policy.caching_optimized.id
+    origin_request_policy_id = aws_cloudfront_origin_request_policy.all_viewer.id
+    compress                 = true
+  }
+
   # No origin request policy, so Pages gets its own name as Host. Uncached, or
   # the URL that failed would keep the error page for the page's TTL.
   ordered_cache_behavior {
