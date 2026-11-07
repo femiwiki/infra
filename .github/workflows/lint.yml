@@ -172,6 +172,10 @@ jobs:
           persist-credentials: false
 
       - uses: dflook/tofu-test@c8b6279e71fa6895ed60fe539017cc5170975b3c  # v3.1.2
+        env:
+          # The action looks up OpenTofu releases on api.github.com; without a
+          # token it shares the runner IP's 60 requests an hour and fails
+          GITHUB_DOT_COM_TOKEN: ${{ github.token }}
         with:
           path: docker/caddyfile
 
