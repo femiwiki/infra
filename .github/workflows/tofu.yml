@@ -703,6 +703,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: gh workflow run update-branches.yml --repo "$GITHUB_REPOSITORY" --ref main
 
+  # Outside the required gate: copies the apply output onto the pull request after the apply
   log:
     needs: apply
     if: always() && github.event.pull_request && needs.apply.result != 'skipped'

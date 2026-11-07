@@ -1,5 +1,6 @@
 ---
 name: stale applies
+# Outside the required gate: only cancels waiting runs of closed pull requests
 on:
   # A new run of a branch cancels the older ones still waiting, but a closed
   # pull request gets no new run, so its last one would wait for good (#1090)
