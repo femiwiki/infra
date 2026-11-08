@@ -196,9 +196,17 @@ panels:
       100 * sum(increase(caddy_http_request_duration_seconds_count{job="integrations/caddy", code!~"5.."}[$__range]))
       /
       sum(increase(caddy_http_request_duration_seconds_count{job="integrations/caddy"}[$__range]))
+# The public dashboard API answers 400 for a panel without queries, and Grafana
+# 13.4 queries text panels too, so each carries a constant query it ignores.
 - id: 3
   type: text
   title: 대시보드
+  datasource: *prom
+  targets: &no-op
+  - refId: A
+    datasource: *prom
+    instant: true
+    expr: vector(1)
   gridPos:
     h: 3
     w: 9
@@ -211,6 +219,8 @@ panels:
 - id: 5
   type: text
   title: 사고 소식
+  datasource: *prom
+  targets: *no-op
   gridPos:
     h: 3
     w: 9
