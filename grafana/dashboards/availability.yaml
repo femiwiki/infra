@@ -196,9 +196,18 @@ panels:
       100 * sum(increase(caddy_http_request_duration_seconds_count{job="integrations/caddy", code!~"5.."}[$__range]))
       /
       sum(increase(caddy_http_request_duration_seconds_count{job="integrations/caddy"}[$__range]))
+# Grafana 13.4 asks the public dashboard API to run every panel's queries, text
+# panels included, and the API answers 400 for a panel with none. Each text panel
+# therefore carries a constant query that it ignores.
 - id: 3
   type: text
   title: 대시보드
+  datasource: *prom
+  targets: &no-op
+  - refId: A
+    datasource: *prom
+    instant: true
+    expr: vector(1)
   gridPos:
     h: 3
     w: 9
@@ -211,6 +220,8 @@ panels:
 - id: 5
   type: text
   title: 사고 소식
+  datasource: *prom
+  targets: *no-op
   gridPos:
     h: 3
     w: 9
