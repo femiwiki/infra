@@ -150,11 +150,16 @@ panels:
     w: 6
     x: 0
     'y': 5
+  # Value mappings take regexes only for strings, so the value is turned into one.
+  transformations:
+  - id: convertFieldType
+    options:
+      fields: {}
+      conversions:
+      - targetField: 가용성
+        destinationType: string
   fieldConfig:
     defaults:
-      unit: percent
-      decimals: 1
-      max: 100
       color:
         mode: fixed
         fixedColor: text
@@ -186,12 +191,13 @@ panels:
     reduceOptions:
       calcs:
       - lastNotNull
-      fields: ''
+      fields: /^가용성$/
       values: false
   targets:
   - refId: A
     datasource: *prom
     instant: true
+    legendFormat: 가용성
     expr: |-
       100 * sum(increase(caddy_http_request_duration_seconds_count{job="integrations/caddy", code!~"5.."}[$__range]))
       /
