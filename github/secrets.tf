@@ -204,5 +204,5 @@ import {
 resource "github_actions_organization_secret" "pat_application_private_key" {
   secret_name = "PAT_APPLICATION_PRIVATE_KEY"
   visibility  = "all"
-  value       = data.onepassword_item.pat_application_private_key.note_value
+  value       = data.onepassword_item.pat_application_private_key.private_key
 }
