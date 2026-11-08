@@ -185,6 +185,57 @@ resource "aws_ssm_association" "prune_docker_images" {
   }
 }
 
+# In place, since replacing the app host takes the site down. Database hosts get
+# a new image from the swap instead: dnf there stopped the wiki on 2026-10-06.
+locals {
+  os_update_script = replace(replace(file("res/os-update.sh"),
+    "__MEMORY_HIGH_MIB__", 300),
+  "__MEMORY_MAX_MIB__", 700)
+}
+
+resource "aws_ssm_document" "os_update" {
+  for_each = local.app_hosts
+
+  region          = each.value.region
+  name            = "os-update-${each.key}"
+  document_type   = "Command"
+  document_format = "JSON"
+
+  content = jsonencode({
+    schemaVersion = "2.2"
+    description   = "Upgrade the host to the newest Amazon Linux 2023 release and keep the running kernel live-patched, without a reboot."
+    mainSteps = [{
+      action = "aws:runShellScript"
+      name   = "osUpdate"
+      inputs = {
+        runCommand     = split("\n", local.os_update_script)
+        timeoutSeconds = "3600"
+      }
+    }]
+  })
+}
+
+resource "aws_ssm_association" "os_update" {
+  for_each = local.app_hosts
+
+  region           = each.value.region
+  association_name = "os-update-${each.key}"
+  name             = aws_ssm_document.os_update[each.key].name
+  document_version = aws_ssm_document.os_update[each.key].latest_version
+
+  # Mondays 04:30 KST, and not on creation: the first run is started by hand
+  schedule_expression        = "cron(30 19 ? * SUN *)"
+  apply_only_at_cron_interval = true
+  compliance_severity         = "HIGH"
+  max_concurrency             = "1"
+  max_errors                  = "0"
+
+  targets {
+    key    = "tag:Name"
+    values = [each.key]
+  }
+}
+
 resource "aws_ssm_document" "swapfile" {
   for_each = local.swapfile_hosts
 
