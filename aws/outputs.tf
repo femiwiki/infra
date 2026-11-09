@@ -42,3 +42,29 @@ output "femiwiki_role_arn" {
   description = "The role of the wiki's instances"
   value       = module.femiwiki.arn
 }
+
+output "roles_anywhere_ca_cert_pem" {
+  description = "The CA certificate that the IAM Roles Anywhere trust anchor trusts"
+  value       = tls_self_signed_cert.roles_anywhere_ca.cert_pem
+}
+
+output "roles_anywhere_ca_private_key_pem" {
+  description = "The key that signs the containers' IAM Roles Anywhere certificates"
+  value       = tls_private_key.roles_anywhere_ca.private_key_pem
+  sensitive   = true
+}
+
+output "roles_anywhere_trust_anchor_arn" {
+  description = "The IAM Roles Anywhere trust anchor of the containers' certificates"
+  value       = aws_rolesanywhere_trust_anchor.femiwiki.arn
+}
+
+output "roles_anywhere_profile_arn" {
+  description = "The IAM Roles Anywhere profile the containers' sessions come from"
+  value       = aws_rolesanywhere_profile.femiwiki.arn
+}
+
+output "mediawiki_role_arn" {
+  description = "The role of MediaWiki's containers, through IAM Roles Anywhere"
+  value       = module.mediawiki.arn
+}
