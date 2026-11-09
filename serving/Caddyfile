@@ -597,15 +597,6 @@ femiwiki.com *.femiwiki.com 127.0.0.1:80 localhost:80 {
 		}
 	}
 
-	# A page render pulls the same handful of skin icons every time, and on
-	# 2026-09-29 a distributed harvest asking each one for its first 500 bytes
-	# took them from 2.8% of the access log to 28%: eleven URIs, four of them
-	# 70%. They are read off disk under a version hash, so a line per hit
-	# answers nothing the next line does not. What goes with them is the 404 a
-	# renamed asset would have shown here.
-	@static_image path_regexp ^/(fw-resources|resources|skins)/.+\.(svg|png|jpe?g|gif|ico|webp)$
-	log_skip @static_image
-
 	# Paths that will never serve again, from serving/dead-urls.txt; respond runs
 	# before rewrite, so this answers ahead of every rate limit and PHP (#1185)
 	map {http.request.orig_uri.path} {dead_url} {dead_status} {
