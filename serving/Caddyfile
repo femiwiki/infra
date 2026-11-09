@@ -565,12 +565,12 @@ femiwiki.com *.femiwiki.com 127.0.0.1:80 localhost:80 {
 	header {
 		# HSTS
 		Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
-		# Enable XSS filtering for legacy browsers
-		X-XSS-Protection "1; mode=block"
-		# Block content sniffing, and enable Cross-Origin Read Blocking
-		X-Content-Type-Options "nosniff"
-		# Avoid clickjacking
-		X-Frame-Options "DENY"
+		# Block content sniffing, and enable Cross-Origin Read Blocking. MediaWiki
+		# sends its own on some responses, so ? only fills it in where missing.
+		?X-Content-Type-Options "nosniff"
+		# Avoid clickjacking, unless MediaWiki chose its own, such as
+		# $wgApiFrameOptions on api.php
+		?X-Frame-Options "DENY"
 	}
 	log {
 		# Two thirds of a line used to be headers that are the same on every
@@ -592,7 +592,6 @@ femiwiki.com *.femiwiki.com 127.0.0.1:80 localhost:80 {
 				resp_headers>X-Content-Type-Options delete
 				resp_headers>X-Frame-Options delete
 				resp_headers>X-Powered-By delete
-				resp_headers>X-Xss-Protection delete
 			}
 		}
 	}
