@@ -65,6 +65,9 @@ resource "docker_container" "http" {
       FW_RATE_LIMIT_S3_HOST   = data.terraform_remote_state.aws.outputs.rate_limit_s3_host,
       FW_RATE_LIMIT_S3_BUCKET = data.terraform_remote_state.aws.outputs.rate_limit_bucket,
 
+      FW_CHART_PROXY_PORT    = local.chart_proxy_port,
+      FW_CHART_RENDERER_HOST = trimsuffix(trimprefix(data.terraform_remote_state.aws.outputs.chart_renderer_url, "https://"), "/"),
+
       # Used only when Caddy cannot fetch CloudFront's ranges from AWS at start
       FW_TRUSTED_PROXIES = join(" ", split("\n", trimspace(file("../serving/cloudfront-origin-facing.txt")))),
     } : "${k}=${v}"
@@ -125,7 +128,8 @@ locals {
     SSM_SECRETS = "1"
     AWS_REGION  = "ap-northeast-2"
 
-    FW_CHART_RENDERER_URL = data.terraform_remote_state.aws.outputs.chart_renderer_url
+    # Through Caddy's retrying route to the Lambda; see serving/Caddyfile
+    FW_CHART_RENDERER_URL = "http://127.0.0.1:${local.chart_proxy_port}/"
   }
 
   google_analytics_json = jsonencode({
