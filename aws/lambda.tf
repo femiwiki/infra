@@ -409,4 +409,8 @@ module "chart_renderer" {
   issuer     = aws_iam_outbound_web_identity_federation.this.issuer_identifier
   subjects   = [module.femiwiki.arn]
   algorithms = ["ES384"]
+
+  # The URL is open to anyone. The wiki reaches it through Caddy, which retries
+  # a 429 (serving/Caddyfile), so one render at a time is enough.
+  reserved_concurrent_executions = 1
 }
