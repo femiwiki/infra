@@ -23,10 +23,10 @@ data "terraform_remote_state" "gcp" {
 }
 
 locals {
-  # Database hosts come and go with the swap, so they are found by role.
+  # Hosts come and go with replacement, so they are found by role
   otelcol_hosts = {
-    "database" = { name = "mariadb-seoul", type = "database", region = local.seoul_region, tag = "Role" }
-    "docker"   = { name = "femiwiki-seoul", type = "app", region = local.seoul_region, tag = "Name" }
+    "database" = { name = "mariadb-seoul", type = "database", region = local.seoul_region, role = "database" }
+    "docker"   = { name = "femiwiki-seoul", type = "app", region = local.seoul_region, role = "app" }
   }
 
   grafana_cloud = {
@@ -70,7 +70,7 @@ locals {
 
 locals {
   app_hosts = {
-    "docker" = { region = local.seoul_region }
+    "docker" = { region = local.seoul_region, role = "app" }
   }
 
   mysql_backup_script = templatefile("res/mysql-backup.sh.tftpl", {
@@ -128,11 +128,10 @@ resource "aws_ssm_association" "mysql_backup" {
 locals {
   swapfile_mib = 1024
 
-  # Database hosts come and go with the replacement workflow, so they are
-  # found by role.
+  # Hosts come and go with replacement, so they are found by role
   swapfile_hosts = {
-    "docker"   = { region = local.seoul_region, tag = "Name", value = "docker" }
-    "database" = { region = local.seoul_region, tag = "Role", value = "database" }
+    "docker"   = { region = local.seoul_region, role = "app" }
+    "database" = { region = local.seoul_region, role = "database" }
   }
 
   swapfile_install = replace(file("res/install-swapfile.sh"), "__SIZE_MIB__", local.swapfile_mib)
@@ -180,8 +179,8 @@ resource "aws_ssm_association" "prune_docker_images" {
   max_errors          = "0"
 
   targets {
-    key    = "tag:Name"
-    values = [each.key]
+    key    = "tag:Role"
+    values = [each.value.role]
   }
 }
 
@@ -219,8 +218,8 @@ resource "aws_ssm_association" "swapfile" {
   max_errors          = "0"
 
   targets {
-    key    = "tag:${each.value.tag}"
-    values = [each.value.value]
+    key    = "tag:Role"
+    values = [each.value.role]
   }
 }
 
@@ -260,8 +259,8 @@ resource "aws_ssm_association" "otelcol" {
   max_errors          = "0"
 
   targets {
-    key    = "tag:${each.value.tag}"
-    values = [each.key]
+    key    = "tag:Role"
+    values = [each.value.role]
   }
 }
 
@@ -497,7 +496,7 @@ resource "aws_ssm_association" "docker_socket_only" {
   max_errors          = "0"
 
   targets {
-    key    = "tag:Name"
-    values = ["docker"]
+    key    = "tag:Role"
+    values = ["app"]
   }
 }

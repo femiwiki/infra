@@ -53,13 +53,23 @@ data "aws_iam_policy_document" "infra_docker" {
     resources = [data.aws_ssm_parameter.secret["/mysql/users/mediawiki/password"].arn]
   }
 
+  # Whichever app host the docker workspace applies to
   statement {
-    sid     = "DockerPortForward"
-    actions = ["ssm:StartSession"]
-    resources = [
-      aws_instance.docker.arn,
-      "arn:aws:ssm:${local.seoul_region}::document/AWS-StartPortForwardingSession",
-    ]
+    sid       = "DockerPortForward"
+    actions   = ["ssm:StartSession"]
+    resources = ["arn:aws:ec2:${local.seoul_region}:${data.aws_caller_identity.current.account_id}:instance/*"]
+
+    condition {
+      test     = "StringEquals"
+      variable = "ssm:resourceTag/DockerTarget"
+      values   = ["true"]
+    }
+  }
+
+  statement {
+    sid       = "PortForwardDocument"
+    actions   = ["ssm:StartSession"]
+    resources = ["arn:aws:ssm:${local.seoul_region}::document/AWS-StartPortForwardingSession"]
   }
 
   statement {
@@ -134,13 +144,23 @@ data "aws_iam_policy_document" "infra_docker_plan" {
     resources = [data.aws_ssm_parameter.secret["/mysql/users/mediawiki/password"].arn]
   }
 
+  # Whichever app host the docker workspace applies to
   statement {
-    sid     = "ReadOnlyDockerApiForward"
-    actions = ["ssm:StartSession"]
-    resources = [
-      aws_instance.docker.arn,
-      aws_ssm_document.docker_api_readonly_forward.arn,
-    ]
+    sid       = "ReadOnlyDockerApiForward"
+    actions   = ["ssm:StartSession"]
+    resources = ["arn:aws:ec2:${local.seoul_region}:${data.aws_caller_identity.current.account_id}:instance/*"]
+
+    condition {
+      test     = "StringEquals"
+      variable = "ssm:resourceTag/DockerTarget"
+      values   = ["true"]
+    }
+  }
+
+  statement {
+    sid       = "ReadOnlyForwardDocument"
+    actions   = ["ssm:StartSession"]
+    resources = [aws_ssm_document.docker_api_readonly_forward.arn]
   }
 
   statement {
@@ -156,7 +176,13 @@ data "aws_iam_policy_document" "infra_docker_plan" {
 data "aws_iam_policy_document" "docker_ssh" {
   statement {
     actions   = ["ec2-instance-connect:SendSSHPublicKey"]
-    resources = [aws_instance.docker.arn]
+    resources = ["arn:aws:ec2:${local.seoul_region}:${data.aws_caller_identity.current.account_id}:instance/*"]
+
+    condition {
+      test     = "StringEquals"
+      variable = "aws:ResourceTag/DockerTarget"
+      values   = ["true"]
+    }
   }
 }
 
