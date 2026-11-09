@@ -486,6 +486,7 @@ data "aws_iam_policy_document" "iac" {
       "iam:*",
       "lambda:*",
       "logs:*",
+      "rolesanywhere:*",
       "route53:*",
       "route53domains:*",
       "s3:*",
