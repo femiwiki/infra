@@ -58,9 +58,9 @@ module "mediawiki" {
   description              = "MediaWiki's containers, fastcgi and jobrunner, through IAM Roles Anywhere"
   trust_policy_permissions = local.roles_anywhere_trust["mediawiki"]
   policies = {
-    amazon_s3_access         = aws_iam_policy.amazon_s3_access.arn
-    read_secret_parameters   = aws_iam_policy.read_secret_parameters.arn
-    get_google_subject_token = aws_iam_policy.get_google_subject_token.arn
+    amazon_s3_access          = aws_iam_policy.amazon_s3_access.arn
+    read_mediawiki_parameters = aws_iam_policy.read_mediawiki_parameters.arn
+    get_google_subject_token  = aws_iam_policy.get_google_subject_token.arn
   }
 }
 
