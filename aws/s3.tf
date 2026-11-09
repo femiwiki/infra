@@ -74,19 +74,6 @@ resource "aws_s3_bucket_lifecycle_configuration" "backups" {
     }
   }
 
-  rule {
-    status = "Enabled"
-    id     = "Expire replica seeds after 7 days"
-
-    filter {
-      prefix = "seed/"
-    }
-
-    expiration {
-      days = 7
-    }
-  }
-
   # Dumps that failed mid-upload left 44 uploads (14.4 GB of parts) from
   # 2019 to 2024 that no listing shows.
   rule {
@@ -375,12 +362,6 @@ module "backups_seoul" {
       enabled    = true
       filter     = { prefix = "mysql/" }
       transition = [{ days = 14, storage_class = "DEEP_ARCHIVE" }]
-    },
-    {
-      id         = "Expire replica seeds after 7 days"
-      enabled    = true
-      filter     = { prefix = "seed/" }
-      expiration = { days = 7 }
     },
     {
       id                                     = "abort-incomplete-multipart-uploads"
