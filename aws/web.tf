@@ -37,7 +37,13 @@ resource "aws_instance" "docker" {
     http_put_response_hop_limit = 2
   }
 
-  tags = { Name = "docker" }
+  # Role reaches every app host; DockerTarget picks the one the docker
+  # workspace applies to, so a replacement host can run beside this one.
+  tags = {
+    Name         = "docker"
+    Role         = "app"
+    DockerTarget = "true"
+  }
 
   lifecycle {
     ignore_changes = [

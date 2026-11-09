@@ -124,14 +124,24 @@ data "aws_iam_policy_document" "database_swap" {
     resources = local.tfstate_buckets
   }
 
-  # The docker daemon and ProxySQL's admin port
+  # The docker daemon and ProxySQL's admin port, on whichever app host the
+  # docker workspace applies to
   statement {
-    sid     = "DockerPortForward"
-    actions = ["ssm:StartSession"]
-    resources = [
-      aws_instance.docker.arn,
-      "arn:aws:ssm:${local.seoul_region}::document/AWS-StartPortForwardingSession",
-    ]
+    sid       = "DockerPortForward"
+    actions   = ["ssm:StartSession"]
+    resources = ["arn:aws:ec2:${local.seoul_region}:${data.aws_caller_identity.current.account_id}:instance/*"]
+
+    condition {
+      test     = "StringEquals"
+      variable = "ssm:resourceTag/DockerTarget"
+      values   = ["true"]
+    }
+  }
+
+  statement {
+    sid       = "PortForwardDocument"
+    actions   = ["ssm:StartSession"]
+    resources = ["arn:aws:ssm:${local.seoul_region}::document/AWS-StartPortForwardingSession"]
   }
 
   statement {
