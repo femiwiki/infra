@@ -62,11 +62,12 @@ module "mediawiki" {
     read_mediawiki_parameters = aws_iam_policy.read_mediawiki_parameters.arn
     get_google_subject_token  = aws_iam_policy.get_google_subject_token.arn
   }
+  max_session_duration = 7200
 }
 
 resource "aws_rolesanywhere_profile" "femiwiki" {
   name             = "femiwiki"
   enabled          = true
-  duration_seconds = 3600
+  duration_seconds = 7200
   role_arns        = [module.mediawiki.arn]
 }
