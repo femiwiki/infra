@@ -6,7 +6,7 @@ resource "docker_container" "http" {
   name         = "http-${local.fastcgi_generation}"
   log_driver   = "fluentd"
   log_opts     = local.log_opts
-  image        = "ghcr.io/femiwiki/femiwiki:2026-11-09T14-57-5dd10761"
+  image        = "ghcr.io/femiwiki/femiwiki:2026-11-09T23-33-75527306"
   command      = ["caddy-run"]
   restart      = "always"
   init         = true
@@ -62,6 +62,10 @@ resource "docker_container" "http" {
       S3_BUCKET           = data.terraform_remote_state.aws.outputs.caddy_certs_bucket,
       S3_PREFIX           = "caddycerts",
 
+      AWS_SHARED_CREDENTIALS_FILE = "${local.roles_anywhere_dir}/credentials",
+      AWS_CONFIG_FILE             = "${local.roles_anywhere_dir}/credentials",
+      AWS_EC2_METADATA_DISABLED   = "true",
+
       FW_RATE_LIMIT_S3_HOST   = data.terraform_remote_state.aws.outputs.rate_limit_s3_host,
       FW_RATE_LIMIT_S3_BUCKET = data.terraform_remote_state.aws.outputs.rate_limit_bucket,
 
@@ -72,6 +76,24 @@ resource "docker_container" "http" {
       FW_TRUSTED_PROXIES = join(" ", split("\n", trimspace(file("../serving/cloudfront-origin-facing.txt")))),
     } : "${k}=${v}"
   ]
+
+  upload {
+    file        = "${local.roles_anywhere_dir}/certificate.pem"
+    content     = tls_locally_signed_cert.roles_anywhere["caddy"].cert_pem
+    permissions = "0644"
+  }
+
+  upload {
+    file        = "${local.roles_anywhere_dir}/private-key.pem"
+    content     = tls_private_key.roles_anywhere["caddy"].private_key_pem
+    permissions = "0600"
+  }
+
+  upload {
+    file        = "${local.roles_anywhere_dir}/credentials"
+    content     = "[default]\ncredential_process = ${local.caddy_aws_credentials}\n"
+    permissions = "0644"
+  }
 
   ulimit {
     hard = 65536
@@ -156,7 +178,7 @@ resource "docker_container" "fastcgi" {
   name         = "fastcgi-${local.fastcgi_generation}"
   log_driver   = "fluentd"
   log_opts     = local.log_opts
-  image        = "ghcr.io/femiwiki/femiwiki:2026-11-09T14-57-5dd10761"
+  image        = "ghcr.io/femiwiki/femiwiki:2026-11-09T23-33-75527306"
   network_mode = "host"
   restart      = "always"
   init         = true
@@ -242,13 +264,13 @@ resource "docker_container" "fastcgi" {
 
   upload {
     file        = "${local.roles_anywhere_dir}/certificate.pem"
-    content     = tls_locally_signed_cert.mediawiki.cert_pem
+    content     = tls_locally_signed_cert.roles_anywhere["mediawiki"].cert_pem
     permissions = "0644"
   }
 
   upload {
     file        = "${local.roles_anywhere_dir}/private-key.pem"
-    content     = tls_private_key.mediawiki.private_key_pem
+    content     = tls_private_key.roles_anywhere["mediawiki"].private_key_pem
     permissions = "0600"
   }
 
@@ -278,7 +300,7 @@ resource "docker_container" "jobrunner" {
   name         = "jobrunner"
   log_driver   = "fluentd"
   log_opts     = local.log_opts
-  image        = "ghcr.io/femiwiki/femiwiki:2026-11-09T14-57-5dd10761"
+  image        = "ghcr.io/femiwiki/femiwiki:2026-11-09T23-33-75527306"
   command      = ["jobrunner"]
   network_mode = "host"
   restart      = "always"
@@ -300,13 +322,13 @@ resource "docker_container" "jobrunner" {
 
   upload {
     file        = "${local.roles_anywhere_dir}/certificate.pem"
-    content     = tls_locally_signed_cert.mediawiki.cert_pem
+    content     = tls_locally_signed_cert.roles_anywhere["mediawiki"].cert_pem
     permissions = "0644"
   }
 
   upload {
     file        = "${local.roles_anywhere_dir}/private-key.pem"
-    content     = tls_private_key.mediawiki.private_key_pem
+    content     = tls_private_key.roles_anywhere["mediawiki"].private_key_pem
     permissions = "0600"
   }
 
