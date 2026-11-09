@@ -6,7 +6,7 @@ resource "docker_container" "http" {
   name         = "http-${local.fastcgi_generation}"
   log_driver   = "fluentd"
   log_opts     = local.log_opts
-  image        = "ghcr.io/femiwiki/femiwiki:2026-11-08T06-51-d82dc7b2"
+  image        = "ghcr.io/femiwiki/femiwiki:2026-11-09T13-37-4c53f794"
   command      = ["caddy-run"]
   restart      = "always"
   init         = true
@@ -128,6 +128,12 @@ locals {
     SSM_SECRETS = "1"
     AWS_REGION  = "ap-northeast-2"
 
+    FW_ROLES_ANYWHERE_TRUST_ANCHOR_ARN = data.terraform_remote_state.aws.outputs.roles_anywhere_trust_anchor_arn
+    FW_ROLES_ANYWHERE_PROFILE_ARN      = data.terraform_remote_state.aws.outputs.roles_anywhere_profile_arn
+    FW_ROLES_ANYWHERE_ROLE_ARN         = data.terraform_remote_state.aws.outputs.mediawiki_role_arn
+    AWS_SHARED_CREDENTIALS_FILE        = "/run/aws/credentials"
+    AWS_EC2_METADATA_DISABLED          = "true"
+
     # Through Caddy's retrying route to the Lambda; see serving/Caddyfile
     FW_CHART_RENDERER_URL = "http://127.0.0.1:${local.chart_proxy_port}/"
   }
@@ -150,7 +156,7 @@ resource "docker_container" "fastcgi" {
   name         = "fastcgi-${local.fastcgi_generation}"
   log_driver   = "fluentd"
   log_opts     = local.log_opts
-  image        = "ghcr.io/femiwiki/femiwiki:2026-11-08T06-51-d82dc7b2"
+  image        = "ghcr.io/femiwiki/femiwiki:2026-11-09T13-37-4c53f794"
   network_mode = "host"
   restart      = "always"
   init         = true
@@ -234,6 +240,18 @@ resource "docker_container" "fastcgi" {
     content = local.google_analytics_json
   }
 
+  upload {
+    file        = "${local.roles_anywhere_dir}/certificate.pem"
+    content     = tls_locally_signed_cert.mediawiki.cert_pem
+    permissions = "0644"
+  }
+
+  upload {
+    file        = "${local.roles_anywhere_dir}/private-key.pem"
+    content     = tls_private_key.mediawiki.private_key_pem
+    permissions = "0600"
+  }
+
   mounts {
     type      = "volume"
     target    = "/tmp/cache"
@@ -260,7 +278,7 @@ resource "docker_container" "jobrunner" {
   name         = "jobrunner"
   log_driver   = "fluentd"
   log_opts     = local.log_opts
-  image        = "ghcr.io/femiwiki/femiwiki:2026-11-08T06-51-d82dc7b2"
+  image        = "ghcr.io/femiwiki/femiwiki:2026-11-09T13-37-4c53f794"
   command      = ["jobrunner"]
   network_mode = "host"
   restart      = "always"
@@ -278,6 +296,18 @@ resource "docker_container" "jobrunner" {
   upload {
     file    = "/etc/mediawiki/google-analytics.json"
     content = local.google_analytics_json
+  }
+
+  upload {
+    file        = "${local.roles_anywhere_dir}/certificate.pem"
+    content     = tls_locally_signed_cert.mediawiki.cert_pem
+    permissions = "0644"
+  }
+
+  upload {
+    file        = "${local.roles_anywhere_dir}/private-key.pem"
+    content     = tls_private_key.mediawiki.private_key_pem
+    permissions = "0600"
   }
 
   ulimit {
