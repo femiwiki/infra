@@ -562,16 +562,11 @@ femiwiki.com *.femiwiki.com 127.0.0.1:80 localhost:80 {
 			unversioned_max_age 5m
 		}
 	}
-	header {
-		# HSTS
-		Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
-		# Block content sniffing, and enable Cross-Origin Read Blocking. MediaWiki
-		# sends its own on some responses, so ? only fills it in where missing.
-		?X-Content-Type-Options "nosniff"
-		# Avoid clickjacking, unless MediaWiki chose its own, such as
-		# $wgApiFrameOptions on api.php
-		?X-Frame-Options "DENY"
-	}
+	header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+	# ? fills a header in only where MediaWiki sent none, such as $wgApiFrameOptions
+	# on api.php. One ? per directive: a block's ? fields share one condition.
+	header ?X-Content-Type-Options "nosniff"
+	header ?X-Frame-Options "DENY"
 	log {
 		# Two thirds of a line used to be headers that are the same on every
 		# request: the security headers this block sets, Caddy's Via and Alt-Svc,
