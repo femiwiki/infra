@@ -153,13 +153,24 @@ resource "aws_iam_policy" "route53" {
 }
 
 data "aws_iam_policy_document" "route53" {
+  source_policy_documents = [data.aws_iam_policy_document.solve_acme_dns.json]
+
   statement {
     actions = [
       "sts:AssumeRole",
     ]
     resources = ["*"]
   }
+}
 
+resource "aws_iam_policy" "solve_acme_dns" {
+  name        = "SolveAcmeDns"
+  description = "Lets Caddy answer ACME DNS challenges for femiwiki.com"
+
+  policy = data.aws_iam_policy_document.solve_acme_dns.json
+}
+
+data "aws_iam_policy_document" "solve_acme_dns" {
   statement {
     actions = [
       "route53:ListResourceRecordSets",

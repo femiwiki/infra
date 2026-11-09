@@ -29,7 +29,7 @@ resource "aws_rolesanywhere_trust_anchor" "femiwiki" {
 
 locals {
   roles_anywhere_trust = {
-    for name in ["mediawiki"] : name => {
+    for name in ["mediawiki", "caddy"] : name => {
       RolesAnywhere = {
         actions    = ["sts:AssumeRole", "sts:TagSession", "sts:SetSourceIdentity"]
         principals = [{ type = "Service", identifiers = ["rolesanywhere.amazonaws.com"] }]
@@ -65,9 +65,24 @@ module "mediawiki" {
   max_session_duration = 7200
 }
 
+module "caddy" {
+  source                   = "terraform-aws-modules/iam/aws//modules/iam-role"
+  version                  = "6.8.2"
+  name                     = "caddy"
+  use_name_prefix          = false
+  description              = "Caddy's container, http, through IAM Roles Anywhere"
+  trust_policy_permissions = local.roles_anywhere_trust["caddy"]
+  policies = {
+    access_caddycerts      = aws_iam_policy.access_caddycerts.arn
+    share_rate_limit_state = aws_iam_policy.share_rate_limit_state.arn
+    solve_acme_dns         = aws_iam_policy.solve_acme_dns.arn
+  }
+  max_session_duration = 7200
+}
+
 resource "aws_rolesanywhere_profile" "femiwiki" {
   name             = "femiwiki"
   enabled          = true
   duration_seconds = 7200
-  role_arns        = [module.mediawiki.arn]
+  role_arns        = [module.mediawiki.arn, module.caddy.arn]
 }

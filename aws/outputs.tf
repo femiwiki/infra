@@ -64,6 +64,11 @@ output "roles_anywhere_profile_arn" {
   value       = aws_rolesanywhere_profile.femiwiki.arn
 }
 
+output "caddy_role_arn" {
+  description = "The role of Caddy's container, through IAM Roles Anywhere"
+  value       = module.caddy.arn
+}
+
 output "mediawiki_role_arn" {
   description = "The role of MediaWiki's containers, through IAM Roles Anywhere"
   value       = module.mediawiki.arn
