@@ -203,7 +203,7 @@ resource "aws_ssm_document" "os_update" {
 
   content = jsonencode({
     schemaVersion = "2.2"
-    description   = "Upgrade the host to the newest Amazon Linux 2023 release and keep the running kernel live-patched, without a reboot."
+    description   = "Upgrade the host to the newest Amazon Linux 2023 release, without a reboot."
     mainSteps = [{
       action = "aws:runShellScript"
       name   = "osUpdate"

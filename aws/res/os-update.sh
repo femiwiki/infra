@@ -10,16 +10,6 @@ run() {
     "$@"
 }
 
-# Live patches keep the running kernel patched without a reboot, for three
-# months after its release
-if ! rpm -q kpatch-dnf kpatch-runtime >/dev/null; then
-  run dnf install -y -q kpatch-dnf kpatch-runtime
-  run dnf kernel-livepatch -y auto
-fi
-systemctl enable --now kpatch.service
-
 # The host's own release gets no new packages. Upgrading the SSM agent would
 # restart it under this command.
 run dnf upgrade -y -q --releasever=latest --exclude=amazon-ssm-agent
-
-kpatch list
