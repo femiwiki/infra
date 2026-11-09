@@ -66,7 +66,7 @@ jobs:
       - uses: ./.github/actions/ssm-port-forward
         id: daemon
         with:
-          filters: Name=tag:Name,Values=docker
+          filters: Name=tag:DockerTarget,Values=true
           region: ap-northeast-2
           port: 2376
           socket: /var/run/docker.sock
@@ -93,7 +93,7 @@ jobs:
       # A server greets first, so four bytes back mean ProxySQL answered
       - uses: ./.github/actions/ssm-port-forward
         with:
-          filters: Name=tag:Name,Values=docker
+          filters: Name=tag:DockerTarget,Values=true
           region: ap-northeast-2
           port: 6032
           probe: '[ "$(timeout 3 head -c 4 < "/dev/tcp/$HOST/$PORT" | wc -c)" = 4 ]'

@@ -65,7 +65,7 @@ jobs:
         if: steps.scope.outputs.plan == 'true' && startsWith(matrix.workspace, 'docker')
         id: daemon
         with:
-          filters: Name=tag:Name,Values=${{ matrix.workspace }}
+          filters: Name=tag:DockerTarget,Values=true
           region: ap-northeast-2
           # The read-only Docker API, which passes GET and HEAD alone
           port: 2377
@@ -448,7 +448,7 @@ jobs:
         if: startsWith(matrix.workspace, 'docker')
         id: daemon
         with:
-          filters: Name=tag:Name,Values=${{ matrix.workspace }}
+          filters: Name=tag:DockerTarget,Values=true
           region: ap-northeast-2
           port: 2376
           socket: /var/run/docker.sock
