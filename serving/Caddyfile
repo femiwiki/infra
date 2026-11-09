@@ -649,6 +649,24 @@ femiwiki.com *.femiwiki.com 127.0.0.1:80 localhost:80 {
 	respond @asset_code 404
 }
 
+# The chart renderer Lambda for $wgChartServiceUrl, retrying its 429s, which Chart
+# would cache as an error. One port for every generation: either Caddy may answer.
+http://127.0.0.1:{$FW_CHART_PROXY_PORT:8090} {
+	bind 127.0.0.1
+
+	reverse_proxy https://{$FW_CHART_RENDERER_HOST:chart-renderer.invalid} {
+		# Holds the chart spec so a retry can send it again; a larger body
+		# streams and is not retried
+		request_buffers 4MB
+		header_up Host {upstream_hostport}
+		lb_try_duration 5s
+		lb_try_interval 500ms
+		lb_retry_match {
+			expression `{rp.status_code} == 429`
+		}
+	}
+}
+
 # php-fpm's status page and opcache for Alloy on the host. infra alternates
 # every port here per generation, the way it does the probe port, so the
 # previous container cannot answer for the new one. The status page has a port
