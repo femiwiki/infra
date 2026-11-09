@@ -569,3 +569,29 @@ data "aws_iam_policy_document" "infra_healthchecks" {
   }
 }
 
+
+resource "aws_iam_policy" "read_mediawiki_parameters" {
+  name        = "ReadMediaWikiParameters"
+  description = "Allows MediaWiki's containers to read their secrets from Parameter Store at start"
+
+  policy = data.aws_iam_policy_document.read_mediawiki_parameters.json
+}
+
+data "aws_iam_policy_document" "read_mediawiki_parameters" {
+  statement {
+    actions = [
+      "ssm:GetParameter",
+      "ssm:GetParameters",
+      "ssm:GetParametersByPath",
+    ]
+    resources = [
+      "arn:aws:ssm:${local.seoul_region}:${data.aws_caller_identity.current.account_id}:parameter/mediawiki/*",
+      "arn:aws:ssm:${local.seoul_region}:${data.aws_caller_identity.current.account_id}:parameter/mysql/users/mediawiki/*",
+    ]
+  }
+
+  statement {
+    actions   = ["ssm:DescribeParameters"]
+    resources = ["*"]
+  }
+}
