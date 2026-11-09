@@ -649,10 +649,8 @@ femiwiki.com *.femiwiki.com 127.0.0.1:80 localhost:80 {
 	respond @asset_code 404
 }
 
-# Chart's renderer, the Lambda function URL, for $wgChartServiceUrl. Chart
-# never retries, so a 429 from the function's concurrency cap would be cached
-# in the page as a chart error; this waits out the cap instead. The port is the
-# same every generation, so either Caddy may answer during a swap.
+# The chart renderer Lambda for $wgChartServiceUrl, retrying its 429s, which Chart
+# would cache as an error. One port for every generation: either Caddy may answer.
 http://127.0.0.1:{$FW_CHART_PROXY_PORT:8090} {
 	bind 127.0.0.1
 
