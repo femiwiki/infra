@@ -407,6 +407,6 @@ module "chart_renderer" {
   source = "git::https://github.com/femiwiki/terraform-aws-mediawiki-chart-renderer.git?ref=v0.1.1"
 
   issuer     = aws_iam_outbound_web_identity_federation.this.issuer_identifier
-  subjects   = [module.femiwiki.arn]
+  subjects   = [module.femiwiki.arn, module.mediawiki.arn]
   algorithms = ["ES384"]
 }
