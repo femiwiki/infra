@@ -57,10 +57,7 @@ terraform {
 }
 
 provider "aws" {
-  # Seoul, because it is the region that stays: a resource that says nothing
-  # should land where the wiki is going, not where it is leaving. Every resource
-  # and data source in Tokyo names local.tokyo_region, so nothing inherits this.
-  # See #919.
+  # Seoul stays; everything in Tokyo names local.tokyo_region instead. See #919.
   region = local.region
 }
 
