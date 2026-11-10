@@ -20,7 +20,7 @@ resource "aws_bcmdataexports_export" "cost_and_usage" {
       s3_destination {
         s3_bucket = module.cost_and_usage.s3_bucket_id
         s3_prefix = "cost-and-usage"
-        s3_region = local.seoul_region
+        s3_region = local.region
 
         s3_output_configurations {
           overwrite   = "OVERWRITE_REPORT"
