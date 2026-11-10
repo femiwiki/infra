@@ -6,7 +6,7 @@ resource "docker_container" "http" {
   name         = "http-${local.fastcgi_generation}"
   log_driver   = "fluentd"
   log_opts     = local.log_opts
-  image        = "ghcr.io/femiwiki/femiwiki:2026-11-09T23-33-75527306"
+  image        = "ghcr.io/femiwiki/femiwiki:2026-11-10T14-23-8cd9903b"
   command      = ["caddy-run"]
   restart      = "always"
   init         = true
@@ -178,7 +178,7 @@ resource "docker_container" "fastcgi" {
   name         = "fastcgi-${local.fastcgi_generation}"
   log_driver   = "fluentd"
   log_opts     = local.log_opts
-  image        = "ghcr.io/femiwiki/femiwiki:2026-11-09T23-33-75527306"
+  image        = "ghcr.io/femiwiki/femiwiki:2026-11-10T14-23-8cd9903b"
   network_mode = "host"
   restart      = "always"
   init         = true
@@ -300,7 +300,7 @@ resource "docker_container" "jobrunner" {
   name         = "jobrunner"
   log_driver   = "fluentd"
   log_opts     = local.log_opts
-  image        = "ghcr.io/femiwiki/femiwiki:2026-11-09T23-33-75527306"
+  image        = "ghcr.io/femiwiki/femiwiki:2026-11-10T14-23-8cd9903b"
   command      = ["jobrunner"]
   network_mode = "host"
   restart      = "always"
