@@ -7,7 +7,6 @@ locals {
 resource "aws_cloudtrail" "management_events" {
   depends_on = [module.trail]
 
-  region                        = local.seoul_region
   name                          = local.trail_name
   s3_bucket_name                = module.trail.s3_bucket_id
   is_multi_region_trail         = true
@@ -18,7 +17,6 @@ resource "aws_cloudtrail" "management_events" {
 module "trail" {
   source                                = "terraform-aws-modules/s3-bucket/aws"
   version                               = "5.17.0"
-  region                                = local.seoul_region
   bucket                                = "trail-${data.aws_caller_identity.current.account_id}-${local.seoul_region}-an"
   bucket_namespace                      = "account-regional"
   attach_deny_insecure_transport_policy = true
