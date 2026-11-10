@@ -38,11 +38,6 @@ output "database_address" {
   value       = one(aws_network_interface.database.private_ips)
 }
 
-output "femiwiki_role_arn" {
-  description = "The role of the wiki's instances"
-  value       = module.femiwiki.arn
-}
-
 output "roles_anywhere_ca_cert_pem" {
   description = "The CA certificate that the IAM Roles Anywhere trust anchor trusts"
   value       = tls_self_signed_cert.roles_anywhere_ca.cert_pem
