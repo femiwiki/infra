@@ -361,6 +361,20 @@ femiwiki.com *.femiwiki.com 127.0.0.1:80 localhost:80 {
 			events {$FW_LOGIN_USELANG_EVENTS:30}
 			window {$FW_LOGIN_USELANG_WINDOW:10m}
 		}
+		# A Referer with Sec-Fetch-Site none, site-wide. A browser sends none only for an
+		# address typed or opened from outside, and then sends no Referer; a crawl spread
+		# one request per address over thousands still forges both.
+		zone forged_referer {
+			match {
+				path /index.php* /api.php*
+				header Sec-Fetch-Site none
+				header_regexp Referer .
+				not header Cookie *femiwikiUserID=*
+			}
+			key forged_referer
+			events {$FW_FORGED_REFERER_EVENTS:300}
+			window {$FW_FORGED_REFERER_WINDOW:10m}
+		}
 		# Anything that calls itself a crawler, counted per agent string. These
 		# are a quarter of the time php-fpm spends, and nearly all of it is
 		# article reads that robots.txt allows, so a budget is the only thing
