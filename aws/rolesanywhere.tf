@@ -86,3 +86,25 @@ resource "aws_rolesanywhere_profile" "femiwiki" {
   duration_seconds = 7200
   role_arns        = [module.mediawiki.arn, module.caddy.arn]
 }
+
+resource "aws_cloudwatch_event_rule" "roles_anywhere_expiry" {
+  name        = "roles-anywhere-expiry"
+  description = "Sends IAM Roles Anywhere certificate expiry events to the grafana-github Lambda function."
+  event_pattern = jsonencode({
+    source        = ["aws.rolesanywhere"]
+    "detail-type" = ["Roles Anywhere Certificate Expiration State Change"]
+  })
+}
+
+resource "aws_cloudwatch_event_target" "roles_anywhere_expiry" {
+  rule = aws_cloudwatch_event_rule.roles_anywhere_expiry.name
+  arn  = aws_lambda_function.grafana_github.arn
+}
+
+resource "aws_lambda_permission" "grafana_github_roles_anywhere_expiry" {
+  statement_id  = "AllowEventBridgeRolesAnywhereExpiry"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.grafana_github.function_name
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.roles_anywhere_expiry.arn
+}
