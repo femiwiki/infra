@@ -127,14 +127,7 @@ module "femiwiki" {
   description              = "Allows EC2 instances to call AWS services on your behalf."
   trust_policy_permissions = local.instance_trust
   policies = merge(local.instance_managed_policies, {
-    amazon_s3_access         = aws_iam_policy.amazon_s3_access.arn
-    route53                  = aws_iam_policy.route53.arn
-    access_caddycerts        = aws_iam_policy.access_caddycerts.arn
-    share_rate_limit_state   = aws_iam_policy.share_rate_limit_state.arn
-    read_secret_parameters   = aws_iam_policy.read_secret_parameters.arn
-    get_google_subject_token = aws_iam_policy.get_google_subject_token.arn
-    upload_backup            = aws_iam_policy.upload_backup.arn
-    read_alloy_parameters    = aws_iam_policy.read_alloy_parameters.arn
+    read_alloy_parameters = aws_iam_policy.read_alloy_parameters.arn
   })
 }
 
