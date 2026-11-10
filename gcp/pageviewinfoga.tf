@@ -19,7 +19,7 @@ resource "google_iam_workload_identity_pool" "aws_sts" {
 resource "google_iam_workload_identity_pool_provider" "femiwiki" {
   workload_identity_pool_id          = google_iam_workload_identity_pool.aws_sts.workload_identity_pool_id
   workload_identity_pool_provider_id = "femiwiki"
-  attribute_condition                = "assertion.sub in [\"${data.terraform_remote_state.aws.outputs.femiwiki_role_arn}\", \"${data.terraform_remote_state.aws.outputs.mediawiki_role_arn}\"]"
+  attribute_condition                = "assertion.sub == \"${data.terraform_remote_state.aws.outputs.mediawiki_role_arn}\""
   attribute_mapping = {
     "google.subject" = "assertion.sub"
   }
@@ -27,12 +27,6 @@ resource "google_iam_workload_identity_pool_provider" "femiwiki" {
   oidc {
     issuer_uri = data.terraform_remote_state.aws.outputs.outbound_issuer
   }
-}
-
-resource "google_service_account_iam_member" "pageviewinfoga_femiwiki" {
-  service_account_id = google_service_account.pageviewinfoga.name
-  role               = "roles/iam.workloadIdentityUser"
-  member             = "principal://iam.googleapis.com/${google_iam_workload_identity_pool.aws_sts.name}/subject/${data.terraform_remote_state.aws.outputs.femiwiki_role_arn}"
 }
 
 resource "google_service_account_iam_member" "pageviewinfoga_mediawiki" {

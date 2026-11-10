@@ -145,24 +145,6 @@ data "aws_iam_policy_document" "amazon_s3_access" {
   }
 }
 
-resource "aws_iam_policy" "route53" {
-  name        = "Route53Access"
-  description = "Provide Access to route53."
-
-  policy = data.aws_iam_policy_document.route53.json
-}
-
-data "aws_iam_policy_document" "route53" {
-  source_policy_documents = [data.aws_iam_policy_document.solve_acme_dns.json]
-
-  statement {
-    actions = [
-      "sts:AssumeRole",
-    ]
-    resources = ["*"]
-  }
-}
-
 resource "aws_iam_policy" "solve_acme_dns" {
   name        = "SolveAcmeDns"
   description = "Lets Caddy answer ACME DNS challenges for femiwiki.com"
@@ -235,34 +217,6 @@ data "aws_iam_policy_document" "share_rate_limit_state" {
       "s3:DeleteObject",
     ]
     resources = ["${local.rate_limit}/*"]
-  }
-}
-
-resource "aws_iam_policy" "read_secret_parameters" {
-  name        = "ReadSecretParameters"
-  description = "Allows instances to read their own secrets from Parameter Store at boot"
-
-  policy = data.aws_iam_policy_document.read_secret_parameters.json
-}
-
-data "aws_iam_policy_document" "read_secret_parameters" {
-  statement {
-    actions = [
-      "ssm:GetParameter",
-      "ssm:GetParameters",
-      "ssm:GetParametersByPath",
-    ]
-    resources = flatten([
-      for region in local.parameter_store_regions : [
-        "arn:aws:ssm:${region}:${data.aws_caller_identity.current.account_id}:parameter/mediawiki/*",
-        "arn:aws:ssm:${region}:${data.aws_caller_identity.current.account_id}:parameter/mysql/*",
-      ]
-    ])
-  }
-
-  statement {
-    actions   = ["ssm:DescribeParameters"]
-    resources = ["*"]
   }
 }
 
