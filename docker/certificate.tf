@@ -27,7 +27,7 @@ resource "tls_locally_signed_cert" "roles_anywhere" {
   cert_request_pem      = tls_cert_request.roles_anywhere[each.key].cert_request_pem
   ca_private_key_pem    = data.terraform_remote_state.aws.outputs.roles_anywhere_ca_private_key_pem
   ca_cert_pem           = data.terraform_remote_state.aws.outputs.roles_anywhere_ca_cert_pem
-  validity_period_hours = 2160
+  validity_period_hours = 87600
   allowed_uses          = ["digital_signature"]
 }
 
