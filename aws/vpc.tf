@@ -27,7 +27,6 @@ locals {
 }
 
 resource "aws_vpc" "main" {
-  region               = local.seoul_region
   cidr_block           = "10.20.0.0/16"
   enable_dns_support   = true
   enable_dns_hostnames = true
@@ -36,7 +35,6 @@ resource "aws_vpc" "main" {
 }
 
 resource "aws_subnet" "main" {
-  region                  = local.seoul_region
   vpc_id                  = aws_vpc.main.id
   availability_zone       = local.seoul_az
   cidr_block              = "10.20.0.0/20"
@@ -46,14 +44,12 @@ resource "aws_subnet" "main" {
 }
 
 resource "aws_internet_gateway" "main" {
-  region = local.seoul_region
   vpc_id = aws_vpc.main.id
 
   tags = { Name = "femiwiki-seoul" }
 }
 
 resource "aws_route_table" "main" {
-  region = local.seoul_region
   vpc_id = aws_vpc.main.id
 
   route {
@@ -65,7 +61,6 @@ resource "aws_route_table" "main" {
 }
 
 resource "aws_route_table_association" "main" {
-  region         = local.seoul_region
   subnet_id      = aws_subnet.main.id
   route_table_id = aws_route_table.main.id
 }

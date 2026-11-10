@@ -32,7 +32,6 @@ resource "aws_security_group_rule" "default_instance_connect_browser_based_clien
 
 # Web
 resource "aws_security_group" "web" {
-  region      = local.seoul_region
   name        = "web"
   description = "Receives public HTTP and HTTPS"
   vpc_id      = aws_vpc.main.id
@@ -44,7 +43,6 @@ resource "aws_security_group" "web" {
 # readers who come straight to the box.
 resource "aws_vpc_security_group_ingress_rule" "web_http" {
   for_each          = local.through_cloudfront ? toset([]) : toset(["http"])
-  region            = local.seoul_region
   security_group_id = aws_security_group.web.id
   description       = "http"
   ip_protocol       = "tcp"
@@ -54,7 +52,6 @@ resource "aws_vpc_security_group_ingress_rule" "web_http" {
 }
 
 resource "aws_vpc_security_group_ingress_rule" "web_https" {
-  region            = local.seoul_region
   security_group_id = aws_security_group.web.id
   description       = "https"
   ip_protocol       = "tcp"
@@ -66,8 +63,7 @@ resource "aws_vpc_security_group_ingress_rule" "web_https" {
 
 # Counts as 55 of the group's 60 inbound rules, so it fits once, not twice
 data "aws_ec2_managed_prefix_list" "cloudfront_origin_facing" {
-  region = local.seoul_region
-  name   = "com.amazonaws.global.cloudfront.origin-facing"
+  name = "com.amazonaws.global.cloudfront.origin-facing"
 }
 
 moved {
@@ -76,7 +72,6 @@ moved {
 }
 
 resource "aws_vpc_security_group_egress_rule" "web" {
-  region            = local.seoul_region
   security_group_id = aws_security_group.web.id
   ip_protocol       = "-1"
   cidr_ipv4         = "0.0.0.0/0"
@@ -84,7 +79,6 @@ resource "aws_vpc_security_group_egress_rule" "web" {
 
 # Database
 resource "aws_security_group" "database" {
-  region      = local.seoul_region
   name        = "database"
   description = "Receives database connections"
   vpc_id      = aws_vpc.main.id
@@ -93,7 +87,6 @@ resource "aws_security_group" "database" {
 }
 
 resource "aws_vpc_security_group_ingress_rule" "database_self" {
-  region                       = local.seoul_region
   security_group_id            = aws_security_group.database.id
   description                  = "replication"
   ip_protocol                  = "tcp"
@@ -103,7 +96,6 @@ resource "aws_vpc_security_group_ingress_rule" "database_self" {
 }
 
 resource "aws_vpc_security_group_ingress_rule" "database_db_client" {
-  region                       = local.seoul_region
   security_group_id            = aws_security_group.database.id
   description                  = "From a database-client"
   ip_protocol                  = "tcp"
@@ -113,7 +105,6 @@ resource "aws_vpc_security_group_ingress_rule" "database_db_client" {
 }
 
 resource "aws_vpc_security_group_egress_rule" "database" {
-  region            = local.seoul_region
   security_group_id = aws_security_group.database.id
   ip_protocol       = "-1"
   cidr_ipv4         = "0.0.0.0/0"
@@ -121,7 +112,6 @@ resource "aws_vpc_security_group_egress_rule" "database" {
 
 # Anything allowed to reach the database
 resource "aws_security_group" "database_client" {
-  region      = local.seoul_region
   name        = "database-client"
   description = "May reach the database"
   vpc_id      = aws_vpc.main.id
@@ -131,7 +121,6 @@ resource "aws_security_group" "database_client" {
 
 # EC2 Instance Connect, for when SSM will not do
 resource "aws_security_group" "instance_connect" {
-  region      = local.seoul_region
   name        = "instance-connect"
   description = "EC2 Instance Connect"
   vpc_id      = aws_vpc.main.id
@@ -140,7 +129,6 @@ resource "aws_security_group" "instance_connect" {
 }
 
 resource "aws_vpc_security_group_ingress_rule" "instance_connect" {
-  region            = local.seoul_region
   security_group_id = aws_security_group.instance_connect.id
   description       = "EC2 Instance Connect Browser-based client"
   ip_protocol       = "tcp"
@@ -156,7 +144,6 @@ import {
 }
 
 resource "aws_default_security_group" "vpc" {
-  region  = local.seoul_region
   vpc_id  = aws_vpc.main.id
   ingress = []
   egress  = []
@@ -164,7 +151,6 @@ resource "aws_default_security_group" "vpc" {
 
 # The region's default VPC, which nothing uses
 data "aws_vpc" "default" {
-  region  = local.seoul_region
   default = true
 }
 
@@ -174,7 +160,6 @@ import {
 }
 
 resource "aws_default_security_group" "default_vpc" {
-  region  = local.seoul_region
   vpc_id  = data.aws_vpc.default.id
   ingress = []
   egress  = []

@@ -1,5 +1,4 @@
 resource "aws_instance" "docker" {
-  region                      = local.seoul_region
   ami                         = data.aws_ami.amazon_linux_2_arm64.image_id
   availability_zone           = local.seoul_az
   subnet_id                   = aws_subnet.main.id
@@ -55,7 +54,6 @@ resource "aws_instance" "docker" {
 }
 
 resource "aws_eip_association" "web" {
-  region        = local.seoul_region
   allocation_id = aws_eip.web.id
   instance_id   = aws_instance.docker.id
 }

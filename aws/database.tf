@@ -1,5 +1,4 @@
 data "aws_ami" "amazon_linux_2_arm64" {
-  region      = local.seoul_region
   owners      = ["amazon"]
   most_recent = true
 
@@ -37,7 +36,6 @@ moved {
 resource "aws_ebs_volume" "database" {
   for_each = local.database_hosts
 
-  region            = local.seoul_region
   availability_zone = local.seoul_az
   type              = "gp3"
   size              = 32
@@ -48,7 +46,6 @@ resource "aws_ebs_volume" "database" {
 resource "aws_volume_attachment" "database" {
   for_each = local.database_hosts
 
-  region      = local.seoul_region
   device_name = "/dev/sdf"
   volume_id   = aws_ebs_volume.database[each.key].id
   instance_id = aws_instance.database[each.key].id
@@ -57,7 +54,6 @@ resource "aws_volume_attachment" "database" {
 resource "aws_instance" "database" {
   for_each = local.database_hosts
 
-  region                      = local.seoul_region
   ami                         = data.aws_ami.amazon_linux_2_arm64.image_id
   availability_zone           = local.seoul_az
   subnet_id                   = aws_subnet.main.id
@@ -117,7 +113,6 @@ resource "aws_instance" "database" {
 # The address the app and replicas reach the primary at. The swap moves it to
 # the promoted host; this attachment is only the first one.
 resource "aws_network_interface" "database" {
-  region          = local.seoul_region
   subnet_id       = aws_subnet.main.id
   private_ips     = [cidrhost(aws_subnet.main.cidr_block, 10)]
   security_groups = [aws_security_group.database.id]
@@ -126,7 +121,6 @@ resource "aws_network_interface" "database" {
 }
 
 resource "aws_network_interface_attachment" "database" {
-  region               = local.seoul_region
   instance_id          = aws_instance.database[local.database_primary].id
   network_interface_id = aws_network_interface.database.id
   device_index         = 1
@@ -134,7 +128,6 @@ resource "aws_network_interface_attachment" "database" {
 
 # Every host this launches is a replica of whoever holds the interface above.
 resource "aws_launch_template" "database" {
-  region        = local.seoul_region
   name          = "database"
   image_id      = "resolve:ssm:/aws/service/ami-amazon-linux-latest/al2023-ami-minimal-kernel-6.1-arm64"
   instance_type = "t4g.small"
@@ -203,7 +196,6 @@ resource "aws_launch_template" "database" {
 
 # Empty until the swap workflow raises it for a replacement.
 resource "aws_autoscaling_group" "database" {
-  region              = local.seoul_region
   name                = "database"
   min_size            = 0
   max_size            = 2
