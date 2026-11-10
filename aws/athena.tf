@@ -1,12 +1,10 @@
 # Query the CloudFront logs by hour (UTC): a WHERE on year, month, day and hour
 # reads only those partitions, and Parquet reads only the columns selected.
 resource "aws_glue_catalog_database" "logs" {
-  region = local.seoul_region
-  name   = "logs"
+  name = "logs"
 }
 
 resource "aws_glue_catalog_table" "cloudfront" {
-  region        = local.seoul_region
   database_name = aws_glue_catalog_database.logs.name
   name          = "cloudfront"
   table_type    = "EXTERNAL_TABLE"
@@ -59,8 +57,7 @@ resource "aws_glue_catalog_table" "cloudfront" {
 }
 
 resource "aws_athena_workgroup" "logs" {
-  region = local.seoul_region
-  name   = "logs"
+  name = "logs"
 
   configuration {
     enforce_workgroup_configuration = true

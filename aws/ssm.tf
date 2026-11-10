@@ -25,8 +25,8 @@ data "terraform_remote_state" "gcp" {
 locals {
   # Hosts come and go with replacement, so they are found by role
   otelcol_hosts = {
-    "database" = { name = "mariadb-seoul", type = "database", region = local.seoul_region, role = "database" }
-    "docker"   = { name = "femiwiki-seoul", type = "app", region = local.seoul_region, role = "app" }
+    "database" = { name = "mariadb-seoul", type = "database", region = local.region, role = "database" }
+    "docker"   = { name = "femiwiki-seoul", type = "app", region = local.region, role = "app" }
   }
 
   grafana_cloud = {
@@ -70,22 +70,21 @@ locals {
 
 locals {
   app_hosts = {
-    "docker" = { region = local.seoul_region, role = "app" }
+    "docker" = { region = local.region, role = "app" }
   }
 
   mysql_backup_script = templatefile("res/mysql-backup.sh.tftpl", {
-    region         = local.seoul_region
+    region         = local.region
     backups_bucket = module.backups_seoul.s3_bucket_id
   })
 
   mysql_backup_install = templatefile("res/install-mysql-backup.sh.tftpl", {
-    parameter_region = local.seoul_region
+    parameter_region = local.region
     backup_script    = local.mysql_backup_script
   })
 }
 
 resource "aws_ssm_document" "mysql_backup" {
-  region          = local.seoul_region
   name            = "install-mysql-backup"
   document_type   = "Command"
   document_format = "JSON"
@@ -106,7 +105,6 @@ resource "aws_ssm_document" "mysql_backup" {
 resource "aws_ssm_association" "mysql_backup" {
   depends_on = [aws_ssm_parameter.mysql_backup_healthcheck_url]
 
-  region              = local.seoul_region
   association_name    = "install-mysql-backup"
   name                = aws_ssm_document.mysql_backup.name
   document_version    = aws_ssm_document.mysql_backup.latest_version
@@ -130,8 +128,8 @@ locals {
 
   # Hosts come and go with replacement, so they are found by role
   swapfile_hosts = {
-    "docker"   = { region = local.seoul_region, role = "app" }
-    "database" = { region = local.seoul_region, role = "database" }
+    "docker"   = { region = local.region, role = "app" }
+    "database" = { region = local.region, role = "database" }
   }
 
   swapfile_install = replace(file("res/install-swapfile.sh"), "__SIZE_MIB__", local.swapfile_mib)
@@ -267,7 +265,6 @@ resource "aws_ssm_association" "otelcol" {
 # Steps 2 and 3 of the MediaWiki 1.46 upgrade (femiwiki/femiwiki#645), run by
 # hand with Run Command. Nothing schedules them.
 resource "aws_ssm_document" "copy_wiki_schema" {
-  region          = local.seoul_region
   name            = "copy-wiki-schema"
   document_type   = "Command"
   document_format = "JSON"
@@ -293,7 +290,6 @@ resource "aws_ssm_document" "copy_wiki_schema" {
 }
 
 resource "aws_ssm_document" "update_wiki_schema" {
-  region          = local.seoul_region
   name            = "update-wiki-schema"
   document_type   = "Command"
   document_format = "JSON"
@@ -324,14 +320,12 @@ resource "aws_ssm_document" "update_wiki_schema" {
 }
 
 resource "aws_ssm_parameter" "mysql_backup_healthcheck_url" {
-  region = local.seoul_region
-  name   = "/mysql/backup/healthcheck-url"
-  type   = "SecureString"
-  value  = data.terraform_remote_state.healthchecks.outputs.mysql_backup_ping_url
+  name  = "/mysql/backup/healthcheck-url"
+  type  = "SecureString"
+  value = data.terraform_remote_state.healthchecks.outputs.mysql_backup_ping_url
 }
 
 resource "aws_ssm_document" "docker_api_readonly_forward" {
-  region          = local.seoul_region
   name            = "forward-docker-api-readonly"
   document_type   = "Session"
   document_format = "JSON"
@@ -357,7 +351,6 @@ resource "aws_ssm_document" "docker_api_readonly_forward" {
 }
 
 resource "aws_ssm_document" "mariadb_forward" {
-  region          = local.seoul_region
   name            = "forward-mariadb"
   document_type   = "Session"
   document_format = "JSON"
@@ -388,7 +381,6 @@ resource "aws_ssm_parameter" "alloy" {
     prometheus_password = var.prometheus_password
   }
 
-  region           = local.seoul_region
   name             = "/alloy/${each.key}"
   type             = "SecureString"
   value_wo         = each.value
@@ -402,7 +394,6 @@ resource "aws_ssm_parameter" "internet_archive" {
     secret_key = var.internet_archive_secret_key
   }
 
-  region           = local.seoul_region
   name             = "/mediawiki/internet_archive/${each.key}"
   type             = "SecureString"
   value_wo         = each.value
@@ -411,7 +402,6 @@ resource "aws_ssm_parameter" "internet_archive" {
 
 # Read by the MediaWiki image's ConfirmEdit (femiwiki/femiwiki#668).
 resource "aws_ssm_parameter" "h_captcha_secret_key" {
-  region           = local.seoul_region
   name             = "/mediawiki/h_captcha/secret_key"
   type             = "SecureString"
   value_wo         = var.h_captcha_secret_key
@@ -421,7 +411,6 @@ resource "aws_ssm_parameter" "h_captcha_secret_key" {
 # Read by the MediaWiki image to send slow-request profiles; the profiles:write
 # token is made by grafana/access-policies.tf (femiwiki/femiwiki#614).
 resource "aws_ssm_parameter" "pyroscope_password" {
-  region           = local.seoul_region
   name             = "/mediawiki/pyroscope/password"
   type             = "SecureString"
   value_wo         = var.pyroscope_password
@@ -448,7 +437,6 @@ locals {
 data "aws_ssm_parameter" "secret" {
   for_each = local.secret_parameters
 
-  region          = local.seoul_region
   name            = each.key
   with_decryption = false
 }
@@ -456,10 +444,9 @@ data "aws_ssm_parameter" "secret" {
 # The next database host's server_id, raised by the replacement workflow so no
 # id comes back: a replica skips events that carry its own id.
 resource "aws_ssm_parameter" "mariadb_next_server_id" {
-  region = local.seoul_region
-  name   = "/mariadb/server-id/next"
-  type   = "String"
-  value  = "6"
+  name  = "/mariadb/server-id/next"
+  type  = "String"
+  value = "6"
 
   lifecycle {
     ignore_changes = [value]
@@ -467,7 +454,6 @@ resource "aws_ssm_parameter" "mariadb_next_server_id" {
 }
 
 resource "aws_ssm_document" "docker_socket_only" {
-  region          = local.seoul_region
   name            = "docker-socket-only"
   document_type   = "Command"
   document_format = "JSON"
@@ -486,7 +472,6 @@ resource "aws_ssm_document" "docker_socket_only" {
 }
 
 resource "aws_ssm_association" "docker_socket_only" {
-  region              = local.seoul_region
   association_name    = "docker-socket-only"
   name                = aws_ssm_document.docker_socket_only.name
   document_version    = aws_ssm_document.docker_socket_only.latest_version

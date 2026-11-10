@@ -57,7 +57,7 @@ data "aws_iam_policy_document" "infra_docker" {
   statement {
     sid       = "DockerPortForward"
     actions   = ["ssm:StartSession"]
-    resources = ["arn:aws:ec2:${local.seoul_region}:${data.aws_caller_identity.current.account_id}:instance/*"]
+    resources = ["arn:aws:ec2:${local.region}:${data.aws_caller_identity.current.account_id}:instance/*"]
 
     condition {
       test     = "StringEquals"
@@ -69,7 +69,7 @@ data "aws_iam_policy_document" "infra_docker" {
   statement {
     sid       = "PortForwardDocument"
     actions   = ["ssm:StartSession"]
-    resources = ["arn:aws:ssm:${local.seoul_region}::document/AWS-StartPortForwardingSession"]
+    resources = ["arn:aws:ssm:${local.region}::document/AWS-StartPortForwardingSession"]
   }
 
   statement {
@@ -148,7 +148,7 @@ data "aws_iam_policy_document" "infra_docker_plan" {
   statement {
     sid       = "ReadOnlyDockerApiForward"
     actions   = ["ssm:StartSession"]
-    resources = ["arn:aws:ec2:${local.seoul_region}:${data.aws_caller_identity.current.account_id}:instance/*"]
+    resources = ["arn:aws:ec2:${local.region}:${data.aws_caller_identity.current.account_id}:instance/*"]
 
     condition {
       test     = "StringEquals"
@@ -176,7 +176,7 @@ data "aws_iam_policy_document" "infra_docker_plan" {
 data "aws_iam_policy_document" "docker_ssh" {
   statement {
     actions   = ["ec2-instance-connect:SendSSHPublicKey"]
-    resources = ["arn:aws:ec2:${local.seoul_region}:${data.aws_caller_identity.current.account_id}:instance/*"]
+    resources = ["arn:aws:ec2:${local.region}:${data.aws_caller_identity.current.account_id}:instance/*"]
 
     condition {
       test     = "StringEquals"

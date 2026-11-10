@@ -44,7 +44,7 @@ data "aws_iam_policy_document" "mastodon_discord" {
 
   statement {
     actions   = ["ssm:GetParameter", "ssm:PutParameter"]
-    resources = ["arn:aws:ssm:${local.seoul_region}:${data.aws_caller_identity.current.account_id}:parameter/mastodon-discord/cursor"]
+    resources = ["arn:aws:ssm:${local.region}:${data.aws_caller_identity.current.account_id}:parameter/mastodon-discord/cursor"]
   }
 }
 
@@ -113,7 +113,7 @@ data "aws_iam_policy_document" "mastodon_boost" {
 
   statement {
     actions   = ["ssm:GetParameter", "ssm:PutParameter"]
-    resources = ["arn:aws:ssm:${local.seoul_region}:${data.aws_caller_identity.current.account_id}:parameter/mastodon-boost/cursor"]
+    resources = ["arn:aws:ssm:${local.region}:${data.aws_caller_identity.current.account_id}:parameter/mastodon-boost/cursor"]
   }
 }
 
@@ -386,7 +386,7 @@ data "aws_iam_policy_document" "lambda_secrets" {
 
   statement {
     actions   = ["ssm:GetParameter"]
-    resources = ["arn:aws:ssm:${local.seoul_region}:${data.aws_caller_identity.current.account_id}:parameter/lambda/${each.key}/*"]
+    resources = ["arn:aws:ssm:${local.region}:${data.aws_caller_identity.current.account_id}:parameter/lambda/${each.key}/*"]
   }
 }
 
@@ -399,7 +399,7 @@ resource "aws_iam_role_policy" "github_lambda_secrets" {
 data "aws_iam_policy_document" "github_lambda_secrets" {
   statement {
     actions   = ["ssm:PutParameter"]
-    resources = ["arn:aws:ssm:${local.seoul_region}:${data.aws_caller_identity.current.account_id}:parameter/lambda/*"]
+    resources = ["arn:aws:ssm:${local.region}:${data.aws_caller_identity.current.account_id}:parameter/lambda/*"]
   }
 }
 
