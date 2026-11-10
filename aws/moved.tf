@@ -1,4 +1,4 @@
-# Renames that dropped the region suffix; Seoul is the only region the web stack uses.
+# Renames that took seoul out of addresses; where a Tokyo twin remains, it carries a tokyo suffix instead.
 
 moved {
   from = aws_instance.docker_seoul
@@ -103,4 +103,39 @@ moved {
 moved {
   from = module.uploads_seoul
   to   = module.uploads
+}
+
+moved {
+  from = module.backups_seoul
+  to   = module.backups
+}
+
+moved {
+  from = aws_s3_bucket.backups
+  to   = aws_s3_bucket.backups_tokyo
+}
+
+moved {
+  from = aws_s3_bucket_lifecycle_configuration.backups
+  to   = aws_s3_bucket_lifecycle_configuration.backups_tokyo
+}
+
+moved {
+  from = aws_s3_bucket_policy.backups
+  to   = aws_s3_bucket_policy.backups_tokyo
+}
+
+moved {
+  from = aws_s3_bucket_public_access_block.backups
+  to   = aws_s3_bucket_public_access_block.backups_tokyo
+}
+
+moved {
+  from = aws_sns_topic_subscription.sns_discord_seoul
+  to   = aws_sns_topic_subscription.sns_discord_alarms
+}
+
+moved {
+  from = aws_lambda_permission.sns_discord_seoul
+  to   = aws_lambda_permission.sns_discord_alarms
 }

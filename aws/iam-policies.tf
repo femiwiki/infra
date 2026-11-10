@@ -120,8 +120,8 @@ resource "aws_iam_policy" "amazon_s3_access" {
 #   https://github.com/hashicorp/terraform/issues/27282
 locals {
   caddy_certs   = module.caddy_certs.s3_bucket_arn
-  backups_tokyo = aws_s3_bucket.backups.arn
-  backups       = module.backups_seoul.s3_bucket_arn
+  backups_tokyo = aws_s3_bucket.backups_tokyo.arn
+  backups       = module.backups.s3_bucket_arn
   uploads       = module.uploads.s3_bucket_arn
   rate_limit    = module.rate_limit.s3_bucket_arn
 }

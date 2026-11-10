@@ -69,7 +69,7 @@ resource "aws_instance" "database" {
     mysql_server_id = each.key
     primary_host    = ""
     region          = local.region
-    backups_bucket  = module.backups_seoul.s3_bucket_id
+    backups_bucket  = module.backups.s3_bucket_id
 
     otelcol_install = local.otelcol_install["database"]
   }))
@@ -137,7 +137,7 @@ resource "aws_launch_template" "database" {
     mysql_server_id = ""
     primary_host    = one(aws_network_interface.database.private_ips)
     region          = local.region
-    backups_bucket  = module.backups_seoul.s3_bucket_id
+    backups_bucket  = module.backups.s3_bucket_id
 
     otelcol_install = local.otelcol_install["database"]
   }))

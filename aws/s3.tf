@@ -47,14 +47,14 @@ data "aws_iam_policy_document" "caddy_certs" {
 # Database dumps
 #
 
-resource "aws_s3_bucket" "backups" {
+resource "aws_s3_bucket" "backups_tokyo" {
   region = local.tokyo_region
   bucket = "femiwiki-backups"
 }
 
-resource "aws_s3_bucket_lifecycle_configuration" "backups" {
+resource "aws_s3_bucket_lifecycle_configuration" "backups_tokyo" {
   region = local.tokyo_region
-  bucket = aws_s3_bucket.backups.id
+  bucket = aws_s3_bucket.backups_tokyo.id
 
   rule {
     status = "Enabled"
@@ -87,13 +87,13 @@ resource "aws_s3_bucket_lifecycle_configuration" "backups" {
   }
 }
 
-resource "aws_s3_bucket_policy" "backups" {
+resource "aws_s3_bucket_policy" "backups_tokyo" {
   region = local.tokyo_region
-  bucket = aws_s3_bucket.backups.id
-  policy = data.aws_iam_policy_document.backups_bucket.json
+  bucket = aws_s3_bucket.backups_tokyo.id
+  policy = data.aws_iam_policy_document.backups_tokyo.json
 }
 
-data "aws_iam_policy_document" "backups_bucket" {
+data "aws_iam_policy_document" "backups_tokyo" {
   statement {
     sid     = "DenyPlainHttp"
     effect  = "Deny"
@@ -104,7 +104,7 @@ data "aws_iam_policy_document" "backups_bucket" {
       identifiers = ["*"]
     }
 
-    resources = [aws_s3_bucket.backups.arn, "${aws_s3_bucket.backups.arn}/*"]
+    resources = [aws_s3_bucket.backups_tokyo.arn, "${aws_s3_bucket.backups_tokyo.arn}/*"]
 
     condition {
       test     = "Bool"
@@ -114,9 +114,9 @@ data "aws_iam_policy_document" "backups_bucket" {
   }
 }
 
-resource "aws_s3_bucket_public_access_block" "backups" {
+resource "aws_s3_bucket_public_access_block" "backups_tokyo" {
   region = local.tokyo_region
-  bucket = aws_s3_bucket.backups.id
+  bucket = aws_s3_bucket.backups_tokyo.id
 
   block_public_acls       = true
   block_public_policy     = true
@@ -345,7 +345,7 @@ data "aws_iam_policy_document" "uploads" {
 }
 
 # Kept where the dump is taken; femiwiki-backups in Tokyo holds the older ones (femiwiki/infra#892)
-module "backups_seoul" {
+module "backups" {
   source           = "terraform-aws-modules/s3-bucket/aws"
   version          = "5.17.0"
   bucket           = "backups-${data.aws_caller_identity.current.account_id}-${local.region}-an"

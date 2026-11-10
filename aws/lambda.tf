@@ -269,13 +269,13 @@ resource "aws_lambda_permission" "sns_discord" {
   source_arn    = aws_sns_topic.cloudwatch_alarms_topic_us.arn
 }
 
-resource "aws_sns_topic_subscription" "sns_discord_seoul" {
+resource "aws_sns_topic_subscription" "sns_discord_alarms" {
   topic_arn = aws_sns_topic.cloudwatch_alarms.arn
   protocol  = "lambda"
   endpoint  = aws_lambda_function.sns_discord.arn
 }
 
-resource "aws_lambda_permission" "sns_discord_seoul" {
+resource "aws_lambda_permission" "sns_discord_alarms" {
   statement_id  = "AllowSNSSeoul"
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.sns_discord.function_name
