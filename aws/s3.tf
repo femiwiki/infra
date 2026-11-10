@@ -3,8 +3,7 @@
 module "caddy_certs" {
   source                                = "terraform-aws-modules/s3-bucket/aws"
   version                               = "5.17.0"
-  region                                = local.seoul_region
-  bucket                                = "caddy-certs-${data.aws_caller_identity.current.account_id}-${local.seoul_region}-an"
+  bucket                                = "caddy-certs-${data.aws_caller_identity.current.account_id}-${local.region}-an"
   bucket_namespace                      = "account-regional"
   attach_deny_insecure_transport_policy = true
   attach_policy                         = true
@@ -136,8 +135,7 @@ locals {
 module "state" {
   source                                = "terraform-aws-modules/s3-bucket/aws"
   version                               = "5.17.0"
-  region                                = local.seoul_region
-  bucket                                = "tfstate-${data.aws_caller_identity.current.account_id}-${local.seoul_region}-an"
+  bucket                                = "tfstate-${data.aws_caller_identity.current.account_id}-${local.region}-an"
   bucket_namespace                      = "account-regional"
   attach_deny_insecure_transport_policy = true
   versioning                            = { enabled = true }
@@ -213,8 +211,7 @@ data "aws_iam_policy_document" "cost_and_usage_bucket" {
 module "rate_limit" {
   source                                = "terraform-aws-modules/s3-bucket/aws"
   version                               = "5.17.0"
-  region                                = local.seoul_region
-  bucket                                = "rate-limit-${data.aws_caller_identity.current.account_id}-${local.seoul_region}-an"
+  bucket                                = "rate-limit-${data.aws_caller_identity.current.account_id}-${local.region}-an"
   bucket_namespace                      = "account-regional"
   attach_deny_insecure_transport_policy = true
   lifecycle_rule = [
@@ -251,8 +248,7 @@ moved {
 module "cost_and_usage" {
   source           = "terraform-aws-modules/s3-bucket/aws"
   version          = "5.17.0"
-  region           = local.seoul_region
-  bucket           = "cost-exports-${data.aws_caller_identity.current.account_id}-${local.seoul_region}-an"
+  bucket           = "cost-exports-${data.aws_caller_identity.current.account_id}-${local.region}-an"
   bucket_namespace = "account-regional"
   attach_policy    = true
   policy           = data.aws_iam_policy_document.cost_and_usage_bucket.json
@@ -297,8 +293,7 @@ locals {
 module "uploads" {
   source           = "terraform-aws-modules/s3-bucket/aws"
   version          = "5.17.0"
-  region           = local.seoul_region
-  bucket           = "uploads-${data.aws_caller_identity.current.account_id}-${local.seoul_region}-an"
+  bucket           = "uploads-${data.aws_caller_identity.current.account_id}-${local.region}-an"
   bucket_namespace = "account-regional"
 
   # Extension:AWS puts every object with an ACL (AmazonS3FileBackend.php's putObject),
@@ -353,8 +348,7 @@ data "aws_iam_policy_document" "uploads" {
 module "backups_seoul" {
   source           = "terraform-aws-modules/s3-bucket/aws"
   version          = "5.17.0"
-  region           = local.seoul_region
-  bucket           = "backups-${data.aws_caller_identity.current.account_id}-${local.seoul_region}-an"
+  bucket           = "backups-${data.aws_caller_identity.current.account_id}-${local.region}-an"
   bucket_namespace = "account-regional"
   lifecycle_rule = [
     {

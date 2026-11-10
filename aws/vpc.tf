@@ -1,5 +1,5 @@
 locals {
-  availability_zones = {
+  tokyo_availability_zones = {
     a = "ap-northeast-1a",
     c = "ap-northeast-1c",
     d = "ap-northeast-1d",
@@ -11,7 +11,7 @@ resource "aws_default_vpc" "default" {
 }
 
 resource "aws_default_subnet" "default" {
-  for_each = local.availability_zones
+  for_each = local.tokyo_availability_zones
 
   region = local.tokyo_region
 
@@ -19,15 +19,13 @@ resource "aws_default_subnet" "default" {
 }
 
 locals {
-  # Named rather than inherited from the provider, so a resource says which
-  # region it is in and the provider default can move. See #919.
-  tokyo_region = "ap-northeast-1"
-  seoul_region = "ap-northeast-2"
-  seoul_az     = "ap-northeast-2a"
+  # Tokyo resources name their region; the rest inherit the provider's. See #919.
+  tokyo_region      = "ap-northeast-1"
+  region            = "ap-northeast-2"
+  availability_zone = "ap-northeast-2a"
 }
 
 resource "aws_vpc" "main" {
-  region               = local.seoul_region
   cidr_block           = "10.20.0.0/16"
   enable_dns_support   = true
   enable_dns_hostnames = true
@@ -36,9 +34,8 @@ resource "aws_vpc" "main" {
 }
 
 resource "aws_subnet" "main" {
-  region                  = local.seoul_region
   vpc_id                  = aws_vpc.main.id
-  availability_zone       = local.seoul_az
+  availability_zone       = local.availability_zone
   cidr_block              = "10.20.0.0/20"
   map_public_ip_on_launch = true
 
@@ -46,14 +43,12 @@ resource "aws_subnet" "main" {
 }
 
 resource "aws_internet_gateway" "main" {
-  region = local.seoul_region
   vpc_id = aws_vpc.main.id
 
   tags = { Name = "femiwiki-seoul" }
 }
 
 resource "aws_route_table" "main" {
-  region = local.seoul_region
   vpc_id = aws_vpc.main.id
 
   route {
@@ -65,7 +60,6 @@ resource "aws_route_table" "main" {
 }
 
 resource "aws_route_table_association" "main" {
-  region         = local.seoul_region
   subnet_id      = aws_subnet.main.id
   route_table_id = aws_route_table.main.id
 }

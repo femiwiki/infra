@@ -3,8 +3,7 @@
 module "edge_logs" {
   source                                = "terraform-aws-modules/s3-bucket/aws"
   version                               = "5.17.0"
-  region                                = local.seoul_region
-  bucket                                = "edge-logs-${data.aws_caller_identity.current.account_id}-${local.seoul_region}-an"
+  bucket                                = "edge-logs-${data.aws_caller_identity.current.account_id}-${local.region}-an"
   bucket_namespace                      = "account-regional"
   attach_deny_insecure_transport_policy = true
   attach_policy                         = true

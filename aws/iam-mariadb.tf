@@ -48,7 +48,7 @@ data "aws_iam_policy_document" "infra_mariadb" {
   statement {
     sid       = "MariadbPortForward"
     actions   = ["ssm:StartSession"]
-    resources = ["arn:aws:ec2:${local.seoul_region}:${data.aws_caller_identity.current.account_id}:instance/*"]
+    resources = ["arn:aws:ec2:${local.region}:${data.aws_caller_identity.current.account_id}:instance/*"]
 
     condition {
       test     = "StringEquals"
@@ -60,7 +60,7 @@ data "aws_iam_policy_document" "infra_mariadb" {
   statement {
     sid       = "MariadbPortForwardDocument"
     actions   = ["ssm:StartSession"]
-    resources = ["arn:aws:ssm:${local.seoul_region}::document/AWS-StartPortForwardingSession"]
+    resources = ["arn:aws:ssm:${local.region}::document/AWS-StartPortForwardingSession"]
   }
 
   statement {
@@ -126,7 +126,7 @@ data "aws_iam_policy_document" "infra_mariadb_plan" {
   statement {
     sid       = "MariadbPortForward"
     actions   = ["ssm:StartSession"]
-    resources = ["arn:aws:ec2:${local.seoul_region}:${data.aws_caller_identity.current.account_id}:instance/*"]
+    resources = ["arn:aws:ec2:${local.region}:${data.aws_caller_identity.current.account_id}:instance/*"]
 
     condition {
       test     = "StringEquals"

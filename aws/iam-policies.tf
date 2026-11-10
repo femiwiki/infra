@@ -1,5 +1,5 @@
 locals {
-  parameter_store_regions = [local.tokyo_region, local.seoul_region]
+  parameter_store_regions = [local.tokyo_region, local.region]
 }
 
 #
@@ -120,8 +120,8 @@ resource "aws_iam_policy" "amazon_s3_access" {
 #   https://github.com/hashicorp/terraform/issues/27282
 locals {
   caddy_certs   = module.caddy_certs.s3_bucket_arn
-  backups       = aws_s3_bucket.backups.arn
-  backups_seoul = module.backups_seoul.s3_bucket_arn
+  backups_tokyo = aws_s3_bucket.backups.arn
+  backups       = module.backups_seoul.s3_bucket_arn
   uploads       = module.uploads.s3_bucket_arn
   rate_limit    = module.rate_limit.s3_bucket_arn
 }
@@ -244,7 +244,7 @@ resource "aws_iam_policy" "upload_backup" {
 data "aws_iam_policy_document" "upload_backup" {
   statement {
     actions   = ["s3:PutObject"]
-    resources = ["${local.backups_seoul}/*"]
+    resources = ["${local.backups}/*"]
   }
 }
 
@@ -262,14 +262,14 @@ data "aws_iam_policy_document" "read_backup" {
   statement {
     actions = ["s3:GetObject"]
     resources = [
-      "${local.backups_seoul}/mysql/*",
       "${local.backups}/mysql/*",
+      "${local.backups_tokyo}/mysql/*",
     ]
   }
 
   statement {
     actions   = ["s3:ListBucket"]
-    resources = [local.backups_seoul, local.backups]
+    resources = [local.backups, local.backups_tokyo]
 
     condition {
       test     = "StringLike"
@@ -548,8 +548,8 @@ data "aws_iam_policy_document" "read_mediawiki_parameters" {
       "ssm:GetParametersByPath",
     ]
     resources = [
-      "arn:aws:ssm:${local.seoul_region}:${data.aws_caller_identity.current.account_id}:parameter/mediawiki/*",
-      "arn:aws:ssm:${local.seoul_region}:${data.aws_caller_identity.current.account_id}:parameter/mysql/users/mediawiki/*",
+      "arn:aws:ssm:${local.region}:${data.aws_caller_identity.current.account_id}:parameter/mediawiki/*",
+      "arn:aws:ssm:${local.region}:${data.aws_caller_identity.current.account_id}:parameter/mysql/users/mediawiki/*",
     ]
   }
 
