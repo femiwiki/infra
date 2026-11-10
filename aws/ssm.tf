@@ -25,8 +25,8 @@ data "terraform_remote_state" "gcp" {
 locals {
   # Hosts come and go with replacement, so they are found by role
   otelcol_hosts = {
-    "database" = { name = "mariadb-seoul", type = "database", region = local.seoul_region, role = "database" }
-    "docker"   = { name = "femiwiki-seoul", type = "app", region = local.seoul_region, role = "app" }
+    "database" = { name = "mariadb-seoul", type = "database", region = local.region, role = "database" }
+    "docker"   = { name = "femiwiki-seoul", type = "app", region = local.region, role = "app" }
   }
 
   grafana_cloud = {
@@ -70,16 +70,16 @@ locals {
 
 locals {
   app_hosts = {
-    "docker" = { region = local.seoul_region, role = "app" }
+    "docker" = { region = local.region, role = "app" }
   }
 
   mysql_backup_script = templatefile("res/mysql-backup.sh.tftpl", {
-    region         = local.seoul_region
+    region         = local.region
     backups_bucket = module.backups_seoul.s3_bucket_id
   })
 
   mysql_backup_install = templatefile("res/install-mysql-backup.sh.tftpl", {
-    parameter_region = local.seoul_region
+    parameter_region = local.region
     backup_script    = local.mysql_backup_script
   })
 }
@@ -128,8 +128,8 @@ locals {
 
   # Hosts come and go with replacement, so they are found by role
   swapfile_hosts = {
-    "docker"   = { region = local.seoul_region, role = "app" }
-    "database" = { region = local.seoul_region, role = "database" }
+    "docker"   = { region = local.region, role = "app" }
+    "database" = { region = local.region, role = "database" }
   }
 
   swapfile_install = replace(file("res/install-swapfile.sh"), "__SIZE_MIB__", local.swapfile_mib)

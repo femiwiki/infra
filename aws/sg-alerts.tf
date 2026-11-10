@@ -10,7 +10,7 @@ locals {
       errorCode   = [{ exists = false }]
     }
   })
-  seoul_default_event_bus = "arn:aws:events:${local.seoul_region}:${data.aws_caller_identity.current.account_id}:event-bus/default"
+  default_event_bus = "arn:aws:events:${local.region}:${data.aws_caller_identity.current.account_id}:event-bus/default"
 }
 
 # Seoul's own calls, and Tokyo's forwarded below.
@@ -44,7 +44,7 @@ resource "aws_cloudwatch_event_rule" "security_group_rules_tokyo" {
 resource "aws_cloudwatch_event_target" "security_group_rules_tokyo" {
   region   = local.tokyo_region
   rule     = aws_cloudwatch_event_rule.security_group_rules_tokyo.name
-  arn      = local.seoul_default_event_bus
+  arn      = local.default_event_bus
   role_arn = module.security_group_rules_tokyo.arn
 }
 
@@ -71,6 +71,6 @@ resource "aws_iam_role_policy" "security_group_rules_tokyo" {
 data "aws_iam_policy_document" "security_group_rules_tokyo" {
   statement {
     actions   = ["events:PutEvents"]
-    resources = [local.seoul_default_event_bus]
+    resources = [local.default_event_bus]
   }
 }

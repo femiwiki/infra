@@ -50,7 +50,7 @@ data "aws_iam_policy_document" "database_swap" {
   statement {
     sid       = "DatabaseCommands"
     actions   = ["ssm:SendCommand"]
-    resources = ["arn:aws:ec2:${local.seoul_region}:${data.aws_caller_identity.current.account_id}:instance/*"]
+    resources = ["arn:aws:ec2:${local.region}:${data.aws_caller_identity.current.account_id}:instance/*"]
 
     condition {
       test     = "StringEquals"
@@ -62,13 +62,13 @@ data "aws_iam_policy_document" "database_swap" {
   statement {
     sid       = "ShellDocument"
     actions   = ["ssm:SendCommand"]
-    resources = ["arn:aws:ssm:${local.seoul_region}::document/AWS-RunShellScript"]
+    resources = ["arn:aws:ssm:${local.region}::document/AWS-RunShellScript"]
   }
 
   statement {
     sid       = "MoveInterface"
     actions   = ["ec2:AttachNetworkInterface", "ec2:DetachNetworkInterface"]
-    resources = ["arn:aws:ec2:${local.seoul_region}:${data.aws_caller_identity.current.account_id}:instance/*"]
+    resources = ["arn:aws:ec2:${local.region}:${data.aws_caller_identity.current.account_id}:instance/*"]
 
     condition {
       test     = "StringEquals"
@@ -87,7 +87,7 @@ data "aws_iam_policy_document" "database_swap" {
   statement {
     sid       = "Tags"
     actions   = ["ec2:CreateTags"]
-    resources = ["arn:aws:ec2:${local.seoul_region}:${data.aws_caller_identity.current.account_id}:instance/*"]
+    resources = ["arn:aws:ec2:${local.region}:${data.aws_caller_identity.current.account_id}:instance/*"]
 
     condition {
       test     = "StringEquals"
@@ -129,7 +129,7 @@ data "aws_iam_policy_document" "database_swap" {
   statement {
     sid       = "DockerPortForward"
     actions   = ["ssm:StartSession"]
-    resources = ["arn:aws:ec2:${local.seoul_region}:${data.aws_caller_identity.current.account_id}:instance/*"]
+    resources = ["arn:aws:ec2:${local.region}:${data.aws_caller_identity.current.account_id}:instance/*"]
 
     condition {
       test     = "StringEquals"
@@ -141,7 +141,7 @@ data "aws_iam_policy_document" "database_swap" {
   statement {
     sid       = "PortForwardDocument"
     actions   = ["ssm:StartSession"]
-    resources = ["arn:aws:ssm:${local.seoul_region}::document/AWS-StartPortForwardingSession"]
+    resources = ["arn:aws:ssm:${local.region}::document/AWS-StartPortForwardingSession"]
   }
 
   statement {

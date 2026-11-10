@@ -61,7 +61,7 @@ provider "aws" {
   # should land where the wiki is going, not where it is leaving. Every resource
   # and data source in Tokyo names local.tokyo_region, so nothing inherits this.
   # See #919.
-  region = local.seoul_region
+  region = local.region
 }
 
 data "aws_caller_identity" "current" {}

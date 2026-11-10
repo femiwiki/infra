@@ -1,6 +1,6 @@
 resource "aws_instance" "docker" {
   ami                         = data.aws_ami.amazon_linux_2_arm64.image_id
-  availability_zone           = local.seoul_az
+  availability_zone           = local.availability_zone
   subnet_id                   = aws_subnet.main.id
   disable_api_termination     = true
   disable_api_stop            = true

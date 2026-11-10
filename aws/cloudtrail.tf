@@ -17,7 +17,7 @@ resource "aws_cloudtrail" "management_events" {
 module "trail" {
   source                                = "terraform-aws-modules/s3-bucket/aws"
   version                               = "5.17.0"
-  bucket                                = "trail-${data.aws_caller_identity.current.account_id}-${local.seoul_region}-an"
+  bucket                                = "trail-${data.aws_caller_identity.current.account_id}-${local.region}-an"
   bucket_namespace                      = "account-regional"
   attach_deny_insecure_transport_policy = true
   attach_policy                         = true
@@ -48,7 +48,7 @@ data "aws_iam_policy_document" "trail" {
     condition {
       test     = "StringEquals"
       variable = "aws:SourceArn"
-      values   = ["arn:aws:cloudtrail:${local.seoul_region}:${data.aws_caller_identity.current.account_id}:trail/${local.trail_name}"]
+      values   = ["arn:aws:cloudtrail:${local.region}:${data.aws_caller_identity.current.account_id}:trail/${local.trail_name}"]
     }
   }
 
@@ -70,7 +70,7 @@ data "aws_iam_policy_document" "trail" {
     condition {
       test     = "StringEquals"
       variable = "aws:SourceArn"
-      values   = ["arn:aws:cloudtrail:${local.seoul_region}:${data.aws_caller_identity.current.account_id}:trail/${local.trail_name}"]
+      values   = ["arn:aws:cloudtrail:${local.region}:${data.aws_caller_identity.current.account_id}:trail/${local.trail_name}"]
     }
   }
 }

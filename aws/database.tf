@@ -36,7 +36,7 @@ moved {
 resource "aws_ebs_volume" "database" {
   for_each = local.database_hosts
 
-  availability_zone = local.seoul_az
+  availability_zone = local.availability_zone
   type              = "gp3"
   size              = 32
 
@@ -55,7 +55,7 @@ resource "aws_instance" "database" {
   for_each = local.database_hosts
 
   ami                         = data.aws_ami.amazon_linux_2_arm64.image_id
-  availability_zone           = local.seoul_az
+  availability_zone           = local.availability_zone
   subnet_id                   = aws_subnet.main.id
   disable_api_termination     = true
   disable_api_stop            = true
@@ -68,7 +68,7 @@ resource "aws_instance" "database" {
   user_data_base64 = base64gzip(templatefile("res/user-data-mariadb.sh.tftpl", {
     mysql_server_id = each.key
     primary_host    = ""
-    region          = local.seoul_region
+    region          = local.region
     backups_bucket  = module.backups_seoul.s3_bucket_id
 
     otelcol_install = local.otelcol_install["database"]
@@ -136,7 +136,7 @@ resource "aws_launch_template" "database" {
   user_data = base64gzip(templatefile("res/user-data-mariadb.sh.tftpl", {
     mysql_server_id = ""
     primary_host    = one(aws_network_interface.database.private_ips)
-    region          = local.seoul_region
+    region          = local.region
     backups_bucket  = module.backups_seoul.s3_bucket_id
 
     otelcol_install = local.otelcol_install["database"]
