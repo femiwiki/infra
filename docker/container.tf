@@ -129,15 +129,17 @@ locals {
     # Hosts for connections, frames, fonts and the rest; scripts have their own list, images *.
     # Report-only for now, so the list grows from csp-report-only logs. femiwiki#680
     FW_CSP_DEFAULT_SRC = join(",", [
-      "*.google-analytics.com",   # Hits the Google tag sends
-      "*.analytics.google.com",   # The same, on GA4's newer endpoint
-      "*.googletagmanager.com",   # The same, through the tag's own host
-      "cse.google.com",           # GoogleSiteSearch's result frames
-      "www.google.com",           # GoogleSiteSearch's styles and reCAPTCHA frames
-      "e.widgetbot.io",           # The discord-widget gadget's frame
-      "www.youtube-nocookie.com", # EmbedVideo's YouTube frames
-      "www.youtube.com",          # The same, for older embeds
-      "ko.wikipedia.org",         # Citoid's lookups from the visual editor
+      "*.google-analytics.com",    # Hits the Google tag sends
+      "*.analytics.google.com",    # The same, on GA4's newer endpoint
+      "*.googletagmanager.com",    # The same, through the tag's own host
+      "cse.google.com",            # GoogleSiteSearch's result frames
+      "www.google.com",            # GoogleSiteSearch's styles and reCAPTCHA frames
+      "syndicatedsearch.goog",     # Frames for the ads GoogleSiteSearch shows
+      "*.adtrafficquality.google", # The same ads' traffic check frames and hits
+      "e.widgetbot.io",            # The discord-widget gadget's frame
+      "www.youtube-nocookie.com",  # EmbedVideo's YouTube frames
+      "www.youtube.com",           # The same, for older embeds
+      "ko.wikipedia.org",          # Citoid's lookups from the visual editor
     ])
 
     # MediaWiki globals LocalSettings applies after its defaults. See femiwiki#691.
