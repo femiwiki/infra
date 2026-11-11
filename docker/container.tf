@@ -245,8 +245,8 @@ resource "docker_container" "fastcgi" {
       # the ones past the threshold are written. Excimer samples on a timer, so
       # the cost is the sampling rate and not the number of requests.
       FW_PROFILER_SAMPLING = "1"
-      # action=flow takes 5 to 9 seconds (femiwiki#576); a normal page is under
-      # one, so 3 keeps the ordinary traffic out of the directory
+      # A normal page is under a second, so 3 keeps the ordinary traffic out of
+      # the directory
       FW_PROFILER_THRESHOLD = "3"
       # Kept profiles go to Grafana Cloud Profiles; the token is in SSM (femiwiki#614)
       FW_PROFILER_PYROSCOPE_URL  = "https://profiles-prod-019.grafana.net"
