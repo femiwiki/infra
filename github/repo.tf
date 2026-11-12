@@ -157,12 +157,13 @@ module "legunto" {
 }
 
 module "maintenance" {
-  source                = "./modules/github-repository"
-  name                  = "maintenance"
-  description           = ":wrench: 페미위키 점검 페이지"
-  homepage_url          = "https://femiwiki.github.io/maintenance/"
-  pages_build_type      = "workflow"
-  default_status_checks = []
+  source                          = "./modules/github-repository"
+  name                            = "maintenance"
+  description                     = ":wrench: 페미위키 점검 페이지"
+  homepage_url                    = "https://femiwiki.github.io/maintenance/"
+  pages_build_type                = "workflow"
+  required_status_checks_contexts = ["required"]
+  default_status_checks           = []
   topics = [
     "website",
   ]
