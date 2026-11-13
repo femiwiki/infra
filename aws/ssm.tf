@@ -484,3 +484,29 @@ resource "aws_ssm_association" "docker_socket_only" {
     values = ["app"]
   }
 }
+
+# The hand-written SES login, unread since femiwiki/docker-mediawiki#1861, imported
+# only to be deleted next (femiwiki/femiwiki#528). Each keeps its own value.
+locals {
+  old_smtp_parameters = toset(["password", "username"])
+}
+
+data "aws_ssm_parameter" "old_smtp" {
+  for_each = local.old_smtp_parameters
+
+  name = "/mediawiki/smtp/${each.key}"
+}
+
+import {
+  for_each = local.old_smtp_parameters
+  to       = aws_ssm_parameter.old_smtp[each.key]
+  id       = "/mediawiki/smtp/${each.key}"
+}
+
+resource "aws_ssm_parameter" "old_smtp" {
+  for_each = local.old_smtp_parameters
+
+  name  = data.aws_ssm_parameter.old_smtp[each.key].name
+  type  = data.aws_ssm_parameter.old_smtp[each.key].type
+  value = data.aws_ssm_parameter.old_smtp[each.key].value
+}
