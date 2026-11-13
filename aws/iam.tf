@@ -24,6 +24,9 @@ resource "aws_iam_outbound_web_identity_federation" "this" {}
 resource "aws_iam_user" "programmatic_users" {
   for_each = toset(local.programmatic_users)
   name     = each.key
+
+  # So the next change can delete femiwiki-email with its 2018 SES key (femiwiki/femiwiki#528)
+  force_destroy = true
 }
 
 resource "aws_iam_user_policy" "ses_sending_access" {

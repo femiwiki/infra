@@ -426,7 +426,6 @@ locals {
     "/mediawiki/o_auth_2_private_key",
     "/mediawiki/rc_feeds_discord_url",
     "/mediawiki/site_key",
-    "/mediawiki/smtp/password",
     "/mediawiki/verp_secret",
     "/mysql/users/mediawiki/password",
     "/mysql/users/tofu-plan/password",
