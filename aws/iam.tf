@@ -1,9 +1,3 @@
-locals {
-  programmatic_users = [
-    "femiwiki-email",
-  ]
-}
-
 resource "aws_iam_account_password_policy" "strict" {
   allow_users_to_change_password = true
   minimum_password_length        = 14
@@ -17,23 +11,6 @@ resource "aws_iam_openid_connect_provider" "github_actions" {
 
 # Lets IAM principals call sts:GetWebIdentityToken for JWTs that outside services trust
 resource "aws_iam_outbound_web_identity_federation" "this" {}
-
-#
-# IAM Users
-#
-resource "aws_iam_user" "programmatic_users" {
-  for_each = toset(local.programmatic_users)
-  name     = each.key
-
-  # So the next change can delete femiwiki-email with its 2018 SES key (femiwiki/femiwiki#528)
-  force_destroy = true
-}
-
-resource "aws_iam_user_policy" "ses_sending_access" {
-  name   = "AmazonSesSendingAccess"
-  user   = "femiwiki-email"
-  policy = data.aws_iam_policy_document.ses_sending_access.json
-}
 
 # MediaWiki sends mail as one of these, by the parity of the generation; the
 # docker workspace gives each generation a new key (femiwiki/femiwiki#528)
