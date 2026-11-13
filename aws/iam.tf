@@ -32,6 +32,20 @@ resource "aws_iam_user_policy" "ses_sending_access" {
   policy = data.aws_iam_policy_document.ses_sending_access.json
 }
 
+# MediaWiki sends mail as one of these, by the parity of the generation; the
+# docker workspace gives each generation a new key (femiwiki/femiwiki#528)
+resource "aws_iam_user" "smtp" {
+  for_each = toset(["0", "1"])
+  name     = "femiwiki-email-${each.key}"
+}
+
+resource "aws_iam_user_policy" "smtp" {
+  for_each = aws_iam_user.smtp
+  name     = "AmazonSesSendingAccess"
+  user     = each.value.name
+  policy   = data.aws_iam_policy_document.ses_sending_access.json
+}
+
 #
 # IAM Groups
 #
