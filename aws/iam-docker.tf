@@ -53,6 +53,13 @@ data "aws_iam_policy_document" "infra_docker" {
     resources = [data.aws_ssm_parameter.secret["/mysql/users/mediawiki/password"].arn]
   }
 
+  # A key for each generation, replaced as the generation moves (femiwiki/femiwiki#528)
+  statement {
+    sid       = "SmtpKeys"
+    actions   = ["iam:CreateAccessKey", "iam:DeleteAccessKey", "iam:ListAccessKeys"]
+    resources = [for u in aws_iam_user.smtp : u.arn]
+  }
+
   # Whichever app host the docker workspace applies to
   statement {
     sid       = "DockerPortForward"
@@ -142,6 +149,12 @@ data "aws_iam_policy_document" "infra_docker_plan" {
     sid       = "ReadMediawikiDbPassword"
     actions   = ["ssm:GetParameter"]
     resources = [data.aws_ssm_parameter.secret["/mysql/users/mediawiki/password"].arn]
+  }
+
+  statement {
+    sid       = "ReadSmtpKeys"
+    actions   = ["iam:ListAccessKeys"]
+    resources = [for u in aws_iam_user.smtp : u.arn]
   }
 
   # Whichever app host the docker workspace applies to
