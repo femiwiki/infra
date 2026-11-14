@@ -68,7 +68,7 @@ blocks instead of `sed` or string replacement. Run `tofu fmt` afterwards.
 
 ```sh
 hcledit attribute set locals.schema_update_generation 145 -f docker/locals.tf -u
-hcledit attribute get resource.docker_container.http.image -f docker/container.tf
+hcledit attribute get locals.femiwiki_image -f docker/locals.tf
 hcledit block list -f github/repo.tf
 ```
 

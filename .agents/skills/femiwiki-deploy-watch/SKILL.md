@@ -54,10 +54,11 @@ merge often, so a branch goes stale within minutes during a deploy session. The
 verdict is `READY` or `BEHIND <n>`, never a bare number: a number printed in a
 wall of output has been read as "fine".
 
-**Generation.** `docker/res/*` files and the `env`/`image` values in
-`docker/container.tf` reach a container only at creation, so the provider
-replaces it. With `create_before_destroy` the new container is created while the
-old one still holds the name, and the apply dies on
+**Generation.** `docker/res/*` files, the `env`/`image` values in
+`docker/container.tf` and `local.femiwiki_image` in `docker/locals.tf` reach a
+container only at creation, so the provider replaces it. With
+`create_before_destroy` the new container is created while the old one still
+holds the name, and the apply dies on
 `Conflict. The container name "/fastcgi-69" is already in use` unless the same
 pull request raises `local.fastcgi_generation`. The verdict is
 `GENERATION BUMP OK (69 -> 70)`, `GENERATION NOT REQUIRED` or

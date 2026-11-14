@@ -21,4 +21,8 @@ locals {
   memcached_item_mib     = local.memcached_default_mib * 3  # as far as the host's ~470 MiB spare goes
   memcached_overhead_mib = local.memcached_observed_mib * 2 # the hash table grows with the budget
   memcached_mib          = local.memcached_item_mib + local.memcached_overhead_mib
+
+  # The image http, fastcgi and jobrunner all run. The femiwiki/docker-mediawiki
+  # bump job rewrites it, together with fastcgi_generation.
+  femiwiki_image = "ghcr.io/femiwiki/femiwiki:2026-11-14T08-36-16179c46"
 }
