@@ -133,6 +133,18 @@ cmd_preflight() {
 $env_hits"
     fi
   fi
+  # The femiwiki containers take their image from this local
+  ltf=$(printf '%s\n' "$files" | grep -x 'docker/locals.tf' || true)
+  if [ -n "$ltf" ]; then
+    lpatch=$(gh api "repos/$REPO/pulls/$pr/files" --paginate \
+      --jq '.[] | select(.filename == "docker/locals.tf") | .patch' 2>/dev/null || true)
+    image_hits=$(printf '%s\n' "$lpatch" | grep -E '^[+-][[:space:]]*femiwiki_image[[:space:]]*=' || true)
+    if [ -n "$image_hits" ]; then
+      triggers="${triggers:+$triggers
+}docker/locals.tf (femiwiki_image):
+$image_hits"
+    fi
+  fi
 
   old_gen=$(num "$(gen_at "$base_sha")" -1)
   if [ -n "$pretend_head_gen" ]; then

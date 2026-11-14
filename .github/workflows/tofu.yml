@@ -480,7 +480,8 @@ jobs:
         env:
           WORKSPACE: ${{ matrix.workspace }}
         run: |
-          grep -ohE 'image\s*=\s*"[^"]+"' "$WORKSPACE"/*.tf | grep -oE '"[^"]+"' | tr -d '"' | sort -u | while read -r image; do
+          # femiwiki_image is the local the femiwiki containers take theirs from
+          grep -ohE '(image|femiwiki_image)\s*=\s*"[^"]+"' "$WORKSPACE"/*.tf | grep -oE '"[^"]+"' | tr -d '"' | sort -u | while read -r image; do
             curl -sf -X POST "http://127.0.0.1:2376/images/create?fromImage=${image%%:*}&tag=${image##*:}" > /dev/null
           done
 
