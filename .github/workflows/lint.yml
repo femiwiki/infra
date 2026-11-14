@@ -128,7 +128,7 @@ jobs:
       # than from caddy. `caddy validate` would go on to provision the s3
       # storage, which needs credentials, so this stops at adapting.
       - id: image
-        run: echo "image=$(grep -m1 -oE 'ghcr\.io/femiwiki/femiwiki:[^"]+' docker/container.tf)" >> "$GITHUB_OUTPUT"
+        run: echo "image=$(grep -m1 -oE 'ghcr\.io/femiwiki/femiwiki:[^"]+' docker/locals.tf)" >> "$GITHUB_OUTPUT"
 
       # The 2.87 GB image is pulled once per tag; later runs restore about
       # 40 MB of its binary from this cache
