@@ -2,6 +2,8 @@
 name: lint
 on:
   pull_request:
+    # edited, so a body whose release note lines were put into Korean is checked again
+    types: [opened, synchronize, reopened, edited]
   push:
     branches: [main]
 # A new commit on a pull request cancels the run on its old commit; runs on
@@ -96,6 +98,26 @@ jobs:
           coverage: none
 
       - run: .github/scripts/post-update-test.php
+
+  release-note:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962  # 2.40.0
+        with:
+          php-version: "8.3"
+          coverage: none
+
+      - name: The lines the apply posts to 페미위키:업데이트 are in Korean
+        env:
+          BODY: ${{ github.event.pull_request.body }}
+        run: .github/scripts/post-update.php --check
 
   taplo:
     runs-on: ubuntu-latest
@@ -216,7 +238,7 @@ jobs:
 
   gate:
     name: lint gate
-    needs: [tflint, shellcheck, parallel-lint, phpcs, post-update, taplo, caddyfile, tofu-test, long-comments, shared-lint, required-gate]
+    needs: [tflint, shellcheck, parallel-lint, phpcs, post-update, release-note, taplo, caddyfile, tofu-test, long-comments, shared-lint, required-gate]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 5

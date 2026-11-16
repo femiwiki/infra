@@ -61,6 +61,28 @@ $checks = [
 	'says how to post it again' => str_contains( is_file( $summary ) ? file_get_contents( $summary ) : '',
 		'run [post update](https://github.com/femiwiki/infra/actions/workflows/post-update.yml) with `pr` 1095.' ),
 ];
+// --check fails a body with an English line and passes one in Korean
+$check = static function ( string $body ): array {
+	// phpcs:ignore MediaWiki.Usage.ForbiddenFunctions.proc_open
+	$run = proc_open( [ PHP_BINARY, __DIR__ . '/post-update.php', '--check' ],
+		[ [ 'pipe', 'r' ], [ 'pipe', 'w' ], [ 'file', '/dev/null', 'w' ] ], $pipes, null, [ 'BODY' => $body ] );
+	$out = stream_get_contents( $pipes[1] );
+	return [ proc_close( $run ), $out ];
+};
+[ $englishStatus, $english ] = $check(
+	"```wikitext\n===feat===\n\n*show a list [https://github.com/x/y/pull/1]\n```"
+);
+[ $koreanStatus ] = $check(
+	"```wikitext\n*(추가) 목록으로 표시 (Femiwiki 2c3d905) [https://github.com/x/y/pull/1]\n```"
+);
+[ $starStatus ] = $check( "```wikitext\n(추가) * 목록으로 표시 [https://github.com/x/y/pull/1]\n```" );
+$checks += [
+	'--check fails an English line' => $englishStatus === 1
+		&& str_contains( $english, '::error::write it in Korean' ),
+	'--check passes a Korean line' => $koreanStatus === 0,
+	'--check fails a second "*"' => $starStatus === 1,
+	'--check passes a body without a block' => $check( 'no block' )[0] === 0,
+];
 array_map( 'unlink', [ "$dir/bin/gh", "$dir/wiki.php", ...glob( "$dir/summary.md" ) ] );
 rmdir( "$dir/bin" );
 rmdir( $dir );
