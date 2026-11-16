@@ -124,6 +124,8 @@ locals {
       "www.google.com",               # GoogleSiteSearch's element scripts and reCAPTCHA
       "partner.googleadservices.com", # Ads GoogleSiteSearch loads with its results
       "ep2.adtrafficquality.google",  # The same ads' traffic check
+      "hcaptcha.com",                 # hCaptcha when the editor loads it after the page
+      "*.hcaptcha.com",               # The same
     ])
 
     # Hosts for connections, frames, fonts and the rest; scripts have their own list, images *.
@@ -134,6 +136,10 @@ locals {
       "*.googletagmanager.com",    # The same, through the tag's own host
       "cse.google.com",            # GoogleSiteSearch's result frames
       "www.google.com",            # GoogleSiteSearch's styles and reCAPTCHA frames
+      "www.gstatic.com",           # Google Charts styles for 위젯:구글 통계
+      "docs.google.com",           # The same charts' data
+      "hcaptcha.com",              # hCaptcha's frames and checks
+      "*.hcaptcha.com",            # The same
       "syndicatedsearch.goog",     # Frames for the ads GoogleSiteSearch shows
       "*.adtrafficquality.google", # The same ads' traffic check frames and hits
       "e.widgetbot.io",            # The discord-widget gadget's frame
