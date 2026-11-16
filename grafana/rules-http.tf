@@ -473,7 +473,7 @@ resource "grafana_rule_group" "femiwiki_history" {
   rule {
     name            = "Page history refused by its own budget"
     for             = "1h"
-    keep_firing_for = "1h"
+    keep_firing_for = "10m"
 
     condition      = "B"
     no_data_state  = "OK"
@@ -485,7 +485,7 @@ resource "grafana_rule_group" "femiwiki_history" {
     }
 
     annotations = {
-      summary = "역사와 정보 요청이 자기 예산에서 거절되고 있습니다. 최근 한 시간에 {{ printf \"%.0f\" $values.A.Value }}건입니다. 거절이 한 망에서만 나오면 그 망이 긁고 있는 것이고, 여러 망에서 나오면 `FW_HISTORY_EVENTS`가 낮은 것입니다."
+      summary = "역사와 정보 요청이 자기 예산에서 거절되고 있습니다. 최근 10분에 {{ printf \"%.0f\" $values.A.Value }}건이고, 한 시간 넘게 이어졌습니다. 거절이 한 망에서만 나오면 그 망이 긁고 있는 것이고, 여러 망에서 나오면 `FW_HISTORY_EVENTS`가 낮은 것입니다."
       logs    = grafana_dashboard.this["scrapes"].url
     }
 
@@ -493,7 +493,7 @@ resource "grafana_rule_group" "femiwiki_history" {
       ref_id         = "A"
       datasource_uid = data.grafana_data_source.prometheus.uid
       relative_time_range {
-        from = 3600
+        from = 600
         to   = 0
       }
       model = jsonencode({
