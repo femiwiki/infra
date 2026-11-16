@@ -2,7 +2,7 @@
 
 [![Github checks Status]][github checks link]
 
-Terraform code that defines FemiWiki's infrastructure. The workspaces are
+Terraform code that defines Femiwiki's infrastructure. The workspaces are
 `aws/`, `docker/`, `gcp/`, `github/`, `grafana/`, `healthchecks/` and
 `mariadb/`. All of them run on [OpenTofu] and keep their state in S3.
 
