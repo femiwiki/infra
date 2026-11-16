@@ -1,6 +1,6 @@
 locals {
   # The ProxySQL switch rolls the wiki like a deploy, so it moves the generation too
-  fastcgi_generation = 209 + (var.proxysql_enabled ? 1 : 0)
+  fastcgi_generation = 210 + (var.proxysql_enabled ? 1 : 0)
   # The generation whose fastcgi runs update.php as it starts, set with an image
   # that changes the schema; it lapses once the generation moves on
   schema_update_generation = 181
@@ -24,5 +24,5 @@ locals {
 
   # The image http, fastcgi and jobrunner all run. The femiwiki/docker-mediawiki
   # bump job rewrites it, together with fastcgi_generation.
-  femiwiki_image = "ghcr.io/femiwiki/femiwiki:2026-11-16T04-58-4929128d"
+  femiwiki_image = "ghcr.io/femiwiki/femiwiki:2026-11-16T12-58-9140d134"
 }
