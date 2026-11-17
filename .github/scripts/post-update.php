@@ -94,6 +94,22 @@ function items( array $blocks ): array {
 	return $items;
 }
 
+/** Why lines of the blocks would read badly on the page, in Korean being the first: nothing when they are fine */
+function problems( array $blocks ): array {
+	$problems = [];
+	foreach ( items( $blocks ) as [ $category, $line ] ) {
+		$text = trim( preg_replace( '/\h*\[https?:\/\/\S+\]$/u', '', $line ) );
+		if ( $text === '' || str_starts_with( $text, '*' ) ) {
+			$problems[] = "put the change right after \"*(분류) \", with no second \"*\": $line";
+		} elseif ( !preg_match( '/\p{Hangul}/u', $text ) ) {
+			$problems[] = "write it in Korean: $line";
+		} elseif ( preg_match( '/니다$/u', $text ) ) {
+			$problems[] = "end it in a noun, such as \"…기능 추가\" or \"…문제 수정\", not \"…니다\": $line";
+		}
+	}
+	return $problems;
+}
+
 /** Where a category goes on the page: a line without one first, then CATEGORIES, then any other heading */
 function rank( ?string $category ): int {
 	if ( $category === null ) {
@@ -320,6 +336,15 @@ function csrf(): string {
 		$token = wiki( [ 'action' => 'query', 'meta' => 'tokens' ] )['query']['tokens']['csrftoken'];
 	}
 	return $token;
+}
+
+// BODY=... post-update.php --check: a pull request has its lines in Korean before it merges
+if ( ( $argv[1] ?? '' ) === '--check' ) {
+	$problems = problems( blocks( getenv( 'BODY' ) ?: '' ) );
+	foreach ( $problems as $problem ) {
+		echo "::error::$problem\n";
+	}
+	exit( $problems ? 1 : 0 );
 }
 
 $dryRun = in_array( '--dry-run', $argv, true );
