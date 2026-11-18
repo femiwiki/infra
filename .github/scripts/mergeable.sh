@@ -31,14 +31,17 @@ required=$(
 deadline=$(($(date +%s) + TIMEOUT))
 while :; do
   read -r head mergeable < <(gh api "repos/$REPO/pulls/$PR" --jq '"\(.head.sha) \(.mergeable)"')
+  # A re-run or an edited body runs a check again; like the merge button, count only its latest run
   results=$(
-    gh api "repos/$REPO/commits/$head/check-runs" --paginate \
-      --jq '.check_runs[] | [.name, (.conclusion // .status)] | @tsv'
-    gh api "repos/$REPO/commits/$head/status" --jq '.statuses[] | [.context, .state] | @tsv'
+    {
+      gh api "repos/$REPO/commits/$head/check-runs" --paginate \
+        --jq '.check_runs[] | [.name, .started_at, (.conclusion // .status)] | @tsv'
+      gh api "repos/$REPO/commits/$head/status" --jq '.statuses[] | [.context, .updated_at, .state] | @tsv'
+    } | sort -t $'\t' -k2,2
   )
   failing='' waiting=''
   while read -r context; do
-    states=$(awk -F '\t' -v c="$context" '$1 == c { print $2 }' <<< "$results")
+    states=$(awk -F '\t' -v c="$context" '$1 == c { s = $3 } END { if (s != "") print s }' <<< "$results")
     if [ -z "$states" ]; then
       waiting="$waiting, $context"
     elif grep -qvxE 'success|neutral|skipped|queued|in_progress|waiting|requested|pending' <<< "$states"; then
