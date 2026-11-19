@@ -248,10 +248,6 @@ resource "docker_container" "fastcgi" {
       MEDIAWIKI_SKIP_CRON         = "1" # jobrunner runs the jobs
       MEDIAWIKI_SKIP_UPDATE       = local.fastcgi_generation == local.schema_update_generation ? "" : "1"
 
-      # Lets a crashing worker leave a core for systemd-coredump on the host;
-      # off again once docker-mediawiki#1877 has a backtrace, as a core holds secrets
-      PHP_FPM_PROCESS_DUMPABLE = "yes"
-
       FW_PROFILER = "excimer"
       # Every request is instrumented, so nothing slow can be missed, but only
       # the ones past the threshold are written. Excimer samples on a timer, so
@@ -322,13 +318,6 @@ resource "docker_container" "fastcgi" {
     hard = 65536
     name = "nofile"
     soft = 32768
-  }
-
-  # The workers inherit it; php-fpm cannot raise a hard limit of 0 itself
-  ulimit {
-    hard = -1
-    name = "core"
-    soft = -1
   }
 
   labels {
