@@ -129,7 +129,7 @@ jobs:
           workspace: ${{ matrix.workspace }}
           port: 2377
 
-      - uses: dflook/tofu-plan@53b5b01b6eef56cd678401dbe92a0f6ca6b863ff  # v3.1.2
+      - uses: dflook/tofu-plan@0f690c855ee068cc5d4e0b9f3373b9b7990e73e0  # v3.1.3
         if: steps.scope.outputs.plan == 'true'
         id: plan
         env:
@@ -526,7 +526,7 @@ jobs:
           name: plan-${{ matrix.workspace }}
           path: saved-plan
 
-      - uses: dflook/tofu-apply@1de081df5087fb9ba2acf4866e9bc9b95f79676c  # v3.1.2
+      - uses: dflook/tofu-apply@cf65a333228c1a4faa7f95bdd4328bf17513e638  # v3.1.3
         id: apply
         env:
           GITHUB_TOKEN: ${{ github.token }}
@@ -577,7 +577,7 @@ jobs:
 
       # Re-plan with this job's tofu, providers and docker to check the apply left nothing behind.
       # Leave the plan comment alone: a newer run's apply compares its plan against it.
-      - uses: dflook/tofu-plan@53b5b01b6eef56cd678401dbe92a0f6ca6b863ff  # v3.1.2
+      - uses: dflook/tofu-plan@0f690c855ee068cc5d4e0b9f3373b9b7990e73e0  # v3.1.3
         if: github.event.pull_request && steps.apply.outcome == 'success'
         id: verify
         env:
