@@ -27,6 +27,8 @@ locals {
     ["넘겨주기", "Redirect"],
     ["내언어", "MyLanguage"],
     ["로그아웃", "사용자로그아웃", "UserLogout", "Logout"],
+    # Shared on social media, so fediverse servers fetch it for the preview card
+    ["도전과제공유", "ShareAchievement"],
   ]
 
   login_walk_pages = [

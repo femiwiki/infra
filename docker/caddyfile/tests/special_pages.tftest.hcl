@@ -19,6 +19,8 @@ run "special_pages" {
         "/w/특수:사용자로그아웃",
         "/w/특수:내언어/페미위키:초보자_도움말",
         "/w/%ED%8A%B9%EC%88%98:%EB%82%B4%EC%96%B8%EC%96%B4/%EC%97%AC%EC%84%B1%ED%98%90%EC%98%A4",
+        "/w/Special:ShareAchievement/MTc4L3VwbG9hZC1maWxl",
+        "/w/%ED%8A%B9%EC%88%98:%EB%8F%84%EC%A0%84%EA%B3%BC%EC%A0%9C%EA%B3%B5%EC%9C%A0/MTc4L3VwbG9hZC1maWxl",
       ] : uri if !can(regex(output.special_exempt_uri, uri))
     ]) == 0
     error_message = "A page readers or logins need would be rate limited."
@@ -31,6 +33,7 @@ run "special_pages" {
         "/w/%ED%8A%B9%EC%88%98:%EA%B8%B0%EC%97%AC/x",
         "/w/특수:로그인기록",
         "/w/Special:RandomRootPage",
+        "/w/특수:도전과제목록",
         "/index.php?title=Special:Export/x",
       ] : uri if can(regex(output.special_exempt_uri, uri))
     ]) == 0
