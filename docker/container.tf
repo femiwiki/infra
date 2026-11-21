@@ -233,6 +233,8 @@ resource "docker_container" "fastcgi" {
       # PHP's next size, 16229. Memory was never the ceiling. See femiwiki#587.
       PHP_OPCACHE_MAX_ACCELERATED_FILES   = "10000"
       PHP_OPCACHE_INTERNED_STRINGS_BUFFER = "96"
+      # An image never changes its PHP files, so opcache need not stat them
+      PHP_OPCACHE_VALIDATE_TIMESTAMPS = "0"
 
       PHP_FPM_PM_MAX_CHILDREN      = "16"
       PHP_FPM_PM_START_SERVERS     = "16" # max_children, so a new generation takes over at full size
