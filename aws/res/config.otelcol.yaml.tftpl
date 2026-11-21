@@ -90,6 +90,15 @@ receivers:
     transport: tcp
     collection_interval: 60s
 
+  # MediaWiki's StatsFactory. Each php-fpm worker sends from its own port, and
+  # batches split by sender would reach delta_to_cumulative with one timestamp.
+  statsd/mediawiki:
+    endpoint: 127.0.0.1:8125
+    transport: udp
+    aggregation_interval: 60s
+    ignore_host: true
+    is_monotonic_counter: true
+
   # Docker's fluentd log driver, which every container uses
   fluent_forward:
     endpoint: 127.0.0.1:24224
@@ -159,6 +168,23 @@ processors:
     metric_statements:
       - set(resource.attributes["service.namespace"], "integrations")
       - set(resource.attributes["service.name"], "memcached")
+      - set(resource.attributes["service.instance.id"], "${name}")
+
+  # Counters only: a timing becomes a series for every quantile or bucket.
+  # bagostuff_* tell what each keygroup reads and writes in memcached.
+  filter/mediawiki:
+    metrics:
+      metric:
+        - not IsMatch(name, "^mediawiki\\.(bagostuff_(hit|miss|call|bytes_sent|bytes_read)_total|ParserCache_operation_total|wanobjectcache_(check|delete|reset|set)_total|jobqueue_events_total|resourceloader_cache_total|edit_failure_total|RateLimiter_limit_actions_total)$")
+
+  # StatsD counts are per interval; remote write takes running totals
+  delta_to_cumulative/mediawiki:
+    max_stale: 24h
+
+  transform/mediawiki:
+    metric_statements:
+      - set(resource.attributes["service.namespace"], "integrations")
+      - set(resource.attributes["service.name"], "mediawiki")
       - set(resource.attributes["service.instance.id"], "${name}")
 
   # The name without its generation becomes service_name, so queries need no
@@ -346,6 +372,11 @@ service:
     metrics/memcached:
       receivers: [memcached]
       processors: [memory_limiter, filter/memcached, transform/memcached, transform/drop_scope, batch]
+      exporters: [prometheus_remote_write/metrics_service]
+
+    metrics/mediawiki:
+      receivers: [statsd/mediawiki]
+      processors: [memory_limiter, filter/mediawiki, delta_to_cumulative/mediawiki, transform/mediawiki, transform/drop_scope, batch]
       exporters: [prometheus_remote_write/metrics_service]
 
     logs/containers:
