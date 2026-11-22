@@ -17,6 +17,23 @@ The `http` container keeps the ACME account and certificates under
 This host runs cron. `backupbot` is in no root: the dump runs on the database
 host from a systemd timer, to `backups-302617221463-ap-northeast-2-an`.
 
+## The docker provider
+
+The provider is [femiwiki/terraform-provider-docker-per-resource-host], a fork
+that adds `docker_host` to `docker_container` (femiwiki/femiwiki#577). It is on
+no registry, so `tofu init` takes it from `terraform.d/plugins/`, an implied
+local mirror that needs no CLI config. The workflows fill it with the
+`docker-provider` action. For a local run, put the release's zip for your
+platform there first:
+
+```sh
+mkdir -p terraform.d/plugins/femiwiki.invalid/femiwiki/docker
+gh release download v4.7.0-fw.1 -R femiwiki/terraform-provider-docker-per-resource-host \
+  -p '*linux_amd64.zip' -D terraform.d/plugins/femiwiki.invalid/femiwiki/docker
+```
+
+[femiwiki/terraform-provider-docker-per-resource-host]: https://github.com/femiwiki/terraform-provider-docker-per-resource-host
+
 ## Replacing a container
 
 `image` and the whole `env` block are create-only in the docker provider, so any

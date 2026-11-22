@@ -129,6 +129,11 @@ jobs:
           workspace: ${{ matrix.workspace }}
           port: 2377
 
+      - uses: ./.github/actions/docker-provider
+        if: steps.scope.outputs.plan == 'true' && startsWith(matrix.workspace, 'docker')
+        with:
+          path: ${{ matrix.workspace }}
+
       - uses: dflook/tofu-plan@53b5b01b6eef56cd678401dbe92a0f6ca6b863ff  # v3.1.2
         if: steps.scope.outputs.plan == 'true'
         id: plan
@@ -518,6 +523,11 @@ jobs:
         with:
           workspace: ${{ matrix.workspace }}
           port: 2376
+
+      - uses: ./.github/actions/docker-provider
+        if: startsWith(matrix.workspace, 'docker')
+        with:
+          path: ${{ matrix.workspace }}
 
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333  # v8.0.2
         if: github.event.pull_request && matrix.workspace != 'healthchecks'

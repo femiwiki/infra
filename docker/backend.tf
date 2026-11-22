@@ -61,9 +61,11 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 6.7"
     }
+    # A fork that adds docker_host to docker_container, installed from
+    # terraform.d/plugins/ (see the docker-provider action); femiwiki/femiwiki#577
     docker = {
-      source  = "kreuzwerker/docker"
-      version = "~> 3.0"
+      source  = "femiwiki.invalid/femiwiki/docker"
+      version = "4.7.0-fw.1"
     }
     tls = {
       source  = "hashicorp/tls"
