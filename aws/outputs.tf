@@ -68,3 +68,24 @@ output "mediawiki_role_arn" {
   description = "The role of MediaWiki's containers, through IAM Roles Anywhere"
   value       = module.mediawiki.arn
 }
+
+# What docker/ needs to launch an app host, which it owns so one pull request
+# can add a host and its containers (femiwiki/femiwiki#577)
+output "app_host_launch" {
+  description = "AMI, network, profile and user data for an app host"
+  value = {
+    ami                    = data.aws_ami.amazon_linux_2_arm64.image_id
+    availability_zone      = local.availability_zone
+    subnet_id              = aws_subnet.main.id
+    iam_instance_profile   = aws_iam_instance_profile.femiwiki.name
+    vpc_security_group_ids = [aws_security_group.web.id, aws_security_group.database_client.id, aws_security_group.instance_connect.id]
+    user_data_base64 = base64gzip(templatefile("res/user-data-docker-provider.tftpl", {
+      otelcol_install = local.otelcol_install["docker"]
+    }))
+  }
+}
+
+output "femiwiki_com_zone_id" {
+  description = "The femiwiki.com hosted zone, where docker/ keeps cloudfront-origin.femiwiki.com"
+  value       = aws_route53_zone.femiwiki_com.zone_id
+}
