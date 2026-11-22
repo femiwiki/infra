@@ -452,6 +452,44 @@ resource "aws_ssm_parameter" "mariadb_next_server_id" {
   }
 }
 
+locals {
+  docker_api_readonly_image   = "ghcr.io/tecnativa/docker-socket-proxy:v0.5.0"
+  docker_api_readonly_install = replace(file("res/docker-api-readonly.sh"), "__IMAGE__", local.docker_api_readonly_image)
+}
+
+resource "aws_ssm_document" "docker_api_readonly" {
+  name            = "docker-api-readonly"
+  document_type   = "Command"
+  document_format = "JSON"
+
+  content = jsonencode({
+    schemaVersion = "2.2"
+    description   = "Run the read-only Docker API on 127.0.0.1:2377, which pull request plans of the docker workspace read through."
+    mainSteps = [{
+      action = "aws:runShellScript"
+      name   = "dockerApiReadonly"
+      inputs = {
+        runCommand = split("\n", local.docker_api_readonly_install)
+      }
+    }]
+  })
+}
+
+resource "aws_ssm_association" "docker_api_readonly" {
+  association_name    = "docker-api-readonly"
+  name                = aws_ssm_document.docker_api_readonly.name
+  document_version    = aws_ssm_document.docker_api_readonly.latest_version
+  schedule_expression = "rate(30 minutes)"
+  compliance_severity = "HIGH"
+  max_concurrency     = "1"
+  max_errors          = "0"
+
+  targets {
+    key    = "tag:Role"
+    values = ["app"]
+  }
+}
+
 resource "aws_ssm_document" "docker_socket_only" {
   name            = "docker-socket-only"
   document_type   = "Command"
