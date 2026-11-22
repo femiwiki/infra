@@ -1,4 +1,4 @@
-// Reads app-hosts.json into two forward slots, a and b: the hosts docker
+// Reads docker/app-hosts.json into two forward slots, a and b: the hosts docker
 // manages, at most two, since a replacement overlaps one host with the next
 import { readFileSync } from "node:fs";
 import type { Args } from "./database-swap/hosts.mts";
@@ -12,7 +12,7 @@ type List = {
 
 export const slots = ({ core, env }: Args) => {
 	const list: List = JSON.parse(
-		readFileSync(`${env.GITHUB_WORKSPACE}/app-hosts.json`, "utf8"),
+		readFileSync(`${env.GITHUB_WORKSPACE}/docker/app-hosts.json`, "utf8"),
 	);
 	const unknown = [...list.containers, list.serving].filter(
 		(key) => !(key in list.hosts),

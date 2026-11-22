@@ -47,7 +47,6 @@ jobs:
           shared-paths: |
             .github/actions/**
             ${{ case(startsWith(matrix.workspace, 'docker'), 'serving/**', '') }}
-            ${{ case(matrix.workspace == 'aws' || startsWith(matrix.workspace, 'docker'), 'app-hosts.json', '') }}
 
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         if: steps.scope.outputs.plan == 'true'
