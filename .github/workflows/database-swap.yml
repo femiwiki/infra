@@ -67,19 +67,37 @@ jobs:
         with:
           path: docker
 
+      - uses: ./.github/actions/app-hosts
+        id: hosts
+
       - uses: ./.github/actions/ssm-port-forward
         id: daemon
         with:
-          filters: Name=tag:DockerTarget,Values=true
+          filters: Name=tag:HostKey,Values=${{ steps.hosts.outputs.a-key }}
           region: ap-northeast-2
-          port: 2376
+          port: ${{ steps.hosts.outputs.a-port }}
           socket: /var/run/docker.sock
           probe: 'curl -sf --max-time 3 "http://$HOST:$PORT/_ping"'
 
+      - uses: ./.github/actions/ssm-port-forward
+        if: steps.hosts.outputs.b-key != ''
+        id: daemon-b
+        with:
+          filters: Name=tag:HostKey,Values=${{ steps.hosts.outputs.b-key }}
+          region: ap-northeast-2
+          port: ${{ steps.hosts.outputs.b-port }}
+          socket: /var/run/docker.sock
+          sshd-port: "2223"
+          probe: 'curl -sf --max-time 3 "http://$HOST:$PORT/_ping"'
+
       - name: Pull the images the apply will start
+        env:
+          PORTS: ${{ steps.hosts.outputs.a-port }} ${{ steps.hosts.outputs.b-port }}
         run: |
           grep -ohE 'image\s*=\s*"[^"]+"' docker/*.tf | grep -oE '"[^"]+"' | tr -d '"' | sort -u | while read -r image; do
-            curl -sf -X POST "http://127.0.0.1:2376/images/create?fromImage=${image%%:*}&tag=${image##*:}" > /dev/null
+            for port in $PORTS; do
+              curl -sf -X POST "http://127.0.0.1:$port/images/create?fromImage=${image%%:*}&tag=${image##*:}" > /dev/null
+            done
           done
 
       - name: Turn ProxySQL on
@@ -97,7 +115,7 @@ jobs:
       # A server greets first, so four bytes back mean ProxySQL answered
       - uses: ./.github/actions/ssm-port-forward
         with:
-          filters: Name=tag:DockerTarget,Values=true
+          filters: Name=tag:HostKey,Values=${{ steps.hosts.outputs.serving }}
           region: ap-northeast-2
           port: 6032
           probe: '[ "$(timeout 3 head -c 4 < "/dev/tcp/$HOST/$PORT" | wc -c)" = 4 ]'
