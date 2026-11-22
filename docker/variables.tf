@@ -6,6 +6,12 @@ variable "docker_host" {
   ephemeral = true
 }
 
+variable "docker_gateway" {
+  description = "The address the workflows relay each host's forward on, which containers reach their own host through"
+  type        = string
+  default     = "127.0.0.1"
+}
+
 variable "state_passphrase" {
   description = "Passphrase of this state"
   type        = string

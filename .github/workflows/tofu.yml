@@ -162,6 +162,7 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
           TF_PLAN_COLLAPSE_LENGTH: "100000"  # never collapse the plan
           TF_VAR_docker_host: ${{ case(steps.daemon.outputs.address != '', format('tcp://{0}', steps.daemon.outputs.address), '') }}
+          TF_VAR_docker_gateway: ${{ steps.daemon.outputs.gateway }}
           TF_VAR_mariadb_endpoint: ${{ steps.mariadb.outputs.address }}
           TF_VAR_mysql_username: ${{ case(matrix.workspace == 'mariadb', 'tofu-plan', '') }}
           TF_VAR_mysql_password: ${{ steps.mariadb-passwords.outputs.login }}
@@ -589,6 +590,7 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
           TF_PLAN_COLLAPSE_LENGTH: "100000"  # never collapse the plan
           TF_VAR_docker_host: ${{ case(steps.daemon.outputs.address != '', format('tcp://{0}', steps.daemon.outputs.address), '') }}
+          TF_VAR_docker_gateway: ${{ steps.daemon.outputs.gateway }}
           TF_VAR_mariadb_endpoint: ${{ steps.mariadb.outputs.address }}
           TF_VAR_mysql_username: ${{ case(matrix.workspace == 'mariadb', 'tofu', '') }}
           TF_VAR_mysql_password: ${{ steps.mariadb-passwords.outputs.login }}
@@ -641,6 +643,7 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
           TF_PLAN_COLLAPSE_LENGTH: "100000"  # never collapse the plan
           TF_VAR_docker_host: ${{ case(steps.daemon.outputs.address != '', format('tcp://{0}', steps.daemon.outputs.address), '') }}
+          TF_VAR_docker_gateway: ${{ steps.daemon.outputs.gateway }}
           TF_VAR_mariadb_endpoint: ${{ steps.mariadb.outputs.address }}
           TF_VAR_mysql_username: ${{ case(matrix.workspace == 'mariadb', 'tofu', '') }}
           TF_VAR_mysql_password: ${{ steps.mariadb-passwords.outputs.login }}

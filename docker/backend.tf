@@ -65,7 +65,7 @@ terraform {
     # terraform.d/plugins/ (see the docker-provider action); femiwiki/femiwiki#577
     docker = {
       source  = "femiwiki.invalid/femiwiki/docker"
-      version = "4.7.0-fw.1"
+      version = "4.7.0-fw.2"
     }
     tls = {
       source  = "hashicorp/tls"

@@ -3,6 +3,9 @@
 locals {
   app_hosts = jsondecode(file("${path.module}/app-hosts.json"))
   launch    = data.terraform_remote_state.aws.outputs.app_host_launch
+
+  # Each host's Docker API, forwarded by the workflows to its own runner port
+  docker_hosts = { for key in local.app_hosts.containers : key => "tcp://${var.docker_gateway}:${local.app_hosts.hosts[key].port}" }
 }
 
 resource "aws_instance" "app" {
@@ -79,25 +82,4 @@ resource "aws_route53_record" "cloudfront_origin" {
   zone_id = data.terraform_remote_state.aws.outputs.femiwiki_com_zone_id
   records = [aws_instance.app[local.app_hosts.serving].public_ip]
   ttl     = 60
-}
-
-# From aws/, which forgets them in the same pull request
-import {
-  to = aws_instance.app["app-1"]
-  id = "i-0201969cfe38c574c"
-}
-
-import {
-  to = aws_eip.app["app-1"]
-  id = "eipalloc-0d3c968fa5a5a467f"
-}
-
-import {
-  to = aws_eip_association.app["app-1"]
-  id = "eipassoc-0aa9a854c466ebb3f"
-}
-
-import {
-  to = aws_route53_record.cloudfront_origin
-  id = "${data.terraform_remote_state.aws.outputs.femiwiki_com_zone_id}_cloudfront-origin.femiwiki.com_A"
 }
