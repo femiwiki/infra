@@ -1,0 +1,22 @@
+---
+name: Install the docker provider
+description: >-
+  Puts the fork of the docker provider that the root's lock file pins into
+  the root's terraform.d/plugins/, an implied local mirror that tofu init
+  reads without a CLI config. The fork adds docker_host to docker_container
+  and is on no registry (femiwiki/femiwiki#577).
+inputs:
+  path:
+    description: The root whose lock file pins the provider.
+    required: true
+runs:
+  using: composite
+  steps:
+    - name: Download the pinned release
+      uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3  # v9.0.0
+      env:
+        ROOT: ${{ inputs.path }}
+      with:
+        script: |
+          const { install } = await import(`${process.env.GITHUB_WORKSPACE}/.github/scripts/docker-provider.mts`)
+          await install({ core, env: process.env })

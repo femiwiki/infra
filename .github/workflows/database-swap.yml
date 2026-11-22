@@ -63,6 +63,10 @@ jobs:
           role-to-assume: arn:aws:iam::302617221463:role/database-swap
           aws-region: ap-northeast-2
 
+      - uses: ./.github/actions/docker-provider
+        with:
+          path: docker
+
       - uses: ./.github/actions/ssm-port-forward
         id: daemon
         with:

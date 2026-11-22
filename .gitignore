@@ -8,3 +8,6 @@
 
 # Composer
 /vendor/
+
+# The docker provider, which the docker-provider action downloads
+terraform.d/
