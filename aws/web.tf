@@ -1,4 +1,12 @@
+# The app hosts, which app-hosts.json at the repository root lists for this
+# root and docker/ both; femiwiki/femiwiki#577 has how a host is replaced.
+locals {
+  app_host_list = jsondecode(file("${path.module}/../app-hosts.json"))
+}
+
 resource "aws_instance" "docker" {
+  for_each = local.app_host_list.hosts
+
   ami                         = data.aws_ami.amazon_linux_2_arm64.image_id
   availability_zone           = local.availability_zone
   subnet_id                   = aws_subnet.main.id
@@ -42,6 +50,7 @@ resource "aws_instance" "docker" {
     Name         = "docker"
     Role         = "app"
     DockerTarget = "true"
+    HostKey      = each.key
   }
 
   lifecycle {
@@ -53,7 +62,11 @@ resource "aws_instance" "docker" {
   }
 }
 
+# Only the hosts marked eip keep one: associating an EIP with a running host
+# replaces the public IP it booted with, which a plan cannot know.
 resource "aws_eip_association" "web" {
-  allocation_id = aws_eip.web.id
-  instance_id   = aws_instance.docker.id
+  for_each = aws_eip.web
+
+  allocation_id = each.value.id
+  instance_id   = aws_instance.docker[each.key].id
 }

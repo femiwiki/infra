@@ -7,7 +7,7 @@ resource "aws_route53_record" "cloudfront_origin" {
   name    = "cloudfront-origin.femiwiki.com"
   type    = "A"
   zone_id = aws_route53_zone.femiwiki_com.zone_id
-  records = [aws_eip.web.public_ip]
+  records = [aws_instance.docker[local.app_host_list.serving].public_ip]
   ttl     = 60
 }
 
