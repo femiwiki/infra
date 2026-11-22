@@ -139,3 +139,20 @@ moved {
   from = aws_lambda_permission.sns_discord_seoul
   to   = aws_lambda_permission.sns_discord_alarms
 }
+
+# One instance per key of app-hosts.json; today's host is app-1 (femiwiki/femiwiki#577)
+
+moved {
+  from = aws_instance.docker
+  to   = aws_instance.docker["app-1"]
+}
+
+moved {
+  from = aws_eip.web
+  to   = aws_eip.web["app-1"]
+}
+
+moved {
+  from = aws_eip_association.web
+  to   = aws_eip_association.web["app-1"]
+}
