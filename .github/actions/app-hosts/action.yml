@@ -1,0 +1,38 @@
+---
+name: Read the app hosts
+description: >-
+  Reads app-hosts.json into two slots, a and b, for the hosts docker manages
+  (femiwiki/femiwiki#577). A replacement overlaps one host with the next, so
+  there are never more than two; b is empty when there is one.
+outputs:
+  a-key:
+    description: The first host key in containers.
+    value: ${{ steps.read.outputs.a-key }}
+  a-port:
+    description: >-
+      The runner's port for that host's Docker API: the read-only one in a
+      plan, the socket in an apply. The same in both, so a container's
+      docker_host does not change between them.
+    value: ${{ steps.read.outputs.a-port }}
+  b-key:
+    description: The second host key in containers, or empty.
+    value: ${{ steps.read.outputs.b-key }}
+  b-port:
+    description: >-
+      The runner's port for that host's Docker API: the read-only one in a
+      plan, the socket in an apply. The same in both, so a container's
+      docker_host does not change between them.
+    value: ${{ steps.read.outputs.b-port }}
+  serving:
+    description: The host key that takes traffic.
+    value: ${{ steps.read.outputs.serving }}
+runs:
+  using: composite
+  steps:
+    - name: Read app-hosts.json
+      id: read
+      uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3  # v9.0.0
+      with:
+        script: |
+          const { slots } = await import(`${process.env.GITHUB_WORKSPACE}/.github/scripts/app-hosts.mts`)
+          slots({ core, env: process.env })
