@@ -124,3 +124,11 @@ resource "github_repository_vulnerability_alerts" "vulnerability_alerts" {
   count      = var.archived ? 0 : 1
   repository = github_repository.repository.name
 }
+
+# A fork follows its source's dependencies by rebasing onto upstream releases,
+# so Dependabot's security PRs would only widen its difference from upstream
+resource "github_repository_dependabot_security_updates" "fork" {
+  count      = var.fork_source == null ? 0 : 1
+  repository = github_repository.repository.name
+  enabled    = false
+}
