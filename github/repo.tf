@@ -271,6 +271,25 @@ module "terraform-provider-mediawiki" {
   default_status_checks           = []
 }
 
+# Upstream plus two commits: a per-resource Docker host on docker_container, and
+# a retry until that host's daemon answers. Rebased onto each upstream release.
+module "terraform_provider_docker" {
+  source      = "./modules/github-repository"
+  name        = "terraform-provider-docker-per-resource-host"
+  description = "Fork of kreuzwerker/terraform-provider-docker with a per-resource Docker host"
+  fork_source = {
+    owner = "kreuzwerker"
+    repo  = "terraform-provider-docker"
+  }
+  default_branch        = "master"
+  patterns              = []
+  default_status_checks = []
+  topics = [
+    "docker",
+    "terraform-provider",
+  ]
+}
+
 module "fedifeeds" {
   source      = "./modules/github-repository"
   name        = "FediFeeds"
