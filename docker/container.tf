@@ -495,34 +495,12 @@ resource "docker_container" "autoheal" {
   }
 }
 
-resource "docker_container" "docker_api_readonly" {
-  name         = "docker-api-readonly"
-  log_driver   = "fluentd"
-  log_opts     = local.log_opts
-  image        = "ghcr.io/tecnativa/docker-socket-proxy:v0.5.0"
-  network_mode = "host"
-  restart      = "always"
-  memory       = 64
-  memory_swap  = 64
-  env = [
-    "BIND_CONFIG=127.0.0.1:2377",
-    "CONTAINERS=1",
-    "IMAGES=1",
-    "INFO=1",
-    "NETWORKS=1",
-    "VOLUMES=1",
-  ]
+# The read-only Docker API is an SSM association in aws now, so a new host has
+# it before any apply. The running container is left to the association.
+removed {
+  from = docker_container.docker_api_readonly
 
-  mounts {
-    type      = "bind"
-    source    = "/var/run/docker.sock"
-    target    = "/var/run/docker.sock"
-    read_only = true
-  }
-
-  ulimit {
-    hard = 65536
-    name = "nofile"
-    soft = 32768
+  lifecycle {
+    destroy = false
   }
 }
