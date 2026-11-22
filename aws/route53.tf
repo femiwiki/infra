@@ -17,17 +17,13 @@ resource "aws_route53_record" "femiwiki_com" {
   name    = each.key
   type    = "A"
   zone_id = aws_route53_zone.femiwiki_com.zone_id
-  records = local.through_cloudfront ? null : [aws_instance.docker[local.app_host_list.serving].public_ip]
-  ttl     = local.through_cloudfront ? null : 300
 
-  dynamic "alias" {
-    for_each = local.through_cloudfront ? [aws_cloudfront_distribution.femiwiki_com] : []
-
-    content {
-      name                   = alias.value.domain_name
-      zone_id                = alias.value.hosted_zone_id
-      evaluate_target_health = false
-    }
+  # Without CloudFront, the name CloudFront would connect to, by name since
+  # docker/ is to own it
+  alias {
+    name                   = local.through_cloudfront ? aws_cloudfront_distribution.femiwiki_com.domain_name : "cloudfront-origin.femiwiki.com"
+    zone_id                = local.through_cloudfront ? aws_cloudfront_distribution.femiwiki_com.hosted_zone_id : aws_route53_zone.femiwiki_com.zone_id
+    evaluate_target_health = false
   }
 }
 

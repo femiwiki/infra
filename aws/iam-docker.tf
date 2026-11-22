@@ -42,8 +42,8 @@ data "aws_iam_policy_document" "infra_docker" {
   }
 
   statement {
-    sid       = "FindInstances"
-    actions   = ["ec2:DescribeInstances", "ec2:DescribeInstanceTypes"]
+    sid       = "ReadEc2"
+    actions   = ["ec2:Describe*"]
     resources = ["*"]
   }
 
@@ -51,6 +51,96 @@ data "aws_iam_policy_document" "infra_docker" {
     sid       = "ReadMediawikiDbPassword"
     actions   = ["ssm:GetParameter"]
     resources = [data.aws_ssm_parameter.secret["/mysql/users/mediawiki/password"].arn]
+  }
+
+  # The app hosts, which docker/ launches and retires (femiwiki/femiwiki#577).
+  # Only instances tagged Role=app, from this subnet and these security groups.
+  statement {
+    sid       = "LaunchAppHost"
+    actions   = ["ec2:RunInstances"]
+    resources = ["arn:aws:ec2:${local.region}:${data.aws_caller_identity.current.account_id}:instance/*"]
+
+    condition {
+      test     = "StringEquals"
+      variable = "aws:RequestTag/Role"
+      values   = ["app"]
+    }
+  }
+
+  statement {
+    sid     = "LaunchAppHostWith"
+    actions = ["ec2:RunInstances"]
+    resources = concat(
+      [
+        "arn:aws:ec2:${local.region}::image/*",
+        "arn:aws:ec2:${local.region}:${data.aws_caller_identity.current.account_id}:volume/*",
+        "arn:aws:ec2:${local.region}:${data.aws_caller_identity.current.account_id}:network-interface/*",
+        aws_subnet.main.arn,
+      ],
+      [for sg in [aws_security_group.web, aws_security_group.database_client, aws_security_group.instance_connect] : sg.arn],
+    )
+  }
+
+  statement {
+    sid       = "TagAtLaunch"
+    actions   = ["ec2:CreateTags"]
+    resources = ["arn:aws:ec2:${local.region}:${data.aws_caller_identity.current.account_id}:*/*"]
+
+    condition {
+      test     = "StringEquals"
+      variable = "ec2:CreateAction"
+      values   = ["RunInstances", "AllocateAddress"]
+    }
+  }
+
+  statement {
+    sid = "ManageAppHost"
+    actions = [
+      "ec2:CreateTags",
+      "ec2:DeleteTags",
+      "ec2:ModifyInstanceAttribute",
+      "ec2:ModifyInstanceCreditSpecification",
+      "ec2:TerminateInstances",
+      "ec2:AssociateAddress",
+      "ec2:DisassociateAddress",
+    ]
+    resources = ["arn:aws:ec2:${local.region}:${data.aws_caller_identity.current.account_id}:instance/*"]
+
+    condition {
+      test     = "StringEquals"
+      variable = "ec2:ResourceTag/Role"
+      values   = ["app"]
+    }
+  }
+
+  statement {
+    sid       = "AppHostAddress"
+    actions   = ["ec2:AllocateAddress", "ec2:ReleaseAddress", "ec2:AssociateAddress", "ec2:DisassociateAddress", "ec2:CreateTags"]
+    resources = ["arn:aws:ec2:${local.region}:${data.aws_caller_identity.current.account_id}:elastic-ip/*"]
+  }
+
+  statement {
+    sid       = "PassAppHostRole"
+    actions   = ["iam:PassRole"]
+    resources = [module.femiwiki.arn]
+  }
+
+  statement {
+    sid       = "ReadZone"
+    actions   = ["route53:GetHostedZone", "route53:ListResourceRecordSets", "route53:ListTagsForResource", "route53:GetChange"]
+    resources = [aws_route53_zone.femiwiki_com.arn, "arn:aws:route53:::change/*"]
+  }
+
+  statement {
+    sid       = "OriginRecord"
+    actions   = ["route53:ChangeResourceRecordSets"]
+    resources = [aws_route53_zone.femiwiki_com.arn]
+
+    condition {
+      test     = "ForAllValues:StringEquals"
+      variable = "route53:ChangeResourceRecordSetsNormalizedRecordNames"
+      values   = ["cloudfront-origin.femiwiki.com"]
+    }
   }
 
   # A key for each generation, replaced as the generation moves (femiwiki/femiwiki#528)
@@ -140,9 +230,15 @@ data "aws_iam_policy_document" "infra_docker_plan" {
   }
 
   statement {
-    sid       = "FindInstances"
-    actions   = ["ec2:DescribeInstances", "ec2:DescribeInstanceTypes"]
+    sid       = "ReadEc2"
+    actions   = ["ec2:Describe*"]
     resources = ["*"]
+  }
+
+  statement {
+    sid       = "ReadZone"
+    actions   = ["route53:GetHostedZone", "route53:ListResourceRecordSets", "route53:ListTagsForResource"]
+    resources = [aws_route53_zone.femiwiki_com.arn]
   }
 
   statement {
