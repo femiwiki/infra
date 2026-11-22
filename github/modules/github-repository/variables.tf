@@ -102,3 +102,18 @@ variable "kept_branches" {
   type        = list(string)
   default     = []
 }
+
+variable "fork_source" {
+  description = "The repository to fork, as { owner, repo }. Null creates a new repository."
+  type = object({
+    owner = string
+    repo  = string
+  })
+  default = null
+}
+
+variable "default_branch" {
+  description = "The default branch. A fork starts with its source's default branch."
+  type        = string
+  default     = "main"
+}
