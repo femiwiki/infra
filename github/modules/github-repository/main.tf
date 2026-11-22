@@ -6,7 +6,10 @@ resource "github_repository" "repository" {
   allow_auto_merge          = true
   allow_update_branch       = true
   delete_branch_on_merge    = var.delete_branch_on_merge
-  auto_init                 = true
+  auto_init                 = var.fork_source == null
+  fork                      = var.fork_source == null ? null : true
+  source_owner              = try(var.fork_source.owner, null)
+  source_repo               = try(var.fork_source.repo, null)
   archive_on_destroy        = true
   archived                  = var.archived
   topics                    = var.topics
@@ -39,7 +42,7 @@ resource "github_repository_pages" "pages" {
 
 resource "github_branch_default" "branch_default" {
   repository = github_repository.repository.name
-  branch     = "main"
+  branch     = var.default_branch
 }
 
 locals {
