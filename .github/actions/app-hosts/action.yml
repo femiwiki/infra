@@ -1,9 +1,9 @@
 ---
 name: Read the app hosts
 description: >-
-  Reads app-hosts.json into two slots, a and b, for the hosts docker manages
-  (femiwiki/femiwiki#577). A replacement overlaps one host with the next, so
-  there are never more than two; b is empty when there is one.
+  Reads docker/app-hosts.json into two slots, a and b, for the hosts docker
+  manages (femiwiki/femiwiki#577). A replacement overlaps one host with the
+  next, so there are never more than two; b is empty when there is one.
 outputs:
   a-key:
     description: The first host key in containers.
@@ -29,7 +29,7 @@ outputs:
 runs:
   using: composite
   steps:
-    - name: Read app-hosts.json
+    - name: Read docker/app-hosts.json
       id: read
       uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3  # v9.0.0
       with:

@@ -1,16 +1,6 @@
 # CloudFront in front of femiwiki.com, caching only load.php, favicon.ico and the "/" redirect.
 # femiwiki/femiwiki#639 has why, and the order for turning it on and off.
 
-# The name CloudFront connects to. Only CloudFront resolves it, so a short TTL
-# costs nothing and lets a new address take over within a minute.
-resource "aws_route53_record" "cloudfront_origin" {
-  name    = "cloudfront-origin.femiwiki.com"
-  type    = "A"
-  zone_id = aws_route53_zone.femiwiki_com.zone_id
-  records = [aws_instance.docker[local.app_host_list.serving].public_ip]
-  ttl     = 60
-}
-
 locals {
   cloudfront_aliases = ["femiwiki.com", "www.femiwiki.com", "fedi.femiwiki.com"]
 }
@@ -149,7 +139,7 @@ resource "aws_cloudfront_distribution" "femiwiki_com" {
 
   origin {
     origin_id   = "femiwiki"
-    domain_name = aws_route53_record.cloudfront_origin.fqdn
+    domain_name = "cloudfront-origin.femiwiki.com" # docker/ keeps this record
 
     custom_origin_config {
       http_port              = 80
