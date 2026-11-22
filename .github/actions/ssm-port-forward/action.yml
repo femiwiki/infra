@@ -30,6 +30,12 @@ inputs:
       Connect accepts for a minute, forwards the socket to the runner's port.
     required: false
     default: ''
+  sshd-port:
+    description: >-
+      The runner's port the instance's sshd comes to when socket is set. Two
+      forwards in one job need two.
+    required: false
+    default: '2222'
   probe:
     description: >-
       A bash command that succeeds once the service answers on $HOST:$PORT. An
@@ -77,11 +83,15 @@ runs:
         PORT: ${{ inputs.port }}
         DOCUMENT: ${{ inputs.document }}
         SOCKET: ${{ inputs.socket }}
+        SSHD_PORT: ${{ inputs.sshd-port }}
         PROBE: ${{ inputs.probe }}
       run: |
+        # Per port, so two forwards in one job keep their sessions apart
+        log=/tmp/ssm-session-$PORT.log
+        id=/tmp/ssm-session-id-$PORT
         if [ -n "$SOCKET" ]; then
           # sshd, on a runner port of its own; the next step brings the socket
-          PORT=2222
+          PORT=$SSHD_PORT
           PROBE='[ "$(timeout 3 head -c 4 < "/dev/tcp/$HOST/$PORT")" = SSH- ]'
           args=(--document-name AWS-StartPortForwardingSession --parameters "portNumber=22,localPortNumber=$PORT")
         elif [ -n "$DOCUMENT" ]; then
@@ -97,20 +107,20 @@ runs:
         # A session can accept connections and never carry them, so a dud one
         # is closed and replaced, a bounded number of times
         for attempt in 1 2 3; do
-          nohup aws ssm start-session --target "$instance" "${args[@]}" > /tmp/ssm-session.log 2>&1 &
+          nohup aws ssm start-session --target "$instance" "${args[@]}" > "$log" 2>&1 &
           pid=$!
           # A file, not a step output: a failed composite action may drop its
           # outputs, and the caller still has to close a dud session
-          rm -f /tmp/ssm-session-id
+          rm -f "$id"
           for _ in $(seq 10); do
-            awk '/^Starting session with SessionId: /{print $NF; exit}' /tmp/ssm-session.log > /tmp/ssm-session-id
-            if [ -s /tmp/ssm-session-id ]; then
-              echo "Session $(cat /tmp/ssm-session-id), to be closed by the caller."
+            awk '/^Starting session with SessionId: /{print $NF; exit}' "$log" > "$id"
+            if [ -s "$id" ]; then
+              echo "Session $(cat "$id"), to be closed by the caller."
               break
             fi
             sleep 1
           done
-          if [ ! -s /tmp/ssm-session-id ]; then
+          if [ ! -s "$id" ]; then
             echo "::warning::the session id never appeared in the log, so nothing can close this session."
           fi
           # The probe needs its own timeout, or a silent tunnel stalls the
@@ -122,10 +132,10 @@ runs:
             sleep 1
           done
           echo "::warning::the port forward did not come up on attempt $attempt"
-          cat /tmp/ssm-session.log
-          if [ -s /tmp/ssm-session-id ]; then
-            aws ssm terminate-session --session-id "$(cat /tmp/ssm-session-id)" --output text > /dev/null \
-              || echo "::warning::could not terminate $(cat /tmp/ssm-session-id); it may have ended already."
+          cat "$log"
+          if [ -s "$id" ]; then
+            aws ssm terminate-session --session-id "$(cat "$id")" --output text > /dev/null \
+              || echo "::warning::could not terminate $(cat "$id"); it may have ended already."
           fi
           kill "$pid" 2> /dev/null || true
           wait "$pid" 2> /dev/null || true
@@ -134,7 +144,7 @@ runs:
             [ -z "$(ss -Hltn "sport = :$PORT")" ] && break
             sleep 1
           done
-          rm -f /tmp/ssm-session-id
+          rm -f "$id"
         done
         echo "::error::the port forward did not come up"; exit 1
 
@@ -145,6 +155,7 @@ runs:
         AWS_REGION: ${{ inputs.region }}
         INSTANCE: ${{ steps.forward.outputs.instance }}
         PORT: ${{ inputs.port }}
+        SSHD_PORT: ${{ inputs.sshd-port }}
         SOCKET: ${{ inputs.socket }}
         PROBE: ${{ inputs.probe }}
       run: |
@@ -153,7 +164,7 @@ runs:
         aws ec2-instance-connect send-ssh-public-key --instance-id "$INSTANCE" \
           --instance-os-user ec2-user --ssh-public-key "file://$key.pub" --output text > /dev/null
         # The SSM session has already proved which instance answers
-        ssh -f -N -p 2222 -i "$key" -o IdentitiesOnly=yes -o StrictHostKeyChecking=no \
+        ssh -f -N -p "$SSHD_PORT" -i "$key" -o IdentitiesOnly=yes -o StrictHostKeyChecking=no \
           -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR -o ExitOnForwardFailure=yes \
           -L "127.0.0.1:$PORT:$SOCKET" ec2-user@127.0.0.1
         for _ in $(seq 10); do
@@ -172,7 +183,7 @@ runs:
         PROBE: ${{ inputs.probe }}
       run: |
         gateway=$(docker network inspect bridge --format '{{(index .IPAM.Config 0).Gateway}}')
-        nohup socat "TCP-LISTEN:$PORT,bind=$gateway,fork,reuseaddr" "TCP:127.0.0.1:$PORT" > /tmp/socat.log 2>&1 &
+        nohup socat "TCP-LISTEN:$PORT,bind=$gateway,fork,reuseaddr" "TCP:127.0.0.1:$PORT" > "/tmp/socat-$PORT.log" 2>&1 &
         sleep 1
         HOST=$gateway bash -c "$PROBE" > /dev/null
         echo "address=$gateway:$PORT" >> "$GITHUB_OUTPUT"

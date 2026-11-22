@@ -47,7 +47,7 @@ jobs:
           shared-paths: |
             .github/actions/**
             ${{ case(startsWith(matrix.workspace, 'docker'), 'serving/**', '') }}
-            ${{ case(matrix.workspace == 'aws', 'app-hosts.json', '') }}
+            ${{ case(matrix.workspace == 'aws' || startsWith(matrix.workspace, 'docker'), 'app-hosts.json', '') }}
 
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         if: steps.scope.outputs.plan == 'true'
@@ -62,14 +62,29 @@ jobs:
           role-to-assume: arn:aws:iam::302617221463:role/infra-${{ matrix.workspace }}${{ case(matrix.workspace == 'aws' || matrix.workspace == 'docker' || matrix.workspace == 'mariadb', '-plan', '') }}
           aws-region: ap-northeast-1
 
+      - uses: ./.github/actions/app-hosts
+        if: steps.scope.outputs.plan == 'true' && startsWith(matrix.workspace, 'docker')
+        id: hosts
+
+      # The read-only Docker API of each host app-hosts.json gives containers,
+      # which passes GET and HEAD alone
       - uses: ./.github/actions/ssm-port-forward
         if: steps.scope.outputs.plan == 'true' && startsWith(matrix.workspace, 'docker')
         id: daemon
         with:
-          filters: Name=tag:DockerTarget,Values=true
+          filters: Name=tag:HostKey,Values=${{ steps.hosts.outputs.a-key }}
           region: ap-northeast-2
-          # The read-only Docker API, which passes GET and HEAD alone
-          port: 2377
+          port: ${{ steps.hosts.outputs.a-port }}
+          document: forward-docker-api-readonly
+          probe: 'curl -sf --max-time 3 "http://$HOST:$PORT/_ping"'
+
+      - uses: ./.github/actions/ssm-port-forward
+        if: steps.scope.outputs.plan == 'true' && startsWith(matrix.workspace, 'docker') && steps.hosts.outputs.b-key != ''
+        id: daemon-b
+        with:
+          filters: Name=tag:HostKey,Values=${{ steps.hosts.outputs.b-key }}
+          region: ap-northeast-2
+          port: ${{ steps.hosts.outputs.b-port }}
           document: forward-docker-api-readonly
           probe: 'curl -sf --max-time 3 "http://$HOST:$PORT/_ping"'
 
@@ -128,7 +143,13 @@ jobs:
         if: steps.scope.outputs.plan == 'true' && startsWith(matrix.workspace, 'docker')
         with:
           workspace: ${{ matrix.workspace }}
-          port: 2377
+          port: ${{ steps.hosts.outputs.a-port }}
+
+      - uses: ./.github/actions/generation-swaps-ports
+        if: steps.scope.outputs.plan == 'true' && startsWith(matrix.workspace, 'docker') && steps.hosts.outputs.b-key != ''
+        with:
+          workspace: ${{ matrix.workspace }}
+          port: ${{ steps.hosts.outputs.b-port }}
 
       - uses: ./.github/actions/docker-provider
         if: steps.scope.outputs.plan == 'true' && startsWith(matrix.workspace, 'docker')
@@ -294,11 +315,13 @@ jobs:
           AWS_REGION: ap-northeast-2
         run: |
           # Nine were left Connected across both regions on 2026-09-27, from
-          # runs that had finished; see #901.
-          [ -s /tmp/ssm-session-id ] || { echo "No session was opened, so there is none to close."; exit 0; }
-          sid=$(cat /tmp/ssm-session-id)
-          aws ssm terminate-session --session-id "$sid" --output text \
-            || echo "::warning::could not terminate $sid; it may have ended already."
+          # runs that had finished; see #901. One file per forwarded port.
+          for f in /tmp/ssm-session-id-*; do
+            [ -s "$f" ] || continue
+            sid=$(cat "$f")
+            aws ssm terminate-session --session-id "$sid" --output text \
+              || echo "::warning::could not terminate $sid; it may have ended already."
+          done
 
   # One gate so a new job or a new workspace never needs a branch protection
   # change. Registering a context that nothing reports blocks every pull request,
@@ -450,14 +473,29 @@ jobs:
           role-to-assume: arn:aws:iam::302617221463:role/infra-${{ matrix.workspace }}
           aws-region: ap-northeast-1
 
+      - uses: ./.github/actions/app-hosts
+        if: startsWith(matrix.workspace, 'docker')
+        id: hosts
+
       - uses: ./.github/actions/ssm-port-forward
         if: startsWith(matrix.workspace, 'docker')
         id: daemon
         with:
-          filters: Name=tag:DockerTarget,Values=true
+          filters: Name=tag:HostKey,Values=${{ steps.hosts.outputs.a-key }}
           region: ap-northeast-2
-          port: 2376
+          port: ${{ steps.hosts.outputs.a-port }}
           socket: /var/run/docker.sock
+          probe: 'curl -sf --max-time 3 "http://$HOST:$PORT/_ping"'
+
+      - uses: ./.github/actions/ssm-port-forward
+        if: startsWith(matrix.workspace, 'docker') && steps.hosts.outputs.b-key != ''
+        id: daemon-b
+        with:
+          filters: Name=tag:HostKey,Values=${{ steps.hosts.outputs.b-key }}
+          region: ap-northeast-2
+          port: ${{ steps.hosts.outputs.b-port }}
+          socket: /var/run/docker.sock
+          sshd-port: "2223"
           probe: 'curl -sf --max-time 3 "http://$HOST:$PORT/_ping"'
 
       # A server greets first, so four bytes back mean MariaDB answered
@@ -485,10 +523,13 @@ jobs:
         if: startsWith(matrix.workspace, 'docker')
         env:
           WORKSPACE: ${{ matrix.workspace }}
+          PORTS: ${{ steps.hosts.outputs.a-port }} ${{ steps.hosts.outputs.b-port }}
         run: |
           # femiwiki_image is the local the femiwiki containers take theirs from
           grep -ohE '(image|femiwiki_image)\s*=\s*"[^"]+"' "$WORKSPACE"/*.tf | grep -oE '"[^"]+"' | tr -d '"' | sort -u | while read -r image; do
-            curl -sf -X POST "http://127.0.0.1:2376/images/create?fromImage=${image%%:*}&tag=${image##*:}" > /dev/null
+            for port in $PORTS; do
+              curl -sf -X POST "http://127.0.0.1:$port/images/create?fromImage=${image%%:*}&tag=${image##*:}" > /dev/null
+            done
           done
 
       - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093  # v3.0.0
@@ -523,7 +564,13 @@ jobs:
         if: startsWith(matrix.workspace, 'docker')
         with:
           workspace: ${{ matrix.workspace }}
-          port: 2376
+          port: ${{ steps.hosts.outputs.a-port }}
+
+      - uses: ./.github/actions/generation-swaps-ports
+        if: startsWith(matrix.workspace, 'docker') && steps.hosts.outputs.b-key != ''
+        with:
+          workspace: ${{ matrix.workspace }}
+          port: ${{ steps.hosts.outputs.b-port }}
 
       - uses: ./.github/actions/docker-provider
         if: startsWith(matrix.workspace, 'docker')
@@ -687,10 +734,13 @@ jobs:
         env:
           AWS_REGION: ap-northeast-2
         run: |
-          [ -s /tmp/ssm-session-id ] || { echo "No session was opened, so there is none to close."; exit 0; }
-          sid=$(cat /tmp/ssm-session-id)
-          aws ssm terminate-session --session-id "$sid" --output text \
-            || echo "::warning::could not terminate $sid; it may have ended already."
+          # One file per forwarded port
+          for f in /tmp/ssm-session-id-*; do
+            [ -s "$f" ] || continue
+            sid=$(cat "$f")
+            aws ssm terminate-session --session-id "$sid" --output text \
+              || echo "::warning::could not terminate $sid; it may have ended already."
+          done
 
   merge:
     needs: [pending, apply, gate]

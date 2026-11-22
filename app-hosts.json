@@ -1,6 +1,6 @@
 {
 	"hosts": {
-		"app-1": { "plan_port": 2377, "apply_port": 2376, "eip": true }
+		"app-1": { "port": 2376, "eip": true }
 	},
 	"containers": ["app-1"],
 	"serving": "app-1"
