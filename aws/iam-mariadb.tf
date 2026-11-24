@@ -65,7 +65,7 @@ data "aws_iam_policy_document" "infra_mariadb" {
 
   statement {
     sid     = "OwnSessions"
-    actions = ["ssm:TerminateSession", "ssm:ResumeSession"]
+    actions = ["ssm:TerminateSession", "ssm:ResumeSession", "ssmmessages:OpenDataChannel"]
     resources = [
       "arn:aws:ssm:*:*:session/GitHubActions-*",
       "arn:aws:ssm:*:*:session/$${aws:userid}-*",
@@ -143,7 +143,7 @@ data "aws_iam_policy_document" "infra_mariadb_plan" {
 
   statement {
     sid     = "OwnSessions"
-    actions = ["ssm:TerminateSession", "ssm:ResumeSession"]
+    actions = ["ssm:TerminateSession", "ssm:ResumeSession", "ssmmessages:OpenDataChannel"]
     resources = [
       "arn:aws:ssm:*:*:session/GitHubActions-*",
       "arn:aws:ssm:*:*:session/$${aws:userid}-*",
