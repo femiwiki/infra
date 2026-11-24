@@ -104,6 +104,7 @@ jobs:
         uses: dflook/tofu-apply@1de081df5087fb9ba2acf4866e9bc9b95f79676c  # v3.1.2
         env:
           TF_VAR_docker_host: tcp://${{ steps.daemon.outputs.address }}
+          TF_VAR_docker_gateway: ${{ steps.daemon.outputs.gateway }}
           TF_VAR_state_passphrase: ${{ secrets.DOCKER_STATE_PASSPHRASE }}
           TF_VAR_aws_state_passphrase: ${{ secrets.AWS_STATE_PASSPHRASE }}
           TF_VAR_gcp_state_passphrase: ${{ secrets.GCP_STATE_PASSPHRASE }}
@@ -136,6 +137,7 @@ jobs:
         uses: dflook/tofu-apply@1de081df5087fb9ba2acf4866e9bc9b95f79676c  # v3.1.2
         env:
           TF_VAR_docker_host: tcp://${{ steps.daemon.outputs.address }}
+          TF_VAR_docker_gateway: ${{ steps.daemon.outputs.gateway }}
           TF_VAR_state_passphrase: ${{ secrets.DOCKER_STATE_PASSPHRASE }}
           TF_VAR_aws_state_passphrase: ${{ secrets.AWS_STATE_PASSPHRASE }}
           TF_VAR_gcp_state_passphrase: ${{ secrets.GCP_STATE_PASSPHRASE }}

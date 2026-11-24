@@ -2,11 +2,11 @@
 # Manual edits may be lost in future updates.
 
 provider "femiwiki.invalid/femiwiki/docker" {
-  version     = "4.7.0-fw.1"
-  constraints = "4.7.0-fw.1"
+  version     = "4.7.0-fw.2"
+  constraints = "4.7.0-fw.2"
   hashes = [
-    "h1:S6qex2uAo7iHDkNOyn6Ybqi1CWdqgyQlJYejTpkRi48=",
-    "h1:Y+0aNu8nwMmOKsw7fWqQo7h4pXbvV13lrwMkwJIBN1o=",
+    "h1:6jEM8YxMdDrg7fzsodi7aYusnbIZd5WIBOEuzXy/zs4=",
+    "h1:Wd4E2Y8PiVTwSseJ2eql3o/Nx9rukeGVS9BKofAQpHQ=",
   ]
 }
 

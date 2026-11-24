@@ -46,6 +46,9 @@ outputs:
   address:
     description: The host:port to use from a container action.
     value: ${{ steps.relay.outputs.address }}
+  gateway:
+    description: The docker bridge gateway the relay listens on, without the port.
+    value: ${{ steps.relay.outputs.gateway }}
 runs:
   using: composite
   steps:
@@ -187,3 +190,4 @@ runs:
         sleep 1
         HOST=$gateway bash -c "$PROBE" > /dev/null
         echo "address=$gateway:$PORT" >> "$GITHUB_OUTPUT"
+        echo "gateway=$gateway" >> "$GITHUB_OUTPUT"
