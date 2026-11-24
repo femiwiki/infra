@@ -171,7 +171,7 @@ data "aws_iam_policy_document" "infra_docker" {
 
   statement {
     sid     = "OwnSessions"
-    actions = ["ssm:TerminateSession", "ssm:ResumeSession"]
+    actions = ["ssm:TerminateSession", "ssm:ResumeSession", "ssmmessages:OpenDataChannel"]
     resources = [
       # SSM names a session after the role session name, GitHubActions-<random>,
       # while aws:userid for an assumed role expands to <role id>:GitHubActions,
@@ -274,7 +274,7 @@ data "aws_iam_policy_document" "infra_docker_plan" {
 
   statement {
     sid     = "OwnSessions"
-    actions = ["ssm:TerminateSession", "ssm:ResumeSession"]
+    actions = ["ssm:TerminateSession", "ssm:ResumeSession", "ssmmessages:OpenDataChannel"]
     resources = [
       "arn:aws:ssm:*:*:session/GitHubActions-*",
       "arn:aws:ssm:*:*:session/$${aws:userid}-*",
