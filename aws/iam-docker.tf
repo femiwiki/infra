@@ -1,18 +1,28 @@
-module "infra_docker" {
+# The docker workspace becomes app (femiwiki/femiwiki#577). Both names have
+# roles until the workflows use the new one, and the old ones go after.
+locals {
+  app_workspace_names = toset(["docker", "app"])
+}
+
+module "infra_app" {
+  for_each = local.app_workspace_names
+
   source             = "terraform-aws-modules/iam/aws//modules/iam-role"
   version            = "6.8.2"
-  name               = "infra-docker"
+  name               = "infra-${each.key}"
   use_name_prefix    = false
-  description        = "Allows GitHub Actions workflows of femiwiki/infra to apply the docker workspace."
+  description        = "Allows GitHub Actions workflows of femiwiki/infra to apply the app workspace."
   enable_github_oidc = true
   oidc_subjects = [
-    "femiwiki@21275875/infra@188597503:environment:docker",
+    "femiwiki@21275875/infra@188597503:environment:${each.key}",
   ]
 }
 
-resource "aws_iam_role_policy" "infra_docker" {
+resource "aws_iam_role_policy" "infra_app" {
+  for_each = local.app_workspace_names
+
   name   = "InfraDocker"
-  role   = module.infra_docker.name
+  role   = module.infra_app[each.key].name
   policy = data.aws_iam_policy_document.infra_docker.json
 }
 
@@ -182,19 +192,23 @@ data "aws_iam_policy_document" "infra_docker" {
   }
 }
 
-module "infra_docker_plan" {
+module "infra_app_plan" {
+  for_each = local.app_workspace_names
+
   source             = "terraform-aws-modules/iam/aws//modules/iam-role"
   version            = "6.8.2"
-  name               = "infra-docker-plan"
+  name               = "infra-${each.key}-plan"
   use_name_prefix    = false
-  description        = "Allows GitHub Actions workflows of femiwiki/infra to plan the docker workspace through the read-only Docker API."
+  description        = "Allows GitHub Actions workflows of femiwiki/infra to plan the app workspace through the read-only Docker API."
   enable_github_oidc = true
   oidc_subjects      = ["femiwiki@21275875/infra@188597503:pull_request"]
 }
 
-resource "aws_iam_role_policy" "infra_docker_plan" {
+resource "aws_iam_role_policy" "infra_app_plan" {
+  for_each = local.app_workspace_names
+
   name   = "InfraDockerPlan"
-  role   = module.infra_docker_plan.name
+  role   = module.infra_app_plan[each.key].name
   policy = data.aws_iam_policy_document.infra_docker_plan.json
 }
 
@@ -295,9 +309,11 @@ data "aws_iam_policy_document" "docker_ssh" {
   }
 }
 
-resource "aws_iam_role_policy" "infra_docker_ssh" {
+resource "aws_iam_role_policy" "infra_app_ssh" {
+  for_each = local.app_workspace_names
+
   name   = "DockerSsh"
-  role   = module.infra_docker.name
+  role   = module.infra_app[each.key].name
   policy = data.aws_iam_policy_document.docker_ssh.json
 }
 
