@@ -146,7 +146,7 @@ data "aws_iam_policy_document" "database_swap" {
 
   statement {
     sid     = "OwnSessions"
-    actions = ["ssm:TerminateSession", "ssm:ResumeSession"]
+    actions = ["ssm:TerminateSession", "ssm:ResumeSession", "ssmmessages:OpenDataChannel"]
     resources = [
       "arn:aws:ssm:*:*:session/GitHubActions-*",
       "arn:aws:ssm:*:*:session/$${aws:userid}-*",
