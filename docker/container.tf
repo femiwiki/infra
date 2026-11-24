@@ -3,6 +3,9 @@ module "caddyfile" {
 }
 
 resource "docker_container" "http" {
+  for_each = toset(local.app_hosts.containers)
+
+  docker_host  = local.docker_hosts[each.key]
   name         = "http-${local.fastcgi_generation}"
   log_driver   = "fluentd"
   log_opts     = local.log_opts
@@ -197,6 +200,9 @@ locals {
 }
 
 resource "docker_container" "fastcgi" {
+  for_each = toset(local.app_hosts.containers)
+
+  docker_host  = local.docker_hosts[each.key]
   name         = "fastcgi-${local.fastcgi_generation}"
   log_driver   = "fluentd"
   log_opts     = local.log_opts
@@ -333,6 +339,9 @@ resource "docker_container" "fastcgi" {
 
 # The job queue and scheduled maintenance, apart from page requests (femiwiki/docker-mediawiki#968)
 resource "docker_container" "jobrunner" {
+  for_each = toset([local.app_hosts.serving])
+
+  docker_host  = local.docker_hosts[each.key]
   name         = "jobrunner"
   log_driver   = "fluentd"
   log_opts     = local.log_opts
@@ -392,7 +401,9 @@ resource "docker_container" "jobrunner" {
 # Parks the wiki's queries while the database replacement workflow promotes a
 # replica, so no write fails. It runs only while the switch is on.
 resource "docker_container" "proxysql" {
-  count = var.proxysql_enabled ? 1 : 0
+  for_each = var.proxysql_enabled ? toset(local.app_hosts.containers) : toset([])
+
+  docker_host = local.docker_hosts[each.key]
 
   name         = "proxysql"
   log_driver   = "fluentd"
@@ -420,6 +431,9 @@ resource "docker_container" "proxysql" {
 }
 
 resource "docker_container" "memcached" {
+  for_each = toset(local.app_hosts.containers)
+
+  docker_host  = local.docker_hosts[each.key]
   name         = "memcached"
   log_driver   = "fluentd"
   log_opts     = local.log_opts
@@ -464,6 +478,9 @@ resource "terraform_data" "memcached_healthcheck" {
 }
 
 resource "docker_container" "autoheal" {
+  for_each = toset(local.app_hosts.containers)
+
+  docker_host  = local.docker_hosts[each.key]
   name         = "autoheal"
   log_driver   = "fluentd"
   log_opts     = local.log_opts

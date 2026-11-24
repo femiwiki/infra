@@ -28,7 +28,7 @@ platform there first:
 
 ```sh
 mkdir -p terraform.d/plugins/femiwiki.invalid/femiwiki/docker
-gh release download v4.7.0-fw.1 -R femiwiki/terraform-provider-docker-per-resource-host \
+gh release download v4.7.0-fw.2 -R femiwiki/terraform-provider-docker-per-resource-host \
   -p '*linux_amd64.zip' -D terraform.d/plugins/femiwiki.invalid/femiwiki/docker
 ```
 
