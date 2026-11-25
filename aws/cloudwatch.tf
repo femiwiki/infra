@@ -52,7 +52,7 @@ resource "aws_cloudwatch_metric_alarm" "cloudfront_requests" {
 # clean hours before OK caps a flapping function at a few notifications a day.
 resource "aws_cloudwatch_metric_alarm" "lambda_errors" {
   alarm_name          = "Lambda Errors"
-  alarm_description   = "서울 리전의 Lambda 함수가 실패했습니다. 어느 함수인지는 CloudWatch 로그에서 확인해 주세요."
+  alarm_description   = "서울 리전의 Lambda 함수가 실패했습니다. 한 번 걸리고 이어지지 않으면 대개 일시적인 오류라 무시해도 됩니다. 어느 함수인지는 CloudWatch 로그에서 확인해 주세요."
   namespace           = "AWS/Lambda"
   metric_name         = "Errors"
   period              = 3600
