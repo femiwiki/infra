@@ -154,6 +154,7 @@ locals {
       "www.youtube.com",           # The same, for older embeds
       "ko.wikipedia.org",          # Citoid's lookups from the visual editor
       "appdown.pstatic.net",       # Fonts the Naver app lets readers pick
+      "fonts.gstatic.com",         # Google Fonts that browser extensions add for their own panels
     ])
 
     # MediaWiki globals LocalSettings applies after its defaults. See femiwiki#691.
