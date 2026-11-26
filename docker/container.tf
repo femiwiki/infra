@@ -118,7 +118,11 @@ locals {
     FW_JOB_TYPES_OFF_DEFAULT_QUEUE = ""
     FW_JOB_SLOW_TYPES              = ""
 
-    # Script hosts of the report-only Content-Security-Policy. See femiwiki#680.
+    # Enforce the Content-Security-Policy below; blocked loads log on the csp channel.
+    # femiwiki#680
+    FW_CSP_ENFORCE = "1"
+
+    # Script hosts of the Content-Security-Policy. See femiwiki#680.
     FW_CSP_SCRIPT_SRC = join(",", [
       "*.googletagmanager.com",       # The Google tag from PageViewInfoGA
       "cdn.jsdelivr.net",             # WidgetBot's crate for the discord-widget gadget
@@ -132,7 +136,7 @@ locals {
     ])
 
     # Hosts for connections, frames, fonts and the rest; scripts have their own list, images *.
-    # Report-only for now, so the list grows from csp-report-only logs. femiwiki#680
+    # Add a host here before a feature starts loading from it. femiwiki#680
     FW_CSP_DEFAULT_SRC = join(",", [
       "*.google-analytics.com",    # Hits the Google tag sends
       "*.analytics.google.com",    # The same, on GA4's newer endpoint
@@ -149,6 +153,8 @@ locals {
       "www.youtube-nocookie.com",  # EmbedVideo's YouTube frames
       "www.youtube.com",           # The same, for older embeds
       "ko.wikipedia.org",          # Citoid's lookups from the visual editor
+      "appdown.pstatic.net",       # Fonts the Naver app lets readers pick
+      "fonts.gstatic.com",         # Google Fonts that browser extensions add for their own panels
     ])
 
     # MediaWiki globals LocalSettings applies after its defaults. See femiwiki#691.
