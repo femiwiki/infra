@@ -153,6 +153,7 @@ locals {
       "www.youtube-nocookie.com",  # EmbedVideo's YouTube frames
       "www.youtube.com",           # The same, for older embeds
       "ko.wikipedia.org",          # Citoid's lookups from the visual editor
+      "appdown.pstatic.net",       # Fonts the Naver app lets readers pick
     ])
 
     # MediaWiki globals LocalSettings applies after its defaults. See femiwiki#691.
