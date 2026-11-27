@@ -322,9 +322,8 @@ data "aws_iam_policy_document" "write_mysql_root_password" {
 }
 
 
-# AmazonSSMManagedInstanceCore lets an instance read every parameter, and SecureStrings use the
-# aws/ssm key, so a host could decrypt the others' secrets (Lambda tokens, the tofu account's
-# password). These Denies leave each instance role only the paths it reads.
+# AmazonSSMManagedInstanceCore allows reading every parameter; these Denies leave each
+# instance role only the paths it reads (#1733)
 locals {
   instance_parameter_paths = {
     femiwiki = ["/alloy/*"]
