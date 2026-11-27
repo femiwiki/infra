@@ -200,7 +200,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: dflook/tofu-test@c8b6279e71fa6895ed60fe539017cc5170975b3c  # v3.1.2
+      - uses: dflook/tofu-test@c465f5321ab3f31bf90e6d15f8d4dbd943d95a61  # v3.1.3
         env:
           # The action looks up OpenTofu releases on api.github.com; without a
           # token it shares the runner IP's 60 requests an hour and fails

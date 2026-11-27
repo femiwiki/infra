@@ -119,7 +119,7 @@ jobs:
           create_credentials_file: false
           export_environment_variables: false
 
-      - uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510  # v3.3.0
+      - uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc  # v3.4.0
         if: steps.scope.outputs.plan == 'true' && matrix.workspace == 'github'
         id: app-token
         with:
@@ -155,7 +155,7 @@ jobs:
         with:
           path: ${{ matrix.workspace }}
 
-      - uses: dflook/tofu-plan@53b5b01b6eef56cd678401dbe92a0f6ca6b863ff  # v3.1.2
+      - uses: dflook/tofu-plan@0f690c855ee068cc5d4e0b9f3373b9b7990e73e0  # v3.1.3
         if: steps.scope.outputs.plan == 'true'
         id: plan
         env:
@@ -542,7 +542,7 @@ jobs:
           create_credentials_file: false
           export_environment_variables: false
 
-      - uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510  # v3.3.0
+      - uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc  # v3.4.0
         if: matrix.workspace == 'github'
         id: app-token
         with:
@@ -584,7 +584,7 @@ jobs:
           name: plan-${{ matrix.workspace }}
           path: saved-plan
 
-      - uses: dflook/tofu-apply@1de081df5087fb9ba2acf4866e9bc9b95f79676c  # v3.1.2
+      - uses: dflook/tofu-apply@cf65a333228c1a4faa7f95bdd4328bf17513e638  # v3.1.3
         id: apply
         env:
           GITHUB_TOKEN: ${{ github.token }}
@@ -636,7 +636,7 @@ jobs:
 
       # Re-plan with this job's tofu, providers and docker to check the apply left nothing behind.
       # Leave the plan comment alone: a newer run's apply compares its plan against it.
-      - uses: dflook/tofu-plan@53b5b01b6eef56cd678401dbe92a0f6ca6b863ff  # v3.1.2
+      - uses: dflook/tofu-plan@0f690c855ee068cc5d4e0b9f3373b9b7990e73e0  # v3.1.3
         if: github.event.pull_request && steps.apply.outcome == 'success'
         id: verify
         env:
