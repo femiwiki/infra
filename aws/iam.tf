@@ -122,6 +122,7 @@ module "femiwiki" {
   trust_policy_permissions = local.instance_trust
   policies = merge(local.instance_managed_policies, {
     read_alloy_parameters = aws_iam_policy.read_alloy_parameters.arn
+    deny_other_parameters = aws_iam_policy.deny_other_parameters["femiwiki"].arn
   })
 }
 
@@ -139,6 +140,7 @@ module "database" {
     read_backup_healthcheck_url = aws_iam_policy.read_backup_healthcheck_url.arn
     write_mysql_root_password   = aws_iam_policy.write_mysql_root_password.arn
     read_alloy_parameters       = aws_iam_policy.read_alloy_parameters.arn
+    deny_other_parameters       = aws_iam_policy.deny_other_parameters["database"].arn
   })
 }
 

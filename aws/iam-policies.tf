@@ -322,6 +322,44 @@ data "aws_iam_policy_document" "write_mysql_root_password" {
 }
 
 
+# AmazonSSMManagedInstanceCore lets an instance read every parameter, and SecureStrings use the
+# aws/ssm key, so a host could decrypt the others' secrets (Lambda tokens, the tofu account's
+# password). These Denies leave each instance role only the paths it reads.
+locals {
+  instance_parameter_paths = {
+    femiwiki = ["/alloy/*"]
+    database = ["/alloy/*", "/mysql/users/*", "/mysql/backup/*", "/mariadb/*"]
+  }
+}
+
+resource "aws_iam_policy" "deny_other_parameters" {
+  for_each = local.instance_parameter_paths
+
+  name        = "DenyOtherParameters-${each.key}"
+  description = "Denies the ${each.key} instances every parameter outside the paths they read"
+
+  policy = data.aws_iam_policy_document.deny_other_parameters[each.key].json
+}
+
+data "aws_iam_policy_document" "deny_other_parameters" {
+  for_each = local.instance_parameter_paths
+
+  statement {
+    effect = "Deny"
+    actions = [
+      "ssm:GetParameter",
+      "ssm:GetParameters",
+      "ssm:GetParametersByPath",
+      "ssm:GetParameterHistory",
+    ]
+    not_resources = flatten([
+      for region in local.parameter_store_regions : [
+        for path in each.value : "arn:aws:ssm:${region}:${data.aws_caller_identity.current.account_id}:parameter${path}"
+      ]
+    ])
+  }
+}
+
 resource "aws_iam_policy" "get_google_subject_token" {
   name        = "GetGoogleSubjectToken"
   description = "Allows instances to get the JWT that Google exchanges for PageViewInfoGA's access"
