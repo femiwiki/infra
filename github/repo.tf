@@ -318,6 +318,18 @@ module "delayed_job_queue" {
   default_status_checks           = []
 }
 
+module "least_privilege_groups" {
+  source      = "./modules/github-repository"
+  name        = "LeastPrivilegeGroups"
+  description = "MediaWiki extension that splits sysop and bureaucrat into small user groups named after their jobs"
+  topics = [
+    "mediawiki",
+    "mediawiki-extension",
+  ]
+  required_status_checks_contexts = ["required"]
+  default_status_checks           = []
+}
+
 module "property_suggester_local_stats" {
   source      = "./modules/github-repository"
   name        = "PropertySuggesterLocalStats"
