@@ -161,6 +161,14 @@ resource "github_actions_secret" "state_passphrase" {
   value       = random_password.state_passphrase[each.key].result
 }
 
+# The docker workspace becomes app (femiwiki/femiwiki#577) and keeps its state,
+# so the new name carries the same passphrase.
+resource "github_actions_secret" "app_state_passphrase" {
+  repository  = module.infra.name
+  secret_name = "APP_STATE_PASSPHRASE"
+  value       = random_password.state_passphrase["docker"].result
+}
+
 resource "github_repository_environment" "dot_github_gitlab" {
   repository  = module.dot_github.name
   environment = "gitlab"

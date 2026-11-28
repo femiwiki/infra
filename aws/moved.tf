@@ -170,3 +170,28 @@ removed {
     destroy = false
   }
 }
+
+moved {
+  from = module.infra_docker
+  to   = module.infra_app["docker"]
+}
+
+moved {
+  from = aws_iam_role_policy.infra_docker
+  to   = aws_iam_role_policy.infra_app["docker"]
+}
+
+moved {
+  from = module.infra_docker_plan
+  to   = module.infra_app_plan["docker"]
+}
+
+moved {
+  from = aws_iam_role_policy.infra_docker_plan
+  to   = aws_iam_role_policy.infra_app_plan["docker"]
+}
+
+moved {
+  from = aws_iam_role_policy.infra_docker_ssh
+  to   = aws_iam_role_policy.infra_app_ssh["docker"]
+}
