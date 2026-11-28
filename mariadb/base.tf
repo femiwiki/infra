@@ -1,5 +1,5 @@
 terraform {
-  required_version = "1.13.9"
+  required_version = "1.13.10"
 
   backend "s3" {
     bucket       = "tfstate-302617221463-ap-northeast-2-an"
